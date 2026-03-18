@@ -1,0 +1,6 @@
+node_modules
+*.csv
+dist
+*test.*
+!vitest.config.ts
+!tests/**
