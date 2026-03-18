@@ -1,260 +1,458 @@
-import inquirer from 'inquirer'
-import { createSpinner } from 'nanospinner'
+// ─── Connection Manager (blessed UI) ─────────────────────────────────────────
+// Replaces the inquirer-based connection manager with a full-screen blessed UI.
+//
+//  Layout:
+//    ┌─ dbterm ─────────────────────────────────────────────────────┐
+//    │                   (ASCII logo)                               │
+//    ├─ Connections ────────────────────────────────────────────────┤
+//    │  [PG] My Postgres  localhost:5432/mydb  (2024-01-01)        │
+//    │  [MY] My MySQL     localhost:3306/app   (2024-01-02)        │
+//    ├──────────────────────────────────────────────────────────────┤
+//    │ Enter:connect  n:new  e:edit  d:delete  q:quit              │
+//    └──────────────────────────────────────────────────────────────┘
+
+import blessed from 'blessed'
 import { randomBytes } from 'crypto'
 import {
   getConnections, saveConnection, deleteConnection,
-  type Connection, type DbType
+  type Connection, type DbType,
 } from '../config/store.js'
 import { createAdapter, DB_TYPE_LABELS, DB_TYPE_DEFAULTS } from '../db/adapter.js'
-import { theme, box, divider, badge, logo } from '../ui/theme.js'
+import { logo } from '../ui/theme.js'
 
 const DB_TYPES: DbType[] = ['postgresql', 'mysql', 'sqlite', 'mssql', 'mongodb']
 
-const TYPE_COLORS: Record<DbType, any> = {
-  postgresql: theme.pg,
-  mysql: theme.mysql,
-  sqlite: theme.sqlite,
-  mssql: theme.mssql,
-  mongodb: theme.mongo,
+// ─── Small prompt/confirm helpers ────────────────────────────────────────────
+
+function blessedPromptField(
+  screen: blessed.Widgets.Screen,
+  label: string,
+  defaultValue = '',
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    const prompt = blessed.prompt({
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      width: '54%',
+      height: 'shrink',
+      label: ` ${label} `,
+      border: { type: 'line' },
+      style: { border: { fg: 'cyan' } },
+    } as any)
+    ;(prompt as any).input(label, defaultValue, (err: any, value: string | null) => {
+      screen.remove(prompt)
+      resolve(err ? null : value)
+    })
+    screen.render()
+  })
 }
 
-function connLabel(c: Connection): string {
-  const typeLabel = TYPE_COLORS[c.type]?.(c.type.toUpperCase().slice(0, 2)) ?? c.type
-  const host = c.type === 'sqlite' ? (c.file ?? c.database) : `${c.host ?? 'localhost'}:${c.port}`
-  const lastUsed = c.lastUsed
-    ? theme.muted(' · ' + new Date(c.lastUsed).toLocaleDateString())
-    : ''
-  return `[${typeLabel}] ${theme.value(c.name)}  ${theme.muted(host)}${lastUsed}`
+function blessedConfirmDialog(
+  screen: blessed.Widgets.Screen,
+  message: string,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const question = blessed.question({
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      width: '54%',
+      height: 'shrink',
+      label: ' Confirm ',
+      border: { type: 'line' },
+      style: { border: { fg: 'yellow' } },
+    } as any)
+    ;(question as any).ask(message, (err: any, answer: boolean) => {
+      screen.remove(question)
+      resolve(!err && answer)
+    })
+    screen.render()
+  })
 }
 
-export async function manageConnections(): Promise<Connection | null> {
-  console.clear()
-  console.log(logo())
-  console.log()
+function blessedSelectList(
+  screen: blessed.Widgets.Screen,
+  label: string,
+  items: string[],
+  selectedIndex = 0,
+): Promise<number | null> {
+  return new Promise((resolve) => {
+    const list = blessed.list({
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      width: '54%',
+      height: Math.min(items.length + 4, 18),
+      label: ` ${label} `,
+      border: { type: 'line' },
+      style: {
+        border: { fg: 'cyan' },
+        selected: { fg: 'black', bg: 'cyan' },
+        item: { fg: 'white' },
+      },
+      keys: true,
+      vi: true,
+      mouse: true,
+      items,
+    } as any)
+    ;(list as any).select(selectedIndex)
+    list.focus()
 
-  const connections = getConnections()
+    list.on('select', (_item: any, idx: number) => {
+      screen.remove(list)
+      resolve(idx)
+    })
 
-  const choices: any[] = []
+    list.key(['escape', 'q'], () => {
+      screen.remove(list)
+      resolve(null)
+    })
 
-  if (connections.length > 0) {
-    const recent = [...connections].sort((a, b) =>
-      (b.lastUsed ?? '').localeCompare(a.lastUsed ?? '')
-    )
-    choices.push(new inquirer.Separator(theme.muted('─── Recent Connections ───────────────────────')))
-    for (const c of recent) {
-      choices.push({ name: connLabel(c), value: { action: 'connect', conn: c } })
-    }
-  }
-
-  choices.push(new inquirer.Separator(theme.muted('─── Actions ──────────────────────────────────')))
-  choices.push({ name: theme.accent('＋  New Connection'), value: { action: 'new' } })
-
-  if (connections.length > 0) {
-    choices.push({ name: theme.warn('✎   Edit Connection'), value: { action: 'edit' } })
-    choices.push({ name: theme.error('✕   Delete Connection'), value: { action: 'delete' } })
-  }
-
-  choices.push({ name: theme.muted('    Exit'), value: { action: 'exit' } })
-
-  const { choice } = await inquirer.prompt([{
-    type: 'list',
-    name: 'choice',
-    message: theme.title('Select a connection or action:'),
-    choices,
-    pageSize: 20,
-    loop: false,
-  }])
-
-  if (choice.action === 'exit') {
-    console.log(theme.muted('\n  Goodbye! 👋\n'))
-    process.exit(0)
-  }
-
-  if (choice.action === 'connect') {
-    return choice.conn as Connection
-  }
-
-  if (choice.action === 'new') {
-    const conn = await createConnectionDialog()
-    if (conn) {
-      const ok = await testAndSave(conn)
-      if (ok) return conn
-    }
-    return manageConnections()
-  }
-
-  if (choice.action === 'edit') {
-    const { toEdit } = await inquirer.prompt([{
-      type: 'list',
-      name: 'toEdit',
-      message: 'Select connection to edit:',
-      choices: connections.map(c => ({ name: connLabel(c), value: c })),
-    }])
-    const updated = await createConnectionDialog(toEdit)
-    if (updated) {
-      await testAndSave(updated)
-    }
-    return manageConnections()
-  }
-
-  if (choice.action === 'delete') {
-    const { toDel } = await inquirer.prompt([{
-      type: 'checkbox',
-      name: 'toDel',
-      message: 'Select connections to delete:',
-      choices: connections.map(c => ({ name: connLabel(c), value: c.id })),
-    }])
-    if (toDel.length > 0) {
-      const { confirm } = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'confirm',
-        message: theme.error(`Delete ${toDel.length} connection(s)?`),
-        default: false,
-      }])
-      if (confirm) {
-        for (const id of toDel) deleteConnection(id)
-        console.log(theme.success(`\n  ✓ Deleted ${toDel.length} connection(s)\n`))
-      }
-    }
-    return manageConnections()
-  }
-
-  return null
+    screen.render()
+  })
 }
 
-async function createConnectionDialog(existing?: Connection): Promise<Connection | null> {
-  console.log('\n' + divider(existing ? 'Edit Connection' : 'New Connection', 60))
-  console.log()
+function blessedShowMessage(
+  screen: blessed.Widgets.Screen,
+  text: string,
+  delay = 2,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const msg = blessed.message({
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      width: '54%',
+      height: 'shrink',
+      border: { type: 'line' },
+      style: { border: { fg: 'cyan' } },
+    } as any)
+    ;(msg as any).display(text, delay, () => {
+      screen.remove(msg)
+      screen.render()
+      resolve()
+    })
+    screen.render()
+  })
+}
 
-  const { type } = await inquirer.prompt([{
-    type: 'list',
-    name: 'type',
-    message: 'Database type:',
-    default: existing?.type ?? 'postgresql',
-    choices: DB_TYPES.map(t => ({ name: DB_TYPE_LABELS[t], value: t })),
-  }])
+// ─── Connection form ──────────────────────────────────────────────────────────
 
-  const defaults = DB_TYPE_DEFAULTS[type as DbType]
+async function createConnectionDialog(
+  screen: blessed.Widgets.Screen,
+  existing?: Connection,
+): Promise<Connection | null> {
+  // Step 1: Database type
+  const typeItems = DB_TYPES.map((t) => `${t.toUpperCase().padEnd(12)} — ${DB_TYPE_LABELS[t]}`)
+  const defaultTypeIdx = existing?.type ? DB_TYPES.indexOf(existing.type) : 0
+  const typeIdx = await blessedSelectList(
+    screen,
+    existing ? 'Edit Connection — Select database type' : 'New Connection — Select database type',
+    typeItems,
+    defaultTypeIdx >= 0 ? defaultTypeIdx : 0,
+  )
+  if (typeIdx === null) return null
+
+  const type = DB_TYPES[typeIdx]!
   const isSqlite = type === 'sqlite'
+  const defaults = DB_TYPE_DEFAULTS[type]
 
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'name',
-      message: 'Connection name:',
-      default: existing?.name ?? `My ${type} DB`,
-      validate: (v: string) => v.trim().length > 0 || 'Name is required',
-    },
-    {
-      type: 'input',
-      name: 'group',
-      message: 'Group (optional):',
-      default: existing?.group ?? '',
-    },
-    ...(isSqlite ? [
-      {
-        type: 'input',
-        name: 'file',
-        message: 'SQLite file path:',
-        default: existing?.file ?? './database.db',
-        validate: (v: string) => v.trim().length > 0 || 'File path is required',
-      },
-    ] : [
-      {
-        type: 'input',
-        name: 'host',
-        message: 'Host:',
-        default: existing?.host ?? defaults.host,
-      },
-      {
-        type: 'number',
-        name: 'port',
-        message: 'Port:',
-        default: existing?.port ?? defaults.port,
-      },
-      {
-        type: 'input',
-        name: 'database',
-        message: 'Database name:',
-        default: existing?.database ?? '',
-        validate: (v: string) => v.trim().length > 0 || 'Database name is required',
-      },
-      {
-        type: 'input',
-        name: 'username',
-        message: 'Username:',
-        default: existing?.username ?? '',
-      },
-      {
-        type: 'password',
-        name: 'password',
-        message: 'Password:',
-        mask: '*',
-        default: existing?.password ?? '',
-      },
-      {
-        type: 'confirm',
-        name: 'ssl',
-        message: 'Use SSL?',
-        default: existing?.ssl ?? false,
-      },
-      {
-        type: 'number',
-        name: 'queryTimeout',
-        message: 'Query timeout (ms, 0=no limit):',
-        default: existing?.queryTimeout ?? 30000,
-      },
-    ]),
-  ])
+  // Step 2: Connection name
+  const name = await blessedPromptField(
+    screen,
+    'Connection name',
+    existing?.name ?? `My ${DB_TYPE_LABELS[type]}`,
+  )
+  if (!name?.trim()) return null
+
+  // Step 3a: SQLite — just need file path
+  if (isSqlite) {
+    const file = await blessedPromptField(
+      screen,
+      'SQLite file path',
+      existing?.file ?? './database.db',
+    )
+    if (!file?.trim()) return null
+    return {
+      id: existing?.id ?? randomBytes(6).toString('hex'),
+      type,
+      name: name.trim(),
+      database: file.trim(),
+      file: file.trim(),
+      lastUsed: existing?.lastUsed,
+    }
+  }
+
+  // Step 3b: Network databases
+  const host = await blessedPromptField(
+    screen,
+    'Host',
+    existing?.host ?? (defaults as any).host ?? 'localhost',
+  )
+  if (host === null) return null
+
+  const portStr = await blessedPromptField(
+    screen,
+    'Port',
+    String(existing?.port ?? (defaults as any).port ?? 5432),
+  )
+  if (portStr === null) return null
+
+  const database = await blessedPromptField(
+    screen,
+    'Database name',
+    existing?.database ?? '',
+  )
+  if (database === null) return null
+
+  const username = await blessedPromptField(
+    screen,
+    'Username',
+    existing?.username ?? '',
+  )
+  if (username === null) return null
+
+  const password = await blessedPromptField(screen, 'Password (leave blank to keep)', '')
+  if (password === null) return null
+
+  const sslItems = ['No', 'Yes']
+  const sslIdx = await blessedSelectList(
+    screen,
+    'Use SSL?',
+    sslItems,
+    existing?.ssl ? 1 : 0,
+  )
+  const ssl = sslIdx === 1
+
+  const timeoutStr = await blessedPromptField(
+    screen,
+    'Query timeout ms (0 = no limit)',
+    String(existing?.queryTimeout ?? 30000),
+  )
 
   return {
     id: existing?.id ?? randomBytes(6).toString('hex'),
-    type: type as DbType,
-    name: answers.name.trim(),
-    group: answers.group?.trim() || undefined,
-    host: answers.host,
-    port: answers.port,
-    database: answers.database ?? (isSqlite ? answers.file : ''),
-    username: answers.username,
-    password: answers.password,
-    ssl: answers.ssl,
-    file: answers.file,
-    queryTimeout: answers.queryTimeout || undefined,
+    type,
+    name: name.trim(),
+    host: host.trim() || 'localhost',
+    port: parseInt(portStr.trim(), 10) || (defaults as any).port || 5432,
+    database: database.trim(),
+    username: username.trim() || undefined,
+    password: password.trim() || existing?.password || undefined,
+    ssl,
+    queryTimeout: parseInt(timeoutStr ?? '0', 10) || undefined,
     lastUsed: existing?.lastUsed,
   }
 }
 
-async function testAndSave(conn: Connection): Promise<boolean> {
-  const spinner = createSpinner(theme.primary(`Testing connection to ${theme.value(conn.name)}…`)).start()
+// ─── Test & save ──────────────────────────────────────────────────────────────
+
+async function testAndSave(
+  screen: blessed.Widgets.Screen,
+  conn: Connection,
+  connList: blessed.Widgets.ListElement,
+): Promise<boolean> {
+  // Show testing overlay
+  const testingBox = blessed.box({
+    parent: screen,
+    top: 'center',
+    left: 'center',
+    width: '54%',
+    height: 5,
+    label: ' Testing Connection ',
+    border: { type: 'line' },
+    tags: true,
+    content: `\n  Connecting to {bold}${conn.name}{/}…`,
+    style: { border: { fg: 'cyan' } },
+  } as any)
+  screen.render()
 
   try {
     const adapter = await createAdapter(conn)
     await adapter.connect()
     await adapter.disconnect()
-    spinner.success({ text: theme.success(`Connected successfully!`) })
+    screen.remove(testingBox)
     saveConnection(conn)
-    console.log(theme.muted(`  Connection "${conn.name}" saved.\n`))
+    await blessedShowMessage(screen, `Connection to "${conn.name}" successful — saved.`)
+    connList.focus()
     return true
   } catch (err: any) {
-    spinner.error({ text: theme.error(`Connection failed: ${err.message}`) })
-    const { retry } = await inquirer.prompt([{
-      type: 'list',
-      name: 'retry',
-      message: 'What would you like to do?',
-      choices: [
-        { name: 'Save anyway', value: 'save' },
-        { name: 'Edit connection', value: 'edit' },
-        { name: 'Discard', value: 'discard' },
-      ],
-    }])
-    if (retry === 'save') {
+    screen.remove(testingBox)
+    // Show the error as a message, then let user choose what to do
+    await blessedShowMessage(screen, `Connection failed:\n  ${err.message}`, 3)
+    const actionIdx = await blessedSelectList(screen, 'What would you like to do?', [
+      'Save anyway',
+      'Discard',
+    ])
+    if (actionIdx === 0) {
       saveConnection(conn)
+      await blessedShowMessage(screen, `"${conn.name}" saved (without verification).`)
+      connList.focus()
       return true
     }
-    if (retry === 'edit') {
-      const updated = await createConnectionDialog(conn)
-      if (updated) return testAndSave(updated)
-    }
+    connList.focus()
     return false
   }
+}
+
+// ─── Connection label helper ──────────────────────────────────────────────────
+
+function connLabel(c: Connection): string {
+  const typeTag = `[${c.type.toUpperCase().slice(0, 2)}]`
+  const location =
+    c.type === 'sqlite'
+      ? (c.file ?? c.database)
+      : `${c.host ?? 'localhost'}:${c.port}/${c.database}`
+  const lastUsed = c.lastUsed
+    ? ` (${new Date(c.lastUsed).toLocaleDateString()})`
+    : ''
+  return `${typeTag.padEnd(5)} ${c.name.padEnd(24)} ${location}${lastUsed}`
+}
+
+// ─── Main connection manager ──────────────────────────────────────────────────
+
+export async function manageConnections(): Promise<Connection | null> {
+  return new Promise((resolve) => {
+    let selectedConn: Connection | null = null
+
+    const screen = blessed.screen({
+      smartCSR: true,
+      title: 'dbterm — Connections',
+      fullUnicode: true,
+    })
+
+    // ── Logo/header ─────────────────────────────────────────────────────────
+    const logoBox = blessed.box({
+      top: 0,
+      left: 'center',
+      width: '100%',
+      height: 8,
+      tags: false,
+      content: logo(),
+      style: { fg: 'white' },
+    } as any)
+
+    // ── Connections list ─────────────────────────────────────────────────────
+    const connList = blessed.list({
+      top: 8,
+      left: 0,
+      width: '100%',
+      bottom: 3,
+      label: ' Connections ',
+      border: { type: 'line' },
+      style: {
+        border: { fg: 'cyan' },
+        selected: { fg: 'black', bg: 'cyan' },
+        item: { fg: 'white' },
+      },
+      keys: true,
+      vi: true,
+      mouse: true,
+    } as any)
+
+    // ── Help bar ─────────────────────────────────────────────────────────────
+    const helpBar = blessed.box({
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      height: 3,
+      border: { type: 'line' },
+      tags: true,
+      style: { border: { fg: 234 as any }, fg: 'grey' },
+      content:
+        '  {bold}{cyan-fg}Enter{/} connect' +
+        '   {bold}{cyan-fg}n{/} new' +
+        '   {bold}{cyan-fg}e{/} edit' +
+        '   {bold}{cyan-fg}d{/} delete' +
+        '   {bold}{cyan-fg}q{/} quit',
+    } as any)
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function getSorted(): Connection[] {
+      return [...getConnections()].sort(
+        (a, b) => (b.lastUsed ?? '').localeCompare(a.lastUsed ?? ''),
+      )
+    }
+
+    function refreshList() {
+      const sorted = getSorted()
+      if (sorted.length === 0) {
+        connList.setItems(['  (no saved connections — press n to add one)'])
+      } else {
+        connList.setItems(sorted.map(connLabel))
+      }
+      screen.render()
+    }
+
+    // ── Event handlers ────────────────────────────────────────────────────────
+
+    connList.on('select', (_item: any, idx: number) => {
+      const sorted = getSorted()
+      if (sorted.length === 0) return
+      const conn = sorted[idx]
+      if (!conn) return
+      selectedConn = conn
+      screen.destroy()
+    })
+
+    connList.key('n', async () => {
+      const conn = await createConnectionDialog(screen)
+      if (conn) {
+        await testAndSave(screen, conn, connList)
+        refreshList()
+      }
+      connList.focus()
+      screen.render()
+    })
+
+    connList.key('e', async () => {
+      const sorted = getSorted()
+      if (sorted.length === 0) return
+      const idx = (connList as any).selected ?? 0
+      const existing = sorted[idx]
+      if (!existing) return
+      const updated = await createConnectionDialog(screen, existing)
+      if (updated) {
+        await testAndSave(screen, updated, connList)
+        refreshList()
+      }
+      connList.focus()
+      screen.render()
+    })
+
+    connList.key('d', async () => {
+      const sorted = getSorted()
+      if (sorted.length === 0) return
+      const idx = (connList as any).selected ?? 0
+      const conn = sorted[idx]
+      if (!conn) return
+      const confirmed = await blessedConfirmDialog(screen, `Delete "${conn.name}"?`)
+      if (confirmed) {
+        deleteConnection(conn.id)
+        refreshList()
+      }
+      connList.focus()
+      screen.render()
+    })
+
+    connList.key(['q', 'escape'], () => {
+      screen.destroy()
+    })
+
+    screen.key(['q', 'C-c'], () => {
+      screen.destroy()
+    })
+
+    screen.append(logoBox)
+    screen.append(connList)
+    screen.append(helpBar)
+
+    refreshList()
+    connList.focus()
+    screen.render()
+
+    screen.on('destroy', () => resolve(selectedConn))
+  })
 }
