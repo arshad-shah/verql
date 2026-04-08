@@ -17,6 +17,9 @@ import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { safeCall } from './plugins/sdk/safe-call'
+import * as sshPlugin from './plugins/bundled/ssh-tunnel'
+import * as mongoPlugin from './plugins/bundled/mongodb'
+import * as redisPlugin from './plugins/bundled/redis'
 
 const activeAdapters = new Map<string, DbAdapter>()
 
@@ -378,6 +381,11 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  // Register bundled plugins
+  pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
+  pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
+  pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
+
   pluginCoordinator.boot().catch(err => {
     console.error('[plugins] Boot failed:', err)
   })
@@ -420,5 +428,26 @@ export function registerIpcHandlers(): void {
 
   handle('plugins:errors', async (name) => {
     return pluginCoordinator.getErrorBudget().getErrors(name)
+  })
+
+  handle('plugins:connection-fields', async () => {
+    return driverRegistry.getDriverIds().map(id => {
+      const factory = driverRegistry.get(id)!
+      return {
+        driverId: id,
+        driverName: id,
+        connectionFields: factory.connectionFields
+      }
+    })
+  })
+
+  handle('plugins:middleware-fields', async () => {
+    const fields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[] = []
+    for (const plugin of pluginCoordinator.getLoadedPlugins()) {
+      if (plugin.manifest.contributes.connectionFields) {
+        fields.push(...plugin.manifest.contributes.connectionFields)
+      }
+    }
+    return fields
   })
 }
