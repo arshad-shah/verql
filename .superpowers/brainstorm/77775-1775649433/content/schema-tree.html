@@ -1,0 +1,63 @@
+<h2>Schema Tree — Deep Object Browsing</h2>
+<p class="subtitle">How the sidebar tree organizes database objects by category</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Current Tree</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2; padding: 16px; color: #c8c8d8;">
+      <div>&#9660; <span style="color:#7c6ff7;">public</span></div>
+      <div style="padding-left: 20px;">&#9660; <span style="color:#5cb85c;">users</span></div>
+      <div style="padding-left: 40px; color:#888;">id <span style="color:#666;">integer PK</span></div>
+      <div style="padding-left: 40px; color:#888;">email <span style="color:#666;">varchar</span></div>
+      <div style="padding-left: 40px; color:#888;">created_at <span style="color:#666;">timestamp</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#5cb85c;">orders</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#5cb85c;">products</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#59a8de;">user_summary</span> <span style="color:#555; font-size:11px;">(view)</span></div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">New Tree (PostgreSQL)</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 2; padding: 16px; color: #c8c8d8;">
+      <div>&#9660; <span style="color:#7c6ff7;">public</span></div>
+      <div style="padding-left: 20px;">&#9660; <span style="color:#aaa;">&#9638; Tables</span> <span style="color:#555; font-size:11px;">(3)</span></div>
+      <div style="padding-left: 40px;">&#9660; <span style="color:#5cb85c;">users</span></div>
+      <div style="padding-left: 60px; color:#888;">id <span style="color:#666;">integer PK</span></div>
+      <div style="padding-left: 60px; color:#888;">email <span style="color:#666;">varchar</span></div>
+      <div style="padding-left: 60px; color:#888;">created_at <span style="color:#666;">timestamp</span></div>
+      <div style="padding-left: 60px; color:#d9a54d;">&#9654; Indexes <span style="color:#555; font-size:11px;">(2)</span></div>
+      <div style="padding-left: 60px; color:#d9a54d;">&#9654; Foreign Keys <span style="color:#555; font-size:11px;">(0)</span></div>
+      <div style="padding-left: 60px; color:#d9a54d;">&#9654; Constraints <span style="color:#555; font-size:11px;">(1)</span></div>
+      <div style="padding-left: 60px; color:#d9a54d;">&#9654; Triggers <span style="color:#555; font-size:11px;">(0)</span></div>
+      <div style="padding-left: 40px;">&#9654; <span style="color:#5cb85c;">orders</span></div>
+      <div style="padding-left: 40px;">&#9654; <span style="color:#5cb85c;">products</span></div>
+      <div style="padding-left: 20px;">&#9660; <span style="color:#aaa;">&#9673; Views</span> <span style="color:#555; font-size:11px;">(1)</span></div>
+      <div style="padding-left: 40px;">&#9654; <span style="color:#59a8de;">user_summary</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#aaa;">&#402; Functions</span> <span style="color:#555; font-size:11px;">(4)</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#aaa;">&#8635; Sequences</span> <span style="color:#555; font-size:11px;">(2)</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#aaa;">&#9830; Enums</span> <span style="color:#555; font-size:11px;">(1)</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#aaa;">&#9889; Triggers</span> <span style="color:#555; font-size:11px;">(2)</span></div>
+      <div style="padding-left: 20px;">&#9654; <span style="color:#aaa;">&#9881; Extensions</span> <span style="color:#555; font-size:11px;">(3)</span></div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 32px;">Key Changes</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+  <div style="background: rgba(124,111,247,0.08); border: 1px solid rgba(124,111,247,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #7c6ff7; margin: 0 0 8px;">Category Folders</h4>
+    <p style="margin: 0; color: #aaa; font-size: 14px;">Objects grouped under collapsible categories driven by the engine's supported types. PG shows 7+, SQLite shows 3-4.</p>
+  </div>
+  <div style="background: rgba(92,184,92,0.08); border: 1px solid rgba(92,184,92,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #5cb85c; margin: 0 0 8px;">Table Sub-nodes</h4>
+    <p style="margin: 0; color: #aaa; font-size: 14px;">Each table expands to show Columns, plus child groups for Indexes, Foreign Keys, Constraints, and Triggers.</p>
+  </div>
+  <div style="background: rgba(217,165,77,0.08); border: 1px solid rgba(217,165,77,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #d9a54d; margin: 0 0 8px;">Count Badges</h4>
+    <p style="margin: 0; color: #aaa; font-size: 14px;">Every collapsible node shows its child count — quick scan without expanding.</p>
+  </div>
+  <div style="background: rgba(89,168,222,0.08); border: 1px solid rgba(89,168,222,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #59a8de; margin: 0 0 8px;">Context Menus</h4>
+    <p style="margin: 0; color: #aaa; font-size: 14px;">Right-click any object for: Copy Name, Generate SELECT, View DDL, Refresh.</p>
+  </div>
+</div>

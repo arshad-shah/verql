@@ -1,0 +1,111 @@
+<h2>Inspector Panel — Right Sidebar</h2>
+<p class="subtitle">Rich detail panel that appears when any object is selected in the tree</p>
+
+<div class="mockup" style="max-width: 900px; margin: 0 auto;">
+  <div class="mockup-header">Layout: Query Editor + Inspector</div>
+  <div class="mockup-body" style="display: flex; gap: 0; min-height: 420px; padding: 0;">
+    <!-- Main area -->
+    <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid #2a2a3e;">
+      <!-- Tab bar -->
+      <div style="background: #12121f; padding: 8px 16px; border-bottom: 1px solid #2a2a3e; font-size: 12px; color: #888;">
+        <span style="color: #c8c8d8; background: #1a1a2e; padding: 4px 12px; border-radius: 4px;">Query 1</span>
+        <span style="padding: 4px 12px;">Query 2</span>
+      </div>
+      <!-- Editor -->
+      <div style="flex: 1; padding: 16px; font-family: monospace; font-size: 13px; color: #c8c8d8; background: #0d0d1a;">
+        <div><span style="color:#c678dd;">SELECT</span> u.name, <span style="color:#c678dd;">COUNT</span>(o.id)</div>
+        <div><span style="color:#c678dd;">FROM</span> users u</div>
+        <div><span style="color:#c678dd;">JOIN</span> orders o <span style="color:#c678dd;">ON</span> o.user_id = u.id</div>
+        <div><span style="color:#c678dd;">GROUP BY</span> u.name;</div>
+      </div>
+      <!-- Results -->
+      <div style="border-top: 1px solid #2a2a3e; padding: 12px 16px; font-size: 12px; color: #888; background: #12121f;">
+        Results: 42 rows in 12ms
+      </div>
+    </div>
+
+    <!-- Inspector Panel -->
+    <div style="width: 280px; background: #12121f; font-size: 13px; overflow-y: auto;">
+      <!-- Header -->
+      <div style="padding: 12px 16px; border-bottom: 1px solid #2a2a3e; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #5cb85c; font-size: 11px;">&#9638;</span>
+        <span style="color: #c8c8d8; font-weight: 600;">users</span>
+        <span style="color: #555; font-size: 11px; margin-left: auto;">TABLE</span>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display: flex; border-bottom: 1px solid #2a2a3e; font-size: 12px;">
+        <div style="padding: 8px 12px; color: #7c6ff7; border-bottom: 2px solid #7c6ff7;">Info</div>
+        <div style="padding: 8px 12px; color: #666;">Columns</div>
+        <div style="padding: 8px 12px; color: #666;">DDL</div>
+        <div style="padding: 8px 12px; color: #666;">Deps</div>
+      </div>
+
+      <!-- Info tab content -->
+      <div style="padding: 12px 16px;">
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Schema</div>
+          <div style="color: #c8c8d8;">public</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Row Count (est.)</div>
+          <div style="color: #c8c8d8;">~12,450</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Size</div>
+          <div style="color: #c8c8d8;">2.1 MB</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Primary Key</div>
+          <div style="color: #d9a54d; font-family: monospace;">id</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Indexes</div>
+          <div style="color: #c8c8d8; font-family: monospace; font-size: 12px;">
+            <div>users_pkey <span style="color:#5cb85c; font-size:10px;">UNIQUE</span></div>
+            <div>users_email_idx <span style="color:#5cb85c; font-size:10px;">UNIQUE</span></div>
+          </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Foreign Keys</div>
+          <div style="color: #888; font-size: 12px; font-style: italic;">None</div>
+        </div>
+        <div>
+          <div style="color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Referenced By</div>
+          <div style="color: #59a8de; font-family: monospace; font-size: 12px;">
+            <div>orders.user_id &rarr; users.id</div>
+            <div>comments.author_id &rarr; users.id</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 32px;">Inspector Tabs by Object Kind</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+  <div style="background: rgba(92,184,92,0.08); border: 1px solid rgba(92,184,92,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #5cb85c; margin: 0 0 8px;">Table / View</h4>
+    <p style="margin: 0; color: #aaa; font-size: 13px;"><strong>Info:</strong> schema, row count, size, PK, indexes, FKs, referenced-by<br><strong>Columns:</strong> name, type, nullable, default, constraints<br><strong>DDL:</strong> CREATE TABLE source<br><strong>Deps:</strong> objects that depend on / are depended on</p>
+  </div>
+  <div style="background: rgba(124,111,247,0.08); border: 1px solid rgba(124,111,247,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #7c6ff7; margin: 0 0 8px;">Function / Procedure</h4>
+    <p style="margin: 0; color: #aaa; font-size: 13px;"><strong>Info:</strong> language, return type, volatility<br><strong>Params:</strong> name, type, IN/OUT/INOUT<br><strong>Source:</strong> function body with syntax highlighting<br><strong>DDL:</strong> CREATE FUNCTION source</p>
+  </div>
+  <div style="background: rgba(217,165,77,0.08); border: 1px solid rgba(217,165,77,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #d9a54d; margin: 0 0 8px;">Trigger</h4>
+    <p style="margin: 0; color: #aaa; font-size: 13px;"><strong>Info:</strong> event (INSERT/UPDATE/DELETE), timing (BEFORE/AFTER), table<br><strong>Source:</strong> trigger body / function reference<br><strong>DDL:</strong> CREATE TRIGGER source</p>
+  </div>
+  <div style="background: rgba(89,168,222,0.08); border: 1px solid rgba(89,168,222,0.2); border-radius: 8px; padding: 16px;">
+    <h4 style="color: #59a8de; margin: 0 0 8px;">Sequence / Enum / Extension</h4>
+    <p style="margin: 0; color: #aaa; font-size: 13px;"><strong>Sequence:</strong> current value, min/max, increment, cycle<br><strong>Enum:</strong> list of values<br><strong>Extension:</strong> version, schema, description</p>
+  </div>
+</div>
+
+<h3 style="margin-top: 24px;">Behavior</h3>
+<div style="background: #1a1a2e; border-radius: 8px; padding: 16px; color: #aaa; font-size: 13px; line-height: 1.8;">
+  &bull; Panel appears on first object click, persists until closed via X button<br>
+  &bull; Clicking a different object updates the panel content (no re-animation)<br>
+  &bull; Panel width is resizable via drag handle<br>
+  &bull; Stored in UI store: <code>inspectorVisible</code>, <code>inspectorWidth</code>, <code>selectedObject</code>
+</div>

@@ -1,0 +1,130 @@
+import { create } from 'zustand'
+import type { SchemaTable, SchemaColumn, SchemaIndex } from '@shared/types'
+
+interface SchemaState {
+  tables: Map<string, SchemaTable[]>
+  columns: Map<string, SchemaColumn[]>
+  indexes: Map<string, SchemaIndex[]>
+  schemas: Map<string, string[]>
+  databases: Map<string, string[]>
+  expandedTables: Set<string>
+  loading: boolean
+
+  fetchDatabases: (connectionId: string) => Promise<string[]>
+  fetchSchemas: (connectionId: string) => Promise<string[]>
+  fetchTables: (connectionId: string, schema: string) => Promise<SchemaTable[]>
+  fetchColumns: (connectionId: string, table: string, schema: string) => Promise<SchemaColumn[]>
+  fetchIndexes: (connectionId: string, table: string, schema: string) => Promise<SchemaIndex[]>
+  toggleTable: (key: string) => void
+  clearCache: (connectionId?: string) => void
+}
+
+function cacheKey(connectionId: string, ...parts: string[]): string {
+  return [connectionId, ...parts].join(':')
+}
+
+export const useSchemaStore = create<SchemaState>((set, get) => ({
+  tables: new Map(),
+  columns: new Map(),
+  indexes: new Map(),
+  schemas: new Map(),
+  databases: new Map(),
+  expandedTables: new Set(),
+  loading: false,
+
+  fetchDatabases: async (connectionId) => {
+    const key = connectionId
+    const cached = get().databases.get(key)
+    if (cached) return cached
+    const result = await window.electronAPI.invoke('db:get-databases', connectionId)
+    set((s) => {
+      const next = new Map(s.databases)
+      next.set(key, result)
+      return { databases: next }
+    })
+    return result
+  },
+
+  fetchSchemas: async (connectionId) => {
+    const key = connectionId
+    const cached = get().schemas.get(key)
+    if (cached) return cached
+    set({ loading: true })
+    const result = await window.electronAPI.invoke('db:get-schemas', connectionId)
+    set((s) => {
+      const next = new Map(s.schemas)
+      next.set(key, result)
+      return { schemas: next, loading: false }
+    })
+    return result
+  },
+
+  fetchTables: async (connectionId, schema) => {
+    const key = cacheKey(connectionId, schema)
+    const cached = get().tables.get(key)
+    if (cached) return cached
+    set({ loading: true })
+    const result = await window.electronAPI.invoke('db:get-tables', connectionId, schema)
+    set((s) => {
+      const next = new Map(s.tables)
+      next.set(key, result)
+      return { tables: next, loading: false }
+    })
+    return result
+  },
+
+  fetchColumns: async (connectionId, table, schema) => {
+    const key = cacheKey(connectionId, schema, table)
+    const cached = get().columns.get(key)
+    if (cached) return cached
+    const result = await window.electronAPI.invoke('db:get-columns', connectionId, table, schema)
+    set((s) => {
+      const next = new Map(s.columns)
+      next.set(key, result)
+      return { columns: next }
+    })
+    return result
+  },
+
+  fetchIndexes: async (connectionId, table, schema) => {
+    const key = cacheKey(connectionId, schema, table)
+    const cached = get().indexes.get(key)
+    if (cached) return cached
+    const result = await window.electronAPI.invoke('db:get-indexes', connectionId, table, schema)
+    set((s) => {
+      const next = new Map(s.indexes)
+      next.set(key, result)
+      return { indexes: next }
+    })
+    return result
+  },
+
+  toggleTable: (key) => {
+    set((s) => {
+      const next = new Set(s.expandedTables)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return { expandedTables: next }
+    })
+  },
+
+  clearCache: (connectionId) => {
+    if (!connectionId) {
+      set({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map() })
+      return
+    }
+    set((s) => {
+      const filterMap = <T,>(m: Map<string, T>) => {
+        const next = new Map<string, T>()
+        for (const [k, v] of m) if (!k.startsWith(connectionId)) next.set(k, v)
+        return next
+      }
+      return {
+        tables: filterMap(s.tables),
+        columns: filterMap(s.columns),
+        indexes: filterMap(s.indexes),
+        schemas: filterMap(s.schemas),
+        databases: filterMap(s.databases)
+      }
+    })
+  }
+}))

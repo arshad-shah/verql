@@ -1,0 +1,163 @@
+<h2>Import, Export & Cross-Database Migration</h2>
+<p class="subtitle">First-class data movement — the feature that makes this a real professional tool</p>
+
+<div class="mockup" style="margin-bottom: 1.5rem;">
+  <div class="mockup-header">Export Wizard</div>
+  <div class="mockup-body" style="padding: 0; background: #1a1a2e;">
+    <!-- Steps -->
+    <div style="display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2a2a3e; background: #12121f; gap: 4px;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="background: #7c6ff7; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">✓</span>
+        <span style="color: #7c6ff7; font-size: 11px; font-weight: 600;">Source</span>
+      </div>
+      <span style="color: #2a2a3e; padding: 0 8px;">────</span>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="background: #7c6ff7; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">2</span>
+        <span style="color: #fff; font-size: 11px; font-weight: 600;">Format</span>
+      </div>
+      <span style="color: #2a2a3e; padding: 0 8px;">────</span>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="background: #2a2a3e; color: #666; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;">3</span>
+        <span style="color: #666; font-size: 11px;">Options</span>
+      </div>
+      <span style="color: #2a2a3e; padding: 0 8px;">────</span>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="background: #2a2a3e; color: #666; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;">4</span>
+        <span style="color: #666; font-size: 11px;">Export</span>
+      </div>
+    </div>
+    <!-- Format selection -->
+    <div style="padding: 16px;">
+      <div style="color: #ccc; font-size: 12px; margin-bottom: 12px;">Select export format for <strong style="color: #7c6ff7;">orders</strong> table (5,420 rows)</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+        <div style="background: rgba(124,111,247,0.1); border: 2px solid #7c6ff7; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">📄</div>
+          <div style="color: #fff; font-size: 11px; font-weight: 600;">SQL</div>
+          <div style="color: #888; font-size: 9px;">INSERT statements</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">📊</div>
+          <div style="color: #ccc; font-size: 11px; font-weight: 600;">CSV</div>
+          <div style="color: #888; font-size: 9px;">Comma separated</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">{ }</div>
+          <div style="color: #ccc; font-size: 11px; font-weight: 600;">JSON</div>
+          <div style="color: #888; font-size: 9px;">Array of objects</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">📗</div>
+          <div style="color: #ccc; font-size: 11px; font-weight: 600;">Excel</div>
+          <div style="color: #888; font-size: 9px;">.xlsx workbook</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">🗂</div>
+          <div style="color: #ccc; font-size: 11px; font-weight: 600;">Schema DDL</div>
+          <div style="color: #888; font-size: 9px;">CREATE TABLE</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">🔌</div>
+          <div style="color: #ccc; font-size: 11px; font-weight: 600;">Plugin</div>
+          <div style="color: #888; font-size: 9px;">Parquet, Avro...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cross-database migration -->
+<div class="mockup" style="margin-bottom: 1.5rem;">
+  <div class="mockup-header">Cross-Database Migration — PostgreSQL → MySQL</div>
+  <div class="mockup-body" style="padding: 16px; background: #1a1a2e; font-size: 11px;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <!-- Source -->
+      <div style="flex: 1; background: #12121f; border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="color: #61afef; font-size: 20px; margin-bottom: 4px;">🐘</div>
+        <div style="color: #fff; font-weight: 600;">PostgreSQL</div>
+        <div style="color: #888; font-size: 10px;">Production · 12 tables</div>
+      </div>
+      <!-- Arrow -->
+      <div style="color: #7c6ff7; font-size: 24px;">→</div>
+      <!-- Target -->
+      <div style="flex: 1; background: #12121f; border: 1px solid #2a2a3e; border-radius: 8px; padding: 12px; text-align: center;">
+        <div style="color: #e5c07b; font-size: 20px; margin-bottom: 4px;">🐬</div>
+        <div style="color: #fff; font-weight: 600;">MySQL</div>
+        <div style="color: #888; font-size: 10px;">Staging · new database</div>
+      </div>
+    </div>
+    <!-- Type mapping -->
+    <div style="background: #12121f; border: 1px solid #2a2a3e; border-radius: 8px; overflow: hidden;">
+      <div style="padding: 8px 12px; border-bottom: 1px solid #2a2a3e; color: #888; font-weight: 600; font-size: 10px;">Type Mapping (auto-detected, editable)</div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+        <tr style="border-bottom: 1px solid #1e1e30;">
+          <td style="padding: 6px 12px; color: #61afef;">serial</td>
+          <td style="padding: 6px 12px; color: #666;">→</td>
+          <td style="padding: 6px 12px; color: #e5c07b;">INT AUTO_INCREMENT</td>
+          <td style="padding: 6px 12px; color: #28c840; text-align: right;">✓ auto</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #1e1e30;">
+          <td style="padding: 6px 12px; color: #61afef;">timestamptz</td>
+          <td style="padding: 6px 12px; color: #666;">→</td>
+          <td style="padding: 6px 12px; color: #e5c07b;">DATETIME</td>
+          <td style="padding: 6px 12px; color: #28c840; text-align: right;">✓ auto</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #1e1e30;">
+          <td style="padding: 6px 12px; color: #61afef;">jsonb</td>
+          <td style="padding: 6px 12px; color: #666;">→</td>
+          <td style="padding: 6px 12px; color: #e5c07b;">JSON</td>
+          <td style="padding: 6px 12px; color: #ff5f57; text-align: right;">⚠ lossy</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 12px; color: #61afef;">text[]</td>
+          <td style="padding: 6px 12px; color: #666;">→</td>
+          <td style="padding: 6px 12px; color: #e5c07b;">JSON</td>
+          <td style="padding: 6px 12px; color: #ff5f57; text-align: right;">⚠ lossy</td>
+        </tr>
+      </table>
+    </div>
+    <!-- Progress -->
+    <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+      <span style="color: #888; font-size: 10px;">Preview migration SQL before running</span>
+      <span style="margin-left: auto; background: #7c6ff7; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600;">Generate SQL</span>
+      <span style="background: #28c840; color: #000; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600;">Run Migration</span>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+  <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem; background: rgba(255,255,255,0.02);">
+    <div style="color: #28c840; font-weight: 600; margin-bottom: 8px;">Export Features</div>
+    <ul style="color: rgba(255,255,255,0.6); font-size: 0.85em; margin: 0; padding-left: 16px; line-height: 1.8;">
+      <li>Table, query result, or entire schema</li>
+      <li>SQL, CSV, JSON, Excel (.xlsx), Schema DDL</li>
+      <li>Plugin-based format extensions</li>
+      <li>Paginated export for large tables</li>
+      <li>Custom column selection</li>
+      <li>WHERE clause filtering before export</li>
+    </ul>
+  </div>
+  <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem; background: rgba(255,255,255,0.02);">
+    <div style="color: #e5c07b; font-weight: 600; margin-bottom: 8px;">Import Features</div>
+    <ul style="color: rgba(255,255,255,0.6); font-size: 0.85em; margin: 0; padding-left: 16px; line-height: 1.8;">
+      <li>CSV with column mapping wizard</li>
+      <li>SQL file execution (multi-statement)</li>
+      <li>JSON array → table rows</li>
+      <li>Excel sheet selection</li>
+      <li>Conflict handling (skip, update, error)</li>
+      <li>Dry-run preview before commit</li>
+    </ul>
+  </div>
+  <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem; background: rgba(255,255,255,0.02); grid-column: span 2;">
+    <div style="color: #7c6ff7; font-weight: 600; margin-bottom: 8px;">Cross-Database Migration</div>
+    <ul style="color: rgba(255,255,255,0.6); font-size: 0.85em; margin: 0; padding-left: 16px; line-height: 1.8; columns: 2;">
+      <li>Auto type mapping between databases</li>
+      <li>Editable mappings for edge cases</li>
+      <li>Lossy conversion warnings (jsonb → JSON)</li>
+      <li>Schema + data migration in one flow</li>
+      <li>Preview generated SQL before execution</li>
+      <li>Progress tracking with rollback on failure</li>
+      <li>Index and constraint translation</li>
+      <li>Selective table migration</li>
+    </ul>
+  </div>
+</div>
