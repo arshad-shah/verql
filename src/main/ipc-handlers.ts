@@ -141,6 +141,14 @@ export function registerIpcHandlers(): void {
       await adapter.disconnect()
       activeAdapters.delete(profileId)
     }
+    // Run middleware disconnect (e.g. close SSH tunnels)
+    for (const { middleware, pluginName } of driverRegistry.getMiddlewares()) {
+      try {
+        await middleware.onDisconnect(profileId)
+      } catch {
+        // Ignore middleware cleanup errors
+      }
+    }
   })
 
   handle('db:query', async (profileId: string, sql: string, params?: unknown[]) => {

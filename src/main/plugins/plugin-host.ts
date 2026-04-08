@@ -111,7 +111,15 @@ export class PluginBootCoordinator {
   // ── Phase 1: Discover ──────────────────────────────────────────────────────
 
   discover(dirs: string[]): void {
+    // Preserve bundled plugins (path === '<bundled>'), clear discovered ones
+    const bundled = new Map<string, LoadedPlugin>()
+    for (const [name, plugin] of this.plugins) {
+      if (plugin.path === '<bundled>') bundled.set(name, plugin)
+    }
     this.plugins.clear()
+    for (const [name, plugin] of bundled) {
+      this.plugins.set(name, plugin)
+    }
 
     for (const dir of dirs) {
       if (!fs.existsSync(dir)) continue
