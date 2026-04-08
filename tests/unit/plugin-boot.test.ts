@@ -104,6 +104,32 @@ describe('PluginBootCoordinator', () => {
     expect(result.status.state).toBe('degraded')
   })
 
+  it('registers and activates a bundled plugin', async () => {
+    const fakeModule = {
+      activate: vi.fn((ctx: any) => {
+        ctx.drivers.register('testdb', {
+          createAdapter: () => ({}),
+          connectionFields: []
+        })
+      })
+    }
+    const manifest = {
+      name: 'bundled-test', version: '1.0.0', displayName: 'Bundled Test',
+      description: 'Test', main: 'index.js',
+      contributes: { drivers: [{ id: 'testdb', name: 'TestDB' }] }
+    }
+
+    coordinator.registerBundledPlugin(manifest, fakeModule)
+    const plugin = coordinator.getPlugin('bundled-test')
+    expect(plugin).toBeDefined()
+    expect(plugin!.status.state).toBe('validated')
+
+    const result = await coordinator.activatePlugin(plugin!)
+    expect(result.status.state).toBe('active')
+    expect(fakeModule.activate).toHaveBeenCalledOnce()
+    expect(driverRegistry.has('testdb')).toBe(true)
+  })
+
   it('deactivates a plugin and disposes subscriptions', async () => {
     const deactivateFn = vi.fn()
     const fakeModule = { activate: vi.fn(), deactivate: deactivateFn }

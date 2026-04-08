@@ -445,6 +445,20 @@ export class PluginBootCoordinator {
     }
   }
 
+  // ── Bundled Plugin Registration ────────────────────────────────────────────
+
+  registerBundledPlugin(
+    manifest: PluginManifest,
+    module: { activate: (ctx: any) => void | Promise<void>; deactivate?: () => void | Promise<void> }
+  ): void {
+    this.plugins.set(manifest.name, {
+      manifest,
+      path: '<bundled>',
+      status: { state: 'validated' },
+      module
+    })
+  }
+
   // ── Install / Uninstall ────────────────────────────────────────────────────
 
   installFromPath(sourcePath: string): { success: boolean; name?: string; error?: string } {
