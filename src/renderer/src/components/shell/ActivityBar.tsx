@@ -1,10 +1,9 @@
-import { Database, PenSquare, GitFork, BarChart3, Puzzle, Settings } from 'lucide-react'
+import { Database, PenSquare, BarChart3, Puzzle, Settings } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
   { id: 'explorer', icon: Database, label: 'Explorer' },
   { id: 'query', icon: PenSquare, label: 'Saved Queries' },
-  { id: 'schema', icon: GitFork, label: 'Schema' },
   { id: 'charts', icon: BarChart3, label: 'Charts' },
   { id: 'extensions', icon: Puzzle, label: 'Extensions' }
 ]
