@@ -46,7 +46,7 @@ export function Sidebar() {
   }, [activeConnectionId, conn?.type, conn?.database])
 
   return (
-    <div className="w-60 bg-bg-secondary border-r border-border flex flex-col shrink-0">
+    <div className="w-full h-full bg-bg-secondary border-r border-border flex flex-col">
       <div className="px-3 py-2 text-xs text-text-muted uppercase tracking-wider border-b border-border flex items-center justify-between">
         <span>{titles[activePanel] ?? 'Explorer'}</span>
         {isConnected && activePanel === 'explorer' && (

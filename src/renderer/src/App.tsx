@@ -8,13 +8,17 @@ import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
+import { ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
+import { useUiStore } from '@/stores/ui'
 import type { QueryTab, ErDiagramTab } from '@shared/types'
 
 export function App() {
   const { tabs, activeTabId } = useTabsStore()
+  const { sidebarVisible, sidebarWidth, setSidebarWidth } = useUiStore()
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
 
   // Cmd+Shift+P to open command palette
   useEffect(() => {
@@ -28,12 +32,36 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  const handleSidebarResize = (delta: number) => {
+    setSidebarWidth(sidebarWidth + delta)
+  }
+
+  const handleSidebarResizeDoubleClick = () => {
+    if (sidebarWidth > 180) {
+      setPrevSidebarWidth(sidebarWidth)
+      setSidebarWidth(180)
+    } else {
+      setSidebarWidth(prevSidebarWidth > 180 ? prevSidebarWidth : 240)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen bg-bg-primary text-text-primary">
       <TitleBar />
       <div className="flex flex-1 overflow-hidden">
         <ActivityBar />
-        <Sidebar />
+        {sidebarVisible && (
+          <>
+            <div style={{ width: sidebarWidth }} className="flex-shrink-0 flex flex-col overflow-hidden">
+              <Sidebar />
+            </div>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={handleSidebarResize}
+              onDoubleClick={handleSidebarResizeDoubleClick}
+            />
+          </>
+        )}
         <div className="flex-1 flex flex-col overflow-hidden">
           <TabBar />
           <div className="flex-1 overflow-hidden">
