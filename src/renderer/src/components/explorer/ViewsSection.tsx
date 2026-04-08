@@ -13,7 +13,7 @@ interface ViewsSectionProps {
 }
 
 export function ViewsSection({ connectionId, activeSchema }: ViewsSectionProps) {
-  const { tables, columns, expandedTables, filterText, fetchTables, fetchColumns, toggleTable } = useSchemaStore()
+  const { tables, columns, expandedTables, filterText, cacheVersion, fetchTables, fetchColumns, toggleTable } = useSchemaStore()
   const { addQueryTab, updateTabSql } = useTabsStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -26,7 +26,7 @@ export function ViewsSection({ connectionId, activeSchema }: ViewsSectionProps) 
 
   useEffect(() => {
     fetchTables(connectionId, activeSchema)
-  }, [connectionId, activeSchema, fetchTables])
+  }, [connectionId, activeSchema, cacheVersion, fetchTables])
 
   const handleExpandView = async (viewName: string) => {
     const key = `${connectionId}:${activeSchema}:${viewName}`

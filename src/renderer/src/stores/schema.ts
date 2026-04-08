@@ -11,6 +11,8 @@ interface SchemaState {
   filterText: string
   rowCounts: Map<string, number>
   loading: boolean
+  /** Incremented on clearCache — lets components know to re-fetch */
+  cacheVersion: number
 
   fetchDatabases: (connectionId: string) => Promise<string[]>
   fetchSchemas: (connectionId: string) => Promise<string[]>
@@ -37,6 +39,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
   filterText: '',
   rowCounts: new Map(),
   loading: false,
+  cacheVersion: 0,
 
   fetchDatabases: async (connectionId) => {
     const key = connectionId
@@ -128,7 +131,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
 
   clearCache: (connectionId) => {
     if (!connectionId) {
-      set({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map(), rowCounts: new Map(), filterText: '' })
+      set((s) => ({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map(), rowCounts: new Map(), filterText: '', cacheVersion: s.cacheVersion + 1 }))
       return
     }
     set((s) => {
@@ -143,7 +146,8 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
         indexes: filterMap(s.indexes),
         schemas: filterMap(s.schemas),
         databases: filterMap(s.databases),
-        rowCounts: filterMap(s.rowCounts)
+        rowCounts: filterMap(s.rowCounts),
+        cacheVersion: s.cacheVersion + 1
       }
     })
   }

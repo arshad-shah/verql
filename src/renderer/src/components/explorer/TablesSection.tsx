@@ -14,7 +14,7 @@ interface TablesSectionProps {
 }
 
 export function TablesSection({ connectionId, activeSchema, onExportTable }: TablesSectionProps) {
-  const { tables, columns, expandedTables, rowCounts, filterText, fetchTables, fetchColumns, fetchRowCount, toggleTable } = useSchemaStore()
+  const { tables, columns, expandedTables, rowCounts, filterText, cacheVersion, fetchTables, fetchColumns, fetchRowCount, toggleTable } = useSchemaStore()
   const { addQueryTab, updateTabSql } = useTabsStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -27,7 +27,7 @@ export function TablesSection({ connectionId, activeSchema, onExportTable }: Tab
 
   useEffect(() => {
     fetchTables(connectionId, activeSchema)
-  }, [connectionId, activeSchema, fetchTables])
+  }, [connectionId, activeSchema, cacheVersion, fetchTables])
 
   // Fetch row counts for visible tables
   useEffect(() => {
