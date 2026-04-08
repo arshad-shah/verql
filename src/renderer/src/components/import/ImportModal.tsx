@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Upload } from 'lucide-react'
-import { Modal, Button, Input, Text, Flex, Spinner } from '@/primitives'
+import { Modal, Button, Input, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 
 interface Props {
   connectionId: string
@@ -56,8 +56,8 @@ export function ImportModal({ connectionId, onClose }: Props) {
         <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
       </Flex>
 
-      <div className="p-4 space-y-4">
-        <div>
+      <Stack gap="md" className="p-4">
+        <Box>
           <Text size="xs" color="muted" as="p" className="mb-2">Import Type</Text>
           <Flex direction="row" gap="sm">
             {(['sql', 'csv'] as ImportType[]).map(t => (
@@ -72,14 +72,14 @@ export function ImportModal({ connectionId, onClose }: Props) {
               </Button>
             ))}
           </Flex>
-        </div>
+        </Box>
 
         {importType === 'sql' && (
           <Text size="xs" color="secondary" as="p">Select a .sql file to execute all statements against the connected database.</Text>
         )}
 
         {importType === 'csv' && (
-          <div>
+          <Box>
             <Text size="xs" color="muted" as="p" className="mb-1">Target Table</Text>
             <Input
               value={tableName}
@@ -88,13 +88,13 @@ export function ImportModal({ connectionId, onClose }: Props) {
               size="sm"
             />
             <Text size="xs" color="muted" as="p" className="mt-1">CSV column headers must match table column names.</Text>
-          </div>
+          </Box>
         )}
 
         {result && (
           <Text size="xs" color={result.startsWith('Error') ? 'error' : 'success'} as="p">{result}</Text>
         )}
-      </div>
+      </Stack>
 
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
         <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>

@@ -4,6 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import type { ChartType } from './chart-detect'
+import { Flex, Text } from '@/primitives'
 
 const COLORS = ['#7c6ff7', '#28c840', '#e5c07b', '#61afef', '#ff5f57', '#c678dd', '#56b6c2', '#d19a66']
 
@@ -16,7 +17,11 @@ interface Props {
 
 export function ChartView({ type, data, xKey, yKey }: Props) {
   if (type === 'none' || data.length === 0) {
-    return <div className="flex items-center justify-center h-full text-text-muted text-sm">No chart available</div>
+    return (
+      <Flex align="center" justify="center" className="h-full">
+        <Text size="sm" color="muted">No chart available</Text>
+      </Flex>
+    )
   }
 
   return (

@@ -15,6 +15,7 @@ import { buildErElements, layoutErDiagram, type TableNodeData } from './er-layou
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
+import { Flex, Text, Box, Button, Spinner } from '@/primitives'
 
 const nodeTypes = { tableNode: TableNode }
 
@@ -66,22 +67,22 @@ export function ERDiagram({ connectionId, schema }: Props) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-bg-tertiary h-full">
-        <Loader2 size={24} className="animate-spin text-accent" />
-      </div>
+      <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
+        <Spinner size="md" label="Loading diagram..." />
+      </Flex>
     )
   }
 
   if (nodes.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-bg-tertiary text-text-muted text-sm h-full">
-        No tables found in schema "{schema}"
-      </div>
+      <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
+        <Text size="sm" color="muted">No tables found in schema "{schema}"</Text>
+      </Flex>
     )
   }
 
   return (
-    <div className="h-full">
+    <Box className="h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -104,21 +105,25 @@ export function ERDiagram({ connectionId, schema }: Props) {
           maskColor="rgba(0,0,0,0.7)"
           className="!bg-bg-secondary !border-border"
         />
-        <div className="absolute top-3 right-3 flex gap-1 z-10">
-          <button
+        <Flex gap="xs" className="absolute top-3 right-3 z-10">
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => handleRelayout('LR')}
-            className={`px-2 py-1 text-xs rounded border transition-colors ${direction === 'LR' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
+            className={`transition-colors ${direction === 'LR' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
             Horizontal
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => handleRelayout('TB')}
-            className={`px-2 py-1 text-xs rounded border transition-colors ${direction === 'TB' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
+            className={`transition-colors ${direction === 'TB' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
             Vertical
-          </button>
-        </div>
+          </Button>
+        </Flex>
       </ReactFlow>
-    </div>
+    </Box>
   )
 }

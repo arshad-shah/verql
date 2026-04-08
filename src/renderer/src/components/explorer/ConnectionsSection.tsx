@@ -3,16 +3,18 @@ import { Plus, PlugZap, Unplug, Pencil, Trash2, Copy } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useToastStore } from '@/stores/toast'
 import { ConnectionForm } from '@/components/connections/ConnectionForm'
+import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { AccordionSection } from './AccordionSection'
 import { OverflowMenu, type MenuItem } from './OverflowMenu'
 import type { ConnectionProfile } from '@shared/types'
-import { IconButton, Text } from '@/primitives'
+import { IconButton, Text, Box, Flex } from '@/primitives'
 
 export function ConnectionsSection() {
   const { connections, connectedIds, activeConnectionId, loadConnections, saveConnection, deleteConnection, connect, disconnect, setActiveConnection } = useConnectionsStore()
   const addToast = useToastStore((s) => s.addToast)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<ConnectionProfile | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<ConnectionProfile | null>(null)
 
   useEffect(() => { loadConnections() }, [loadConnections])
 
@@ -60,7 +62,7 @@ export function ConnectionsSection() {
       label: 'Delete',
       icon: <Trash2 size={12} />,
       variant: 'danger',
-      onClick: () => { if (confirm(`Delete "${conn.name}"?`)) deleteConnection(conn.id) }
+      onClick: () => setDeleteTarget(conn)
     })
     return items
   }
@@ -82,7 +84,7 @@ export function ConnectionsSection() {
           </IconButton>
         }
       >
-        <div className="px-1">
+        <Box className="px-1">
           {connections.length === 0 && (
             <Text size="xs" color="muted" as="p" className="px-2 py-4 text-center">No connections yet</Text>
           )}
@@ -90,14 +92,16 @@ export function ConnectionsSection() {
             const isConnected = connectedIds.has(conn.id)
             const isActive = activeConnectionId === conn.id
             return (
-              <div
+              <Flex
                 key={conn.id}
+                align="center"
+                gap="sm"
                 onClick={() => handleConnect(conn.id)}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                className={`px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
                   isActive ? 'bg-accent/10 text-accent' : 'hover:bg-white/5 text-text-secondary'
                 }`}
               >
-                <div
+                <Box
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: isConnected ? (conn.color ?? '#7c6ff7') : '#444' }}
                 />
@@ -124,14 +128,26 @@ export function ConnectionsSection() {
                   <Pencil size={12} />
                 </IconButton>
                 <OverflowMenu items={getOverflowItems(conn)} />
-              </div>
+              </Flex>
             )
           })}
-        </div>
+        </Box>
       </AccordionSection>
       {showForm && (
         <ConnectionForm initial={editing} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(undefined) }} />
       )}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="This connection profile will be permanently removed."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteTarget) deleteConnection(deleteTarget.id)
+          setDeleteTarget(null)
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   )
 }

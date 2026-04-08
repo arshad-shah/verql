@@ -4,7 +4,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { useToastStore } from '@/stores/toast'
 import { useTabsStore } from '@/stores/tabs'
-import { Button, Text, Divider, ScrollArea } from '@/primitives'
+import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
 
 interface Props {
   tabId: string
@@ -89,7 +89,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
   }
 
   return (
-    <div className="relative flex items-center gap-1">
+    <Flex align="center" gap="xs" className="relative">
       {/* Connection selector */}
       <Button
         variant="outline"
@@ -99,7 +99,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
       >
         {activeConn ? (
           <>
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeConn.color ?? '#7c6ff7' }} />
+            <Box className="w-2 h-2 rounded-full" style={{ backgroundColor: activeConn.color ?? '#7c6ff7' }} />
             <Text size="xs" color="primary" truncate className="max-w-28">{activeConn.name}</Text>
           </>
         ) : (
@@ -130,7 +130,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
 
       {/* Backdrop for any dropdown */}
       {(showConnDropdown || showSchemaDropdown) && (
-        <div className="fixed inset-0 z-40" onClick={closeAllDropdowns} />
+        <Box className="fixed inset-0 z-40" onClick={closeAllDropdowns} />
       )}
 
       {/* Connection dropdown */}
@@ -141,17 +141,19 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
             <Text size="xs" color="muted" as="p" className="px-3 py-2">No active connections</Text>
           )}
           {connectedList.map(conn => (
-            <button
+            <Button
               key={conn.id}
+              variant="ghost"
+              size="xs"
               onClick={() => handleSelectConnection(conn.id)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors ${
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
                 connectionId === conn.id ? 'text-accent' : 'text-text-secondary'
               }`}
             >
-              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: conn.color ?? '#7c6ff7' }} />
-              <span className="truncate">{conn.name}</span>
+              <Box className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: conn.color ?? '#7c6ff7' }} />
+              <Text size="xs" truncate>{conn.name}</Text>
               <Text size="xs" color="muted" className="ml-auto">{conn.database}</Text>
-            </button>
+            </Button>
           ))}
 
           {/* Databases on current server */}
@@ -162,18 +164,20 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
               {databaseList.map(db => {
                 const isCurrent = db === activeDatabase
                 return (
-                  <button
+                  <Button
                     key={db}
+                    variant="ghost"
+                    size="xs"
                     onClick={() => handleSwitchDatabase(db)}
                     disabled={isCurrent}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors rounded-none border-0 h-auto ${
                       isCurrent ? 'text-accent' : 'text-text-muted hover:bg-white/5 hover:text-text-secondary'
                     }`}
                   >
                     <Database size={11} className="shrink-0" />
-                    <span className="truncate">{db}</span>
+                    <Text size="xs" truncate>{db}</Text>
                     {isCurrent && <Text size="xs" color="accent" className="ml-auto text-[10px]">active</Text>}
-                  </button>
+                  </Button>
                 )
               })}
             </>
@@ -185,19 +189,21 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
               <Divider />
               <Text size="xs" color="muted" as="p" className="px-3 py-0.5 text-[10px] uppercase tracking-wider">Disconnected</Text>
               {connections.filter(c => !connectedIds.has(c.id)).map(conn => (
-                <button
+                <Button
                   key={conn.id}
+                  variant="ghost"
+                  size="xs"
                   onClick={async () => {
                     const result = await connect(conn.id)
                     if (result.success) handleSelectConnection(conn.id)
                     setShowConnDropdown(false)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-white/5 transition-colors rounded-none border-0 h-auto"
                 >
-                  <div className="w-2 h-2 rounded-full shrink-0 bg-text-muted" />
-                  <span className="truncate">{conn.name}</span>
+                  <Box className="w-2 h-2 rounded-full shrink-0 bg-text-muted" />
+                  <Text size="xs" truncate>{conn.name}</Text>
                   <Text size="xs" color="muted" className="ml-auto text-[10px]">click to connect</Text>
-                </button>
+                </Button>
               ))}
             </>
           )}
@@ -211,19 +217,21 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
             <Text size="xs" color="muted" as="p" className="px-3 py-2">No schemas found</Text>
           )}
           {schemaList.map(s => (
-            <button
+            <Button
               key={s}
+              variant="ghost"
+              size="xs"
               onClick={() => handleSelectSchema(s)}
-              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors ${
+              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
                 schema === s ? 'text-accent' : 'text-text-secondary'
               }`}
             >
               <Layers size={11} className="shrink-0" />
-              <span className="truncate">{s}</span>
-            </button>
+              <Text size="xs" truncate>{s}</Text>
+            </Button>
           ))}
         </ScrollArea>
       )}
-    </div>
+    </Flex>
   )
 }

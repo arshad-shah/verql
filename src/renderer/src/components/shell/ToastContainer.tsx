@@ -1,6 +1,6 @@
 import { X, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
-import { Stack, Flex, Text, IconButton, cn } from '@/primitives'
+import { Stack, Flex, Text, IconButton, Box, cn } from '@/primitives'
 
 const icons = {
   error: AlertCircle,
@@ -41,14 +41,14 @@ export function ToastContainer() {
             role="alert"
           >
             <Icon size={16} className={cn('shrink-0 mt-0.5', iconStyles[toast.type])} />
-            <div className="flex-1 min-w-0">
+            <Box className="flex-1 min-w-0">
               <Text size="sm" weight="medium" as="p">{toast.title}</Text>
               {toast.message && (
                 <Text size="xs" color="secondary" as="p" className="mt-0.5 whitespace-pre-wrap break-words">
                   {toast.message}
                 </Text>
               )}
-            </div>
+            </Box>
             <IconButton
               label="Dismiss"
               size="xs"

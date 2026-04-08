@@ -8,19 +8,23 @@ import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
-import { ResizeHandle } from '@/primitives'
+import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
+import { Flex, Box, Heading, Text, ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab, ErDiagramTab } from '@shared/types'
 
 export function App() {
-  const { tabs, activeTabId } = useTabsStore()
+  const { tabs, activeTabId, addQueryTab } = useTabsStore()
   const { sidebarVisible, sidebarWidth, setSidebarWidth } = useUiStore()
+  const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [showNewConnection, setShowNewConnection] = useState(false)
   const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
 
-  // Cmd+Shift+P to open command palette
+  // Keyboard shortcuts + native menu events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
@@ -29,8 +33,19 @@ export function App() {
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+
+    // Listen for native menu commands
+    const cleanups = [
+      window.electronAPI.on('menu:new-query-tab', () => addQueryTab(activeConnectionId)),
+      window.electronAPI.on('menu:new-connection', () => setShowNewConnection(true)),
+      window.electronAPI.on('menu:toggle-command-palette', () => setPaletteOpen(prev => !prev)),
+    ]
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      cleanups.forEach(cleanup => cleanup())
+    }
+  }, [activeConnectionId, addQueryTab])
 
   const handleSidebarResize = (delta: number) => {
     const current = useUiStore.getState().sidebarWidth
@@ -48,15 +63,15 @@ export function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-bg-primary text-text-primary">
+    <Flex direction="column" className="h-screen bg-bg-primary text-text-primary">
       <TitleBar />
-      <div className="flex flex-1 overflow-hidden">
+      <Flex className="flex-1 overflow-hidden">
         <ActivityBar />
         {sidebarVisible && (
           <>
-            <div style={{ width: sidebarWidth }} className="shrink-0 flex flex-col overflow-hidden">
+            <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
               <Sidebar />
-            </div>
+            </Flex>
             <ResizeHandle
               direction="horizontal"
               onResize={handleSidebarResize}
@@ -64,9 +79,9 @@ export function App() {
             />
           </>
         )}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <Flex direction="column" className="flex-1 overflow-hidden">
           <TabBar />
-          <div className="flex-1 overflow-hidden">
+          <Box className="flex-1 overflow-hidden">
             {activeTab?.type === 'query' && (
               <QueryPanel tab={activeTab as QueryTab} />
             )}
@@ -77,20 +92,38 @@ export function App() {
               />
             )}
             {!activeTab && (
-              <div className="flex-1 flex items-center justify-center bg-bg-tertiary h-full">
-                <div className="text-center">
-                  <h1 className="text-2xl font-semibold mb-2">dbstudio</h1>
-                  <p className="text-text-secondary">Connect to a database to get started</p>
-                  <p className="text-text-muted text-sm mt-1">Cmd+Shift+P to open command palette</p>
-                </div>
-              </div>
+              <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
+                <Box className="text-center">
+                  <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
+                  <Text color="secondary" as="p">Connect to a database to get started</Text>
+                  <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
+                </Box>
+              </Flex>
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Flex>
+      </Flex>
       <StatusBar />
       <ToastContainer />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-    </div>
+      {showNewConnection && (
+        <ConnectionFormFromMenu onClose={() => setShowNewConnection(false)} />
+      )}
+    </Flex>
+  )
+}
+
+/** Thin wrapper so ConnectionForm can be triggered from native menu */
+import { ConnectionForm } from '@/components/connections/ConnectionForm'
+function ConnectionFormFromMenu({ onClose }: { onClose: () => void }) {
+  const saveConnection = useConnectionsStore(s => s.saveConnection)
+  return (
+    <ConnectionForm
+      onSave={async (profile) => {
+        await saveConnection(profile)
+        onClose()
+      }}
+      onClose={onClose}
+    />
   )
 }

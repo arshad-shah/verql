@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Search, Play, Trash2, Clock } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
-import { Stack, ScrollArea, Text, EmptyState, IconButton } from '@/primitives'
+import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input } from '@/primitives'
 
 interface SavedQuery {
   id: string
@@ -41,17 +41,18 @@ export function SavedQueriesPanel() {
   return (
     <Stack className="h-full">
       {/* Search */}
-      <div className="px-2 py-1.5">
-        <div className="flex items-center gap-1.5 bg-bg-tertiary border border-border rounded-md px-2 py-1">
+      <Box className="px-2 py-1.5">
+        <Flex align="center" gap="xs" className="bg-bg-tertiary border border-border rounded-md px-2 py-1">
           <Search size={12} className="text-text-muted shrink-0" />
-          <input
+          <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search queries..."
-            className="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-muted focus:outline-none"
+            size="sm"
+            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       {/* Query list */}
       <ScrollArea direction="vertical" className="flex-1 px-1">
@@ -65,14 +66,14 @@ export function SavedQueriesPanel() {
         )}
 
         {filtered.map(query => (
-          <div
+          <Box
             key={query.id}
             className="group px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer transition-colors"
             onClick={() => handleOpenQuery(query)}
           >
-            <div className="flex items-center justify-between">
+            <Flex align="center" justify="between">
               <Text size="xs" color="primary" truncate className="flex-1">{query.name}</Text>
-              <div className="hidden group-hover:flex items-center gap-0.5">
+              <Flex className="hidden group-hover:flex items-center gap-0.5">
                 <IconButton
                   label="Open in new tab"
                   size="xs"
@@ -91,10 +92,10 @@ export function SavedQueriesPanel() {
                 >
                   <Trash2 size={10} />
                 </IconButton>
-              </div>
-            </div>
+              </Flex>
+            </Flex>
             <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">{query.sql}</Text>
-          </div>
+          </Box>
         ))}
       </ScrollArea>
     </Stack>

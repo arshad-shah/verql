@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
-import { Modal, Button, Input, Text, Flex, Stack, Checkbox, Label, ScrollArea } from '@/primitives'
+import { Modal, Button, Input, Text, Flex, Stack, Checkbox, Label, ScrollArea, Box } from '@/primitives'
 
 interface Props {
   initial?: ConnectionProfile
@@ -120,7 +120,7 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
     }
 
     return (
-      <div key={field.key}>
+      <Box key={field.key}>
         <Label className="block mb-1"><Text size="xs" color="muted">{field.label}</Text></Label>
         <Input
           type={field.type === 'password' ? 'password' : field.type === 'number' ? 'number' : 'text'}
@@ -129,7 +129,7 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
           onChange={(e) => update({ [field.key]: field.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value })}
           size="sm"
         />
-      </div>
+      </Box>
     )
   }
 
@@ -144,97 +144,98 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
         <ScrollArea direction="vertical" className="max-h-[70vh]">
           <Stack gap="md" className="p-4">
             {/* Database type selector */}
-            <div ref={dropdownRef} className="relative">
+            <Box ref={dropdownRef} className="relative">
               <Label className="block mb-1"><Text size="xs" color="muted">Database Type</Text></Label>
-              <button type="button" onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                className="w-full flex items-center justify-between bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary hover:border-accent/50 transition-colors">
-                <span>{selectedType?.label ?? profile.type}</span>
+              <Button type="button" variant="ghost" onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                className="w-full flex items-center justify-between bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary hover:border-accent/50 transition-colors h-auto">
+                <Text size="sm">{selectedType?.label ?? String(profile.type)}</Text>
                 <ChevronDown size={14} className={`text-text-muted transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+              </Button>
               {typeDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-bg-secondary border border-border rounded-lg shadow-xl overflow-hidden">
+                <Box className="absolute z-10 mt-1 w-full bg-bg-secondary border border-border rounded-lg shadow-xl overflow-hidden">
                   {allTypes.length > 5 && (
-                    <div className="p-2 border-b border-border">
-                      <div className="flex items-center gap-2 bg-bg-tertiary rounded-md px-2 py-1.5">
+                    <Box className="p-2 border-b border-border">
+                      <Flex align="center" gap="sm" className="bg-bg-tertiary rounded-md px-2 py-1.5">
                         <Search size={12} className="text-text-muted shrink-0" />
-                        <input
+                        <Input
                           autoFocus
                           value={typeSearch}
                           onChange={(e) => setTypeSearch(e.target.value)}
                           placeholder="Search databases..."
-                          className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+                          size="sm"
+                          className="w-full bg-transparent border-0 focus:ring-0 px-0"
                         />
-                      </div>
-                    </div>
+                      </Flex>
+                    </Box>
                   )}
                   <ScrollArea direction="vertical" className="max-h-48 py-1">
                     {filteredTypes.length === 0 && (
                       <Text size="xs" color="muted" as="p" className="px-3 py-2">No matches</Text>
                     )}
                     {filteredTypes.map(({ value, label }) => (
-                      <button key={value} type="button"
+                      <Button key={value} type="button" variant="ghost"
                         onClick={() => { handleTypeChange(value); setTypeDropdownOpen(false); setTypeSearch('') }}
-                        className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+                        className={`w-full text-left px-3 py-1.5 text-sm transition-colors rounded-none border-0 h-auto ${
                           profile.type === value
                             ? 'bg-accent/10 text-accent'
                             : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
                         }`}>
                         {label}
-                      </button>
+                      </Button>
                     ))}
                   </ScrollArea>
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <Label className="block mb-1"><Text size="xs" color="muted">Connection Name</Text></Label>
               <Input required value={String(profile.name ?? '')} onChange={(e) => update({ name: e.target.value })} placeholder="My Database" size="sm" />
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <Label className="block mb-1"><Text size="xs" color="muted">Color</Text></Label>
               <Flex direction="row" gap="sm">
                 {COLORS.map(c => (
-                  <button key={c} type="button" onClick={() => update({ color: c })}
-                    className={`w-6 h-6 rounded-full border-2 transition-transform ${profile.color === c ? 'border-white scale-110' : 'border-transparent'}`}
+                  <Button key={c} type="button" variant="ghost" onClick={() => update({ color: c })}
+                    className={`w-6 h-6 rounded-full border-2 transition-transform p-0 min-w-0 ${profile.color === c ? 'border-white scale-110' : 'border-transparent'}`}
                     style={{ backgroundColor: c }} />
                 ))}
               </Flex>
-            </div>
+            </Box>
 
             {isBuiltin ? (
               <>
                 {isSqlite ? (
-                  <div>
+                  <Box>
                     <Label className="block mb-1"><Text size="xs" color="muted">Database File</Text></Label>
                     <Input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="/path/to/database.sqlite" size="sm" />
-                  </div>
+                  </Box>
                 ) : (
                   <>
                     <Flex direction="row" gap="md">
-                      <div className="flex-1">
+                      <Box className="flex-1">
                         <Label className="block mb-1"><Text size="xs" color="muted">Host</Text></Label>
                         <Input required value={String(profile.host ?? '')} onChange={(e) => update({ host: e.target.value })} placeholder="localhost" size="sm" />
-                      </div>
-                      <div className="w-24">
+                      </Box>
+                      <Box className="w-24">
                         <Label className="block mb-1"><Text size="xs" color="muted">Port</Text></Label>
                         <Input required type="number" value={String(profile.port ?? '')} onChange={(e) => update({ port: parseInt(e.target.value) || 0 })} size="sm" />
-                      </div>
+                      </Box>
                     </Flex>
-                    <div>
+                    <Box>
                       <Label className="block mb-1"><Text size="xs" color="muted">Database</Text></Label>
                       <Input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="mydb" size="sm" />
-                    </div>
+                    </Box>
                     <Flex direction="row" gap="md">
-                      <div className="flex-1">
+                      <Box className="flex-1">
                         <Label className="block mb-1"><Text size="xs" color="muted">Username</Text></Label>
                         <Input value={String(profile.username ?? '')} onChange={(e) => update({ username: e.target.value })} placeholder="postgres" size="sm" />
-                      </div>
-                      <div className="flex-1">
+                      </Box>
+                      <Box className="flex-1">
                         <Label className="block mb-1"><Text size="xs" color="muted">Password</Text></Label>
                         <Input type="password" value={String(profile.password ?? '')} onChange={(e) => update({ password: e.target.value })} size="sm" />
-                      </div>
+                      </Box>
                     </Flex>
                     <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => update({ ssl: !profile.ssl })}>
                       <Checkbox checked={!!profile.ssl} onChange={(e) => update({ ssl: e.target.checked })} />
@@ -250,18 +251,18 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
             ) : null}
 
             {sshFields.length > 0 && !isSqlite && (
-              <div className="border border-border rounded-lg">
-                <button type="button" onClick={() => setSshExpanded(!sshExpanded)}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary">
+              <Box className="border border-border rounded-lg">
+                <Button type="button" variant="ghost" onClick={() => setSshExpanded(!sshExpanded)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary rounded-none h-auto border-0">
                   {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   SSH Tunnel
-                </button>
+                </Button>
                 {sshExpanded && (
                   <Stack gap="md" className="px-3 pb-3">
                     {sshFields.map(renderField)}
                   </Stack>
                 )}
-              </div>
+              </Box>
             )}
 
             <ConnectionTestButton profile={profile as ConnectionProfile} />

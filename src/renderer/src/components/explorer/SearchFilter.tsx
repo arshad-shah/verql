@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
-import { IconButton } from '@/primitives'
+import { IconButton, Input, Flex, Box } from '@/primitives'
 
 export function SearchFilter() {
   const filterText = useSchemaStore((s) => s.filterText)
@@ -32,17 +32,18 @@ export function SearchFilter() {
   }
 
   return (
-    <div className="px-2 py-1.5 border-b border-border">
-      <div className="flex items-center gap-1.5 bg-bg-tertiary border border-border rounded-md px-2 py-1">
+    <Box className="px-2 py-1.5 border-b border-border">
+      <Flex align="center" gap="xs" className="bg-bg-tertiary border border-border rounded-md px-2 py-1">
         <Search size={12} className="text-text-muted shrink-0" />
-        <input
+        <Input
           ref={inputRef}
           type="text"
           placeholder="Filter tables, views..."
           defaultValue={filterText}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-xs text-text-primary placeholder-text-muted outline-none"
+          size="sm"
+          className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
         />
         {filterText && (
           <IconButton
@@ -55,7 +56,7 @@ export function SearchFilter() {
             <X size={12} />
           </IconButton>
         )}
-      </div>
-    </div>
+      </Flex>
+    </Box>
   )
 }

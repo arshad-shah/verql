@@ -1,6 +1,6 @@
 import { ChevronRight, ChevronDown, Table2, Eye, Key, Link, Hash } from 'lucide-react'
 import type { SchemaColumn } from '@shared/types'
-import { Text } from '@/primitives'
+import { Text, Box, Flex } from '@/primitives'
 
 interface Props {
   label: string
@@ -19,24 +19,26 @@ export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onC
   const paddingLeft = 8 + depth * 14
 
   return (
-    <div>
-      <div
+    <Box>
+      <Flex
+        align="center"
+        gap="xs"
         onClick={() => { onToggle?.(); onClick?.() }}
-        className="group flex items-center gap-1.5 py-0.5 px-1 cursor-pointer text-xs hover:bg-white/5 rounded transition-colors"
+        className="group py-0.5 px-1 cursor-pointer text-xs hover:bg-white/5 rounded transition-colors"
         style={{ paddingLeft }}
       >
         {hasChildren ? (
           expanded ? <ChevronDown size={12} className="text-text-muted shrink-0" /> : <ChevronRight size={12} className="text-text-muted shrink-0" />
         ) : (
-          <span className="w-3 shrink-0" />
+          <Box as="span" className="w-3 shrink-0" />
         )}
-        {icon && <span className="shrink-0">{icon}</span>}
+        {icon && <Box as="span" className="shrink-0">{icon}</Box>}
         <Text size="xs" color="secondary" truncate className="flex-1">{label}</Text>
         {meta && <Text size="xs" color="muted" className="text-[9px] shrink-0">{meta}</Text>}
-        {actions && <span className="flex items-center gap-0.5 shrink-0">{actions}</span>}
-      </div>
-      {expanded && children && <div>{children}</div>}
-    </div>
+        {actions && <Flex as="span" align="center" gap="xs" className="shrink-0">{actions}</Flex>}
+      </Flex>
+      {expanded && children && <Box>{children}</Box>}
+    </Box>
   )
 }
 

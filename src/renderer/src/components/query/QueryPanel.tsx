@@ -6,7 +6,7 @@ import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab } from '@shared/types'
-import { Flex, Divider, Text } from '@/primitives'
+import { Flex, Divider, Text, Box, Alert } from '@/primitives'
 
 interface Props {
   tab: QueryTab
@@ -63,7 +63,7 @@ export function QueryPanel({ tab }: Props) {
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
 
   return (
-    <div className="flex flex-col h-full">
+    <Flex direction="column" className="h-full">
       {/* Connection + schema selector + toolbar */}
       <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
         <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} schema={tab.schema} />
@@ -80,7 +80,7 @@ export function QueryPanel({ tab }: Props) {
       </Flex>
 
       {/* Editor — top half */}
-      <div className="flex-1 min-h-30 border-b border-border">
+      <Box className="flex-1 min-h-30 border-b border-border">
         <QueryEditor
           value={tab.sql}
           onChange={(sql) => updateTabSql(tab.id, sql)}
@@ -89,18 +89,17 @@ export function QueryPanel({ tab }: Props) {
           schema={tab.schema}
           databaseType={dbType}
         />
-      </div>
+      </Box>
 
       {/* Results — bottom half */}
-      <div className="flex-1 min-h-25 flex flex-col">
+      <Flex direction="column" className="flex-1 min-h-25">
         {tab.results ? (
           <ResultsPanel results={tab.results} />
         ) : tab.error ? (
           <Flex align="center" justify="center" className="flex-1 p-4">
-            <div className="bg-error/5 border border-error/20 rounded-lg p-4 max-w-lg">
-              <Text size="sm" weight="medium" color="error" as="p" className="mb-1">Query Error</Text>
+            <Alert variant="error" title="Query Error" className="max-w-lg">
               <Text size="xs" color="secondary" as="p" className="font-mono whitespace-pre-wrap">{tab.error}</Text>
-            </div>
+            </Alert>
           </Flex>
         ) : (
           <Flex align="center" justify="center" className="flex-1">
@@ -111,7 +110,7 @@ export function QueryPanel({ tab }: Props) {
             </Text>
           </Flex>
         )}
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

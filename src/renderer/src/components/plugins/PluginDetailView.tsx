@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Power, PowerOff, Trash2, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { Stack, ScrollArea, Flex, Text, Button, IconButton, Badge, Divider } from '@/primitives'
+import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
+import { useToastStore } from '@/stores/toast'
+import { Stack, ScrollArea, Flex, Text, Button, IconButton, Badge, Divider, Box, Code, Alert } from '@/primitives'
 
 interface PluginInfo {
   name: string
@@ -38,6 +40,8 @@ const STATE_CONFIG: Record<string, { label: string; color: string; icon: typeof 
 export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
   const [errors, setErrors] = useState<ErrorRecord[]>([])
   const [expandedError, setExpandedError] = useState<number | null>(null)
+  const [showUninstallConfirm, setShowUninstallConfirm] = useState(false)
+  const addToast = useToastStore(s => s.addToast)
 
   useEffect(() => {
     window.electronAPI.invoke('plugins:errors', plugin.name)
@@ -47,7 +51,7 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
 
   const handleActivate = async () => {
     const result = await window.electronAPI.invoke('plugins:activate', plugin.name)
-    if (!result.success) alert(`Failed to activate: ${result.error}`)
+    if (!result.success) addToast({ type: 'error', title: 'Failed to activate', message: result.error })
     onRefresh()
   }
 
@@ -57,7 +61,7 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
   }
 
   const handleUninstall = async () => {
-    if (!confirm(`Uninstall "${plugin.displayName}"?`)) return
+    setShowUninstallConfirm(false)
     await window.electronAPI.invoke('plugins:uninstall', plugin.name)
     onBack()
     onRefresh()
@@ -85,12 +89,12 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
 
       <ScrollArea direction="vertical" className="flex-1">
         {/* Plugin Header */}
-        <div className="px-4 pt-4 pb-3">
+        <Box className="px-4 pt-4 pb-3">
           <Flex direction="row" align="start" gap="md">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-              <span className="text-lg font-bold text-accent">{plugin.displayName.charAt(0)}</span>
-            </div>
-            <div className="flex-1 min-w-0">
+            <Flex align="center" justify="center" className="w-10 h-10 rounded-lg bg-accent/10 shrink-0">
+              <Text size="lg" weight="bold" color="accent">{plugin.displayName.charAt(0)}</Text>
+            </Flex>
+            <Box className="flex-1 min-w-0">
               <Text size="sm" weight="semibold" color="primary" as="h3">{plugin.displayName}</Text>
               <Flex direction="row" align="center" gap="sm" className="mt-0.5">
                 <Text size="xs" color="muted" className="text-[10px]">v{plugin.version}</Text>
@@ -98,7 +102,7 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
                   <Badge size="sm" className="text-[9px]">built-in</Badge>
                 )}
               </Flex>
-            </div>
+            </Box>
           </Flex>
           <Text size="xs" color="secondary" as="p" className="mt-3 leading-relaxed">{plugin.description}</Text>
 
@@ -127,14 +131,14 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleUninstall}
+                onClick={() => setShowUninstallConfirm(true)}
                 className="flex items-center gap-1.5 hover:text-error hover:border-error/30"
               >
                 <Trash2 size={12} /> Uninstall
               </Button>
             )}
           </Flex>
-        </div>
+        </Box>
 
         {/* Status Section */}
         <Section title="Status">
@@ -146,9 +150,9 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
             <Text size="xs" color="muted" as="p" className="text-[10px] mt-1">Failed during: {plugin.status.phase}</Text>
           )}
           {plugin.status.error && (
-            <div className="mt-2 p-2 bg-red-500/5 border border-red-500/10 rounded-md">
-              <Text size="xs" className="text-[10px] text-red-400">{plugin.status.error}</Text>
-            </div>
+            <Alert variant="error" className="mt-2 text-[10px] py-2 px-3">
+              {plugin.status.error}
+            </Alert>
           )}
         </Section>
 
@@ -174,23 +178,24 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
           <Section title={`Error Log (${errors.length})`}>
             <Stack gap="xs">
               {errors.slice(-10).reverse().map((err, i) => (
-                <div key={i}>
-                  <button
+                <Box key={i}>
+                  <Button
+                    variant="ghost"
                     onClick={() => setExpandedError(expandedError === i ? null : i)}
-                    className="w-full text-left flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
+                    className="w-full text-left flex items-start gap-2 py-1 hover:bg-white/5 rounded px-1 -mx-1 transition-colors h-auto border-0"
                   >
                     <XCircle size={10} className="text-red-400 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
+                    <Box className="flex-1 min-w-0">
                       <Text size="xs" color="secondary" truncate className="text-[10px] block">{err.error}</Text>
                       <Text size="xs" color="muted" className="text-[9px]">{new Date(err.timestamp).toLocaleString()}</Text>
-                    </div>
-                  </button>
+                    </Box>
+                  </Button>
                   {expandedError === i && err.stack && (
-                    <pre className="text-[9px] text-text-muted bg-black/20 rounded p-2 mt-1 overflow-x-auto whitespace-pre-wrap">
+                    <Code block className="text-[9px] text-text-muted bg-black/20 rounded p-2 mt-1 overflow-x-auto whitespace-pre-wrap">
                       {err.stack}
-                    </pre>
+                    </Code>
                   )}
-                </div>
+                </Box>
               ))}
             </Stack>
           </Section>
@@ -205,16 +210,26 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
           </Stack>
         </Section>
       </ScrollArea>
+
+      <ConfirmDialog
+        open={showUninstallConfirm}
+        title={`Uninstall "${plugin.displayName}"?`}
+        message="This plugin will be permanently removed."
+        confirmLabel="Uninstall"
+        variant="danger"
+        onConfirm={handleUninstall}
+        onCancel={() => setShowUninstallConfirm(false)}
+      />
     </Stack>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="px-4 py-3 border-t border-border">
+    <Box className="px-4 py-3 border-t border-border">
       <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{title}</Text>
       {children}
-    </div>
+    </Box>
   )
 }
 

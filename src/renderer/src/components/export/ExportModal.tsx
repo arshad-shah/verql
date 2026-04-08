@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal, Button, Checkbox, Text, Flex, Spinner } from '@/primitives'
+import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 
 interface Props {
   tableName?: string
@@ -42,8 +42,8 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
       </Flex>
 
-      <div className="p-4 space-y-4">
-        <div>
+      <Stack gap="md" className="p-4">
+        <Box>
           <Text size="xs" color="muted" as="p" className="mb-2">Format</Text>
           <Flex direction="row" gap="sm">
             {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
@@ -58,7 +58,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
               </Button>
             ))}
           </Flex>
-        </div>
+        </Box>
 
         {format === 'sql' && (
           <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
@@ -70,7 +70,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         {result && (
           <Text size="xs" color={result.startsWith('Error') ? 'error' : 'success'} as="p">{result}</Text>
         )}
-      </div>
+      </Stack>
 
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
         <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>

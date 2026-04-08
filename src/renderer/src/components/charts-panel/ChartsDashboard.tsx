@@ -2,7 +2,7 @@ import { BarChart3 } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab } from '@shared/types'
-import { Stack, ScrollArea, Flex, Text, EmptyState } from '@/primitives'
+import { Stack, ScrollArea, Flex, Text, EmptyState, Box } from '@/primitives'
 
 export function ChartsDashboard() {
   const { tabs } = useTabsStore()
@@ -26,7 +26,7 @@ export function ChartsDashboard() {
         )}
 
         {queryTabsWithResults.map(tab => (
-          <div
+          <Box
             key={tab.id}
             className="px-2 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors mb-0.5"
             onClick={() => useTabsStore.getState().setActiveTab(tab.id)}
@@ -41,7 +41,7 @@ export function ChartsDashboard() {
             <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono pl-5 block">
               {tab.sql.slice(0, 60)}{tab.sql.length > 60 ? '...' : ''}
             </Text>
-          </div>
+          </Box>
         ))}
       </ScrollArea>
     </Stack>

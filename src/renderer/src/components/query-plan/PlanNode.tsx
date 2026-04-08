@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import type { PlanNode as PlanNodeType } from '@/lib/plan-parser'
+import { Box, Flex, Text } from '@/primitives'
 
 interface Props {
   node: PlanNodeType
@@ -21,41 +22,43 @@ export function PlanNodeView({ node, maxCost, depth = 0 }: Props) {
   const color = costColor(costRatio)
 
   return (
-    <div style={{ marginLeft: depth * 24 }}>
-      <div
-        className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-white/5 cursor-pointer"
+    <Box style={{ marginLeft: depth * 24 }}>
+      <Flex
+        align="center"
+        gap="sm"
+        className="py-1.5 px-2 rounded-md hover:bg-white/5 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         {hasChildren ? (
           expanded ? <ChevronDown size={14} className="text-text-muted shrink-0" /> : <ChevronRight size={14} className="text-text-muted shrink-0" />
         ) : (
-          <span className="w-3.5 shrink-0" />
+          <Box as="span" className="w-3.5 shrink-0" />
         )}
 
-        <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: color, color: costRatio > 0.3 ? '#000' : '#fff' }}>
+        <Text size="xs" weight="semibold" className="px-2 py-0.5 rounded" style={{ backgroundColor: color, color: costRatio > 0.3 ? '#000' : '#fff' }}>
           {node.type}
-        </span>
+        </Text>
 
-        {node.table && <span className="text-xs text-info">{node.table}</span>}
+        {node.table && <Text size="xs" color="info">{node.table}</Text>}
 
-        <div className="flex-1 mx-2 h-2 bg-bg-tertiary rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(costRatio * 100, 2)}%`, backgroundColor: color }} />
-        </div>
+        <Box className="flex-1 mx-2 h-2 bg-bg-tertiary rounded-full overflow-hidden">
+          <Box className="h-full rounded-full transition-all" style={{ width: `${Math.max(costRatio * 100, 2)}%`, backgroundColor: color }} />
+        </Box>
 
-        <span className="text-xs text-text-muted shrink-0">cost: {node.cost.toFixed(1)}</span>
-        <span className="text-xs text-text-muted shrink-0">rows: {node.rows}</span>
+        <Text size="xs" color="muted" className="shrink-0">cost: {node.cost.toFixed(1)}</Text>
+        <Text size="xs" color="muted" className="shrink-0">rows: {node.rows}</Text>
         {node.actualTime !== undefined && (
-          <span className="text-xs text-warning shrink-0">{node.actualTime.toFixed(1)}ms</span>
+          <Text size="xs" color="warning" className="shrink-0">{node.actualTime.toFixed(1)}ms</Text>
         )}
-      </div>
+      </Flex>
 
       {expanded && hasChildren && (
-        <div>
+        <Box>
           {node.children.map((child, i) => (
             <PlanNodeView key={i} node={child} maxCost={maxCost} depth={depth + 1} />
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }

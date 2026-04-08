@@ -1,6 +1,6 @@
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
-import { Flex, Text, Badge } from '@/primitives'
+import { Flex, Text, Badge, Box, Button } from '@/primitives'
 
 interface AccordionSectionProps {
   title: string
@@ -15,10 +15,11 @@ export function AccordionSection({ title, count, actions, children }: AccordionS
   const toggleSection = useUiStore((s) => s.toggleSection)
 
   return (
-    <div className="border-b border-border">
-      <button
+    <Box className="border-b border-border">
+      <Button
+        variant="ghost"
         onClick={() => toggleSection(title)}
-        className="w-full flex items-center gap-1 px-2 py-1.5 bg-bg-primary hover:bg-white/5 transition-colors"
+        className="w-full flex items-center gap-1 px-2 py-1.5 bg-bg-primary hover:bg-white/5 transition-colors rounded-none border-0 h-auto"
       >
         {expanded
           ? <ChevronDown size={12} className="text-text-muted shrink-0" />
@@ -29,15 +30,16 @@ export function AccordionSection({ title, count, actions, children }: AccordionS
           <Badge size="sm" className="text-[9px] leading-4">{count}</Badge>
         )}
         {actions && (
-          <span
-            className="flex items-center gap-0.5"
-            onClick={(e) => e.stopPropagation()}
+          <Flex as="span"
+            align="center"
+            gap="xs"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {actions}
-          </span>
+          </Flex>
         )}
-      </button>
-      {expanded && <div className="pb-1">{children}</div>}
-    </div>
+      </Button>
+      {expanded && <Box className="pb-1">{children}</Box>}
+    </Box>
   )
 }

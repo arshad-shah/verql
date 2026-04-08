@@ -3,7 +3,7 @@ import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
-import { Input, ScrollArea, Text, Kbd } from '@/primitives'
+import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
 
 interface Command {
   id: string
@@ -87,10 +87,10 @@ export function CommandPalette({ open, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 z-50" onClick={onClose} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 z-50 w-[520px] bg-bg-secondary border border-border rounded-xl shadow-2xl overflow-hidden">
+      <Box className="fixed inset-0 bg-black/30 z-50" onClick={onClose} />
+      <Box className="fixed top-[15%] left-1/2 -translate-x-1/2 z-50 w-[520px] bg-bg-secondary border border-border rounded-xl shadow-2xl overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <Flex align="center" gap="sm" className="px-4 py-3 border-b border-border">
           <Search size={16} className="text-text-muted shrink-0" />
           <Input
             ref={inputRef}
@@ -101,7 +101,7 @@ export function CommandPalette({ open, onClose }: Props) {
             size="sm"
             className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
-        </div>
+        </Flex>
 
         {/* Results */}
         <ScrollArea direction="vertical" className="max-h-72 py-1">
@@ -109,22 +109,23 @@ export function CommandPalette({ open, onClose }: Props) {
             <Text size="xs" color="muted" as="p" className="px-4 py-3 text-center">No matching commands</Text>
           )}
           {filtered.map((cmd, i) => (
-            <button
+            <Button
               key={cmd.id}
+              variant="ghost"
               onClick={() => { cmd.action(); onClose() }}
-              className={`w-full flex items-center justify-between px-4 py-2 text-left transition-colors ${
+              className={`w-full flex items-center justify-between px-4 py-2 text-left transition-colors rounded-none border-0 h-auto ${
                 i === selectedIndex ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-white/5'
               }`}
             >
-              <div className="flex items-center gap-2">
+              <Flex align="center" gap="sm">
                 {cmd.category && <Text size="xs" color="muted" className="text-[10px] uppercase">{cmd.category}</Text>}
                 <Text size="xs">{cmd.title}</Text>
-              </div>
+              </Flex>
               {cmd.keybinding && <Kbd>{cmd.keybinding}</Kbd>}
-            </button>
+            </Button>
           ))}
         </ScrollArea>
-      </div>
+      </Box>
     </>
   )
 }

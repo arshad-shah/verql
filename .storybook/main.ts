@@ -6,7 +6,10 @@ import tailwindcss from '@tailwindcss/vite'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const config: StorybookConfig = {
-  stories: ['../src/renderer/src/primitives/**/*.stories.tsx'],
+  stories: [
+    '../src/renderer/src/primitives/**/*.stories.tsx',
+    '../src/renderer/src/components/**/*.stories.tsx',
+  ],
   addons: [
     '@storybook/addon-docs',
     '@storybook/addon-a11y',

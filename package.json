@@ -8,7 +8,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "postinstall": "electron-rebuild --only better-sqlite3",
+    "postinstall": "electron-rebuild --only better-sqlite3 && bash scripts/patch-electron-name.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:mac": "npm run build && electron-builder --mac",

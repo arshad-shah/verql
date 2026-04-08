@@ -6,7 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { SchemaTreeItem, TableIcon, ColumnIcon } from '@/components/schema/SchemaTreeItem'
 import { AccordionSection } from './AccordionSection'
 import { OverflowMenu, type MenuItem } from './OverflowMenu'
-import { Text } from '@/primitives'
+import { Text, Box } from '@/primitives'
 
 interface ViewsSectionProps {
   connectionId: string
@@ -70,7 +70,7 @@ export function ViewsSection({ connectionId, activeSchema }: ViewsSectionProps) 
 
   return (
     <AccordionSection title="VIEWS" count={filtered.length}>
-      <div className="px-1">
+      <Box className="px-1">
         {filtered.length === 0 && (
           <Text size="xs" color="muted" as="p" className="px-2 py-3 text-center">
             {filterText ? 'No matching views' : 'No views found'}
@@ -103,7 +103,7 @@ export function ViewsSection({ connectionId, activeSchema }: ViewsSectionProps) 
             </SchemaTreeItem>
           )
         })}
-      </div>
+      </Box>
     </AccordionSection>
   )
 }

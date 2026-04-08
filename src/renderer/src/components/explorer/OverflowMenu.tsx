@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
-import { IconButton, Text } from '@/primitives'
+import { IconButton, Text, Box, Button, Flex } from '@/primitives'
 
 export interface MenuItem {
   label: string
@@ -53,28 +53,30 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
         <MoreHorizontal size={12} />
       </IconButton>
       {open && rect && createPortal(
-        <div
+        <Box
           ref={menuRef}
           className="fixed z-50 bg-bg-secondary border border-border rounded-lg shadow-xl py-1 min-w-36"
           style={{ top: rect.bottom + 4, left: rect.right - 144 }}
         >
           {items.map((item) => (
-            <button
+            <Button
               key={item.label}
+              variant="ghost"
+              size="xs"
               onClick={(e) => {
                 e.stopPropagation()
                 setOpen(false)
                 item.onClick()
               }}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors text-left ${
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors text-left rounded-none border-0 h-auto ${
                 item.variant === 'danger' ? 'text-error' : 'text-text-secondary'
               }`}
             >
-              {item.icon && <span className="shrink-0">{item.icon}</span>}
+              {item.icon && <Box as="span" className="shrink-0">{item.icon}</Box>}
               <Text size="xs" color={item.variant === 'danger' ? 'error' : 'secondary'}>{item.label}</Text>
-            </button>
+            </Button>
           ))}
-        </div>,
+        </Box>,
         document.body
       )}
     </>

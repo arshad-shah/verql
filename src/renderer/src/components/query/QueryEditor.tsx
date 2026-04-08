@@ -3,6 +3,7 @@ import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { registerSqlCompletionProvider, updateTableNames } from '@/lib/monaco-sql'
 import { useConnectionsStore } from '@/stores/connections'
+import { Flex, Text } from '@/primitives'
 
 interface Props {
   value: string
@@ -75,9 +76,9 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
       }}
       onMount={handleMount}
       loading={
-        <div className="flex items-center justify-center h-full text-text-muted text-sm">
-          Loading editor...
-        </div>
+        <Flex align="center" justify="center" className="h-full">
+          <Text size="sm" color="muted">Loading editor...</Text>
+        </Flex>
       }
     />
   )

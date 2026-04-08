@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
+import { Flex, Box, Button, Text, Label, Select } from '@/primitives'
 
 interface Props {
   results: QueryResult
@@ -23,37 +24,42 @@ export function ChartPanel({ results }: Props) {
   const [yKey, setYKey] = useState(suggestedAxes?.y ?? results.fields[1]?.name ?? '')
 
   if (results.fields.length < 2) {
-    return <div className="flex items-center justify-center h-full text-text-muted text-sm">Need at least 2 columns to chart</div>
+    return (
+      <Flex align="center" justify="center" className="h-full">
+        <Text size="sm" color="muted">Need at least 2 columns to chart</Text>
+      </Flex>
+    )
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-bg-secondary shrink-0">
-        <div className="flex gap-1">
+    <Flex direction="column" className="h-full">
+      <Flex align="center" gap="md" className="px-3 py-2 border-b border-border bg-bg-secondary shrink-0">
+        <Flex gap="xs">
           {CHART_TYPES.map(ct => (
-            <button
+            <Button
               key={ct.value}
+              variant={chartType === ct.value ? 'solid' : 'outline'}
+              size="xs"
               onClick={() => setChartType(ct.value)}
-              className={`px-2 py-0.5 text-xs rounded transition-colors ${chartType === ct.value ? 'bg-accent text-white' : 'text-text-muted hover:text-text-primary border border-border'}`}
             >
               {ct.label}
-            </button>
+            </Button>
           ))}
-        </div>
-        <div className="flex items-center gap-2 text-xs ml-auto">
-          <label className="text-text-muted">X:</label>
-          <select value={xKey} onChange={e => setXKey(e.target.value)} className="bg-bg-tertiary border border-border rounded px-2 py-0.5 text-xs text-text-primary">
+        </Flex>
+        <Flex align="center" gap="sm" className="text-xs ml-auto">
+          <Label className="text-text-muted">X:</Label>
+          <Select value={xKey} onChange={e => setXKey(e.target.value)} size="xs">
             {results.fields.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
-          </select>
-          <label className="text-text-muted">Y:</label>
-          <select value={yKey} onChange={e => setYKey(e.target.value)} className="bg-bg-tertiary border border-border rounded px-2 py-0.5 text-xs text-text-primary">
+          </Select>
+          <Label className="text-text-muted">Y:</Label>
+          <Select value={yKey} onChange={e => setYKey(e.target.value)} size="xs">
             {results.fields.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="flex-1 p-4">
+          </Select>
+        </Flex>
+      </Flex>
+      <Box padding="lg" className="flex-1">
         <ChartView type={chartType} data={results.rows} xKey={xKey} yKey={yKey} />
-      </div>
-    </div>
+      </Box>
+    </Flex>
   )
 }

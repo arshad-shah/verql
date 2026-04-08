@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, type ColDef, themeQuartz } from 'ag-grid-community'
 import type { QueryResult } from '@shared/types'
+import { Box } from '@/primitives'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -52,7 +53,7 @@ export function ResultsGrid({ results }: Props) {
   }, [results.fields])
 
   return (
-    <div className="flex-1 overflow-hidden">
+    <Box className="flex-1 overflow-hidden">
       <AgGridReact
         theme={darkTheme}
         rowData={results.rows}
@@ -68,6 +69,6 @@ export function ResultsGrid({ results }: Props) {
         rowHeight={28}
         headerHeight={32}
       />
-    </div>
+    </Box>
   )
 }

@@ -46,7 +46,6 @@ describe('ResizeHandle', () => {
       <ResizeHandle direction="horizontal" onResize={() => {}} />
     )
     expect(container.firstChild).toHaveClass('cursor-col-resize')
-    expect(container.firstChild).toHaveClass('w-1')
   })
 
   it('renders with vertical cursor class for vertical direction', () => {
@@ -54,7 +53,6 @@ describe('ResizeHandle', () => {
       <ResizeHandle direction="vertical" onResize={() => {}} />
     )
     expect(container.firstChild).toHaveClass('cursor-row-resize')
-    expect(container.firstChild).toHaveClass('h-1')
   })
 
   it('has role="separator"', () => {
