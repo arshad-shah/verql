@@ -91,7 +91,14 @@ export interface IpcChannelMap {
   }
   'plugins:list': {
     args: []
-    return: { name: string; displayName: string; version: string; description: string; active: boolean; error?: string }[]
+    return: {
+      name: string
+      displayName: string
+      version: string
+      description: string
+      status: { state: string; error?: string; phase?: string; contributions?: string[] }
+      contributions: string[]
+    }[]
   }
   'plugins:activate': {
     args: [name: string]
@@ -108,5 +115,9 @@ export interface IpcChannelMap {
   'plugins:uninstall': {
     args: [name: string]
     return: void
+  }
+  'plugins:errors': {
+    args: [name: string]
+    return: { timestamp: number; error: string; stack?: string }[]
   }
 }

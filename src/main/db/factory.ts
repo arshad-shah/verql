@@ -3,6 +3,13 @@ import type { DbAdapter } from './adapter'
 import { SqliteAdapter } from './sqlite'
 import { PostgresAdapter } from './postgres'
 import { MysqlAdapter } from './mysql'
+import type { DriverRegistryImpl } from '../plugins/sdk/driver-registry'
+
+let pluginDriverRegistry: DriverRegistryImpl | null = null
+
+export function setDriverRegistry(registry: DriverRegistryImpl): void {
+  pluginDriverRegistry = registry
+}
 
 export function createAdapter(profile: ConnectionProfile): DbAdapter {
   switch (profile.type) {
@@ -19,8 +26,13 @@ export function createAdapter(profile: ConnectionProfile): DbAdapter {
         user: profile.username, password: profile.password, ssl: profile.ssl
       })
     default: {
-      const _exhaustive: never = profile.type
-      throw new Error(`Unsupported database type: ${_exhaustive}`)
+      if (pluginDriverRegistry) {
+        const factory = pluginDriverRegistry.get(profile.type)
+        if (factory) {
+          return factory.createAdapter(profile as unknown as Record<string, unknown>)
+        }
+      }
+      throw new Error(`Unsupported database type: ${profile.type}`)
     }
   }
 }

@@ -1,7 +1,7 @@
 import { ipcMain, app, dialog } from 'electron'
 import fs from 'fs'
 import { ConfigStore } from './config/store'
-import { createAdapter } from './db/factory'
+import { createAdapter, setDriverRegistry } from './db/factory'
 import type { DbAdapter } from './db/adapter'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import type { IpcChannelMap } from '@shared/ipc'
@@ -12,7 +12,11 @@ import { exportToJson } from './export/json-export'
 import { parseCsvFile, importCsvToTable } from './import/csv-import'
 import { executeSqlFile } from './import/sql-import'
 import { mapType, generateMigrationDdl } from './migration/type-map'
-import { loadPlugins, getLoadedPlugins, activatePlugin, deactivatePlugin, installPluginFromPath, uninstallPlugin } from './plugins/plugin-host'
+import { PluginBootCoordinator } from './plugins/plugin-host'
+import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
+import { CommandRegistryImpl } from './plugins/sdk/command-registry'
+import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
+import { safeCall } from './plugins/sdk/safe-call'
 
 const activeAdapters = new Map<string, DbAdapter>()
 
@@ -84,6 +88,13 @@ function handle<K extends keyof IpcChannelMap>(
 export function registerIpcHandlers(): void {
   const configPath = path.join(app.getPath('userData'), 'config.json')
   const configStore = new ConfigStore(configPath)
+
+  const driverRegistry = new DriverRegistryImpl()
+  const commandRegistry = new CommandRegistryImpl()
+  const panelRegistry = new PanelRegistryImpl()
+
+  setDriverRegistry(driverRegistry)
+
   handle('connections:list', () => configStore.listConnections())
 
   handle('connections:save', (profile: ConnectionProfile) =>
@@ -101,9 +112,17 @@ export function registerIpcHandlers(): void {
 
   handle('db:connect', async (profileId: string) => {
     try {
-      const profile = configStore.getConnection(profileId)
+      let profile = configStore.getConnection(profileId)
       if (!profile) return { success: false, error: 'Connection profile not found — it may have been deleted' }
       if (activeAdapters.has(profileId)) return { success: true }
+
+      // Run connection middleware chain
+      for (const { middleware } of driverRegistry.getMiddlewares()) {
+        if (middleware.shouldApply(profile)) {
+          profile = await safeCall('middleware', () => middleware.beforeConnect(profile!), { timeoutMs: 15_000 })
+        }
+      }
+
       const adapter = createAdapter(profile)
       await adapter.connect()
       activeAdapters.set(profileId, adapter)
@@ -333,32 +352,63 @@ export function registerIpcHandlers(): void {
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────
 
-  loadPlugins()
+  const pluginCoordinator = new PluginBootCoordinator({
+    driverRegistry,
+    commandRegistry,
+    panelRegistry,
+    getAdapter: (id) => activeAdapters.get(id),
+    getProfile: (id) => configStore.getConnection(id),
+    settingsStore: {
+      get: (key) => (configStore as any).data?.[key],
+      set: (key, value) => {
+        (configStore as any).data = (configStore as any).data ?? {}
+        ;(configStore as any).data[key] = value
+        ;(configStore as any).save?.()
+      }
+    }
+  })
+
+  pluginCoordinator.boot().catch(err => {
+    console.error('[plugins] Boot failed:', err)
+  })
 
   handle('plugins:list', async () => {
-    return getLoadedPlugins().map(p => ({
+    return pluginCoordinator.getLoadedPlugins().map(p => ({
       name: p.manifest.name,
       displayName: p.manifest.displayName,
       version: p.manifest.version,
       description: p.manifest.description,
-      active: p.active,
-      error: p.error
+      status: p.status as { state: string; error?: string; phase?: string; contributions?: string[] },
+      contributions: p.status.state === 'active' ? p.status.contributions
+        : p.status.state === 'degraded' ? p.status.contributions
+        : []
     }))
   })
 
   handle('plugins:activate', async (name) => {
-    return activatePlugin(name)
+    const plugin = pluginCoordinator.getPlugin(name)
+    if (!plugin) return { success: false, error: 'Plugin not found' }
+    const result = await pluginCoordinator.activatePlugin(plugin)
+    if (result.status.state === 'error') {
+      return { success: false, error: result.status.error }
+    }
+    return { success: true }
   })
 
   handle('plugins:deactivate', async (name) => {
-    deactivatePlugin(name)
+    const plugin = pluginCoordinator.getPlugin(name)
+    if (plugin) pluginCoordinator.deactivatePlugin(plugin)
   })
 
   handle('plugins:install-from-path', async (pluginPath) => {
-    return installPluginFromPath(pluginPath)
+    return pluginCoordinator.installFromPath(pluginPath)
   })
 
   handle('plugins:uninstall', async (name) => {
-    uninstallPlugin(name)
+    pluginCoordinator.uninstall(name)
+  })
+
+  handle('plugins:errors', async (name) => {
+    return pluginCoordinator.getErrorBudget().getErrors(name)
   })
 }
