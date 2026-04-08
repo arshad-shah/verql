@@ -1,0 +1,105 @@
+/*
+ * Design Token System — Three Layers
+ *
+ * Layer 1: Raw scale values (static, never themed)
+ * Layer 2: Semantic tokens (remapped per theme)
+ * Layer 3: Component tokens (reference semantic tokens)
+ */
+
+/* ── Layer 1: Raw Scale ── */
+
+:root {
+  /* Purple */
+  --raw-purple-400: #9b8fff;
+  --raw-purple-500: #7c6ff7;
+  --raw-purple-600: #6558d4;
+  --raw-purple-900: #1a1533;
+
+  /* Neutral */
+  --raw-neutral-50: #fafafa;
+  --raw-neutral-100: #f0f0f0;
+  --raw-neutral-200: #e0e0e0;
+  --raw-neutral-300: #c0c0c0;
+  --raw-neutral-400: #888888;
+  --raw-neutral-500: #666666;
+  --raw-neutral-600: #444444;
+  --raw-neutral-700: #2a2a3e;
+  --raw-neutral-800: #1a1a2e;
+  --raw-neutral-850: #12121f;
+  --raw-neutral-900: #0d0d1a;
+
+  /* Status */
+  --raw-green-500: #28c840;
+  --raw-yellow-500: #e5c07b;
+  --raw-red-500: #ff5f57;
+  --raw-blue-500: #61afef;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --font-3xl: 1.875rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
+
+/* ── Layer 2: Semantic Tokens (default = dark) ── */
+
+:root {
+  /* Backgrounds */
+  --color-bg-primary: var(--raw-neutral-900);
+  --color-bg-secondary: var(--raw-neutral-850);
+  --color-bg-tertiary: var(--raw-neutral-800);
+  --color-bg-elevated: var(--raw-neutral-700);
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: var(--raw-neutral-400);
+  --color-text-tertiary: var(--raw-neutral-500);
+  --color-text-disabled: var(--raw-neutral-600);
+
+  /* Borders */
+  --color-border-default: var(--raw-neutral-700);
+  --color-border-subtle: var(--raw-neutral-800);
+  --color-border-strong: var(--raw-neutral-500);
+
+  /* Accent */
+  --color-accent: var(--raw-purple-500);
+  --color-accent-hover: var(--raw-purple-400);
+  --color-accent-muted: var(--raw-purple-900);
+
+  /* Status */
+  --color-success: var(--raw-green-500);
+  --color-warning: var(--raw-yellow-500);
+  --color-error: var(--raw-red-500);
+  --color-info: var(--raw-blue-500);
+
+  /* Interactive */
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus-ring: var(--raw-purple-500);
+  --color-disabled: var(--raw-neutral-600);
+}

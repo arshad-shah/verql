@@ -1,0 +1,25 @@
+/* Dark theme — default, matches :root tokens in tokens.css */
+[data-theme="dark"] {
+  --color-bg-primary: var(--raw-neutral-900);
+  --color-bg-secondary: var(--raw-neutral-850);
+  --color-bg-tertiary: var(--raw-neutral-800);
+  --color-bg-elevated: var(--raw-neutral-700);
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: var(--raw-neutral-400);
+  --color-text-tertiary: var(--raw-neutral-500);
+  --color-text-disabled: var(--raw-neutral-600);
+
+  --color-border-default: var(--raw-neutral-700);
+  --color-border-subtle: var(--raw-neutral-800);
+  --color-border-strong: var(--raw-neutral-500);
+
+  --color-accent: var(--raw-purple-500);
+  --color-accent-hover: var(--raw-purple-400);
+  --color-accent-muted: var(--raw-purple-900);
+
+  --color-hover: rgba(255, 255, 255, 0.05);
+  --color-active: rgba(255, 255, 255, 0.1);
+  --color-focus-ring: var(--raw-purple-500);
+  --color-disabled: var(--raw-neutral-600);
+}

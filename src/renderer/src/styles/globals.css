@@ -1,19 +1,31 @@
 @import "tailwindcss";
+@import "../primitives/theme/tokens.css";
+@import "../primitives/theme/themes/dark.css";
+@import "../primitives/theme/themes/light.css";
+@import "../primitives/theme/themes/midnight.css";
 
 @theme {
-  --color-bg-primary: #0d0d1a;
-  --color-bg-secondary: #12121f;
-  --color-bg-tertiary: #1a1a2e;
-  --color-border: #2a2a3e;
-  --color-accent: #7c6ff7;
-  --color-accent-hover: #9b8fff;
-  --color-success: #28c840;
-  --color-warning: #e5c07b;
-  --color-error: #ff5f57;
-  --color-info: #61afef;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #888888;
-  --color-text-muted: #666666;
+  --color-bg-primary: var(--color-bg-primary);
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-tertiary: var(--color-bg-tertiary);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-border: var(--color-border-default);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-tertiary);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-hover: var(--color-hover);
+  --color-active: var(--color-active);
+  --color-focus-ring: var(--color-focus-ring);
 }
 
 body {
@@ -24,8 +36,8 @@ body {
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--color-bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
 .drag-region { -webkit-app-region: drag; }
 .no-drag { -webkit-app-region: no-drag; }
