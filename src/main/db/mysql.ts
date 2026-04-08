@@ -92,4 +92,13 @@ export class MysqlAdapter implements DbAdapter {
     const [rows] = await this.pool.query(`SELECT schema_name FROM information_schema.schemata ORDER BY schema_name`)
     return (rows as { schema_name: string }[]).map(r => r.schema_name)
   }
+
+  async getRowCount(table: string, schema?: string): Promise<number> {
+    if (!this.pool) throw new Error('Not connected')
+    const db = schema ?? this.config.database
+    const [rows] = await this.pool.query(
+      `SELECT count(*) as cnt FROM \`${db}\`.\`${table}\``
+    )
+    return (rows as { cnt: number }[])[0].cnt
+  }
 }

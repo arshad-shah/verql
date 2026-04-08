@@ -7,6 +7,7 @@ export interface DbAdapter {
   getTables(schema?: string): Promise<SchemaTable[]>
   getColumns(table: string, schema?: string): Promise<SchemaColumn[]>
   getIndexes(table: string, schema?: string): Promise<SchemaIndex[]>
+  getRowCount(table: string, schema?: string): Promise<number>
   getSchemas(): Promise<string[]>
   getDatabases(): Promise<string[]>
   switchDatabase(database: string): Promise<void>

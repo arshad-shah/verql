@@ -37,6 +37,10 @@ export interface IpcChannelMap {
     args: [profileId: string]
     return: string[]
   }
+  'db:get-row-count': {
+    args: [profileId: string, table: string, schema?: string]
+    return: number
+  }
   'db:switch-database': {
     args: [profileId: string, database: string]
     return: void

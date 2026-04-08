@@ -122,4 +122,13 @@ export class PostgresAdapter implements DbAdapter {
     )
     return result.rows.map((r: { datname: string }) => r.datname)
   }
+
+  async getRowCount(table: string, schema?: string): Promise<number> {
+    if (!this.pool) throw new Error('Not connected')
+    const s = schema ?? 'public'
+    const result = await this.pool.query(
+      `SELECT count(*) as cnt FROM "${s}"."${table}"`
+    )
+    return parseInt(result.rows[0].cnt, 10)
+  }
 }

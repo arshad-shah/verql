@@ -221,6 +221,16 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  handle('db:get-row-count', async (profileId: string, table: string, schema?: string) => {
+    const adapter = activeAdapters.get(profileId)
+    if (!adapter) throw new Error('Not connected — select a connection first')
+    try {
+      return await adapter.getRowCount(table, schema)
+    } catch (err) {
+      throw new Error(formatDbError(err))
+    }
+  })
+
   handle('db:switch-database', async (profileId: string, database: string) => {
     const adapter = activeAdapters.get(profileId)
     if (!adapter) throw new Error('Not connected — select a connection first')

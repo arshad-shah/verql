@@ -102,6 +102,12 @@ export class SqliteAdapter implements DbAdapter {
     })
   }
 
+  async getRowCount(table: string, _schema?: string): Promise<number> {
+    if (!this.db) throw new Error('Not connected')
+    const row = this.db.prepare(`SELECT count(*) as cnt FROM "${table}"`).get() as { cnt: number }
+    return row.cnt
+  }
+
   async getSchemas(): Promise<string[]> {
     if (!this.db) throw new Error('Not connected')
     const rows = this.db.prepare('PRAGMA database_list').all() as { name: string }[]
