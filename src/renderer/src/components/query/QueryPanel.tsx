@@ -4,6 +4,7 @@ import { QueryToolbar } from './QueryToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab } from '@shared/types'
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 
 export function QueryPanel({ tab }: Props) {
   const { updateTabSql, setTabExecuting, setTabResults, setTabError } = useTabsStore()
+  const connections = useConnectionsStore(s => s.connections)
+  const dbType = tab.connectionId ? connections.find(c => c.id === tab.connectionId)?.type : undefined
 
   const executeWithSchema = useCallback(async (sql: string) => {
     if (!tab.connectionId) return
@@ -83,6 +86,7 @@ export function QueryPanel({ tab }: Props) {
           onExecute={handleExecute}
           connectionId={tab.connectionId}
           schema={tab.schema}
+          databaseType={dbType}
         />
       </div>
 

@@ -10,18 +10,21 @@ interface Props {
   onExecute: () => void
   connectionId: string | null
   schema: string | null
+  databaseType?: string
 }
 
 let completionRegistered = false
 
-export function QueryEditor({ value, onChange, onExecute, connectionId, schema }: Props) {
+export function QueryEditor({ value, onChange, onExecute, connectionId, schema, databaseType }: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const { connectedIds } = useConnectionsStore()
+
+  const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
 
-    if (!completionRegistered) {
+    if (!completionRegistered && language === 'sql') {
       registerSqlCompletionProvider(monaco)
       completionRegistered = true
     }
@@ -34,22 +37,21 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema }
     })
 
     editor.focus()
-  }, [onExecute])
+  }, [onExecute, language])
 
-  // Fetch table names for autocomplete when connection or schema changes
   useEffect(() => {
-    if (!connectionId || !connectedIds.has(connectionId)) {
+    if (!connectionId || !connectedIds.has(connectionId) || language !== 'sql') {
       updateTableNames([])
       return
     }
     window.electronAPI.invoke('db:get-table-names', connectionId, schema ?? undefined)
       .then(names => updateTableNames(names))
       .catch(() => updateTableNames([]))
-  }, [connectionId, schema, connectedIds])
+  }, [connectionId, schema, connectedIds, language])
 
   return (
     <Editor
-      defaultLanguage="sql"
+      language={language}
       value={value}
       onChange={(v) => onChange(v ?? '')}
       theme="vs-dark"

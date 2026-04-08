@@ -6,8 +6,8 @@ interface PluginInfo {
   displayName: string
   version: string
   description: string
-  active: boolean
-  error?: string
+  status: { state: string; error?: string; phase?: string; contributions?: string[] }
+  contributions: string[]
 }
 
 export function ExtensionsPanel() {
@@ -92,40 +92,35 @@ export function ExtensionsPanel() {
         {plugins.map(plugin => (
           <div key={plugin.name} className="group px-2 py-2 rounded-md hover:bg-white/5 transition-colors mb-0.5">
             <div className="flex items-start gap-2">
-              <Puzzle size={14} className={plugin.active ? 'text-accent mt-0.5' : 'text-text-muted mt-0.5'} />
+              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                  plugin.status.state === 'active' ? 'bg-green-400' :
+                  plugin.status.state === 'degraded' ? 'bg-yellow-400' :
+                  plugin.status.state === 'error' ? 'bg-red-400' : 'bg-gray-500'
+                }`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-text-primary truncate">{plugin.displayName}</span>
                   <span className="text-[10px] text-text-muted">v{plugin.version}</span>
                 </div>
                 <p className="text-[10px] text-text-muted truncate mt-0.5">{plugin.description}</p>
-                {plugin.error && (
-                  <p className="text-[10px] text-error mt-0.5">{plugin.error}</p>
+                {plugin.contributions.length > 0 && (
+                  <p className="text-[10px] text-text-muted mt-0.5">{plugin.contributions.join(', ')}</p>
+                )}
+                {plugin.status.error && (
+                  <p className="text-[10px] text-error mt-0.5">{plugin.status.error}</p>
                 )}
               </div>
               <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
-                {plugin.active ? (
-                  <button
-                    onClick={() => handleDeactivate(plugin.name)}
-                    className="p-1 text-text-muted hover:text-warning rounded"
-                    title="Deactivate"
-                  >
+                {plugin.status.state === 'active' || plugin.status.state === 'degraded' ? (
+                  <button onClick={() => handleDeactivate(plugin.name)} className="p-1 text-text-muted hover:text-warning rounded" title="Deactivate">
                     <PowerOff size={12} />
                   </button>
                 ) : (
-                  <button
-                    onClick={() => handleActivate(plugin.name)}
-                    className="p-1 text-text-muted hover:text-success rounded"
-                    title="Activate"
-                  >
+                  <button onClick={() => handleActivate(plugin.name)} className="p-1 text-text-muted hover:text-success rounded" title="Activate">
                     <Power size={12} />
                   </button>
                 )}
-                <button
-                  onClick={() => handleUninstall(plugin.name)}
-                  className="p-1 text-text-muted hover:text-error rounded"
-                  title="Uninstall"
-                >
+                <button onClick={() => handleUninstall(plugin.name)} className="p-1 text-text-muted hover:text-error rounded" title="Uninstall">
                   <Trash2 size={12} />
                 </button>
               </div>
