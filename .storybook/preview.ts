@@ -1,6 +1,10 @@
 import type { Preview } from '@storybook/react'
 import '../src/renderer/src/styles/globals.css'
 
+// Inject theme attribute on the iframe's html element immediately
+// This runs once when the preview module loads, before any story renders
+document.documentElement.setAttribute('data-theme', 'dark')
+
 const preview: Preview = {
   parameters: {
     controls: {
@@ -10,13 +14,24 @@ const preview: Preview = {
       },
     },
     backgrounds: { disable: true },
-    layout: 'centered',
+    layout: 'fullscreen',
   },
   decorators: [
-    (Story) => {
-      document.documentElement.setAttribute('data-theme', 'dark')
-      return Story()
-    },
+    (Story) => (
+      <div
+        style={{
+          backgroundColor: 'var(--color-bg-primary)',
+          color: 'var(--color-text-primary)',
+          minHeight: '100vh',
+          padding: '2rem',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
+        <Story />
+      </div>
+    ),
   ],
 }
 

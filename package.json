@@ -8,7 +8,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-rebuild --only better-sqlite3",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:mac": "npm run build && electron-builder --mac",
@@ -42,6 +42,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "@storybook/addon-themes": "^10.3.5",
@@ -67,5 +68,37 @@
     "typescript": "^6.0.2",
     "vite": "^7.3.2",
     "vitest": "^4.1.3"
+  },
+  "build": {
+    "npmRebuild": true,
+    "buildDependenciesFromSource": false,
+    "files": [
+      "out/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   }
 }
