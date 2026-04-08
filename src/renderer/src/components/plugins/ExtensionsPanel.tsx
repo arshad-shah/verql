@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Power, PowerOff, Trash2, FolderOpen, RefreshCw, Loader2, Package } from 'lucide-react'
+import { PluginDetailView } from './PluginDetailView'
 
 interface PluginInfo {
   name: string
@@ -14,6 +15,7 @@ interface PluginInfo {
 export function ExtensionsPanel() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null)
 
   const loadPlugins = async () => {
     setLoading(true)
@@ -38,6 +40,7 @@ export function ExtensionsPanel() {
   const handleUninstall = async (name: string) => {
     if (!confirm(`Uninstall "${name}"?`)) return
     await window.electronAPI.invoke('plugins:uninstall', name)
+    setSelectedPlugin(null)
     await loadPlugins()
   }
 
@@ -52,6 +55,18 @@ export function ExtensionsPanel() {
     }
   }
 
+  // Detail view
+  const activePlugin = plugins.find(p => p.name === selectedPlugin)
+  if (activePlugin) {
+    return (
+      <PluginDetailView
+        plugin={activePlugin}
+        onBack={() => setSelectedPlugin(null)}
+        onRefresh={loadPlugins}
+      />
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -64,7 +79,10 @@ export function ExtensionsPanel() {
   const installedPlugins = plugins.filter(p => !p.bundled)
 
   const renderPlugin = (plugin: PluginInfo) => (
-    <div key={plugin.name} className="group px-2 py-2 rounded-md hover:bg-white/5 transition-colors mb-0.5">
+    <div key={plugin.name}
+      onClick={() => setSelectedPlugin(plugin.name)}
+      className="group px-2 py-2 rounded-md hover:bg-white/5 transition-colors mb-0.5 cursor-pointer"
+    >
       <div className="flex items-start gap-2">
         <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
           plugin.status.state === 'active' ? 'bg-green-400' :
@@ -84,10 +102,10 @@ export function ExtensionsPanel() {
             <p className="text-[10px] text-text-muted mt-0.5">{plugin.contributions.join(', ')}</p>
           )}
           {plugin.status.error && (
-            <p className="text-[10px] text-error mt-0.5">{plugin.status.error}</p>
+            <p className="text-[10px] text-error mt-0.5 truncate">{plugin.status.error}</p>
           )}
         </div>
-        <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+        <div className="hidden group-hover:flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
           {plugin.status.state === 'active' || plugin.status.state === 'degraded' ? (
             <button onClick={() => handleDeactivate(plugin.name)} className="p-1 text-text-muted hover:text-warning rounded" title="Disable">
               <PowerOff size={12} />
