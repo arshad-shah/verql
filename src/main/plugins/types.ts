@@ -1,3 +1,6 @@
+// src/main/plugins/types.ts
+import type { PluginStatus, PluginContext } from './sdk/types'
+
 export interface PluginManifest {
   name: string
   version: string
@@ -10,6 +13,10 @@ export interface PluginManifest {
     commands?: CommandContribution[]
     exporters?: ExporterContribution[]
     importers?: ImporterContribution[]
+    connectionMiddleware?: { id: string }[]
+    connectionFields?: ConnectionFieldContribution[]
+    panels?: PanelContributionManifest[]
+    settings?: SettingContribution[]
   }
 }
 
@@ -43,9 +50,33 @@ export interface ImporterContribution {
   extensions: string[]
 }
 
+export interface ConnectionFieldContribution {
+  key: string
+  label: string
+  type: 'text' | 'password' | 'number' | 'boolean' | 'file'
+  required?: boolean
+  default?: string | number | boolean
+  group?: string
+}
+
+export interface PanelContributionManifest {
+  id: string
+  title: string
+  icon: string
+  location: 'sidebar' | 'bottom'
+}
+
+export interface SettingContribution {
+  key: string
+  title: string
+  type: 'text' | 'password' | 'number' | 'boolean'
+  default?: string | number | boolean
+}
+
 export interface LoadedPlugin {
   manifest: PluginManifest
   path: string
-  active: boolean
-  error?: string
+  status: PluginStatus
+  module?: { activate: (ctx: PluginContext) => void | Promise<void>; deactivate?: () => void | Promise<void> }
+  context?: PluginContext
 }
