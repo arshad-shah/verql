@@ -1,1 +1,4 @@
-// Typography primitives - components will be added as they're built
+export { Text } from './Text'
+export { Heading } from './Heading'
+export { Code } from './Code'
+export { Kbd } from './Kbd'
