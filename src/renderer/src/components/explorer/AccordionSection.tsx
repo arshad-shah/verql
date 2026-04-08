@@ -1,5 +1,6 @@
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
+import { Flex, Text, Badge } from '@/primitives'
 
 interface AccordionSectionProps {
   title: string
@@ -23,9 +24,9 @@ export function AccordionSection({ title, count, actions, children }: AccordionS
           ? <ChevronDown size={12} className="text-text-muted shrink-0" />
           : <ChevronRight size={12} className="text-text-muted shrink-0" />
         }
-        <span className="text-[10px] text-text-muted uppercase tracking-wider flex-1 text-left">{title}</span>
+        <Text size="xs" color="muted" className="text-[10px] uppercase tracking-wider flex-1 text-left">{title}</Text>
         {count !== undefined && (
-          <span className="bg-white/10 text-text-muted rounded-full px-1.5 text-[9px] leading-4">{count}</span>
+          <Badge size="sm" className="text-[9px] leading-4">{count}</Badge>
         )}
         {actions && (
           <span

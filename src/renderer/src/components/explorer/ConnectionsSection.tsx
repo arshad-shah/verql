@@ -6,6 +6,7 @@ import { ConnectionForm } from '@/components/connections/ConnectionForm'
 import { AccordionSection } from './AccordionSection'
 import { OverflowMenu, type MenuItem } from './OverflowMenu'
 import type { ConnectionProfile } from '@shared/types'
+import { IconButton, Text } from '@/primitives'
 
 export function ConnectionsSection() {
   const { connections, connectedIds, activeConnectionId, loadConnections, saveConnection, deleteConnection, connect, disconnect, setActiveConnection } = useConnectionsStore()
@@ -70,18 +71,20 @@ export function ConnectionsSection() {
         title="CONNECTIONS"
         count={connections.length}
         actions={
-          <button
+          <IconButton
+            label="New Connection"
+            size="xs"
+            variant="ghost"
             onClick={() => { setEditing(undefined); setShowForm(true) }}
-            className="p-0.5 text-text-muted hover:text-text-primary rounded transition-colors"
-            title="New Connection"
+            className="text-text-muted hover:text-text-primary"
           >
             <Plus size={12} />
-          </button>
+          </IconButton>
         }
       >
         <div className="px-1">
           {connections.length === 0 && (
-            <p className="text-text-muted text-xs px-2 py-4 text-center">No connections yet</p>
+            <Text size="xs" color="muted" as="p" className="px-2 py-4 text-center">No connections yet</Text>
           )}
           {connections.map((conn) => {
             const isConnected = connectedIds.has(conn.id)
@@ -98,28 +101,28 @@ export function ConnectionsSection() {
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: isConnected ? (conn.color ?? '#7c6ff7') : '#444' }}
                 />
-                <span className="text-xs truncate flex-1">{conn.name}</span>
-                <button
+                <Text size="xs" truncate className="flex-1">{conn.name}</Text>
+                <IconButton
+                  label={isConnected ? 'Disconnect' : 'Connect'}
+                  size="xs"
+                  variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation()
                     isConnected ? disconnect(conn.id) : handleConnect(conn.id)
                   }}
-                  className={`p-0.5 rounded transition-colors shrink-0 ${
-                    isConnected
-                      ? 'text-success hover:text-error'
-                      : 'text-text-muted hover:text-success'
-                  }`}
-                  title={isConnected ? 'Disconnect' : 'Connect'}
+                  className={`shrink-0 ${isConnected ? 'text-success hover:text-error' : 'text-text-muted hover:text-success'}`}
                 >
                   {isConnected ? <Unplug size={12} /> : <PlugZap size={12} />}
-                </button>
-                <button
+                </IconButton>
+                <IconButton
+                  label="Edit"
+                  size="xs"
+                  variant="ghost"
                   onClick={(e) => { e.stopPropagation(); setEditing(conn); setShowForm(true) }}
-                  className="p-0.5 text-text-muted hover:text-text-primary rounded transition-colors shrink-0"
-                  title="Edit"
+                  className="text-text-muted hover:text-text-primary shrink-0"
                 >
                   <Pencil size={12} />
-                </button>
+                </IconButton>
                 <OverflowMenu items={getOverflowItems(conn)} />
               </div>
             )

@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { SchemaTreeItem, TableIcon, ColumnIcon, formatRowCount } from '@/components/schema/SchemaTreeItem'
 import { AccordionSection } from './AccordionSection'
 import { OverflowMenu, type MenuItem } from './OverflowMenu'
+import { Text } from '@/primitives'
 
 interface TablesSectionProps {
   connectionId: string
@@ -82,9 +83,9 @@ export function TablesSection({ connectionId, activeSchema, onExportTable }: Tab
     <AccordionSection title="TABLES" count={filtered.length}>
       <div className="px-1">
         {filtered.length === 0 && (
-          <p className="text-text-muted text-xs px-2 py-3 text-center">
+          <Text size="xs" color="muted" as="p" className="px-2 py-3 text-center">
             {filterText ? 'No matching tables' : 'No tables found'}
-          </p>
+          </Text>
         )}
         {filtered.map(table => {
           const colKey = `${connectionId}:${activeSchema}:${table.name}`

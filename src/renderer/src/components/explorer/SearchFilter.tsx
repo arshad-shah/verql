@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
+import { IconButton } from '@/primitives'
 
 export function SearchFilter() {
   const filterText = useSchemaStore((s) => s.filterText)
@@ -44,9 +45,15 @@ export function SearchFilter() {
           className="flex-1 bg-transparent text-xs text-text-primary placeholder-text-muted outline-none"
         />
         {filterText && (
-          <button onClick={handleClear} className="text-text-muted hover:text-text-primary shrink-0">
+          <IconButton
+            label="Clear filter"
+            size="xs"
+            variant="ghost"
+            onClick={handleClear}
+            className="shrink-0 h-4 w-4 text-text-muted hover:text-text-primary"
+          >
             <X size={12} />
-          </button>
+          </IconButton>
         )}
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search, Play, Trash2, Clock } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { Stack, ScrollArea, Text, EmptyState, IconButton } from '@/primitives'
 
 interface SavedQuery {
   id: string
@@ -38,7 +39,7 @@ export function SavedQueriesPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <Stack className="h-full">
       {/* Search */}
       <div className="px-2 py-1.5">
         <div className="flex items-center gap-1.5 bg-bg-tertiary border border-border rounded-md px-2 py-1">
@@ -53,17 +54,14 @@ export function SavedQueriesPanel() {
       </div>
 
       {/* Query list */}
-      <div className="flex-1 overflow-y-auto px-1">
+      <ScrollArea direction="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
-          <div className="text-center py-8">
-            <Clock size={20} className="text-text-muted mx-auto mb-2" />
-            <p className="text-text-muted text-xs">
-              {queries.length === 0 ? 'No saved queries yet' : 'No matches'}
-            </p>
-            <p className="text-text-muted text-[10px] mt-1">
-              Save queries from the editor with Cmd+S
-            </p>
-          </div>
+          <EmptyState
+            icon={<Clock size={20} className="text-text-muted" />}
+            title={queries.length === 0 ? 'No saved queries yet' : 'No matches'}
+            description={queries.length === 0 ? 'Save queries from the editor with Cmd+S' : undefined}
+            className="py-8"
+          />
         )}
 
         {filtered.map(query => (
@@ -73,29 +71,33 @@ export function SavedQueriesPanel() {
             onClick={() => handleOpenQuery(query)}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-primary truncate">{query.name}</span>
+              <Text size="xs" color="primary" truncate className="flex-1">{query.name}</Text>
               <div className="hidden group-hover:flex items-center gap-0.5">
-                <button
+                <IconButton
+                  label="Open in new tab"
+                  size="xs"
+                  variant="ghost"
                   onClick={(e) => { e.stopPropagation(); handleOpenQuery(query) }}
-                  className="p-0.5 text-text-muted hover:text-success rounded"
-                  title="Open in new tab"
+                  className="text-text-muted hover:text-success"
                 >
                   <Play size={10} />
-                </button>
-                <button
+                </IconButton>
+                <IconButton
+                  label="Delete"
+                  size="xs"
+                  variant="ghost"
                   onClick={(e) => { e.stopPropagation(); handleDelete(query.id) }}
-                  className="p-0.5 text-text-muted hover:text-error rounded"
-                  title="Delete"
+                  className="text-text-muted hover:text-error"
                 >
                   <Trash2 size={10} />
-                </button>
+                </IconButton>
               </div>
             </div>
-            <p className="text-[10px] text-text-muted truncate mt-0.5 font-mono">{query.sql}</p>
+            <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">{query.sql}</Text>
           </div>
         ))}
-      </div>
-    </div>
+      </ScrollArea>
+    </Stack>
   )
 }
 

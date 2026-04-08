@@ -6,6 +6,7 @@ import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab } from '@shared/types'
+import { Flex, Divider, Text } from '@/primitives'
 
 interface Props {
   tab: QueryTab
@@ -64,9 +65,9 @@ export function QueryPanel({ tab }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Connection + schema selector + toolbar */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
+      <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
         <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} schema={tab.schema} />
-        <div className="w-px h-4 bg-border" />
+        <Divider orientation="vertical" className="h-4" />
         <QueryToolbar
           onExecute={handleExecute}
           onCancel={handleCancel}
@@ -76,7 +77,7 @@ export function QueryPanel({ tab }: Props) {
           rowCount={tab.results?.rowCount ?? null}
           error={tab.error}
         />
-      </div>
+      </Flex>
 
       {/* Editor — top half */}
       <div className="flex-1 min-h-30 border-b border-border">
@@ -95,18 +96,20 @@ export function QueryPanel({ tab }: Props) {
         {tab.results ? (
           <ResultsPanel results={tab.results} />
         ) : tab.error ? (
-          <div className="flex-1 flex items-center justify-center p-4">
+          <Flex align="center" justify="center" className="flex-1 p-4">
             <div className="bg-error/5 border border-error/20 rounded-lg p-4 max-w-lg">
-              <p className="text-error text-sm font-medium mb-1">Query Error</p>
-              <p className="text-text-secondary text-xs font-mono whitespace-pre-wrap">{tab.error}</p>
+              <Text size="sm" weight="medium" color="error" as="p" className="mb-1">Query Error</Text>
+              <Text size="xs" color="secondary" as="p" className="font-mono whitespace-pre-wrap">{tab.error}</Text>
             </div>
-          </div>
+          </Flex>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-text-muted text-sm">
-            {!tab.connectionId
-              ? 'Select a connection above to start querying'
-              : 'Run a query to see results (Cmd+Enter)'}
-          </div>
+          <Flex align="center" justify="center" className="flex-1">
+            <Text size="sm" color="muted">
+              {!tab.connectionId
+                ? 'Select a connection above to start querying'
+                : 'Run a query to see results (Cmd+Enter)'}
+            </Text>
+          </Flex>
         )}
       </div>
     </div>

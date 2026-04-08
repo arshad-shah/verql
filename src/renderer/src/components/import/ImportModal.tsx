@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { X, Upload, Loader2 } from 'lucide-react'
+import { Upload } from 'lucide-react'
+import { Modal, Button, Input, Text, Flex, Spinner } from '@/primitives'
 
 interface Props {
   connectionId: string
@@ -49,63 +50,65 @@ export function ImportModal({ connectionId, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-bg-secondary border border-border rounded-xl w-[400px]">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold">Import Data</h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text-primary"><X size={16} /></button>
+    <Modal open={true} onClose={onClose}>
+      <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
+        <Text size="sm" weight="semibold">Import Data</Text>
+        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
+      </Flex>
+
+      <div className="p-4 space-y-4">
+        <div>
+          <Text size="xs" color="muted" as="p" className="mb-2">Import Type</Text>
+          <Flex direction="row" gap="sm">
+            {(['sql', 'csv'] as ImportType[]).map(t => (
+              <Button
+                key={t}
+                variant={importType === t ? 'outline' : 'ghost'}
+                size="sm"
+                onClick={() => setImportType(t)}
+                className={`flex-1 ${importType === t ? 'border-accent text-accent bg-accent/10' : ''}`}
+              >
+                {t.toUpperCase()}
+              </Button>
+            ))}
+          </Flex>
         </div>
 
-        <div className="p-4 space-y-4">
+        {importType === 'sql' && (
+          <Text size="xs" color="secondary" as="p">Select a .sql file to execute all statements against the connected database.</Text>
+        )}
+
+        {importType === 'csv' && (
           <div>
-            <label className="block text-xs text-text-muted mb-2">Import Type</label>
-            <div className="flex gap-2">
-              {(['sql', 'csv'] as ImportType[]).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setImportType(t)}
-                  className={`flex-1 py-2 text-sm rounded-lg border transition-colors ${importType === t ? 'border-accent bg-accent/10 text-accent' : 'border-border text-text-muted hover:text-text-primary'}`}
-                >
-                  {t.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            <Text size="xs" color="muted" as="p" className="mb-1">Target Table</Text>
+            <Input
+              value={tableName}
+              onChange={e => setTableName(e.target.value)}
+              placeholder="table_name"
+              size="sm"
+            />
+            <Text size="xs" color="muted" as="p" className="mt-1">CSV column headers must match table column names.</Text>
           </div>
+        )}
 
-          {importType === 'sql' && (
-            <p className="text-xs text-text-secondary">Select a .sql file to execute all statements against the connected database.</p>
-          )}
-
-          {importType === 'csv' && (
-            <div>
-              <label className="block text-xs text-text-muted mb-1">Target Table</label>
-              <input
-                value={tableName}
-                onChange={e => setTableName(e.target.value)}
-                placeholder="table_name"
-                className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent"
-              />
-              <p className="text-xs text-text-muted mt-1">CSV column headers must match table column names.</p>
-            </div>
-          )}
-
-          {result && (
-            <p className={`text-xs ${result.startsWith('Error') ? 'text-error' : 'text-success'}`}>{result}</p>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm rounded-lg border border-border hover:bg-white/5">Cancel</button>
-          <button
-            onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
-            disabled={importing || (importType === 'csv' && !tableName.trim())}
-            className="px-4 py-1.5 text-sm rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 flex items-center gap-1.5"
-          >
-            {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-            Import
-          </button>
-        </div>
+        {result && (
+          <Text size="xs" color={result.startsWith('Error') ? 'error' : 'success'} as="p">{result}</Text>
+        )}
       </div>
-    </div>
+
+      <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+        <Button
+          variant="solid"
+          size="sm"
+          onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
+          disabled={importing || (importType === 'csv' && !tableName.trim())}
+          className="flex items-center gap-1.5"
+        >
+          {importing ? <Spinner size="xs" /> : <Upload size={14} />}
+          Import
+        </Button>
+      </Flex>
+    </Modal>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Power, PowerOff, Trash2, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Stack, ScrollArea, Flex, Text, Button, IconButton, Badge, Divider } from '@/primitives'
 
 interface PluginInfo {
   name: string
@@ -67,68 +68,86 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
   const isActive = plugin.status.state === 'active' || plugin.status.state === 'degraded'
 
   return (
-    <div className="flex flex-col h-full">
+    <Stack className="h-full">
       {/* Header */}
-      <div className="px-3 py-2 border-b border-border flex items-center gap-2">
-        <button onClick={onBack} className="p-0.5 text-text-muted hover:text-text-primary rounded transition-colors">
+      <Flex direction="row" align="center" gap="sm" className="px-3 py-2 border-b border-border">
+        <IconButton
+          label="Back"
+          size="xs"
+          variant="ghost"
+          onClick={onBack}
+          className="text-text-muted hover:text-text-primary"
+        >
           <ArrowLeft size={14} />
-        </button>
-        <span className="text-xs text-text-muted">Extension Details</span>
-      </div>
+        </IconButton>
+        <Text size="xs" color="muted">Extension Details</Text>
+      </Flex>
 
-      <div className="flex-1 overflow-y-auto">
+      <ScrollArea direction="vertical" className="flex-1">
         {/* Plugin Header */}
         <div className="px-4 pt-4 pb-3">
-          <div className="flex items-start gap-3">
+          <Flex direction="row" align="start" gap="md">
             <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
               <span className="text-lg font-bold text-accent">{plugin.displayName.charAt(0)}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-text-primary">{plugin.displayName}</h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] text-text-muted">v{plugin.version}</span>
+              <Text size="sm" weight="semibold" color="primary" as="h3">{plugin.displayName}</Text>
+              <Flex direction="row" align="center" gap="sm" className="mt-0.5">
+                <Text size="xs" color="muted" className="text-[10px]">v{plugin.version}</Text>
                 {plugin.bundled && (
-                  <span className="text-[9px] text-text-muted bg-white/5 px-1.5 py-0.5 rounded">built-in</span>
+                  <Badge size="sm" className="text-[9px]">built-in</Badge>
                 )}
-              </div>
+              </Flex>
             </div>
-          </div>
-          <p className="text-xs text-text-secondary mt-3 leading-relaxed">{plugin.description}</p>
+          </Flex>
+          <Text size="xs" color="secondary" as="p" className="mt-3 leading-relaxed">{plugin.description}</Text>
 
           {/* Action buttons */}
-          <div className="flex gap-2 mt-3">
+          <Flex direction="row" gap="sm" className="mt-3">
             {isActive ? (
-              <button onClick={handleDeactivate}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-text-secondary hover:text-warning hover:border-warning/30 transition-colors">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeactivate}
+                className="flex items-center gap-1.5 hover:text-warning hover:border-warning/30"
+              >
                 <PowerOff size={12} /> Disable
-              </button>
+              </Button>
             ) : (
-              <button onClick={handleActivate}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors">
+              <Button
+                variant="solid"
+                size="sm"
+                onClick={handleActivate}
+                className="flex items-center gap-1.5"
+              >
                 <Power size={12} /> Enable
-              </button>
+              </Button>
             )}
             {!plugin.bundled && (
-              <button onClick={handleUninstall}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted hover:text-error hover:border-error/30 transition-colors">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUninstall}
+                className="flex items-center gap-1.5 hover:text-error hover:border-error/30"
+              >
                 <Trash2 size={12} /> Uninstall
-              </button>
+              </Button>
             )}
-          </div>
+          </Flex>
         </div>
 
         {/* Status Section */}
         <Section title="Status">
-          <div className="flex items-center gap-2">
+          <Flex direction="row" align="center" gap="sm">
             <StateIcon size={14} className={stateConfig.color} />
-            <span className={`text-xs font-medium ${stateConfig.color}`}>{stateConfig.label}</span>
-          </div>
+            <Text size="xs" weight="medium" className={stateConfig.color}>{stateConfig.label}</Text>
+          </Flex>
           {plugin.status.phase && plugin.status.state === 'error' && (
-            <p className="text-[10px] text-text-muted mt-1">Failed during: {plugin.status.phase}</p>
+            <Text size="xs" color="muted" as="p" className="text-[10px] mt-1">Failed during: {plugin.status.phase}</Text>
           )}
           {plugin.status.error && (
             <div className="mt-2 p-2 bg-red-500/5 border border-red-500/10 rounded-md">
-              <p className="text-[10px] text-red-400">{plugin.status.error}</p>
+              <Text size="xs" className="text-[10px] text-red-400">{plugin.status.error}</Text>
             </div>
           )}
         </Section>
@@ -136,26 +155,24 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
         {/* Contributions Section */}
         {plugin.contributions.length > 0 && (
           <Section title="Contributions">
-            <div className="space-y-1">
+            <Stack gap="xs">
               {plugin.contributions.map((c, i) => {
                 const [type, name] = c.includes(':') ? c.split(':') : ['feature', c]
                 return (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-[9px] uppercase tracking-wide text-text-muted bg-white/5 px-1.5 py-0.5 rounded w-16 text-center shrink-0">
-                      {type}
-                    </span>
-                    <span className="text-xs text-text-secondary">{name}</span>
-                  </div>
+                  <Flex key={i} direction="row" align="center" gap="sm">
+                    <Badge size="sm" className="text-[9px] w-16 text-center shrink-0">{type}</Badge>
+                    <Text size="xs" color="secondary">{name}</Text>
+                  </Flex>
                 )
               })}
-            </div>
+            </Stack>
           </Section>
         )}
 
         {/* Error Log Section */}
         {errors.length > 0 && (
           <Section title={`Error Log (${errors.length})`}>
-            <div className="space-y-1">
+            <Stack gap="xs">
               {errors.slice(-10).reverse().map((err, i) => (
                 <div key={i}>
                   <button
@@ -164,8 +181,8 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
                   >
                     <XCircle size={10} className="text-red-400 mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] text-text-secondary truncate">{err.error}</p>
-                      <p className="text-[9px] text-text-muted">{new Date(err.timestamp).toLocaleString()}</p>
+                      <Text size="xs" color="secondary" truncate className="text-[10px] block">{err.error}</Text>
+                      <Text size="xs" color="muted" className="text-[9px]">{new Date(err.timestamp).toLocaleString()}</Text>
                     </div>
                   </button>
                   {expandedError === i && err.stack && (
@@ -175,27 +192,27 @@ export function PluginDetailView({ plugin, onBack, onRefresh }: Props) {
                   )}
                 </div>
               ))}
-            </div>
+            </Stack>
           </Section>
         )}
 
         {/* Identifier */}
         <Section title="Info">
-          <div className="space-y-1.5">
+          <Stack gap="xs">
             <InfoRow label="Identifier" value={plugin.name} />
             <InfoRow label="Version" value={plugin.version} />
             <InfoRow label="Source" value={plugin.bundled ? 'Built-in' : 'User installed'} />
-          </div>
+          </Stack>
         </Section>
-      </div>
-    </div>
+      </ScrollArea>
+    </Stack>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="px-4 py-3 border-t border-border">
-      <h4 className="text-[10px] font-medium text-text-muted uppercase tracking-wide mb-2">{title}</h4>
+      <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{title}</Text>
       {children}
     </div>
   )
@@ -203,9 +220,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-[10px] text-text-muted">{label}</span>
-      <span className="text-[10px] text-text-secondary font-mono">{value}</span>
-    </div>
+    <Flex direction="row" align="center" justify="between">
+      <Text size="xs" color="muted" className="text-[10px]">{label}</Text>
+      <Text size="xs" color="secondary" className="text-[10px] font-mono">{value}</Text>
+    </Flex>
   )
 }

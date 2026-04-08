@@ -5,6 +5,7 @@ import { ChartPanel } from '@/components/charts/ChartPanel'
 import { QueryPlanView } from '@/components/query-plan/QueryPlanView'
 import { Table2, BarChart3, GitBranch } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
+import { Flex, Button, Text } from '@/primitives'
 
 type ResultTab = 'grid' | 'chart' | 'plan'
 
@@ -23,19 +24,21 @@ export function ResultsPanel({ results }: Props) {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex items-center gap-1 px-3 py-1 border-b border-border bg-bg-secondary shrink-0">
+      <Flex direction="row" align="center" gap="xs" className="px-3 py-1 border-b border-border bg-bg-secondary shrink-0">
         {tabs.map(({ id, label, icon: Icon }) => (
-          <button
+          <Button
             key={id}
+            variant="ghost"
+            size="xs"
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded transition-colors ${
+            className={`flex items-center gap-1 ${
               activeTab === id ? 'text-text-primary bg-white/10' : 'text-text-muted hover:text-text-primary'
             }`}
           >
             <Icon size={12} /> {label}
-          </button>
+          </Button>
         ))}
-      </div>
+      </Flex>
 
       <div className="flex-1 flex flex-col min-h-0">
         {activeTab === 'grid' && (

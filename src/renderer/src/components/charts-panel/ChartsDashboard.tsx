@@ -2,6 +2,7 @@ import { BarChart3 } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab } from '@shared/types'
+import { Stack, ScrollArea, Flex, Text, EmptyState } from '@/primitives'
 
 export function ChartsDashboard() {
   const { tabs } = useTabsStore()
@@ -13,16 +14,15 @@ export function ChartsDashboard() {
   )
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto px-1 py-1">
+    <Stack className="h-full">
+      <ScrollArea direction="vertical" className="flex-1 px-1 py-1">
         {queryTabsWithResults.length === 0 && (
-          <div className="text-center py-8">
-            <BarChart3 size={20} className="text-text-muted mx-auto mb-2" />
-            <p className="text-text-muted text-xs">No chart data yet</p>
-            <p className="text-text-muted text-[10px] mt-1">
-              Run a query, then switch to the Chart tab in results
-            </p>
-          </div>
+          <EmptyState
+            icon={<BarChart3 size={20} className="text-text-muted" />}
+            title="No chart data yet"
+            description="Run a query, then switch to the Chart tab in results"
+            className="py-8"
+          />
         )}
 
         {queryTabsWithResults.map(tab => (
@@ -31,19 +31,19 @@ export function ChartsDashboard() {
             className="px-2 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors mb-0.5"
             onClick={() => useTabsStore.getState().setActiveTab(tab.id)}
           >
-            <div className="flex items-center gap-2">
+            <Flex direction="row" align="center" gap="sm">
               <BarChart3 size={12} className="text-accent shrink-0" />
-              <span className="text-xs text-text-primary truncate">{tab.title}</span>
-              <span className="text-[10px] text-text-muted ml-auto">
+              <Text size="xs" color="primary" truncate className="flex-1">{tab.title}</Text>
+              <Text size="xs" color="muted" className="text-[10px] ml-auto">
                 {tab.results?.rowCount} rows
-              </span>
-            </div>
-            <p className="text-[10px] text-text-muted truncate mt-0.5 font-mono pl-5">
+              </Text>
+            </Flex>
+            <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono pl-5 block">
               {tab.sql.slice(0, 60)}{tab.sql.length > 60 ? '...' : ''}
-            </p>
+            </Text>
           </div>
         ))}
-      </div>
-    </div>
+      </ScrollArea>
+    </Stack>
   )
 }

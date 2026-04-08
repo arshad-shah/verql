@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
+import { IconButton, Text } from '@/primitives'
 
 export interface MenuItem {
   label: string
@@ -41,14 +42,16 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
 
   return (
     <>
-      <button
+      <IconButton
         ref={buttonRef}
+        label="More actions"
+        size="xs"
+        variant="ghost"
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-        className="p-0.5 text-text-muted hover:text-text-primary rounded transition-colors"
-        title="More actions"
+        className="text-text-muted hover:text-text-primary"
       >
         <MoreHorizontal size={12} />
-      </button>
+      </IconButton>
       {open && rect && createPortal(
         <div
           ref={menuRef}
@@ -68,7 +71,7 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
               }`}
             >
               {item.icon && <span className="shrink-0">{item.icon}</span>}
-              {item.label}
+              <Text size="xs" color={item.variant === 'danger' ? 'error' : 'secondary'}>{item.label}</Text>
             </button>
           ))}
         </div>,

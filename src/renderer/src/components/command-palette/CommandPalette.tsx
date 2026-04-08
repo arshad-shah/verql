@@ -3,6 +3,7 @@ import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { Input, ScrollArea, Text, Kbd } from '@/primitives'
 
 interface Command {
   id: string
@@ -91,20 +92,21 @@ export function CommandPalette({ open, onClose }: Props) {
         {/* Search input */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
           <Search size={16} className="text-text-muted shrink-0" />
-          <input
+          <Input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a command..."
-            className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+            size="sm"
+            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
         </div>
 
         {/* Results */}
-        <div className="max-h-72 overflow-y-auto py-1">
+        <ScrollArea direction="vertical" className="max-h-72 py-1">
           {filtered.length === 0 && (
-            <p className="text-text-muted text-xs px-4 py-3 text-center">No matching commands</p>
+            <Text size="xs" color="muted" as="p" className="px-4 py-3 text-center">No matching commands</Text>
           )}
           {filtered.map((cmd, i) => (
             <button
@@ -115,15 +117,13 @@ export function CommandPalette({ open, onClose }: Props) {
               }`}
             >
               <div className="flex items-center gap-2">
-                {cmd.category && <span className="text-[10px] text-text-muted uppercase">{cmd.category}</span>}
-                <span className="text-xs">{cmd.title}</span>
+                {cmd.category && <Text size="xs" color="muted" className="text-[10px] uppercase">{cmd.category}</Text>}
+                <Text size="xs">{cmd.title}</Text>
               </div>
-              {cmd.keybinding && (
-                <span className="text-[10px] text-text-muted bg-bg-tertiary px-1.5 py-0.5 rounded">{cmd.keybinding}</span>
-              )}
+              {cmd.keybinding && <Kbd>{cmd.keybinding}</Kbd>}
             </button>
           ))}
-        </div>
+        </ScrollArea>
       </div>
     </>
   )

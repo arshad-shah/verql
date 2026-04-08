@@ -1,5 +1,6 @@
 import { ChevronRight, ChevronDown, Table2, Eye, Key, Link, Hash } from 'lucide-react'
 import type { SchemaColumn } from '@shared/types'
+import { Text } from '@/primitives'
 
 interface Props {
   label: string
@@ -30,8 +31,8 @@ export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onC
           <span className="w-3 shrink-0" />
         )}
         {icon && <span className="shrink-0">{icon}</span>}
-        <span className="truncate text-text-secondary flex-1">{label}</span>
-        {meta && <span className="text-text-muted text-[9px] shrink-0">{meta}</span>}
+        <Text size="xs" color="secondary" truncate className="flex-1">{label}</Text>
+        {meta && <Text size="xs" color="muted" className="text-[9px] shrink-0">{meta}</Text>}
         {actions && <span className="flex items-center gap-0.5 shrink-0">{actions}</span>}
       </div>
       {expanded && children && <div>{children}</div>}

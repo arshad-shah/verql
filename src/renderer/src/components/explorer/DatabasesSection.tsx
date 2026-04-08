@@ -5,6 +5,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
 import { AccordionSection } from './AccordionSection'
+import { IconButton, Text, ScrollArea } from '@/primitives'
 
 interface DatabasesSectionProps {
   connectionId: string
@@ -74,20 +75,24 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
       count={databaseList.length || undefined}
       actions={
         <div className="flex items-center gap-0.5">
-          <button
+          <IconButton
+            label="ER Diagram"
+            size="xs"
+            variant="ghost"
             onClick={handleOpenErDiagram}
-            className="p-0.5 text-text-muted hover:text-accent rounded transition-colors"
-            title="ER Diagram"
+            className="text-text-muted hover:text-accent"
           >
             <GitFork size={12} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
+            label="Refresh"
+            size="xs"
+            variant="ghost"
             onClick={handleRefresh}
-            className="p-0.5 text-text-muted hover:text-text-primary rounded transition-colors"
-            title="Refresh"
+            className="text-text-muted hover:text-text-primary"
           >
             <RefreshCw size={11} />
-          </button>
+          </IconButton>
         </div>
       }
     >
@@ -113,7 +118,7 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
         )}
 
         <div className="relative flex items-center gap-1.5">
-          <span className="text-[10px] text-text-muted">Schema:</span>
+          <Text size="xs" color="muted" className="text-[10px]">Schema:</Text>
           <button
             onClick={() => setShowSchemaPicker(!showSchemaPicker)}
             className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
@@ -125,7 +130,7 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
           {showSchemaPicker && schemaList.length > 1 && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowSchemaPicker(false)} />
-              <div className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-32 py-1 max-h-48 overflow-y-auto">
+              <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-32 py-1 max-h-48">
                 {schemaList.map(s => (
                   <button
                     key={s}
@@ -138,7 +143,7 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
                     {s}
                   </button>
                 ))}
-              </div>
+              </ScrollArea>
             </>
           )}
         </div>

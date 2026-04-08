@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, ChevronDown, ChevronRight, Search } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
+import { Modal, Button, Input, Text, Flex, Stack, Checkbox, Label, ScrollArea } from '@/primitives'
 
 interface Props {
   initial?: ConnectionProfile
@@ -111,172 +112,169 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
 
     if (field.type === 'boolean') {
       return (
-        <label key={field.key} className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-          <input type="checkbox" checked={!!profile[field.key]} onChange={(e) => update({ [field.key]: e.target.checked })} className="accent-accent" />
-          {field.label}
-        </label>
+        <Flex key={field.key} direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => update({ [field.key]: !profile[field.key] })}>
+          <Checkbox checked={!!profile[field.key]} onChange={(e) => update({ [field.key]: e.target.checked })} />
+          <Text size="sm" color="secondary">{field.label}</Text>
+        </Flex>
       )
     }
 
     return (
       <div key={field.key}>
-        <label className="block text-xs text-text-muted mb-1">{field.label}</label>
-        <input
+        <Label className="block mb-1"><Text size="xs" color="muted">{field.label}</Text></Label>
+        <Input
           type={field.type === 'password' ? 'password' : field.type === 'number' ? 'number' : 'text'}
           required={field.required}
           value={String(value)}
           onChange={(e) => update({ [field.key]: field.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value })}
-          className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent"
+          size="sm"
         />
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <form onSubmit={handleSubmit} className="bg-bg-secondary border border-border rounded-xl w-[480px] max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold">{initial ? 'Edit Connection' : 'New Connection'}</h2>
-          <button type="button" onClick={onClose} className="text-text-muted hover:text-text-primary"><X size={16} /></button>
-        </div>
-        <div className="p-4 space-y-4">
-          {/* Database type selector */}
-          <div ref={dropdownRef} className="relative">
-            <label className="block text-xs text-text-muted mb-1">Database Type</label>
-            <button type="button" onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-              className="w-full flex items-center justify-between bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary hover:border-accent/50 transition-colors">
-              <span>{selectedType?.label ?? profile.type}</span>
-              <ChevronDown size={14} className={`text-text-muted transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {typeDropdownOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-bg-secondary border border-border rounded-lg shadow-xl overflow-hidden">
-                {allTypes.length > 5 && (
-                  <div className="p-2 border-b border-border">
-                    <div className="flex items-center gap-2 bg-bg-tertiary rounded-md px-2 py-1.5">
-                      <Search size={12} className="text-text-muted shrink-0" />
-                      <input
-                        autoFocus
-                        value={typeSearch}
-                        onChange={(e) => setTypeSearch(e.target.value)}
-                        placeholder="Search databases..."
-                        className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
-                      />
+    <Modal open={true} onClose={onClose} className="w-[480px] max-w-[95vw]">
+      <form onSubmit={handleSubmit}>
+        <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
+          <Text size="sm" weight="semibold">{initial ? 'Edit Connection' : 'New Connection'}</Text>
+          <Button type="button" variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
+        </Flex>
+
+        <ScrollArea direction="vertical" className="max-h-[70vh]">
+          <Stack gap="md" className="p-4">
+            {/* Database type selector */}
+            <div ref={dropdownRef} className="relative">
+              <Label className="block mb-1"><Text size="xs" color="muted">Database Type</Text></Label>
+              <button type="button" onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                className="w-full flex items-center justify-between bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary hover:border-accent/50 transition-colors">
+                <span>{selectedType?.label ?? profile.type}</span>
+                <ChevronDown size={14} className={`text-text-muted transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {typeDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-bg-secondary border border-border rounded-lg shadow-xl overflow-hidden">
+                  {allTypes.length > 5 && (
+                    <div className="p-2 border-b border-border">
+                      <div className="flex items-center gap-2 bg-bg-tertiary rounded-md px-2 py-1.5">
+                        <Search size={12} className="text-text-muted shrink-0" />
+                        <input
+                          autoFocus
+                          value={typeSearch}
+                          onChange={(e) => setTypeSearch(e.target.value)}
+                          placeholder="Search databases..."
+                          className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
-                <div className="max-h-48 overflow-y-auto py-1">
-                  {filteredTypes.length === 0 && (
-                    <div className="px-3 py-2 text-xs text-text-muted">No matches</div>
                   )}
-                  {filteredTypes.map(({ value, label }) => (
-                    <button key={value} type="button"
-                      onClick={() => { handleTypeChange(value); setTypeDropdownOpen(false); setTypeSearch('') }}
-                      className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
-                        profile.type === value
-                          ? 'bg-accent/10 text-accent'
-                          : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
-                      }`}>
-                      {label}
-                    </button>
-                  ))}
+                  <ScrollArea direction="vertical" className="max-h-48 py-1">
+                    {filteredTypes.length === 0 && (
+                      <Text size="xs" color="muted" as="p" className="px-3 py-2">No matches</Text>
+                    )}
+                    {filteredTypes.map(({ value, label }) => (
+                      <button key={value} type="button"
+                        onClick={() => { handleTypeChange(value); setTypeDropdownOpen(false); setTypeSearch('') }}
+                        className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+                          profile.type === value
+                            ? 'bg-accent/10 text-accent'
+                            : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                        }`}>
+                        {label}
+                      </button>
+                    ))}
+                  </ScrollArea>
                 </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="block mb-1"><Text size="xs" color="muted">Connection Name</Text></Label>
+              <Input required value={String(profile.name ?? '')} onChange={(e) => update({ name: e.target.value })} placeholder="My Database" size="sm" />
+            </div>
+
+            <div>
+              <Label className="block mb-1"><Text size="xs" color="muted">Color</Text></Label>
+              <Flex direction="row" gap="sm">
+                {COLORS.map(c => (
+                  <button key={c} type="button" onClick={() => update({ color: c })}
+                    className={`w-6 h-6 rounded-full border-2 transition-transform ${profile.color === c ? 'border-white scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: c }} />
+                ))}
+              </Flex>
+            </div>
+
+            {isBuiltin ? (
+              <>
+                {isSqlite ? (
+                  <div>
+                    <Label className="block mb-1"><Text size="xs" color="muted">Database File</Text></Label>
+                    <Input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="/path/to/database.sqlite" size="sm" />
+                  </div>
+                ) : (
+                  <>
+                    <Flex direction="row" gap="md">
+                      <div className="flex-1">
+                        <Label className="block mb-1"><Text size="xs" color="muted">Host</Text></Label>
+                        <Input required value={String(profile.host ?? '')} onChange={(e) => update({ host: e.target.value })} placeholder="localhost" size="sm" />
+                      </div>
+                      <div className="w-24">
+                        <Label className="block mb-1"><Text size="xs" color="muted">Port</Text></Label>
+                        <Input required type="number" value={String(profile.port ?? '')} onChange={(e) => update({ port: parseInt(e.target.value) || 0 })} size="sm" />
+                      </div>
+                    </Flex>
+                    <div>
+                      <Label className="block mb-1"><Text size="xs" color="muted">Database</Text></Label>
+                      <Input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="mydb" size="sm" />
+                    </div>
+                    <Flex direction="row" gap="md">
+                      <div className="flex-1">
+                        <Label className="block mb-1"><Text size="xs" color="muted">Username</Text></Label>
+                        <Input value={String(profile.username ?? '')} onChange={(e) => update({ username: e.target.value })} placeholder="postgres" size="sm" />
+                      </div>
+                      <div className="flex-1">
+                        <Label className="block mb-1"><Text size="xs" color="muted">Password</Text></Label>
+                        <Input type="password" value={String(profile.password ?? '')} onChange={(e) => update({ password: e.target.value })} size="sm" />
+                      </div>
+                    </Flex>
+                    <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => update({ ssl: !profile.ssl })}>
+                      <Checkbox checked={!!profile.ssl} onChange={(e) => update({ ssl: e.target.checked })} />
+                      <Text size="sm" color="secondary">Use SSL</Text>
+                    </Flex>
+                  </>
+                )}
+              </>
+            ) : activePluginDriver ? (
+              <Stack gap="md">
+                {activePluginDriver.connectionFields.filter(f => !f.group).map(renderField)}
+              </Stack>
+            ) : null}
+
+            {sshFields.length > 0 && !isSqlite && (
+              <div className="border border-border rounded-lg">
+                <button type="button" onClick={() => setSshExpanded(!sshExpanded)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary">
+                  {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  SSH Tunnel
+                </button>
+                {sshExpanded && (
+                  <Stack gap="md" className="px-3 pb-3">
+                    {sshFields.map(renderField)}
+                  </Stack>
+                )}
               </div>
             )}
-          </div>
 
-          <div>
-            <label className="block text-xs text-text-muted mb-1">Connection Name</label>
-            <input required value={String(profile.name ?? '')} onChange={(e) => update({ name: e.target.value })} placeholder="My Database"
-              className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-          </div>
+            <ConnectionTestButton profile={profile as ConnectionProfile} />
+          </Stack>
+        </ScrollArea>
 
-          <div>
-            <label className="block text-xs text-text-muted mb-1">Color</label>
-            <div className="flex gap-2">
-              {COLORS.map(c => (
-                <button key={c} type="button" onClick={() => update({ color: c })}
-                  className={`w-6 h-6 rounded-full border-2 transition-transform ${profile.color === c ? 'border-white scale-110' : 'border-transparent'}`}
-                  style={{ backgroundColor: c }} />
-              ))}
-            </div>
-          </div>
-
-          {isBuiltin ? (
-            <>
-              {isSqlite ? (
-                <div>
-                  <label className="block text-xs text-text-muted mb-1">Database File</label>
-                  <input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="/path/to/database.sqlite"
-                    className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label className="block text-xs text-text-muted mb-1">Host</label>
-                      <input required value={String(profile.host ?? '')} onChange={(e) => update({ host: e.target.value })} placeholder="localhost"
-                        className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                    </div>
-                    <div className="w-24">
-                      <label className="block text-xs text-text-muted mb-1">Port</label>
-                      <input required type="number" value={String(profile.port ?? '')} onChange={(e) => update({ port: parseInt(e.target.value) || 0 })}
-                        className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-text-muted mb-1">Database</label>
-                    <input required value={String(profile.database ?? '')} onChange={(e) => update({ database: e.target.value })} placeholder="mydb"
-                      className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <label className="block text-xs text-text-muted mb-1">Username</label>
-                      <input value={String(profile.username ?? '')} onChange={(e) => update({ username: e.target.value })} placeholder="postgres"
-                        className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-text-muted mb-1">Password</label>
-                      <input type="password" value={String(profile.password ?? '')} onChange={(e) => update({ password: e.target.value })}
-                        className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent" />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-                    <input type="checkbox" checked={!!profile.ssl} onChange={(e) => update({ ssl: e.target.checked })} className="accent-accent" />
-                    Use SSL
-                  </label>
-                </>
-              )}
-            </>
-          ) : activePluginDriver ? (
-            <div className="space-y-4">
-              {activePluginDriver.connectionFields.filter(f => !f.group).map(renderField)}
-            </div>
-          ) : null}
-
-          {sshFields.length > 0 && !isSqlite && (
-            <div className="border border-border rounded-lg">
-              <button type="button" onClick={() => setSshExpanded(!sshExpanded)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary">
-                {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                SSH Tunnel
-              </button>
-              {sshExpanded && (
-                <div className="px-3 pb-3 space-y-3">
-                  {sshFields.map(renderField)}
-                </div>
-              )}
-            </div>
-          )}
-
-          <ConnectionTestButton profile={profile as ConnectionProfile} />
-        </div>
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
-          <button type="button" onClick={onClose} className="px-4 py-1.5 text-sm rounded-lg border border-border hover:bg-white/5">Cancel</button>
-          <button type="submit" className="px-4 py-1.5 text-sm rounded-lg bg-accent text-white hover:bg-accent-hover">
+        <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="solid" size="sm">
             {initial ? 'Save Changes' : 'Add Connection'}
-          </button>
-        </div>
+          </Button>
+        </Flex>
       </form>
-    </div>
+    </Modal>
   )
 }

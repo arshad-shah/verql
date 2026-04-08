@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle } from 'lucide-react'
 import type { ConnectionProfile } from '@shared/types'
+import { Flex, Button, Text, Spinner } from '@/primitives'
 
 interface Props {
   profile: ConnectionProfile
@@ -24,20 +25,29 @@ export function ConnectionTestButton({ profile }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
+    <Flex direction="row" align="center" gap="sm">
+      <Button
+        variant="outline"
+        size="sm"
         onClick={test}
         disabled={status === 'testing'}
-        className="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-white/5 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5"
       >
-        {status === 'testing' ? <Loader2 size={14} className="animate-spin" /> : 'Test Connection'}
-      </button>
+        {status === 'testing' ? <Spinner size="xs" /> : null}
+        Test Connection
+      </Button>
       {status === 'success' && (
-        <span className="text-success text-xs flex items-center gap-1"><CheckCircle size={12} /> {message}</span>
+        <Flex direction="row" align="center" gap="xs">
+          <CheckCircle size={12} className="text-success" />
+          <Text size="xs" color="success">{message}</Text>
+        </Flex>
       )}
       {status === 'error' && (
-        <span className="text-error text-xs flex items-center gap-1"><XCircle size={12} /> {message}</span>
+        <Flex direction="row" align="center" gap="xs">
+          <XCircle size={12} className="text-error" />
+          <Text size="xs" color="error">{message}</Text>
+        </Flex>
       )}
-    </div>
+    </Flex>
   )
 }
