@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUiStore } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
 import { SearchFilter } from '@/components/explorer/SearchFilter'
@@ -37,6 +37,13 @@ export function Sidebar() {
   const defaultSchema = conn?.type === 'sqlite' ? 'main' : conn?.type === 'mysql' ? conn.database : 'public'
   const [activeSchema, setActiveSchema] = useState(defaultSchema ?? 'public')
   const [activeDatabase, setActiveDatabase] = useState(conn?.database ?? '')
+
+  // Reset schema and database when connection changes
+  useEffect(() => {
+    const newDefault = conn?.type === 'sqlite' ? 'main' : conn?.type === 'mysql' ? conn.database : 'public'
+    setActiveSchema(newDefault ?? 'public')
+    setActiveDatabase(conn?.database ?? '')
+  }, [activeConnectionId, conn?.type, conn?.database])
 
   return (
     <div className="w-60 bg-bg-secondary border-r border-border flex flex-col shrink-0">
