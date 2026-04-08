@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
 
@@ -31,6 +31,9 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
   const [pluginDrivers, setPluginDrivers] = useState<PluginDriver[]>([])
   const [middlewareFields, setMiddlewareFields] = useState<MiddlewareField[]>([])
   const [sshExpanded, setSshExpanded] = useState(false)
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
+  const [typeSearch, setTypeSearch] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [profile, setProfile] = useState<Record<string, unknown>>({
     id: crypto.randomUUID(),
@@ -54,6 +57,24 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
     ...BUILTIN_TYPES.map(t => ({ value: t.value, label: t.label })),
     ...pluginDrivers.map(d => ({ value: d.driverId as DatabaseType, label: d.driverName.charAt(0).toUpperCase() + d.driverName.slice(1) }))
   ]
+
+  const selectedType = allTypes.find(t => t.value === profile.type)
+  const filteredTypes = typeSearch
+    ? allTypes.filter(t => t.label.toLowerCase().includes(typeSearch.toLowerCase()))
+    : allTypes
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!typeDropdownOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setTypeDropdownOpen(false)
+        setTypeSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [typeDropdownOpen])
 
   const isBuiltin = BUILTIN_TYPES.some(t => t.value === profile.type)
   const activePluginDriver = pluginDrivers.find(d => d.driverId === profile.type)
@@ -119,13 +140,48 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
           <button type="button" onClick={onClose} className="text-text-muted hover:text-text-primary"><X size={16} /></button>
         </div>
         <div className="p-4 space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            {allTypes.map(({ value, label }) => (
-              <button key={value} type="button" onClick={() => handleTypeChange(value)}
-                className={`flex-1 min-w-20 py-2 text-sm rounded-lg border transition-colors ${profile.type === value ? 'border-accent bg-accent/10 text-accent' : 'border-border text-text-muted hover:text-text-primary'}`}>
-                {label}
-              </button>
-            ))}
+          {/* Database type selector */}
+          <div ref={dropdownRef} className="relative">
+            <label className="block text-xs text-text-muted mb-1">Database Type</label>
+            <button type="button" onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+              className="w-full flex items-center justify-between bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary hover:border-accent/50 transition-colors">
+              <span>{selectedType?.label ?? profile.type}</span>
+              <ChevronDown size={14} className={`text-text-muted transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {typeDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-bg-secondary border border-border rounded-lg shadow-xl overflow-hidden">
+                {allTypes.length > 5 && (
+                  <div className="p-2 border-b border-border">
+                    <div className="flex items-center gap-2 bg-bg-tertiary rounded-md px-2 py-1.5">
+                      <Search size={12} className="text-text-muted shrink-0" />
+                      <input
+                        autoFocus
+                        value={typeSearch}
+                        onChange={(e) => setTypeSearch(e.target.value)}
+                        placeholder="Search databases..."
+                        className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="max-h-48 overflow-y-auto py-1">
+                  {filteredTypes.length === 0 && (
+                    <div className="px-3 py-2 text-xs text-text-muted">No matches</div>
+                  )}
+                  {filteredTypes.map(({ value, label }) => (
+                    <button key={value} type="button"
+                      onClick={() => { handleTypeChange(value); setTypeDropdownOpen(false); setTypeSearch('') }}
+                      className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
+                        profile.type === value
+                          ? 'bg-accent/10 text-accent'
+                          : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                      }`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

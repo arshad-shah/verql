@@ -404,6 +404,7 @@ export function registerIpcHandlers(): void {
       displayName: p.manifest.displayName,
       version: p.manifest.version,
       description: p.manifest.description,
+      bundled: p.path === '<bundled>',
       status: p.status as { state: string; error?: string; phase?: string; contributions?: string[] },
       contributions: p.status.state === 'active' ? p.status.contributions
         : p.status.state === 'degraded' ? p.status.contributions
