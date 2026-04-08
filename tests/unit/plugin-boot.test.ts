@@ -118,7 +118,7 @@ describe('PluginBootCoordinator', () => {
     }
 
     const activated = await coordinator.activatePlugin(plugin)
-    coordinator.deactivatePlugin(activated)
+    await coordinator.deactivatePlugin(activated)
     expect(deactivateFn).toHaveBeenCalledOnce()
     expect(activated.status.state).toBe('inactive')
   })

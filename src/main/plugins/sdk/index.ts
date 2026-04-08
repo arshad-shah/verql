@@ -38,7 +38,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
       return disposable
     },
     registerConnectionMiddleware(id: string, middleware: Parameters<DriverRegistryImpl['registerConnectionMiddleware']>[1]) {
-      const disposable = deps.driverRegistry.registerConnectionMiddleware(id, middleware)
+      const disposable = deps.driverRegistry.registerConnectionMiddleware(id, middleware, pluginName)
       subscriptions.push(disposable)
       return disposable
     }

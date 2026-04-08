@@ -16,7 +16,7 @@ import type { ConnectionProfile } from '@shared/types'
 // ─── Manifest Validation ─────────────────────────────────────────────────────
 
 const NAME_PATTERN = /^[a-z0-9-]+$/
-const SEMVER_PATTERN = /^\d+\.\d+\.\d+/
+const SEMVER_PATTERN = /^\d+\.\d+\.\d+(-[\w.]+)?(\+[\w.]+)?$/
 
 export interface ValidationResult {
   valid: boolean
@@ -377,10 +377,10 @@ export class PluginBootCoordinator {
 
   // ── Deactivate ─────────────────────────────────────────────────────────────
 
-  deactivatePlugin(plugin: LoadedPlugin): void {
+  async deactivatePlugin(plugin: LoadedPlugin): Promise<void> {
     if (plugin.module?.deactivate) {
       try {
-        plugin.module.deactivate()
+        await plugin.module.deactivate()
       } catch {
         // Ignore deactivation errors
       }
@@ -426,6 +426,25 @@ export class PluginBootCoordinator {
     return this.errorBudget
   }
 
+  /** Wrap a plugin call with error budget tracking. Auto-deactivates on budget exceeded. */
+  async safeCallWithBudget<T>(pluginName: string, fn: () => T | Promise<T>, options?: { timeoutMs?: number }): Promise<T> {
+    try {
+      return await safeCall(pluginName, fn, options)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      const exceeded = this.errorBudget.record(pluginName, error)
+      if (exceeded) {
+        const plugin = this.plugins.get(pluginName)
+        if (plugin && plugin.status.state !== 'error' && plugin.status.state !== 'inactive') {
+          await this.deactivatePlugin(plugin)
+          plugin.status = { state: 'error', error: `Disabled due to repeated errors (${this.errorBudget.getErrors(pluginName).length} in window)`, phase: 'runtime' }
+          console.warn(`[plugins] ${pluginName} auto-deactivated due to repeated errors`)
+        }
+      }
+      throw err
+    }
+  }
+
   // ── Install / Uninstall ────────────────────────────────────────────────────
 
   installFromPath(sourcePath: string): { success: boolean; name?: string; error?: string } {
@@ -448,7 +467,15 @@ export class PluginBootCoordinator {
       }
       fs.cpSync(sourcePath, destDir, { recursive: true })
 
-      this.discover([this.getPluginDir()])
+      // Parse and add only the new plugin (don't clear existing state)
+      const manifest = this.parseManifest(destDir, name)
+      if (manifest) {
+        this.plugins.set(manifest.name, {
+          manifest,
+          path: destDir,
+          status: { state: 'discovered' }
+        })
+      }
       return { success: true, name }
     } catch (err) {
       return { success: false, error: (err as Error).message }

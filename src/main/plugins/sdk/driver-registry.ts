@@ -1,7 +1,8 @@
 import type { Disposable, DriverFactory, DriverRegistry, ConnectionMiddleware } from './types'
 
-interface MiddlewareEntry {
+export interface MiddlewareEntry {
   id: string
+  pluginName: string
   middleware: ConnectionMiddleware
 }
 
@@ -29,11 +30,11 @@ export class DriverRegistryImpl implements DriverRegistry {
     return [...this.drivers.keys()]
   }
 
-  registerConnectionMiddleware(id: string, middleware: ConnectionMiddleware): Disposable {
+  registerConnectionMiddleware(id: string, middleware: ConnectionMiddleware, pluginName: string = 'unknown'): Disposable {
     if (this.middlewares.has(id)) {
       throw new Error(`Connection middleware '${id}' is already registered`)
     }
-    const entry: MiddlewareEntry = { id, middleware }
+    const entry: MiddlewareEntry = { id, pluginName, middleware }
     this.middlewares.set(id, entry)
     return { dispose: () => { this.middlewares.delete(id) } }
   }

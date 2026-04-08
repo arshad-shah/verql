@@ -12,12 +12,16 @@ export class CommandRegistryImpl implements CommandRegistry {
     return { dispose: () => { this.commands.delete(id) } }
   }
 
-  async execute(id: string): Promise<void> {
+  async execute(id: string, wrapper?: <T>(fn: () => T | Promise<T>) => Promise<T>): Promise<void> {
     const handler = this.commands.get(id)
     if (!handler) {
       throw new Error(`Command '${id}' not found`)
     }
-    await handler()
+    if (wrapper) {
+      await wrapper(handler)
+    } else {
+      await handler()
+    }
   }
 
   has(id: string): boolean {

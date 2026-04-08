@@ -117,9 +117,9 @@ export function registerIpcHandlers(): void {
       if (activeAdapters.has(profileId)) return { success: true }
 
       // Run connection middleware chain
-      for (const { middleware } of driverRegistry.getMiddlewares()) {
+      for (const { middleware, pluginName } of driverRegistry.getMiddlewares()) {
         if (middleware.shouldApply(profile)) {
-          profile = await safeCall('middleware', () => middleware.beforeConnect(profile!), { timeoutMs: 15_000 })
+          profile = await safeCall(pluginName, () => middleware.beforeConnect(profile!), { timeoutMs: 15_000 })
         }
       }
 
@@ -397,7 +397,7 @@ export function registerIpcHandlers(): void {
 
   handle('plugins:deactivate', async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
-    if (plugin) pluginCoordinator.deactivatePlugin(plugin)
+    if (plugin) await pluginCoordinator.deactivatePlugin(plugin)
   })
 
   handle('plugins:install-from-path', async (pluginPath) => {
