@@ -8,6 +8,8 @@ interface SchemaState {
   schemas: Map<string, string[]>
   databases: Map<string, string[]>
   expandedTables: Set<string>
+  filterText: string
+  rowCounts: Map<string, number>
   loading: boolean
 
   fetchDatabases: (connectionId: string) => Promise<string[]>
@@ -17,6 +19,8 @@ interface SchemaState {
   fetchIndexes: (connectionId: string, table: string, schema: string) => Promise<SchemaIndex[]>
   toggleTable: (key: string) => void
   clearCache: (connectionId?: string) => void
+  setFilterText: (text: string) => void
+  fetchRowCount: (connectionId: string, table: string, schema: string) => Promise<void>
 }
 
 function cacheKey(connectionId: string, ...parts: string[]): string {
@@ -30,6 +34,8 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
   schemas: new Map(),
   databases: new Map(),
   expandedTables: new Set(),
+  filterText: '',
+  rowCounts: new Map(),
   loading: false,
 
   fetchDatabases: async (connectionId) => {
@@ -107,9 +113,22 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
     })
   },
 
+  setFilterText: (text) => set({ filterText: text }),
+
+  fetchRowCount: async (connectionId, table, schema) => {
+    const key = cacheKey(connectionId, schema, table)
+    if (get().rowCounts.has(key)) return
+    const count = await window.electronAPI.invoke('db:get-row-count', connectionId, table, schema)
+    set((s) => {
+      const next = new Map(s.rowCounts)
+      next.set(key, count)
+      return { rowCounts: next }
+    })
+  },
+
   clearCache: (connectionId) => {
     if (!connectionId) {
-      set({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map() })
+      set({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map(), rowCounts: new Map(), filterText: '' })
       return
     }
     set((s) => {
@@ -123,7 +142,8 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
         columns: filterMap(s.columns),
         indexes: filterMap(s.indexes),
         schemas: filterMap(s.schemas),
-        databases: filterMap(s.databases)
+        databases: filterMap(s.databases),
+        rowCounts: filterMap(s.rowCounts)
       }
     })
   }

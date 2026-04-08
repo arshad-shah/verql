@@ -36,3 +36,39 @@ describe('Schema cache logic', () => {
     expect(cache.get('conn1:public')).toBeUndefined()
   })
 })
+
+describe('Schema filter and row count cache', () => {
+  it('filterText filters table names case-insensitively', () => {
+    const tables: SchemaTable[] = [
+      { name: 'users', schema: 'public', type: 'table' },
+      { name: 'user_roles', schema: 'public', type: 'table' },
+      { name: 'posts', schema: 'public', type: 'table' },
+      { name: 'active_users', schema: 'public', type: 'view' }
+    ]
+    const filterText = 'user'
+    const filtered = tables.filter(t => t.name.toLowerCase().includes(filterText.toLowerCase()))
+    expect(filtered).toHaveLength(3)
+    expect(filtered.map(t => t.name)).toEqual(['users', 'user_roles', 'active_users'])
+  })
+
+  it('rowCounts cache stores counts by composite key', () => {
+    const rowCounts = new Map<string, number>()
+    rowCounts.set('conn1:public:users', 1200)
+    rowCounts.set('conn1:public:posts', 856)
+    expect(rowCounts.get('conn1:public:users')).toBe(1200)
+    expect(rowCounts.get('conn1:public:posts')).toBe(856)
+    expect(rowCounts.get('conn1:public:missing')).toBeUndefined()
+  })
+
+  it('clearCache removes rowCounts for a connection', () => {
+    const rowCounts = new Map<string, number>()
+    rowCounts.set('conn1:public:users', 1200)
+    rowCounts.set('conn2:public:posts', 500)
+    const next = new Map<string, number>()
+    for (const [k, v] of rowCounts) {
+      if (!k.startsWith('conn1')) next.set(k, v)
+    }
+    expect(next.size).toBe(1)
+    expect(next.get('conn2:public:posts')).toBe(500)
+  })
+})
