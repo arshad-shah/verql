@@ -10,9 +10,10 @@ interface Props {
   onClick?: () => void
   actions?: React.ReactNode
   children?: React.ReactNode
+  meta?: string
 }
 
-export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onClick, actions, children }: Props) {
+export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onClick, actions, children, meta }: Props) {
   const hasChildren = children !== undefined
   const paddingLeft = 8 + depth * 14
 
@@ -30,7 +31,8 @@ export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onC
         )}
         {icon && <span className="shrink-0">{icon}</span>}
         <span className="truncate text-text-secondary flex-1">{label}</span>
-        {actions && <span className="hidden group-hover:flex items-center gap-0.5 shrink-0">{actions}</span>}
+        {meta && <span className="text-text-muted text-[9px] shrink-0">{meta}</span>}
+        {actions && <span className="flex items-center gap-0.5 shrink-0">{actions}</span>}
       </div>
       {expanded && children && <div>{children}</div>}
     </div>
@@ -47,4 +49,10 @@ export function ColumnIcon({ column }: { column: SchemaColumn }) {
   if (column.isPrimaryKey) return <Key size={11} className="text-warning" />
   if (column.isForeignKey) return <Link size={11} className="text-info" />
   return <Hash size={11} className="text-text-muted" />
+}
+
+export function formatRowCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
+  return String(count)
 }
