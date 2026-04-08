@@ -1,1 +1,8 @@
-// Surface primitives - components will be added as they're built
+export { Card } from './Card'
+export { Panel } from './Panel'
+export { Modal } from './Modal'
+export { Sheet } from './Sheet'
+export { Popover } from './Popover'
+export { Tooltip } from './Tooltip'
+export { DropdownMenu } from './DropdownMenu'
+export { ContextMenu } from './ContextMenu'
