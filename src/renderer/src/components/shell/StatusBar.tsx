@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Loader2, CheckCircle, AlertTriangle } from 'lucide-react'
+import { AlertTriangle, CheckCircle } from 'lucide-react'
+import { Flex, Text, Spinner, Badge } from '@/primitives'
 
 interface PluginStatus {
   total: number
@@ -43,32 +44,40 @@ export function StatusBar() {
     : 'Disconnected'
 
   return (
-    <div className="h-6 bg-accent flex items-center px-3 text-xs text-white shrink-0 justify-between">
-      <div className="flex items-center gap-3">
-        <span>{dbLabel}</span>
-      </div>
-      <div className="flex items-center gap-3">
+    <Flex
+      align="center"
+      justify="between"
+      className="h-6 bg-accent px-3 text-white shrink-0"
+    >
+      <Flex align="center" gap="md">
+        <Text size="xs" className="text-white">{dbLabel}</Text>
+      </Flex>
+      <Flex align="center" gap="md">
         {/* Plugin status */}
-        <div className="flex items-center gap-1.5 opacity-80">
+        <Flex align="center" gap="xs" className="opacity-80">
           {pluginStatus.loading ? (
             <>
-              <Loader2 size={10} className="animate-spin" />
-              <span>Loading plugins...</span>
+              <Spinner size="xs" label="Loading plugins" className="text-white" />
+              <Text size="xs" className="text-white">Loading plugins...</Text>
             </>
           ) : pluginStatus.failed > 0 ? (
             <>
               <AlertTriangle size={10} />
-              <span>{pluginStatus.active}/{pluginStatus.total} plugins ({pluginStatus.failed} failed)</span>
+              <Badge variant="warning" size="sm">
+                {pluginStatus.active}/{pluginStatus.total} plugins ({pluginStatus.failed} failed)
+              </Badge>
             </>
           ) : pluginStatus.total > 0 ? (
             <>
               <CheckCircle size={10} />
-              <span>{pluginStatus.active} plugins</span>
+              <Badge variant="success" size="sm">
+                {pluginStatus.active} plugins
+              </Badge>
             </>
           ) : null}
-        </div>
-        <span>UTF-8</span>
-      </div>
-    </div>
+        </Flex>
+        <Text size="xs" className="text-white">UTF-8</Text>
+      </Flex>
+    </Flex>
   )
 }

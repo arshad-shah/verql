@@ -1,5 +1,6 @@
 import { Database, PenSquare, BarChart3, Puzzle, Settings } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
+import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
   { id: 'explorer', icon: Database, label: 'Explorer' },
@@ -14,26 +15,34 @@ export function ActivityBar() {
   const renderButton = (id: ActivityPanel, Icon: typeof Database, label: string) => {
     const isActive = activePanel === id && sidebarVisible
     return (
-      <button
-        key={id}
-        onClick={() => setActivePanel(id)}
-        title={label}
-        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-          isActive
-            ? 'bg-accent/10 text-accent'
-            : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-        }`}
-      >
-        <Icon size={20} />
-      </button>
+      <Tooltip key={id} content={label} side="right">
+        <IconButton
+          label={label}
+          size="lg"
+          variant="ghost"
+          onClick={() => setActivePanel(id)}
+          className={cn(
+            'rounded-lg transition-colors',
+            isActive
+              ? 'bg-accent/10 text-accent hover:bg-accent/10'
+              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
+          )}
+        >
+          <Icon size={20} />
+        </IconButton>
+      </Tooltip>
     )
   }
 
   return (
-    <div className="w-12 bg-bg-primary border-r border-border flex flex-col items-center pt-2 gap-1 shrink-0">
+    <Stack
+      align="center"
+      gap="xs"
+      className="w-12 bg-bg-primary border-r border-border shrink-0 pt-2"
+    >
       {topItems.map(({ id, icon, label }) => renderButton(id, icon, label))}
-      <div className="flex-1" />
+      <Spacer />
       {renderButton('settings', Settings, 'Settings')}
-    </div>
+    </Stack>
   )
 }

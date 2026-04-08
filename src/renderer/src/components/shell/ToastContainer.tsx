@@ -1,5 +1,6 @@
 import { X, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
+import { Stack, Flex, Text, IconButton, cn } from '@/primitives'
 
 const icons = {
   error: AlertCircle,
@@ -25,32 +26,41 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-10 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    <Stack gap="sm" className="fixed bottom-10 right-4 z-50 max-w-sm">
       {toasts.map((toast) => {
         const Icon = icons[toast.type]
         return (
-          <div
+          <Flex
             key={toast.id}
-            className={`flex items-start gap-2 px-3 py-2.5 rounded-lg border backdrop-blur-sm shadow-lg toast-enter ${styles[toast.type]}`}
+            align="start"
+            gap="sm"
+            className={cn(
+              'px-3 py-2.5 rounded-lg border backdrop-blur-sm shadow-lg toast-enter',
+              styles[toast.type]
+            )}
             role="alert"
           >
-            <Icon size={16} className={`shrink-0 mt-0.5 ${iconStyles[toast.type]}`} />
+            <Icon size={16} className={cn('shrink-0 mt-0.5', iconStyles[toast.type])} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-text-primary">{toast.title}</p>
+              <Text size="sm" weight="medium" as="p">{toast.title}</Text>
               {toast.message && (
-                <p className="text-xs text-text-secondary mt-0.5 whitespace-pre-wrap break-words">{toast.message}</p>
+                <Text size="xs" color="secondary" as="p" className="mt-0.5 whitespace-pre-wrap break-words">
+                  {toast.message}
+                </Text>
               )}
             </div>
-            <button
+            <IconButton
+              label="Dismiss"
+              size="xs"
+              variant="ghost"
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 p-0.5 text-text-muted hover:text-text-primary rounded"
-              aria-label="Dismiss"
+              className="shrink-0 text-text-muted hover:text-text-primary p-0.5 h-auto w-auto"
             >
               <X size={14} />
-            </button>
-          </div>
+            </IconButton>
+          </Flex>
         )
       })}
-    </div>
+    </Stack>
   )
 }

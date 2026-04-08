@@ -13,6 +13,7 @@ import { SettingsPanel } from '@/components/settings/SettingsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
+import { Panel, Flex, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
 
 export function Sidebar() {
   const { activePanel } = useUiStore()
@@ -44,20 +45,30 @@ export function Sidebar() {
   }, [activeConnectionId, conn?.type, conn?.database])
 
   return (
-    <div className="w-full h-full bg-bg-secondary border-r border-border flex flex-col">
-      <div className="px-3 py-2 text-xs text-text-muted uppercase tracking-wider border-b border-border flex items-center justify-between">
-        <span>{titles[activePanel] ?? 'Explorer'}</span>
+    <Panel className="w-full h-full flex flex-col border-r border-b-0 border-t-0">
+      <Flex
+        align="center"
+        justify="between"
+        className="px-3 py-2 border-b border-border"
+      >
+        <Text size="xs" color="muted" className="uppercase tracking-wider">
+          {titles[activePanel] ?? 'Explorer'}
+        </Text>
         {isConnected && activePanel === 'explorer' && (
-          <button
-            onClick={() => setShowImport(true)}
-            className="text-text-muted hover:text-accent transition-colors"
-            title="Import data"
-          >
-            <Upload size={12} />
-          </button>
+          <Tooltip content="Import data" side="left">
+            <IconButton
+              label="Import data"
+              size="xs"
+              variant="ghost"
+              onClick={() => setShowImport(true)}
+              className="text-text-muted hover:text-accent"
+            >
+              <Upload size={12} />
+            </IconButton>
+          </Tooltip>
         )}
-      </div>
-      <div className="flex-1 overflow-y-auto">
+      </Flex>
+      <ScrollArea direction="vertical" className="flex-1">
         {activePanel === 'explorer' && (
           <>
             {isConnected && <SearchFilter />}
@@ -87,12 +98,14 @@ export function Sidebar() {
         {activePanel === 'query' && <SavedQueriesPanel />}
         {activePanel === 'charts' && (
           isConnected ? <ChartsDashboard /> : (
-            <p className="text-text-muted text-xs px-3 py-8 text-center">Connect and run queries to see charts</p>
+            <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">
+              Connect and run queries to see charts
+            </Text>
           )
         )}
         {activePanel === 'extensions' && <ExtensionsPanel />}
         {activePanel === 'settings' && <SettingsPanel />}
-      </div>
+      </ScrollArea>
 
       {/* Modals */}
       {exportTable && activeConnectionId && (
@@ -101,6 +114,6 @@ export function Sidebar() {
       {showImport && activeConnectionId && (
         <ImportModal connectionId={activeConnectionId} onClose={() => setShowImport(false)} />
       )}
-    </div>
+    </Panel>
   )
 }
