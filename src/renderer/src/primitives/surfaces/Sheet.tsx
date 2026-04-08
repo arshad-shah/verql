@@ -12,9 +12,9 @@ type SheetProps = {
 }
 
 const sideStyles: Record<SheetSide, string> = {
-  right: 'ml-auto mr-0 h-full rounded-l-lg',
-  left: 'mr-auto ml-0 h-full rounded-r-lg',
-  bottom: 'mt-auto mb-0 w-full rounded-t-lg',
+  right: 'fixed top-0 right-0 h-full rounded-l-lg',
+  left: 'fixed top-0 left-0 h-full rounded-r-lg',
+  bottom: 'fixed bottom-0 left-0 w-full rounded-t-lg',
 }
 
 export function Sheet({ open, onClose, side = 'right', className, children }: SheetProps) {

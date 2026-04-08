@@ -33,7 +33,8 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
       onClose={onClose}
       onClick={handleClick}
       className={cn(
-        'backdrop:bg-black/50 bg-bg-secondary border border-border-default rounded-lg p-0 max-w-lg w-full text-text-primary',
+        'fixed inset-0 m-auto',
+        'backdrop:bg-black/50 bg-bg-secondary border border-border-default rounded-lg p-0 max-w-lg w-full max-h-[85vh] text-text-primary',
         className
       )}
     >

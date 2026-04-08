@@ -39,6 +39,9 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+dialog[open] { display: flex; flex-direction: column; }
+
 .drag-region { -webkit-app-region: drag; }
 .no-drag { -webkit-app-region: no-drag; }
 
