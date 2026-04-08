@@ -33,12 +33,14 @@ export function App() {
   }, [])
 
   const handleSidebarResize = (delta: number) => {
-    setSidebarWidth(sidebarWidth + delta)
+    const current = useUiStore.getState().sidebarWidth
+    setSidebarWidth(current + delta)
   }
 
   const handleSidebarResizeDoubleClick = () => {
-    if (sidebarWidth > 180) {
-      setPrevSidebarWidth(sidebarWidth)
+    const current = useUiStore.getState().sidebarWidth
+    if (current > 180) {
+      setPrevSidebarWidth(current)
       setSidebarWidth(180)
     } else {
       setSidebarWidth(prevSidebarWidth > 180 ? prevSidebarWidth : 240)
@@ -52,7 +54,7 @@ export function App() {
         <ActivityBar />
         {sidebarVisible && (
           <>
-            <div style={{ width: sidebarWidth }} className="flex-shrink-0 flex flex-col overflow-hidden">
+            <div style={{ width: sidebarWidth }} className="shrink-0 flex flex-col overflow-hidden">
               <Sidebar />
             </div>
             <ResizeHandle

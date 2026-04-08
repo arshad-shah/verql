@@ -15,13 +15,11 @@ import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
 
 export function Sidebar() {
-  const { activePanel, sidebarVisible } = useUiStore()
+  const { activePanel } = useUiStore()
   const { activeConnectionId, connectedIds, connections } = useConnectionsStore()
 
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
-
-  if (!sidebarVisible) return null
 
   const titles: Record<string, string> = {
     explorer: 'Explorer',

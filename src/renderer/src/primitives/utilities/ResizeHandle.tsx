@@ -85,7 +85,9 @@ export function ResizeHandle({
       onDoubleClick={onDoubleClick}
       className={cn(
         'shrink-0 bg-transparent hover:bg-accent/50 transition-colors',
-        direction === 'horizontal' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize',
+        direction === 'horizontal'
+          ? 'w-[5px] cursor-col-resize hover:w-[5px]'
+          : 'h-[5px] cursor-row-resize hover:h-[5px]',
         className
       )}
     />
