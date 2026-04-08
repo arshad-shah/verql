@@ -1,10 +1,7 @@
 import React from 'react'
 import type { Preview } from '@storybook/react'
+import { withThemeByDataAttribute } from '@storybook/addon-themes'
 import '../src/renderer/src/styles/globals.css'
-
-// Inject theme attribute on the iframe's html element immediately
-// This runs once when the preview module loads, before any story renders
-document.documentElement.setAttribute('data-theme', 'dark')
 
 const preview: Preview = {
   parameters: {
@@ -18,6 +15,15 @@ const preview: Preview = {
     layout: 'fullscreen',
   },
   decorators: [
+    withThemeByDataAttribute({
+      themes: {
+        Dark: 'dark',
+        Light: 'light',
+        Midnight: 'midnight',
+      },
+      defaultTheme: 'Dark',
+      attributeName: 'data-theme',
+    }),
     (Story) => (
       <div
         style={{
