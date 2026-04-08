@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- Background rounded square -->
+  <rect width="1024" height="1024" rx="224" fill="#0d0d1a"/>
+
+  <!-- Database layers — three stacked elliptical shapes -->
+
+  <!-- Bottom layer (darkest) -->
+  <ellipse cx="512" cy="680" rx="260" ry="60" fill="#2a2a3e"/>
+  <rect x="252" y="580" width="520" height="100" fill="#2a2a3e"/>
+  <ellipse cx="512" cy="580" rx="260" ry="60" fill="#3a3a55"/>
+
+  <!-- Middle layer -->
+  <ellipse cx="512" cy="540" rx="260" ry="60" fill="#2a2a3e"/>
+  <rect x="252" y="440" width="520" height="100" fill="#2a2a3e"/>
+  <ellipse cx="512" cy="440" rx="260" ry="60" fill="#4a4a6a"/>
+
+  <!-- Top layer — accent purple -->
+  <ellipse cx="512" cy="400" rx="260" ry="60" fill="#5548b0"/>
+  <rect x="252" y="300" width="520" height="100" fill="#5548b0"/>
+  <ellipse cx="512" cy="300" rx="260" ry="60" fill="#7c6ff7"/>
+
+  <!-- Terminal cursor blink on top -->
+  <rect x="472" y="260" width="80" height="4" rx="2" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Subtle glow on top layer -->
+  <ellipse cx="512" cy="300" rx="200" ry="40" fill="#7c6ff7" opacity="0.15"/>
+</svg>
