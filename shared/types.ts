@@ -82,4 +82,11 @@ export interface ErDiagramTab {
   schema: string
 }
 
-export type Tab = QueryTab | TableTab | ErDiagramTab
+export interface ConnectionFormTab {
+  id: string
+  type: 'connection-form'
+  title: string
+  editingId?: string
+}
+
+export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab
