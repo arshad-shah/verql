@@ -40,7 +40,7 @@ export function ContextMenu({ items, className, children }: ContextMenuProps) {
           <div
             role="menu"
             className={cn(
-              'fixed z-50 bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px]',
+              'fixed z-50 bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px] shadow-[var(--shadow-dropdown)]',
               className
             )}
             style={{ top: position.y, left: position.x }}
@@ -50,7 +50,7 @@ export function ContextMenu({ items, className, children }: ContextMenuProps) {
                 key={item.label}
                 role="menuitem"
                 disabled={item.disabled}
-                className="w-full text-left px-3 py-1.5 text-sm hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full text-left px-3 py-1.5 text-sm hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]"
                 onClick={() => {
                   item.onSelect()
                   close()

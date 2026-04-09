@@ -19,7 +19,7 @@ export function Popover({ trigger, content, className }: PopoverProps) {
         id={id}
         popover="auto"
         className={cn(
-          'bg-bg-elevated border border-border-default rounded-lg p-2 m-0',
+          'bg-bg-elevated border border-border-default rounded-lg p-2 m-0 shadow-[var(--shadow-dropdown)]',
           className
         )}
       >

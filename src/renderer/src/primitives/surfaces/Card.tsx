@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const cardVariants = cva(
-  'border border-border-default rounded-lg bg-bg-secondary',
+  'rounded-lg border border-border-default bg-bg-secondary shadow-[var(--shadow-card)] transition-shadow duration-[var(--transition-fast)]',
   {
     variants: {
       padding: {

@@ -8,7 +8,7 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
     return (
       <div
         ref={ref}
-        className={cn('bg-bg-secondary border border-border-default', className)}
+        className={cn('bg-bg-secondary border border-border-default shadow-[var(--shadow-card)]', className)}
         {...props}
       />
     )

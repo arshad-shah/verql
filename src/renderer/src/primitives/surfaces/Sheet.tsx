@@ -42,7 +42,7 @@ export function Sheet({ open, onClose, side = 'right', className, children }: Sh
       onClose={onClose}
       onClick={handleClick}
       className={cn(
-        'backdrop:bg-black/50 bg-bg-secondary border border-border-default p-0 max-h-full max-w-sm text-text-primary',
+        'backdrop:bg-black/50 bg-bg-secondary border border-border-default p-0 max-h-full max-w-sm text-text-primary shadow-[var(--shadow-elevated)]',
         sideStyles[side],
         className
       )}

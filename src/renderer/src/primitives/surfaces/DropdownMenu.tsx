@@ -50,7 +50,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
         id={id}
         popover="auto"
         className={cn(
-          'bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px] m-0',
+          'bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px] m-0 shadow-[var(--shadow-dropdown)]',
           className
         )}
         onKeyDown={handleKeyDown}
@@ -62,7 +62,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
               key={item.label}
               role="menuitem"
               disabled={item.disabled}
-              className="w-full text-left px-3 py-1.5 text-sm hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full text-left px-3 py-1.5 text-sm hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]"
               onClick={() => {
                 item.onSelect()
                 const popoverEl = menuRef.current?.closest('[popover]') as HTMLElement | null

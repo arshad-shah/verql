@@ -34,7 +34,7 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
       onClick={handleClick}
       className={cn(
         'fixed inset-0 m-auto',
-        'backdrop:bg-black/50 bg-bg-secondary border border-border-default rounded-lg p-0 max-w-lg w-full max-h-[85vh] text-text-primary',
+        'backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-bg-secondary border border-border-default rounded-lg p-0 max-w-lg w-full max-h-[85vh] text-text-primary shadow-[var(--shadow-elevated)]',
         className
       )}
     >
