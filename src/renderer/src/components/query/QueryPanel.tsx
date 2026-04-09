@@ -5,6 +5,7 @@ import { ConnectionSelector } from './ConnectionSelector'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { useNotificationsStore } from '@/stores/notifications'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Text, Box, Alert } from '@/primitives'
 
@@ -15,6 +16,7 @@ interface Props {
 export function QueryPanel({ tab }: Props) {
   const { updateTabSql, setTabExecuting, setTabResults, setTabError } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
+  const addNotification = useNotificationsStore(s => s.addNotification)
   const dbType = tab.connectionId ? connections.find(c => c.id === tab.connectionId)?.type : undefined
 
   const executeWithSchema = useCallback(async (sql: string) => {
@@ -37,9 +39,15 @@ export function QueryPanel({ tab }: Props) {
       const result = await executeWithSchema(tab.sql)
       if (result) setTabResults(tab.id, result)
     } catch (err) {
-      setTabError(tab.id, (err as Error).message)
+      const message = (err as Error).message
+      setTabError(tab.id, message)
+      addNotification({
+        type: 'error',
+        message: `Query failed: ${message}`,
+        source: { type: 'tab', id: tab.id, label: tab.title },
+      })
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, executeWithSchema, setTabExecuting, setTabResults, setTabError, addNotification])
 
   const handleCancel = useCallback(async () => {
     if (!tab.connectionId) return
