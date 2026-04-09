@@ -19,3 +19,6 @@ export type { KeyValueProps } from './KeyValue'
 export { Table } from './Table'
 
 export { List } from './List'
+
+export { TreeItem } from './TreeItem'
+export type { TreeItemProps } from './TreeItem'
