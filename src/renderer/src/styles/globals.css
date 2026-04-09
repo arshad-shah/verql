@@ -3,6 +3,10 @@
 @import "../primitives/theme/themes/dark.css";
 @import "../primitives/theme/themes/light.css";
 @import "../primitives/theme/themes/midnight.css";
+@import "../primitives/theme/themes/dracula.css";
+@import "../primitives/theme/themes/nord.css";
+@import "../primitives/theme/themes/solarized.css";
+@import "../primitives/theme/themes/catppuccin.css";
 
 @theme {
   --color-bg-primary: var(--color-bg-primary);
@@ -26,6 +30,17 @@
   --color-hover: var(--color-hover);
   --color-active: var(--color-active);
   --color-focus-ring: var(--color-focus-ring);
+  --shadow-input-inset: var(--shadow-input-inset);
+  --shadow-card: var(--shadow-card);
+  --shadow-elevated: var(--shadow-elevated);
+  --shadow-dropdown: var(--shadow-dropdown);
+  --shadow-focus-glow: var(--shadow-focus-glow);
+  --transition-fast: var(--transition-fast);
+  --transition-normal: var(--transition-normal);
+  --transition-slow: var(--transition-slow);
+  --color-input-gradient-top: var(--color-input-gradient-top);
+  --color-input-gradient-bottom: var(--color-input-gradient-bottom);
+  --color-button-highlight: var(--color-button-highlight);
 }
 
 body {

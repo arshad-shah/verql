@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 const STORAGE_KEY = 'dbstudio-theme'
-const AVAILABLE_THEMES = ['dark', 'light', 'midnight'] as const
+const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
 
 type Theme = (typeof AVAILABLE_THEMES)[number]
 
