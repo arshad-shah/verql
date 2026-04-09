@@ -1,6 +1,8 @@
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
+import { ColorPicker } from './ColorPicker'
+import { parseColor, rgbToHex, isValidColor } from './color-utils'
 
 const colorInputVariants = cva(
   'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)] border-border-default hover:border-border-strong',
@@ -58,6 +60,12 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
       }
     }
 
+    const handlePickerChange = (color: string) => {
+      const [r, g, b] = parseColor(color)
+      const hex = rgbToHex(r, g, b)
+      setValue(hex)
+    }
+
     useEffect(() => {
       if (!isOpen) return
       const handler = (e: MouseEvent) => {
@@ -67,6 +75,15 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
       }
       document.addEventListener('mousedown', handler)
       return () => document.removeEventListener('mousedown', handler)
+    }, [isOpen])
+
+    useEffect(() => {
+      if (!isOpen) return
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsOpen(false)
+      }
+      document.addEventListener('keydown', handler)
+      return () => document.removeEventListener('keydown', handler)
     }, [isOpen])
 
     return (
@@ -97,30 +114,12 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
         </div>
 
         {isOpen && showPicker && (
-          <div className="absolute top-full left-0 mt-1 z-50 rounded-md border border-border-default bg-bg-secondary shadow-[var(--shadow-dropdown)] p-3 w-[200px]">
-            <input
-              type="color"
+          <div className="absolute top-full left-0 mt-1 z-50">
+            <ColorPicker
               value={isValidHex(currentValue) ? currentValue : defaultValue}
-              onChange={(e) => setValue(e.target.value)}
-              className="w-full h-32 rounded border-0 cursor-pointer bg-transparent"
+              onChange={handlePickerChange}
+              presets={presets}
             />
-            {presets && presets.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {presets.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => { setValue(color); setIsOpen(false) }}
-                    className={cn(
-                      'w-6 h-6 rounded border transition-all',
-                      currentValue === color ? 'border-accent scale-110' : 'border-border-default hover:scale-110'
-                    )}
-                    style={{ backgroundColor: color }}
-                    aria-label={`Select ${color}`}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>
