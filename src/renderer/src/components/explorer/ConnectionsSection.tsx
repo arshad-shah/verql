@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, PlugZap, Unplug, Pencil, Trash2, Copy } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useToastStore } from '@/stores/toast'
-import { ConnectionForm } from '@/components/connections/ConnectionForm'
+import { useTabsStore } from '@/stores/tabs'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { AccordionSection } from './AccordionSection'
 import { OverflowMenu, type MenuItem } from './OverflowMenu'
@@ -12,17 +12,10 @@ import { IconButton, Text, Box, Flex } from '@/primitives'
 export function ConnectionsSection() {
   const { connections, connectedIds, activeConnectionId, loadConnections, saveConnection, deleteConnection, connect, disconnect, setActiveConnection } = useConnectionsStore()
   const addToast = useToastStore((s) => s.addToast)
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<ConnectionProfile | undefined>()
+  const openConnectionForm = useTabsStore(s => s.openConnectionForm)
   const [deleteTarget, setDeleteTarget] = useState<ConnectionProfile | null>(null)
 
   useEffect(() => { loadConnections() }, [loadConnections])
-
-  const handleSave = async (profile: ConnectionProfile) => {
-    await saveConnection(profile)
-    setShowForm(false)
-    setEditing(undefined)
-  }
 
   const handleConnect = async (id: string) => {
     if (connectedIds.has(id)) {
@@ -39,8 +32,8 @@ export function ConnectionsSection() {
       id: crypto.randomUUID(),
       name: `${conn.name} (copy)`
     }
-    setEditing(duplicate)
-    setShowForm(true)
+    await saveConnection(duplicate)
+    openConnectionForm(duplicate.id)
   }
 
   const getOverflowItems = (conn: ConnectionProfile): MenuItem[] => {
@@ -77,7 +70,7 @@ export function ConnectionsSection() {
             label="New Connection"
             size="xs"
             variant="ghost"
-            onClick={() => { setEditing(undefined); setShowForm(true) }}
+            onClick={() => openConnectionForm()}
             className="text-text-muted hover:text-text-primary"
           >
             <Plus size={12} />
@@ -122,7 +115,7 @@ export function ConnectionsSection() {
                   label="Edit"
                   size="xs"
                   variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); setEditing(conn); setShowForm(true) }}
+                  onClick={(e) => { e.stopPropagation(); openConnectionForm(conn.id) }}
                   className="text-text-muted hover:text-text-primary shrink-0"
                 >
                   <Pencil size={12} />
@@ -133,9 +126,6 @@ export function ConnectionsSection() {
           })}
         </Box>
       </AccordionSection>
-      {showForm && (
-        <ConnectionForm initial={editing} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(undefined) }} />
-      )}
       <ConfirmDialog
         open={deleteTarget !== null}
         title={`Delete "${deleteTarget?.name}"?`}
