@@ -1,235 +1,198 @@
 import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
-import { Flex, Text, Spinner, Badge, Tooltip, Box } from '@/primitives'
-import { Database, AlertTriangle, CheckCircle, Zap, GitBranch } from 'lucide-react'
+import { Flex, Text, Spinner } from '@/primitives'
+import { Bell } from 'lucide-react'
+import { StatusBarMetric } from './StatusBarMetric'
+import { ConnectionCard } from './ConnectionCard'
+import { cn } from '@/primitives/utils/cn'
 
 /**
- * The StatusBar sits at the bottom of the application window.
- * It provides at-a-glance information about connection state,
- * active schema, plugin health, and environment.
+ * The Command Dock sits at the bottom of the application window.
+ * Three-zone layout: connection card (left), contextual metrics (center), tools (right).
  *
- * ## Design Zones
+ * ## Zones
  *
- * | Zone   | Content                                           |
- * |--------|---------------------------------------------------|
- * | Left   | Connection indicator, DB type, name, database, schema |
- * | Right  | Plugin status, tab count, encoding, dev badge     |
- *
- * ## Variants to consider
- * - Disconnected (no active connection)
- * - Connected with single DB
- * - Multiple connections active
- * - Plugin loading / failed / healthy
- * - Dev vs prod mode
+ * | Zone   | Content                                    |
+ * |--------|--------------------------------------------|
+ * | Left   | Connection card with status orb, DB type, name, schema |
+ * | Center | Contextual metrics (query time, rows, running state) |
+ * | Right  | Plugin status, notification bell, DEV badge |
  */
 
-function StatusBarShell({ children }: { children: React.ReactNode }) {
+function DockShell({ children }: { children: React.ReactNode }) {
+  return <div style={{ width: 1200 }}>{children}</div>
+}
+
+function DockWrapper({
+  left,
+  center,
+  right,
+}: {
+  left: React.ReactNode
+  center?: React.ReactNode
+  right: React.ReactNode
+}) {
   return (
-    <div style={{ width: 1200 }}>
-      {children}
+    <Flex
+      align="center"
+      className="relative h-9.5 shrink-0 select-none border-t border-border-default bg-bg-primary px-3"
+    >
+      <Flex align="center" gap="xs" className="mr-auto">
+        {left}
+      </Flex>
+      <Flex align="center" gap="xs">
+        {center}
+      </Flex>
+      <Flex align="center" gap="xs" className="ml-auto">
+        {right}
+      </Flex>
+    </Flex>
+  )
+}
+
+function PluginCard({ active, total, loading }: { active: number; total: number; loading?: boolean }) {
+  return (
+    <div className="flex items-center gap-1 rounded-md border border-border-default bg-bg-tertiary px-2 py-1">
+      {loading ? (
+        <>
+          <Spinner size="xs" label="Loading plugins" />
+          <Text size="xs" color="secondary" className="text-[10px]">Loading...</Text>
+        </>
+      ) : (
+        <>
+          <div className={cn('h-1.5 w-1.5 rounded-full', active < total ? 'bg-warning' : 'bg-success')} />
+          <Text size="xs" color="secondary" className="text-[10px]">
+            {active < total ? `${active}/${total} plugins` : `${active} plugins`}
+          </Text>
+        </>
+      )}
     </div>
   )
+}
+
+function BellCard({ count }: { count: number }) {
+  return (
+    <div className="relative flex items-center rounded-md border border-border-default bg-bg-tertiary px-2 py-1">
+      <Bell size={12} className="text-text-secondary" />
+      {count > 0 && (
+        <div className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-error px-0.5 text-[7px] font-bold text-white">
+          {count}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DevBadge() {
+  return <div className="rounded-md bg-accent px-1.5 py-1 text-[9px] font-semibold text-white">DEV</div>
 }
 
 const meta = {
   title: 'Shell/StatusBar',
   tags: ['autodocs'],
-  decorators: [(Story: React.ComponentType) => <StatusBarShell><Story /></StatusBarShell>],
+  decorators: [(Story: React.ComponentType) => <DockShell><Story /></DockShell>],
 } satisfies Meta
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** The default disconnected state — no active connection. */
+/** No active connection — disconnected state. */
 export const Disconnected: Story = {
   render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs">
-          <Box className="w-1.5 h-1.5 rounded-full bg-white/40" />
-          <Text size="xs" className="text-white/60">Disconnected</Text>
-        </Flex>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs" className="opacity-80">
-          <CheckCircle size={10} />
-          <Badge variant="success" size="sm">3 plugins</Badge>
-        </Flex>
-        <Text size="xs" className="text-white/60">1 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-      </Flex>
-    </Flex>
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={() => {}} />
+      }
+      center={<Text size="xs" color="disabled">—</Text>}
+      right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
+    />
   ),
 }
 
-/** Connected to a PostgreSQL database with schema info. */
+/** Connected to PostgreSQL with query results. */
 export const ConnectedPostgres: Story = {
   render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Tooltip content="Connected to Production DB">
-          <Flex align="center" gap="xs">
-            <Box className="w-1.5 h-1.5 rounded-full bg-white" />
-            <Database size={10} />
-            <Text size="xs" className="text-white">PostgreSQL</Text>
-            <Text size="xs" className="text-white/60">&middot;</Text>
-            <Text size="xs" className="text-white">Production DB</Text>
-            <Text size="xs" className="text-white/60">&middot;</Text>
-            <Text size="xs" className="text-white/80">myapp_production</Text>
-          </Flex>
-        </Tooltip>
-        <Text size="xs" className="text-white/40">|</Text>
-        <Tooltip content="Active schema">
-          <Flex align="center" gap="xs" className="opacity-70">
-            <GitBranch size={9} />
-            <Text size="xs" className="text-white">public</Text>
-          </Flex>
-        </Tooltip>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs" className="opacity-80">
-          <CheckCircle size={10} />
-          <Badge variant="success" size="sm">5 plugins</Badge>
-        </Flex>
-        <Text size="xs" className="text-white/60">3 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-      </Flex>
-    </Flex>
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="my_app_db" schema="public" isOpen={false} onClick={() => {}} />
+      }
+      center={
+        <>
+          <StatusBarMetric color="success" label="⚡ 142ms" />
+          <StatusBarMetric color="info" label="248 rows" />
+        </>
+      }
+      right={<><PluginCard active={5} total={5} /><BellCard count={2} /><DevBadge /></>}
+    />
   ),
 }
 
-/** Multiple active connections with count indicator. */
+/** Multiple active connections. */
 export const MultipleConnections: Story = {
   render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs">
-          <Box className="w-1.5 h-1.5 rounded-full bg-white" />
-          <Database size={10} />
-          <Text size="xs" className="text-white">MySQL</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white">Staging</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white/80">orders_db</Text>
-        </Flex>
-        <Tooltip content="3 active connections">
-          <Flex align="center" gap="xs" className="opacity-70">
-            <Zap size={9} />
-            <Text size="xs" className="text-white">3</Text>
-          </Flex>
-        </Tooltip>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs" className="opacity-80">
-          <CheckCircle size={10} />
-          <Badge variant="success" size="sm">4 plugins</Badge>
-        </Flex>
-        <Text size="xs" className="text-white/60">5 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-      </Flex>
-    </Flex>
+    <DockWrapper
+      left={
+        <>
+          <ConnectionCard isConnected isError={false} dbType="mysql" dbName="staging_mysql" schema={null} isOpen={false} onClick={() => {}} />
+          <div className="flex items-center gap-1 rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
+            <Text size="xs" color="accent" className="text-[10px]">↔ 3</Text>
+          </div>
+        </>
+      }
+      center={<StatusBarMetric color="success" label="⚡ 89ms" />}
+      right={<><PluginCard active={4} total={4} /><BellCard count={0} /></>}
+    />
   ),
 }
 
-/** Plugins are still loading during boot. */
+/** Query currently running with elapsed time. */
+export const QueryRunning: Story = {
+  render: () => (
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="analytics_db" schema="reporting" isOpen={false} onClick={() => {}} />
+      }
+      center={<StatusBarMetric color="warning" label="Running..." animated />}
+      right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
+    />
+  ),
+}
+
+/** Connection error state. */
+export const ConnectionError: Story = {
+  render: () => (
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected isError dbType="postgresql" dbName="prod_db" schema={null} isOpen={false} onClick={() => {}} />
+      }
+      center={<StatusBarMetric color="error" label="⚠ Reconnecting..." />}
+      right={<><PluginCard active={3} total={3} /><BellCard count={3} /><DevBadge /></>}
+    />
+  ),
+}
+
+/** Plugins still loading during boot. */
 export const PluginsLoading: Story = {
   render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs">
-          <Box className="w-1.5 h-1.5 rounded-full bg-white/40" />
-          <Text size="xs" className="text-white/60">Disconnected</Text>
-        </Flex>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs" className="opacity-80">
-          <Spinner size="xs" label="Loading plugins" className="text-white" />
-          <Text size="xs" className="text-white">Loading plugins...</Text>
-        </Flex>
-        <Text size="xs" className="text-white/60">0 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-      </Flex>
-    </Flex>
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={() => {}} />
+      }
+      center={<Text size="xs" color="disabled">—</Text>}
+      right={<><PluginCard active={0} total={0} loading /><BellCard count={0} /></>}
+    />
   ),
 }
 
 /** Some plugins failed to load. */
 export const PluginsFailed: Story = {
   render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs">
-          <Box className="w-1.5 h-1.5 rounded-full bg-white" />
-          <Database size={10} />
-          <Text size="xs" className="text-white">SQLite</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white">Local DB</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white/80">app.sqlite</Text>
-        </Flex>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Tooltip content="2 plugin(s) failed to load">
-          <Flex align="center" gap="xs">
-            <AlertTriangle size={10} />
-            <Badge variant="warning" size="sm">3/5 plugins</Badge>
-          </Flex>
-        </Tooltip>
-        <Text size="xs" className="text-white/60">2 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-      </Flex>
-    </Flex>
-  ),
-}
-
-/** Development mode indicator. */
-export const DevMode: Story = {
-  render: () => (
-    <Flex
-      align="center"
-      justify="between"
-      className="h-6 bg-accent px-3 text-white shrink-0 select-none"
-    >
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs">
-          <Box className="w-1.5 h-1.5 rounded-full bg-white" />
-          <Database size={10} />
-          <Text size="xs" className="text-white">PostgreSQL</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white">Dev Server</Text>
-          <Text size="xs" className="text-white/60">&middot;</Text>
-          <Text size="xs" className="text-white/80">devdb</Text>
-        </Flex>
-      </Flex>
-      <Flex align="center" gap="md">
-        <Flex align="center" gap="xs" className="opacity-80">
-          <CheckCircle size={10} />
-          <Badge variant="success" size="sm">2 plugins</Badge>
-        </Flex>
-        <Text size="xs" className="text-white/60">1 tabs</Text>
-        <Text size="xs" className="text-white/60">UTF-8</Text>
-        <Badge variant="warning" size="sm" className="text-[9px] leading-none">DEV</Badge>
-      </Flex>
-    </Flex>
+    <DockWrapper
+      left={
+        <ConnectionCard isConnected isError={false} dbType="sqlite" dbName="local.db" schema={null} isOpen={false} onClick={() => {}} />
+      }
+      center={<StatusBarMetric color="success" label="⚡ 12ms" />}
+      right={<><PluginCard active={3} total={5} /><BellCard count={1} /><DevBadge /></>}
+    />
   ),
 }

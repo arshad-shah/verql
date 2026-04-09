@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ConnectionProfile } from '@shared/types'
+import { useNotificationsStore } from './notifications'
 
 interface ConnectionsState {
   connections: ConnectionProfile[]
@@ -48,12 +49,31 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     if (result.success) {
       get().addConnected(id)
       set({ activeConnectionId: id })
+      const conn = get().connections.find(c => c.id === id)
+      useNotificationsStore.getState().addNotification({
+        type: 'info',
+        message: `Connected to ${conn?.name ?? id}`,
+        source: { type: 'connection', id, label: conn?.name ?? id },
+      })
+    } else {
+      const conn = get().connections.find(c => c.id === id)
+      useNotificationsStore.getState().addNotification({
+        type: 'error',
+        message: `Connection failed: ${result.error ?? 'Unknown error'}`,
+        source: { type: 'connection', id, label: conn?.name ?? id },
+      })
     }
     return result
   },
   disconnect: async (id) => {
     await window.electronAPI.invoke('db:disconnect', id)
     get().removeConnected(id)
+    const conn = get().connections.find(c => c.id === id)
+    useNotificationsStore.getState().addNotification({
+      type: 'info',
+      message: `Disconnected from ${conn?.name ?? id}`,
+      source: { type: 'connection', id, label: conn?.name ?? id },
+    })
     if (get().activeConnectionId === id) set({ activeConnectionId: null })
   }
 }))

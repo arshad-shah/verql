@@ -41,8 +41,12 @@ export function App() {
       window.electronAPI.on('menu:toggle-command-palette', () => setPaletteOpen(prev => !prev)),
     ]
 
+    const handleStatusBarNewConn = () => setShowNewConnection(true)
+    window.addEventListener('statusbar:new-connection', handleStatusBarNewConn)
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('statusbar:new-connection', handleStatusBarNewConn)
       cleanups.forEach(cleanup => cleanup())
     }
   }, [activeConnectionId, addQueryTab])
