@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
-import { Download, Copy, PenSquare, ArrowRight } from 'lucide-react'
+import { ArrowRight, MoreHorizontal } from 'lucide-react'
 import { useSchemaStore } from '@/stores/schema'
+import { useUiStore } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
-import { SchemaTreeItem, TableIcon, ColumnIcon, formatRowCount } from '@/components/schema/SchemaTreeItem'
-import { AccordionSection } from './AccordionSection'
-import { OverflowMenu, type MenuItem } from './OverflowMenu'
-import { Text, Box } from '@/primitives'
+import { TableIcon, ColumnIcon } from '@/components/explorer/icons'
+import { formatRowCount } from '@/lib/format'
+import { Accordion, TreeItem, DropdownMenu, ContextMenu, IconButton, Text, Box, Badge } from '@/primitives'
 
 interface TablesSectionProps {
   connectionId: string
@@ -16,6 +16,8 @@ interface TablesSectionProps {
 
 export function TablesSection({ connectionId, activeSchema, onExportTable }: TablesSectionProps) {
   const { tables, columns, expandedTables, rowCounts, filterText, cacheVersion, fetchTables, fetchColumns, fetchRowCount, toggleTable } = useSchemaStore()
+  const expanded = useUiStore((s) => s.expandedSections['TABLES'] ?? true)
+  const toggleSection = useUiStore((s) => s.toggleSection)
   const { addQueryTab, updateTabSql } = useTabsStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -30,7 +32,6 @@ export function TablesSection({ connectionId, activeSchema, onExportTable }: Tab
     fetchTables(connectionId, activeSchema)
   }, [connectionId, activeSchema, cacheVersion, fetchTables])
 
-  // Fetch row counts for visible tables
   useEffect(() => {
     filtered.forEach(t => {
       fetchRowCount(connectionId, t.name, activeSchema)
@@ -45,78 +46,96 @@ export function TablesSection({ connectionId, activeSchema, onExportTable }: Tab
     }
   }
 
-  const getOverflowItems = (tableName: string): MenuItem[] => [
+  const getMenuItems = (tableName: string) => [
     {
       label: 'Export',
-      icon: <Download size={12} />,
-      onClick: () => onExportTable(tableName)
+      onSelect: () => onExportTable(tableName),
     },
     {
       label: 'Copy name',
-      icon: <Copy size={12} />,
-      onClick: () => {
+      onSelect: () => {
         navigator.clipboard.writeText(tableName)
         addToast({ type: 'success', title: 'Copied table name' })
-      }
+      },
     },
     {
       label: 'Copy SELECT',
-      icon: <Copy size={12} />,
-      onClick: () => {
+      onSelect: () => {
         const sql = `SELECT * FROM "${activeSchema}"."${tableName}" LIMIT 100;`
         navigator.clipboard.writeText(sql)
         addToast({ type: 'success', title: 'Copied SELECT query' })
-      }
+      },
     },
     {
       label: 'Open in tab',
-      icon: <PenSquare size={12} />,
-      onClick: () => {
+      onSelect: () => {
         const sql = `SELECT * FROM "${activeSchema}"."${tableName}" LIMIT 100;`
         const tabId = addQueryTab(connectionId)
         updateTabSql(tabId, sql)
-      }
-    }
+      },
+    },
   ]
 
   return (
-    <AccordionSection title="TABLES" count={filtered.length}>
-      <Box className="px-1">
-        {filtered.length === 0 && (
-          <Text size="xs" color="muted" as="p" className="px-2 py-3 text-center">
-            {filterText ? 'No matching tables' : 'No tables found'}
-          </Text>
-        )}
-        {filtered.map(table => {
-          const colKey = `${connectionId}:${activeSchema}:${table.name}`
-          const isExpanded = expandedTables.has(colKey)
-          const cols = columns.get(colKey) ?? []
-          const count = rowCounts.get(colKey)
+    <Accordion>
+      <Accordion.Item open={expanded} onOpenChange={() => toggleSection('TABLES')}>
+        <Accordion.Trigger>
+          <Text size="xs" color="muted" className="uppercase tracking-wider flex-1 text-left">TABLES</Text>
+          <Badge size="sm">{filtered.length}</Badge>
+        </Accordion.Trigger>
+        <Accordion.Content>
+          <Box className="px-1">
+            {filtered.length === 0 && (
+              <Text size="xs" color="muted" as="p" className="px-2 py-3 text-center">
+                {filterText ? 'No matching tables' : 'No tables found'}
+              </Text>
+            )}
+            {filtered.map(table => {
+              const colKey = `${connectionId}:${activeSchema}:${table.name}`
+              const isExpanded = expandedTables.has(colKey)
+              const cols = columns.get(colKey) ?? []
+              const count = rowCounts.get(colKey)
 
-          return (
-            <SchemaTreeItem
-              key={table.name}
-              label={table.name}
-              icon={<TableIcon type="table" />}
-              depth={0}
-              expanded={isExpanded}
-              onToggle={() => handleExpandTable(table.name)}
-              meta={count !== undefined ? formatRowCount(count) : undefined}
-              actions={<OverflowMenu items={getOverflowItems(table.name)} />}
-            >
-              {cols.map(col => (
-                <SchemaTreeItem
-                  key={col.name}
-                  label={`${col.name} ${col.dataType}`}
-                  icon={<ColumnIcon column={col} />}
-                  depth={1}
-                  meta={col.isForeignKey && col.references ? <span className="inline-flex items-center gap-0.5"><ArrowRight size={9} />{col.references.table}.{col.references.column}</span> : undefined}
-                />
-              ))}
-            </SchemaTreeItem>
-          )
-        })}
-      </Box>
-    </AccordionSection>
+              return (
+                <ContextMenu key={table.name} items={getMenuItems(table.name)}>
+                  <TreeItem
+                    label={table.name}
+                    icon={<TableIcon type="table" />}
+                    depth={0}
+                    expanded={isExpanded}
+                    onToggle={() => handleExpandTable(table.name)}
+                    meta={count !== undefined ? formatRowCount(count) : undefined}
+                    actions={
+                      <DropdownMenu
+                        trigger={
+                          <IconButton label="More actions" size="xs" variant="ghost" className="text-text-muted hover:text-text-primary">
+                            <MoreHorizontal size={12} />
+                          </IconButton>
+                        }
+                        items={getMenuItems(table.name)}
+                      />
+                    }
+                  >
+                    {cols.map(col => (
+                      <TreeItem
+                        key={col.name}
+                        label={`${col.name} ${col.dataType}`}
+                        icon={<ColumnIcon column={col} />}
+                        depth={1}
+                        meta={
+                          col.isForeignKey && col.references
+                            ? <span className="inline-flex items-center gap-0.5"><ArrowRight size={9} />{col.references.table}.{col.references.column}</span>
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </TreeItem>
+                </ContextMenu>
+              )
+            })}
+          </Box>
+        </Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
   )
 }
