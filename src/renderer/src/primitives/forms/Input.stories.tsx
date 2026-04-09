@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Input } from './Input'
 
-const meta = {
-  title: 'Forms/Input',
+const meta: Meta<typeof Input> = {
+  title: 'Primitives/Forms/Input',
   component: Input,
   tags: ['autodocs'],
   argTypes: {
@@ -14,22 +14,21 @@ const meta = {
     disabled: { control: 'boolean' },
     placeholder: { control: 'text' },
   },
-} satisfies Meta<typeof Input>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Input>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     size: 'md',
-    placeholder: 'Enter value…',
+    placeholder: 'Enter value\u2026',
     style: { width: 280 },
   },
 }
 
-export const Sizes: Story = {
+export const Variants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 280 }}>
+    <div className="flex flex-col gap-2" style={{ width: 280 }}>
       {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
         <Input key={size} size={size} placeholder={`size="${size}"`} />
       ))}
@@ -37,20 +36,12 @@ export const Sizes: Story = {
   ),
 }
 
-export const ErrorState: Story = {
-  args: {
-    size: 'md',
-    error: true,
-    defaultValue: 'invalid-value',
-    style: { width: 280 },
-  },
-}
-
-export const Disabled: Story = {
-  args: {
-    size: 'md',
-    disabled: true,
-    defaultValue: 'Cannot edit this',
-    style: { width: 280 },
-  },
+export const States: Story = {
+  render: () => (
+    <div className="flex flex-col gap-2" style={{ width: 280 }}>
+      <Input size="md" placeholder="Default" />
+      <Input size="md" error defaultValue="Error state" />
+      <Input size="md" disabled defaultValue="Disabled" />
+    </div>
+  ),
 }

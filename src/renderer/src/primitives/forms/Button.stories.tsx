@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Button } from './Button'
 
-const meta = {
-  title: 'Forms/Button',
+const meta: Meta<typeof Button> = {
+  title: 'Primitives/Forms/Button',
   component: Button,
   tags: ['autodocs'],
   argTypes: {
@@ -16,33 +16,26 @@ const meta = {
     },
     disabled: { control: 'boolean' },
   },
-} satisfies Meta<typeof Button>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Button>
 
-export const Playground: Story = {
-  args: {
-    variant: 'solid',
-    size: 'md',
-    children: 'Click me',
-  },
+export const Default: Story = {
+  args: { children: 'Button', variant: 'solid', size: 'md' },
 }
 
-export const AllVariants: Story = {
+export const Variants: Story = {
   render: () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, auto)', gap: 8, alignItems: 'center' }}>
-      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }} />
-      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-        <div key={size} style={{ fontSize: 11, color: 'var(--color-text-secondary)', textAlign: 'center' }}>{size}</div>
-      ))}
+    <div className="flex flex-col gap-6">
       {(['solid', 'outline', 'ghost', 'danger'] as const).map((variant) => (
-        <>
-          <div key={`label-${variant}`} style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{variant}</div>
+        <div key={variant} className="flex items-center gap-3">
+          <span className="w-16 text-xs text-text-muted">{variant}</span>
           {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-            <Button key={size} variant={variant} size={size}>{variant}</Button>
+            <Button key={size} variant={variant} size={size}>
+              {size}
+            </Button>
           ))}
-        </>
+        </div>
       ))}
     </div>
   ),
@@ -50,7 +43,7 @@ export const AllVariants: Story = {
 
 export const States: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div className="flex items-center gap-3">
       <Button>Default</Button>
       <Button disabled>Disabled</Button>
     </div>

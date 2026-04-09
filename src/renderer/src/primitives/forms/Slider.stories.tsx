@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Slider } from './Slider'
 
-const meta = {
-  title: 'Forms/Slider',
+const meta: Meta<typeof Slider> = {
+  title: 'Primitives/Forms/Slider',
   component: Slider,
   tags: ['autodocs'],
   argTypes: {
@@ -11,12 +11,11 @@ const meta = {
     step: { control: 'number' },
     disabled: { control: 'boolean' },
   },
-} satisfies Meta<typeof Slider>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Slider>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     min: 0,
     max: 100,
@@ -25,12 +24,11 @@ export const Playground: Story = {
   },
 }
 
-export const Disabled: Story = {
-  args: {
-    min: 0,
-    max: 100,
-    defaultValue: 60,
-    disabled: true,
-    style: { width: 240 },
-  },
+export const States: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4" style={{ width: 240 }}>
+      <Slider min={0} max={100} defaultValue={40} />
+      <Slider min={0} max={100} defaultValue={60} disabled />
+    </div>
+  ),
 }

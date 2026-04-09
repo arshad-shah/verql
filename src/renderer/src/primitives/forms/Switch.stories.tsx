@@ -1,20 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Switch } from './Switch'
 
-const meta = {
-  title: 'Forms/Switch',
+const meta: Meta<typeof Switch> = {
+  title: 'Primitives/Forms/Switch',
   component: Switch,
   tags: ['autodocs'],
   argTypes: {
     disabled: { control: 'boolean' },
     defaultChecked: { control: 'boolean' },
   },
-} satisfies Meta<typeof Switch>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Switch>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     label: 'Enable feature',
   },
@@ -22,14 +21,14 @@ export const Playground: Story = {
 
 export const States: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {[
         { label: 'Off', defaultChecked: false },
         { label: 'On', defaultChecked: true },
         { label: 'Disabled off', disabled: true },
         { label: 'Disabled on', defaultChecked: true, disabled: true },
       ].map(({ label, ...props }) => (
-        <label key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-text-primary)', cursor: 'pointer' }}>
+        <label key={label} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
           <Switch label={label} {...props} />
           {label}
         </label>

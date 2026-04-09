@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Select } from './Select'
 
-const meta = {
-  title: 'Forms/Select',
+const meta: Meta<typeof Select> = {
+  title: 'Primitives/Forms/Select',
   component: Select,
   tags: ['autodocs'],
   argTypes: {
@@ -12,14 +12,13 @@ const meta = {
     },
     disabled: { control: 'boolean' },
   },
-} satisfies Meta<typeof Select>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Select>
 
 const options = (
   <>
-    <option value="">Choose an option…</option>
+    <option value="">Choose an option\u2026</option>
     <option value="postgresql">PostgreSQL</option>
     <option value="mysql">MySQL</option>
     <option value="sqlite">SQLite</option>
@@ -27,7 +26,7 @@ const options = (
   </>
 )
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     size: 'md',
     style: { width: 240 },
@@ -35,12 +34,23 @@ export const Playground: Story = {
   },
 }
 
-export const Sizes: Story = {
+export const Variants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 240 }}>
+    <div className="flex flex-col gap-2" style={{ width: 240 }}>
       {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-        <Select key={size} size={size}>{options}</Select>
+        <Select key={size} size={size}>
+          {options}
+        </Select>
       ))}
+    </div>
+  ),
+}
+
+export const States: Story = {
+  render: () => (
+    <div className="flex flex-col gap-2" style={{ width: 240 }}>
+      <Select size="md">{options}</Select>
+      <Select size="md" disabled>{options}</Select>
     </div>
   ),
 }

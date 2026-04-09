@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { IconButton } from './Button'
 
-const meta = {
-  title: 'Forms/IconButton',
+const meta: Meta<typeof IconButton> = {
+  title: 'Primitives/Forms/IconButton',
   component: IconButton,
   tags: ['autodocs'],
   argTypes: {
@@ -16,36 +16,41 @@ const meta = {
     },
     disabled: { control: 'boolean' },
   },
-} satisfies Meta<typeof IconButton>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof IconButton>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     variant: 'ghost',
     size: 'md',
     label: 'Settings',
-    children: '⚙',
+    children: '\u2699',
   },
 }
 
-export const Sizes: Story = {
+export const Variants: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-        <IconButton key={size} size={size} label={`${size} button`}>✕</IconButton>
+    <div className="flex flex-col gap-6">
+      {(['solid', 'outline', 'ghost'] as const).map((variant) => (
+        <div key={variant} className="flex items-center gap-3">
+          <span className="w-16 text-xs text-text-muted">{variant}</span>
+          {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+            <IconButton key={size} variant={variant} size={size} label={`${variant} ${size}`}>
+              \u2715
+            </IconButton>
+          ))}
+        </div>
       ))}
     </div>
   ),
 }
 
-export const Variants: Story = {
+export const States: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      {(['solid', 'outline', 'ghost'] as const).map((variant) => (
-        <IconButton key={variant} variant={variant} label={`${variant} button`}>★</IconButton>
-      ))}
+    <div className="flex items-center gap-3">
+      <IconButton label="Default">\u2605</IconButton>
+      <IconButton label="Disabled" disabled>\u2605</IconButton>
     </div>
   ),
 }

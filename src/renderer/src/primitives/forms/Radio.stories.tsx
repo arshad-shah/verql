@@ -1,30 +1,47 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Radio } from './Radio'
 
-const meta = {
-  title: 'Forms/Radio',
+const meta: Meta<typeof Radio> = {
+  title: 'Primitives/Forms/Radio',
   component: Radio,
   tags: ['autodocs'],
   argTypes: {
     disabled: { control: 'boolean' },
   },
-} satisfies Meta<typeof Radio>
-
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof Radio>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
-    name: 'playground',
+    name: 'default',
     value: 'option',
   },
 }
 
+export const States: Story = {
+  render: () => (
+    <div className="flex flex-col gap-3">
+      {[
+        { label: 'Unselected', name: 'states', value: 'a' },
+        { label: 'Selected', name: 'states', value: 'b', defaultChecked: true },
+        { label: 'Disabled', name: 'states-disabled', value: 'c', disabled: true },
+        { label: 'Disabled + selected', name: 'states-disabled-sel', value: 'd', defaultChecked: true, disabled: true },
+      ].map(({ label, ...props }) => (
+        <label key={label} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+          <Radio {...props} />
+          {label}
+        </label>
+      ))}
+    </div>
+  ),
+}
+
 export const RadioGroup: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="flex flex-col gap-3">
       {['PostgreSQL', 'MySQL', 'SQLite', 'MongoDB'].map((db, i) => (
-        <label key={db} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-text-primary)', cursor: 'pointer' }}>
+        <label key={db} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
           <Radio name="db" value={db.toLowerCase()} defaultChecked={i === 0} />
           {db}
         </label>
