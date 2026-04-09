@@ -3,6 +3,7 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { NotificationItem } from './NotificationItem'
 import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
+import { Box, Flex, Text, Button, IconButton, EmptyState } from '@/primitives'
 
 const categoryOrder = ['error', 'warning', 'info', 'success'] as const
 
@@ -74,43 +75,70 @@ export function NotificationPanel() {
         'animate-in slide-in-from-bottom-2 duration-150'
       )}
     >
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border-default">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-primary">Notifications</span>
+      <Flex
+        align="center"
+        justify="between"
+        className="px-3.5 py-2.5 border-b border-border-default"
+      >
+        <Flex align="center" gap="sm">
+          <Text size="xs" weight="semibold" color="primary">Notifications</Text>
           {unread > 0 && (
-            <span className="rounded-full bg-error/15 px-1.5 py-px text-[9px] font-semibold text-error">
+            <Text
+              size="xs"
+              weight="semibold"
+              color="error"
+              className="rounded-full bg-error/15 px-1.5 py-px text-[9px]"
+            >
               {unread} new
-            </span>
+            </Text>
           )}
-        </div>
-        <div className="flex items-center gap-2">
+        </Flex>
+        <Flex align="center" gap="sm">
           {unread > 0 && (
-            <button onClick={markAllRead} className="text-[10px] text-accent hover:text-accent-hover">
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={markAllRead}
+              className="text-[10px] text-accent hover:text-accent-hover"
+            >
               Mark all read
-            </button>
+            </Button>
           )}
-          <button onClick={closePanel} className="text-[10px] text-text-tertiary hover:text-text-secondary">
+          <IconButton
+            variant="ghost"
+            size="xs"
+            onClick={closePanel}
+            label="Close notifications"
+          >
             <X size={12} />
-          </button>
-        </div>
-      </div>
+          </IconButton>
+        </Flex>
+      </Flex>
 
       {grouped.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 px-4">
-          <Bell size={24} className="text-text-disabled" />
-          <span className="text-[11px] text-text-tertiary">All caught up</span>
-          <span className="text-[10px] text-text-disabled">No new notifications</span>
-        </div>
+        <EmptyState
+          icon={<Bell size={24} className="text-text-disabled" />}
+          title="All caught up"
+          description="No new notifications"
+          className="py-8 px-4"
+        />
       ) : (
         grouped.map((group) => (
-          <div key={group.category}>
-            <div className={cn('px-3.5 pt-2 pb-0.5 text-[9px] uppercase tracking-wider font-semibold', categoryColors[group.category])}>
+          <Box key={group.category}>
+            <Text
+              size="xs"
+              weight="semibold"
+              className={cn(
+                'block px-3.5 pt-2 pb-0.5 text-[9px] uppercase tracking-wider',
+                categoryColors[group.category]
+              )}
+            >
               {categoryLabels[group.category]}
-            </div>
+            </Text>
             {group.items.map((n) => (
               <NotificationItem key={n.id} notification={n} onClick={handleItemClick} />
             ))}
-          </div>
+          </Box>
         ))
       )}
     </div>

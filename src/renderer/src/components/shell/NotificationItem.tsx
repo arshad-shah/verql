@@ -1,3 +1,4 @@
+import { Flex, Box, Text, Button } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 import type { Notification } from '@/stores/notifications'
 
@@ -28,32 +29,31 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
   const { id, type, message, source, timestamp, read } = notification
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={() => onClick(id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') onClick(id)
-      }}
       className={cn(
-        'flex items-start gap-2 px-3.5 py-1.5 cursor-pointer border-b border-white/[0.03] hover:bg-hover',
+        'w-full justify-start rounded-none px-3.5 py-1.5 h-auto border-b border-white/3',
         read && 'opacity-60'
       )}
     >
-      <div
-        className={cn(
-          'mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full',
-          dotColorMap[type],
-          read && 'opacity-40'
-        )}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="text-[11px] text-text-primary truncate">{message}</div>
-        <div className="mt-0.5 text-[9px] text-text-tertiary">
-          {source && <span>{source.label} · </span>}
-          {formatRelativeTime(timestamp)}
-        </div>
-      </div>
-    </div>
+      <Flex direction="row" align="start" gap="sm" className="w-full">
+        <Box
+          className={cn(
+            'mt-1.25 h-1.5 w-1.5 shrink-0 rounded-full',
+            dotColorMap[type],
+            read && 'opacity-40'
+          )}
+        />
+        <Box className="min-w-0 flex-1 text-left">
+          <Text size="xs" color="primary" truncate>{message}</Text>
+          <Text size="xs" color="muted" className="mt-0.5 text-[9px]">
+            {source && <span>{source.label} · </span>}
+            {formatRelativeTime(timestamp)}
+          </Text>
+        </Box>
+      </Flex>
+    </Button>
   )
 }
