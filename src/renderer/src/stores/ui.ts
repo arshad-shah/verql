@@ -6,23 +6,20 @@ export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'se
 interface UiState {
   activePanel: ActivityPanel
   sidebarVisible: boolean
-  expandedSections: Record<string, boolean>
+  expandedTreeNodes: Set<string>
   setActivePanel: (panel: ActivityPanel) => void
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
   setSplitRatio: (ratio: number) => void
-  toggleSection: (title: string) => void
+  toggleTreeNode: (path: string) => void
+  expandTreeNode: (path: string) => void
+  collapseAllTreeNodes: () => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
   activePanel: 'explorer',
   sidebarVisible: true,
-  expandedSections: {
-    CONNECTIONS: true,
-    DATABASES: true,
-    TABLES: true,
-    VIEWS: true,
-  },
+  expandedTreeNodes: new Set<string>(),
   setActivePanel: (panel) =>
     set((state) => ({
       activePanel: panel,
@@ -37,11 +34,22 @@ export const useUiStore = create<UiState>((set) => ({
     const clamped = Math.min(80, Math.max(20, ratio))
     useSettingsStore.getState().set('appearance.splitRatio', clamped)
   },
-  toggleSection: (title) =>
-    set((state) => ({
-      expandedSections: {
-        ...state.expandedSections,
-        [title]: !state.expandedSections[title],
-      },
-    })),
+  toggleTreeNode: (path) =>
+    set((state) => {
+      const next = new Set(state.expandedTreeNodes)
+      if (next.has(path)) {
+        next.delete(path)
+      } else {
+        next.add(path)
+      }
+      return { expandedTreeNodes: next }
+    }),
+  expandTreeNode: (path) =>
+    set((state) => {
+      if (state.expandedTreeNodes.has(path)) return {}
+      const next = new Set(state.expandedTreeNodes)
+      next.add(path)
+      return { expandedTreeNodes: next }
+    }),
+  collapseAllTreeNodes: () => set({ expandedTreeNodes: new Set<string>() }),
 }))
