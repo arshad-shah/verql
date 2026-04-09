@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Table } from './Table'
 
 const meta = {
-  title: 'Data Display/Table',
+  title: 'Primitives/Data Display/Table',
   component: Table,
   tags: ['autodocs'],
 } satisfies Meta<typeof Table>
@@ -17,7 +17,7 @@ const users = [
   { id: 4, name: 'Diana E', email: 'diana@example.com', role: 'Editor' },
 ]
 
-export const Example: Story = {
+export const Default: Story = {
   render: () => (
     <div style={{ width: 480 }}>
       <Table>

@@ -4,7 +4,7 @@ import { Sheet } from './Sheet'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Surfaces/Sheet',
+  title: 'Primitives/Surfaces/Sheet',
   component: Sheet,
   tags: ['autodocs'],
 } satisfies Meta<typeof Sheet>
@@ -12,7 +12,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => {
     const [open, setOpen] = useState(false)
     const [side, setSide] = useState<'right' | 'left' | 'bottom'>('right')

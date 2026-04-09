@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { AspectRatio } from './AspectRatio'
 
 const meta = {
-  title: 'Layout/AspectRatio',
+  title: 'Primitives/Layout/AspectRatio',
   component: AspectRatio,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     ratio: 'video',
     style: { width: 320, background: 'var(--color-bg-tertiary)', borderRadius: 8 },
@@ -28,7 +28,7 @@ export const Playground: Story = {
   },
 }
 
-export const AllRatios: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
       {(['square', 'video', '4/3'] as const).map((ratio) => (

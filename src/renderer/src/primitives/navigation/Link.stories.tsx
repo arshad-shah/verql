@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Link } from './Link'
 
 const meta = {
-  title: 'Navigation/Link',
+  title: 'Primitives/Navigation/Link',
   component: Link,
   tags: ['autodocs'],
   argTypes: {
@@ -14,14 +14,14 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     href: '#',
     children: 'View documentation',
   },
 }
 
-export const InlineParagraph: Story = {
+export const InContext: Story = {
   render: () => (
     <p style={{ fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.6 }}>
       Connect to your database by adding a{' '}

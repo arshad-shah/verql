@@ -8,7 +8,7 @@ const DemoBox = ({ children }: { children: string }) => (
 )
 
 const meta = {
-  title: 'Layout/Grid',
+  title: 'Primitives/Layout/Grid',
   component: Grid,
   tags: ['autodocs'],
   argTypes: {
@@ -26,7 +26,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     columns: 3,
     gap: 'md',
@@ -44,7 +44,7 @@ export const Playground: Story = {
   },
 }
 
-export const ColumnVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: 480 }}>
       {([2, 3, 4] as const).map((cols) => (

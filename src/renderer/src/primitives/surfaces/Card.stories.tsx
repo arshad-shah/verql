@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Card } from './Card'
 
 const meta = {
-  title: 'Surfaces/Card',
+  title: 'Primitives/Surfaces/Card',
   component: Card,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     padding: 'md',
     children: (
@@ -29,7 +29,7 @@ export const Playground: Story = {
   },
 }
 
-export const PaddingVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 280 }}>
       {(['none', 'sm', 'md', 'lg', 'xl'] as const).map((padding) => (

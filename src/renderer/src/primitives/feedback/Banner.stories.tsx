@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Banner } from './Banner'
 
 const meta = {
-  title: 'Feedback/Banner',
+  title: 'Primitives/Feedback/Banner',
   component: Banner,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     variant: 'info',
     children: 'A new version of dbstudio is available. Restart to update.',
@@ -24,7 +24,7 @@ export const Playground: Story = {
   },
 }
 
-export const AllVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 480 }}>
       <Banner variant="default">Default system message banner.</Banner>

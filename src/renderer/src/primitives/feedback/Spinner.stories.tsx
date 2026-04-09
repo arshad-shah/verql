@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Spinner } from './Spinner'
 
 const meta = {
-  title: 'Feedback/Spinner',
+  title: 'Primitives/Feedback/Spinner',
   component: Spinner,
   tags: ['autodocs'],
   argTypes: {
@@ -17,14 +17,14 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     size: 'md',
     label: 'Loading',
   },
 }
 
-export const Sizes: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
       {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (

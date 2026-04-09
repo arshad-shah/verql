@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Breadcrumb } from './Breadcrumb'
 
 const meta = {
-  title: 'Navigation/Breadcrumb',
+  title: 'Primitives/Navigation/Breadcrumb',
   component: Breadcrumb,
   tags: ['autodocs'],
 } satisfies Meta<typeof Breadcrumb>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     items: [
       { label: 'Connections', onClick: () => {} },

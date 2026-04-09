@@ -3,7 +3,7 @@ import { Tooltip } from './Tooltip'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Surfaces/Tooltip',
+  title: 'Primitives/Surfaces/Tooltip',
   component: Tooltip,
   tags: ['autodocs'],
   argTypes: {
@@ -18,7 +18,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     content: 'This is a tooltip',
     side: 'top',
@@ -26,7 +26,7 @@ export const Playground: Story = {
   },
 }
 
-export const AllSides: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, padding: 40 }}>
       {(['top', 'bottom', 'left', 'right'] as const).map((side) => (

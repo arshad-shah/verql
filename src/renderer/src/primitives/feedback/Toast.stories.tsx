@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Toast } from './Toast'
 
 const meta = {
-  title: 'Feedback/Toast',
+  title: 'Primitives/Feedback/Toast',
   component: Toast,
   tags: ['autodocs'],
   argTypes: {
@@ -17,7 +17,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     variant: 'default',
     message: 'Action completed successfully.',
@@ -26,7 +26,7 @@ export const Playground: Story = {
   decorators: [(Story) => <div style={{ width: 320 }}><Story /></div>],
 }
 
-export const AllVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 320 }}>
       {([

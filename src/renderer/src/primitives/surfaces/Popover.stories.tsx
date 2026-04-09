@@ -3,7 +3,7 @@ import { Popover } from './Popover'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Surfaces/Popover',
+  title: 'Primitives/Surfaces/Popover',
   component: Popover,
   tags: ['autodocs'],
 } satisfies Meta<typeof Popover>
@@ -11,7 +11,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => (
     <Popover
       trigger={<Button variant="outline">Open Popover</Button>}

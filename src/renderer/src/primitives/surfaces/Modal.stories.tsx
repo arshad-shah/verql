@@ -4,7 +4,7 @@ import { Modal } from './Modal'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Surfaces/Modal',
+  title: 'Primitives/Surfaces/Modal',
   component: Modal,
   tags: ['autodocs'],
   parameters: {
@@ -15,7 +15,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => {
     const [open, setOpen] = useState(false)
     return (

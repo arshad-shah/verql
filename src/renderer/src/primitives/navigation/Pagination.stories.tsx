@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Pagination } from './Pagination'
 
 const meta = {
-  title: 'Navigation/Pagination',
+  title: 'Primitives/Navigation/Pagination',
   component: Pagination,
   tags: ['autodocs'],
   argTypes: {
@@ -15,7 +15,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => {
     const [page, setPage] = useState(1)
     return (
@@ -29,18 +29,17 @@ export const Interactive: Story = {
   },
 }
 
-export const FirstPage: Story = {
-  args: {
-    page: 1,
-    totalPages: 5,
-    onPageChange: () => {},
-  },
-}
-
-export const LastPage: Story = {
-  args: {
-    page: 5,
-    totalPages: 5,
-    onPageChange: () => {},
-  },
+export const States: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 6 }}>First page</div>
+        <Pagination page={1} totalPages={5} onPageChange={() => {}} />
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 6 }}>Last page</div>
+        <Pagination page={5} totalPages={5} onPageChange={() => {}} />
+      </div>
+    </div>
+  ),
 }

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Divider } from './Divider'
 
 const meta = {
-  title: 'Layout/Divider',
+  title: 'Primitives/Layout/Divider',
   component: Divider,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     orientation: 'horizontal',
   },

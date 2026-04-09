@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Tag } from './Tag'
 
 const meta = {
-  title: 'Data Display/Tag',
+  title: 'Primitives/Data Display/Tag',
   component: Tag,
   tags: ['autodocs'],
 } satisfies Meta<typeof Tag>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     children: 'postgresql',
   },
@@ -28,12 +28,3 @@ export const WithDismiss: Story = {
   ),
 }
 
-export const Multiple: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-      {['postgresql', 'mysql', 'sqlite', 'mongodb', 'redis'].map((tag) => (
-        <Tag key={tag}>{tag}</Tag>
-      ))}
-    </div>
-  ),
-}

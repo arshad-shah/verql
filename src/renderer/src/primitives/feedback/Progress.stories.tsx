@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Progress } from './Progress'
 
 const meta = {
-  title: 'Feedback/Progress',
+  title: 'Primitives/Feedback/Progress',
   component: Progress,
   tags: ['autodocs'],
   argTypes: {
@@ -14,7 +14,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     value: 60,
     max: 100,

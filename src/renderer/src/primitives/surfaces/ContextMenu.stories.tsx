@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { ContextMenu } from './ContextMenu'
 
 const meta = {
-  title: 'Surfaces/ContextMenu',
+  title: 'Primitives/Surfaces/ContextMenu',
   component: ContextMenu,
   tags: ['autodocs'],
 } satisfies Meta<typeof ContextMenu>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => (
     <ContextMenu
       items={[

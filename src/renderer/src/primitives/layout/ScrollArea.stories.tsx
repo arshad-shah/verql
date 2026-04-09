@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { ScrollArea } from './ScrollArea'
 
 const meta = {
-  title: 'Layout/ScrollArea',
+  title: 'Primitives/Layout/ScrollArea',
   component: ScrollArea,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     direction: 'vertical',
     style: { height: 150, width: 300, border: '1px solid var(--color-border-default)', borderRadius: 6 },

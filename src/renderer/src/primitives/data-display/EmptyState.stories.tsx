@@ -3,7 +3,7 @@ import { EmptyState } from './EmptyState'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Data Display/EmptyState',
+  title: 'Primitives/Data Display/EmptyState',
   component: EmptyState,
   tags: ['autodocs'],
   argTypes: {
@@ -15,7 +15,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     title: 'No tables found',
     description: 'Create your first table to get started.',
@@ -24,7 +24,7 @@ export const Playground: Story = {
   },
 }
 
-export const Minimal: Story = {
+export const States: Story = {
   args: {
     title: 'No results',
   },

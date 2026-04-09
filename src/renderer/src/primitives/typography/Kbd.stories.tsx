@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Kbd } from './Kbd'
 
 const meta = {
-  title: 'Typography/Kbd',
+  title: 'Primitives/Typography/Kbd',
   component: Kbd,
   tags: ['autodocs'],
 } satisfies Meta<typeof Kbd>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     children: '⌘K',
   },

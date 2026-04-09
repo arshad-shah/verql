@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { KeyValue } from './KeyValue'
 
 const meta = {
-  title: 'Data Display/KeyValue',
+  title: 'Primitives/Data Display/KeyValue',
   component: KeyValue,
   tags: ['autodocs'],
   argTypes: {
@@ -14,7 +14,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     label: 'Database',
     value: 'PostgreSQL 15.3',

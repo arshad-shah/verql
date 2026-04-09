@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { List } from './List'
 
 const meta = {
-  title: 'Data Display/List',
+  title: 'Primitives/Data Display/List',
   component: List,
   tags: ['autodocs'],
 } satisfies Meta<typeof List>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Example: Story = {
+export const Default: Story = {
   render: () => (
     <div style={{ width: 240, border: '1px solid var(--color-border-default)', borderRadius: 8, overflow: 'hidden' }}>
       <List>

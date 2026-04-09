@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Container } from './Container'
 
 const meta = {
-  title: 'Layout/Container',
+  title: 'Primitives/Layout/Container',
   component: Container,
   tags: ['autodocs'],
   argTypes: {
@@ -16,7 +16,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     size: 'md',
     children: 'Container content — centered with max-width constraint.',
@@ -24,7 +24,7 @@ export const Playground: Story = {
   },
 }
 
-export const AllSizes: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
       {(['sm', 'md', 'lg', 'xl', 'full'] as const).map((size) => (

@@ -3,7 +3,7 @@ import { DropdownMenu } from './DropdownMenu'
 import { Button } from '../forms/Button'
 
 const meta = {
-  title: 'Surfaces/DropdownMenu',
+  title: 'Primitives/Surfaces/DropdownMenu',
   component: DropdownMenu,
   tags: ['autodocs'],
 } satisfies Meta<typeof DropdownMenu>
@@ -11,7 +11,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => (
     <DropdownMenu
       trigger={<Button variant="outline">Actions ▾</Button>}
@@ -25,7 +25,7 @@ export const Interactive: Story = {
   ),
 }
 
-export const WithDisabledItems: Story = {
+export const States: Story = {
   render: () => (
     <DropdownMenu
       trigger={<Button variant="outline">Options ▾</Button>}

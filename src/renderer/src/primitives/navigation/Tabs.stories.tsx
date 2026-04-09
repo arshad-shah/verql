@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Tabs } from './Tabs'
 
 const meta = {
-  title: 'Navigation/Tabs',
+  title: 'Primitives/Navigation/Tabs',
   component: Tabs,
   tags: ['autodocs'],
 } satisfies Meta<typeof Tabs>
@@ -18,7 +18,7 @@ const TABS = [
   { id: 'constraints', label: 'Constraints' },
 ]
 
-export const Interactive: Story = {
+export const Default: Story = {
   render: () => {
     const [active, setActive] = useState('data')
     return (

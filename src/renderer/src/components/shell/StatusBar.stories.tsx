@@ -88,7 +88,7 @@ function DevBadge() {
 }
 
 const meta = {
-  title: 'Shell/StatusBar',
+  title: 'Primitives/Shell/StatusBar',
   tags: ['autodocs'],
   decorators: [(Story: React.ComponentType) => <DockShell><Story /></DockShell>],
 } satisfies Meta
@@ -97,7 +97,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /** No active connection — disconnected state. */
-export const Disconnected: Story = {
+export const Default: Story = {
   render: () => (
     <DockWrapper
       left={

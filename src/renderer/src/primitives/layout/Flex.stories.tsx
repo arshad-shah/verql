@@ -8,7 +8,7 @@ const DemoBox = ({ children }: { children: string }) => (
 )
 
 const meta = {
-  title: 'Layout/Flex',
+  title: 'Primitives/Layout/Flex',
   component: Flex,
   tags: ['autodocs'],
   argTypes: {
@@ -35,7 +35,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     direction: 'row',
     gap: 'md',
@@ -50,7 +50,7 @@ export const Playground: Story = {
   },
 }
 
-export const Directions: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {(['row', 'column', 'row-reverse', 'column-reverse'] as const).map((dir) => (

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Heading } from './Heading'
 
 const meta = {
-  title: 'Typography/Heading',
+  title: 'Primitives/Typography/Heading',
   component: Heading,
   tags: ['autodocs'],
   argTypes: {
@@ -16,14 +16,14 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     level: 2,
     children: 'The quick brown fox jumps over the lazy dog',
   },
 }
 
-export const AllLevels: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {([1, 2, 3, 4, 5, 6] as const).map((level) => (

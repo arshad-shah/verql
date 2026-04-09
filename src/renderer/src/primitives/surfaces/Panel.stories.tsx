@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Panel } from './Panel'
 
 const meta = {
-  title: 'Surfaces/Panel',
+  title: 'Primitives/Surfaces/Panel',
   component: Panel,
   tags: ['autodocs'],
 } satisfies Meta<typeof Panel>
@@ -10,7 +10,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     children: (
       <div style={{ padding: 16, color: 'var(--color-text-primary)', fontSize: 13 }}>

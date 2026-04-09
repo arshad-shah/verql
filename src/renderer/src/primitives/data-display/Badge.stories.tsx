@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Badge } from './Badge'
 
 const meta = {
-  title: 'Data Display/Badge',
+  title: 'Primitives/Data Display/Badge',
   component: Badge,
   tags: ['autodocs'],
   argTypes: {
@@ -20,7 +20,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Playground: Story = {
+export const Default: Story = {
   args: {
     variant: 'accent',
     size: 'md',
@@ -28,7 +28,7 @@ export const Playground: Story = {
   },
 }
 
-export const AllVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {(['sm', 'md', 'lg'] as const).map((size) => (

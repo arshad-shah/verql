@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Code } from './Code'
 
 const meta = {
-  title: 'Typography/Code',
+  title: 'Primitives/Typography/Code',
   component: Code,
   tags: ['autodocs'],
   argTypes: {
@@ -13,7 +13,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Inline: Story = {
+export const Default: Story = {
   args: {
     block: false,
     children: 'console.log("hello")',
@@ -27,7 +27,7 @@ export const Block: Story = {
   },
 }
 
-export const InlineInContext: Story = {
+export const InContext: Story = {
   render: () => (
     <p style={{ color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.6 }}>
       Call <Code>document.getElementById()</Code> to select an element, or use <Code>querySelector()</Code> for CSS selectors.

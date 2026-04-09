@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ResizeHandle } from './ResizeHandle'
 
 const meta = {
-  title: 'Utilities/ResizeHandle',
+  title: 'Primitives/Utilities/ResizeHandle',
   component: ResizeHandle,
   tags: ['autodocs'],
   argTypes: {
@@ -17,7 +17,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const HorizontalDemo: Story = {
+export const Default: Story = {
   render: () => {
     const [leftWidth, setLeftWidth] = useState(200)
     return (
@@ -38,7 +38,7 @@ export const HorizontalDemo: Story = {
   },
 }
 
-export const VerticalDemo: Story = {
+export const Vertical: Story = {
   render: () => {
     const [topHeight, setTopHeight] = useState(100)
     return (
