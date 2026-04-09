@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Settings } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
@@ -12,7 +13,12 @@ export function ConnectionSwitcher() {
   const connectedIds = useConnectionsStore((s) => s.connectedIds)
   const connect = useConnectionsStore((s) => s.connect)
   const setActiveConnection = useConnectionsStore((s) => s.setActiveConnection)
+  const loadConnections = useConnectionsStore((s) => s.loadConnections)
   const openConnectionForm = useTabsStore((s) => s.openConnectionForm)
+
+  useEffect(() => {
+    loadConnections()
+  }, [loadConnections])
 
   const options = connections.map((c) => ({
     value: c.id,

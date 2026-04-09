@@ -165,13 +165,13 @@ export function TableNode({
                 <ExternalLink size={10} />
               </IconButton>
             </Tooltip>
-            <Tooltip content="Run SELECT *" side="top">
+            <Tooltip content="Copy SELECT *" side="top">
               <IconButton
-                label="Run SELECT *"
+                label="Copy SELECT *"
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
-                onClick={openInQueryTab}
+                onClick={copySelectStar}
               >
                 <Play size={10} />
               </IconButton>

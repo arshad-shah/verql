@@ -93,17 +93,14 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
           </span>
           <span
             className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenInTab()
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
             <IconButton
               label="Open in query tab"
               size="xs"
               variant="ghost"
               className="h-5 w-5"
-              tabIndex={-1}
+              onClick={handleOpenInTab}
             >
               <ExternalLink size={10} />
             </IconButton>
