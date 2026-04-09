@@ -1,6 +1,7 @@
-import { ipcMain, app, dialog } from 'electron'
+import { ipcMain, app, dialog, BrowserWindow } from 'electron'
 import fs from 'fs'
 import { ConfigStore } from './config/store'
+import type { AppSettings } from '@shared/settings'
 import { createAdapter, setDriverRegistry } from './db/factory'
 import type { DbAdapter } from './db/adapter'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
@@ -112,6 +113,29 @@ export function registerIpcHandlers(): void {
       activeAdapters.delete(profileId)
     }
     configStore.deleteConnection(profileId)
+  })
+
+  // ─── Settings ───────────────────────────────────────────────────────────────
+  handle('settings:get-all', async () => {
+    return configStore.getAllSettings()
+  })
+
+  handle('settings:get', async (category) => {
+    return configStore.getSettingsCategory(category as keyof AppSettings)
+  })
+
+  handle('settings:set', async (keyPath, value) => {
+    configStore.setSetting(keyPath as string, value)
+    const mainWindow = BrowserWindow.getAllWindows()[0]
+    mainWindow?.webContents.send('settings:changed', keyPath, value)
+  })
+
+  handle('settings:reset', async (category) => {
+    configStore.resetCategory(category as keyof AppSettings)
+    const updated = configStore.getSettingsCategory(category as keyof AppSettings)
+    const mainWindow = BrowserWindow.getAllWindows()[0]
+    mainWindow?.webContents.send('settings:changed', category, updated)
+    return updated
   })
 
   handle('db:connect', async (profileId: string) => {
@@ -381,11 +405,12 @@ export function registerIpcHandlers(): void {
     getAdapter: (id) => activeAdapters.get(id),
     getProfile: (id) => configStore.getConnection(id),
     settingsStore: {
-      get: (key) => (configStore as any).data?.[key],
+      get: (key) => {
+        const pluginSettings = configStore.getSettingsCategory('plugins')
+        return pluginSettings[key]
+      },
       set: (key, value) => {
-        (configStore as any).data = (configStore as any).data ?? {}
-        ;(configStore as any).data[key] = value
-        ;(configStore as any).save?.()
+        configStore.setSetting(`plugins.${key}`, value)
       }
     }
   })

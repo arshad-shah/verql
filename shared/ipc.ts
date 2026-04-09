@@ -1,4 +1,5 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, DatabaseType } from './types'
+import type { AppSettings } from './settings'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -132,5 +133,21 @@ export interface IpcChannelMap {
   'plugins:middleware-fields': {
     args: []
     return: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[]
+  }
+  'settings:get-all': {
+    args: []
+    return: AppSettings
+  }
+  'settings:get': {
+    args: [category: string]
+    return: unknown
+  }
+  'settings:set': {
+    args: [keyPath: string, value: unknown]
+    return: void
+  }
+  'settings:reset': {
+    args: [category: string]
+    return: unknown
   }
 }
