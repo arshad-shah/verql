@@ -82,7 +82,7 @@ export const States: StoryObj = {
               <option value="mongodb">MongoDB</option>
             </Select>
           </FormField>
-          <FormField label="Database File" hint="Path to the .sqlite or .db file">
+          <FormField label="Database File">
             <Input placeholder="/path/to/database.sqlite" />
           </FormField>
           <div className="flex gap-2 mt-2">

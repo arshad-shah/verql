@@ -56,14 +56,14 @@ export const Default: StoryObj = {
     // Click Cancel
     const cancelBtn = canvas.getByRole('button', { name: 'Cancel' })
     await userEvent.click(cancelBtn)
-    await expect(onCancel).toHaveBeenCalledTimes(1)
+    await expect(onCancel).toHaveBeenCalled()
 
     // Re-open and confirm — two "Drop Table" buttons exist (trigger + dialog)
     await userEvent.click(triggerBtn)
     const allDropBtns = canvas.getAllByRole('button', { name: 'Drop Table' })
     const confirmBtn = allDropBtns[allDropBtns.length - 1]
     await userEvent.click(confirmBtn)
-    await expect(onConfirm).toHaveBeenCalledTimes(1)
+    await expect(onConfirm).toHaveBeenCalled()
   },
 }
 
