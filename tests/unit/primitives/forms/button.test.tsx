@@ -11,7 +11,7 @@ describe('Button', () => {
 
   it('applies solid variant by default', () => {
     const { container } = render(<Button>Solid</Button>)
-    expect(container.firstChild).toHaveClass('bg-accent')
+    expect(container.firstChild).toHaveClass('bg-accent-emphasis')
   })
 
   it('applies ghost variant', () => {
@@ -28,7 +28,7 @@ describe('Button', () => {
 
   it('applies danger variant', () => {
     const { container } = render(<Button variant="danger">Danger</Button>)
-    expect(container.firstChild).toHaveClass('bg-error')
+    expect(container.firstChild).toHaveClass('bg-error-emphasis')
   })
 
   it('applies md size by default', () => {
@@ -111,7 +111,7 @@ describe('IconButton', () => {
 
   it('applies solid variant', () => {
     const { container } = render(<IconButton label="Icon" variant="solid">X</IconButton>)
-    expect(container.firstChild).toHaveClass('bg-accent')
+    expect(container.firstChild).toHaveClass('bg-accent-emphasis')
   })
 
   it('forwards ref', () => {

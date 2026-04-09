@@ -90,11 +90,13 @@
   --color-accent: var(--raw-purple-500);
   --color-accent-hover: var(--raw-purple-400);
   --color-accent-muted: var(--raw-purple-900);
+  --color-accent-emphasis: color-mix(in oklch, var(--color-accent), black 20%);
 
   /* Status */
   --color-success: var(--raw-green-500);
   --color-warning: var(--raw-yellow-500);
   --color-error: var(--raw-red-500);
+  --color-error-emphasis: color-mix(in oklch, var(--color-error), black 25%);
   --color-info: var(--raw-blue-500);
 
   /* Interactive */

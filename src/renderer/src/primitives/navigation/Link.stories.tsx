@@ -25,6 +25,7 @@ export const Default: Story = {
   },
   play: async ({ args, canvas }) => {
     const link = canvas.getByRole('link', { name: 'View documentation' })
+    link.addEventListener('click', (e) => e.preventDefault(), { once: true })
     await userEvent.click(link)
     await expect(args.onClick).toHaveBeenCalledTimes(1)
   },

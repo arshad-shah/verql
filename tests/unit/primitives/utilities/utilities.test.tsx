@@ -108,6 +108,6 @@ describe('ResizeHandle', () => {
   it('has base styling classes', () => {
     const { container } = render(<ResizeHandle direction="horizontal" onResize={() => {}} />)
     expect(container.firstChild).toHaveClass('shrink-0')
-    expect(container.firstChild).toHaveClass('bg-transparent')
+    expect(container.firstChild).toHaveClass('transition-colors')
   })
 })

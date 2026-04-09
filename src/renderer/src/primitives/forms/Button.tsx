@@ -7,11 +7,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        solid: 'bg-accent text-white hover:bg-accent-hover shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)] hover:shadow-[inset_0_1px_0_var(--color-button-highlight),0_2px_4px_rgba(0,0,0,0.25)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]',
+        solid: 'bg-accent-emphasis text-white hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)] hover:shadow-[inset_0_1px_0_var(--color-button-highlight),0_2px_4px_rgba(0,0,0,0.25)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]',
         outline:
           'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
-        danger: 'bg-error text-white hover:bg-error/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.2)]',
+        danger: 'bg-error-emphasis text-white hover:bg-error shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.2)]',
       },
       size: {
         xs: 'h-6 px-2 text-xs rounded',
@@ -53,7 +53,7 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        solid: 'bg-accent text-white hover:bg-accent-hover shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)]',
+        solid: 'bg-accent-emphasis text-white hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)]',
         outline: 'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
       },

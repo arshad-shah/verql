@@ -21,9 +21,11 @@
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-muted: var(--color-accent-muted);
+  --color-accent-emphasis: var(--color-accent-emphasis);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-error: var(--color-error);
+  --color-error-emphasis: var(--color-error-emphasis);
   --color-info: var(--color-info);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);

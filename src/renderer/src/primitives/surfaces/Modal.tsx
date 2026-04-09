@@ -10,6 +10,7 @@ type ModalProps = {
 
 export function Modal({ open, onClose, className, children }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const closingRef = useRef(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -17,7 +18,9 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
     if (open) {
       dialog.showModal()
     } else {
+      closingRef.current = true
       dialog.close()
+      closingRef.current = false
     }
   }, [open])
 
@@ -30,7 +33,7 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
   return (
     <dialog
       ref={dialogRef}
-      onClose={onClose}
+      onClose={() => { if (!closingRef.current) onClose() }}
       onClick={handleClick}
       className={cn(
         'fixed inset-0 m-auto',

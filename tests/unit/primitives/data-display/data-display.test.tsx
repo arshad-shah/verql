@@ -22,7 +22,7 @@ describe('Badge', () => {
 
   it('applies accent variant classes', () => {
     const { container } = render(<Badge variant="accent">Accent</Badge>)
-    expect(container.firstChild).toHaveClass('text-accent')
+    expect(container.firstChild).toHaveClass('text-accent-hover')
   })
 
   it('applies success variant classes', () => {

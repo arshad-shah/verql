@@ -36,6 +36,9 @@ export interface NumberInputProps extends VariantProps<typeof numberInputVariant
   disabled?: boolean
   className?: string
   placeholder?: string
+  id?: string
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
@@ -53,6 +56,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       error,
       className,
       placeholder,
+      id,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
     },
     ref
   ) => {
@@ -133,6 +139,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         </button>
         <input
           ref={inputRef}
+          id={id}
           type="text"
           inputMode="decimal"
           className="flex-1 h-full bg-transparent text-center font-mono outline-none min-w-0 text-inherit"
@@ -146,6 +153,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           aria-valuenow={currentValue}
           aria-valuemin={min !== -Infinity ? min : undefined}
           aria-valuemax={max !== Infinity ? max : undefined}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
           role="spinbutton"
         />
         <button

@@ -87,7 +87,7 @@ describe('Sheet', () => {
       </Sheet>
     )
     const dialog = container.querySelector('dialog')
-    expect(dialog).toHaveClass('ml-auto')
+    expect(dialog).toHaveClass('fixed', 'top-0', 'right-0', 'h-full', 'rounded-l-lg')
   })
 
   it('applies left side variant', () => {
@@ -97,7 +97,7 @@ describe('Sheet', () => {
       </Sheet>
     )
     const dialog = container.querySelector('dialog')
-    expect(dialog).toHaveClass('mr-auto')
+    expect(dialog).toHaveClass('fixed', 'top-0', 'left-0', 'h-full', 'rounded-r-lg')
   })
 
   it('applies bottom side variant', () => {
@@ -107,6 +107,6 @@ describe('Sheet', () => {
       </Sheet>
     )
     const dialog = container.querySelector('dialog')
-    expect(dialog).toHaveClass('mt-auto')
+    expect(dialog).toHaveClass('fixed', 'bottom-0', 'left-0', 'w-full', 'rounded-t-lg')
   })
 })
