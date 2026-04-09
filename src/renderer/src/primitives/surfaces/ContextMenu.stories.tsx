@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn } from 'storybook/test'
+import { expect, fn, userEvent } from 'storybook/test'
 import { ContextMenu } from './ContextMenu'
 
 const meta = {
@@ -42,4 +42,57 @@ export const Default: Story = {
       </div>
     </ContextMenu>
   ),
+  play: async ({ canvas }) => {
+    const target = canvas.getByText('Right-click here to open context menu')
+
+    await userEvent.pointer({ keys: '[MouseRight]', target })
+
+    const openInNewTab = canvas.getByRole('menuitem', { name: 'Open in new tab' })
+    await expect(openInNewTab).toBeVisible()
+
+    await userEvent.click(openInNewTab)
+    await expect(onOpenInNewTab).toHaveBeenCalledTimes(1)
+  },
+}
+
+export const WithDisabledItems: Story = {
+  render: () => (
+    <ContextMenu
+      items={[
+        { label: 'Open in new tab', onSelect: fn() },
+        { label: 'Copy path', onSelect: fn() },
+        { label: 'Rename', onSelect: fn(), disabled: true },
+        { label: 'Delete', onSelect: fn(), disabled: true },
+      ]}
+    >
+      <div style={{
+        width: 280,
+        height: 120,
+        border: '2px dashed var(--color-border-default)',
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 13,
+        color: 'var(--color-text-secondary)',
+        userSelect: 'none',
+      }}>
+        Right-click to see disabled items
+      </div>
+    </ContextMenu>
+  ),
+  play: async ({ canvas }) => {
+    const target = canvas.getByText('Right-click to see disabled items')
+
+    await userEvent.pointer({ keys: '[MouseRight]', target })
+
+    const renameItem = canvas.getByRole('menuitem', { name: 'Rename' })
+    await expect(renameItem).toBeDisabled()
+
+    const deleteItem = canvas.getByRole('menuitem', { name: 'Delete' })
+    await expect(deleteItem).toBeDisabled()
+
+    const openInNewTab = canvas.getByRole('menuitem', { name: 'Open in new tab' })
+    await expect(openInNewTab).not.toBeDisabled()
+  },
 }

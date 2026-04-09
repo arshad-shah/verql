@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { fn } from 'storybook/test'
+import { expect, userEvent, fn } from 'storybook/test'
 import { Sheet } from './Sheet'
 import { Button } from '../forms/Button'
 
@@ -36,5 +36,17 @@ export const Default: Story = {
         </Sheet>
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const openRightButton = canvas.getByRole('button', { name: 'Open right' })
+    await userEvent.click(openRightButton)
+
+    const sheetHeading = canvas.getByText('Sheet — right')
+    await expect(sheetHeading).toBeVisible()
+
+    const closeButton = canvas.getByRole('button', { name: 'Close' })
+    await userEvent.click(closeButton)
+
+    await expect(sheetHeading).not.toBeVisible()
   },
 }

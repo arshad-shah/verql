@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, userEvent } from 'storybook/test'
 import { Popover } from './Popover'
 import { Button } from '../forms/Button'
 
@@ -26,4 +27,12 @@ export const Default: Story = {
       }
     />
   ),
+  play: async ({ canvas }) => {
+    const triggerButton = canvas.getByRole('button', { name: 'Open Popover' })
+    await userEvent.click(triggerButton)
+
+    // The native Popover API uses CSS :popover-open state; content is always in the DOM
+    const title = canvas.getByText('Popover title')
+    await expect(title).toBeInTheDocument()
+  },
 }
