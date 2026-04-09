@@ -7,7 +7,7 @@ import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import {
   ScrollArea, Container, Stack, Flex, Box, Divider,
   Heading, Text,
-  FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput,
+  FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput,
   Button
 } from '@/primitives'
 
@@ -135,6 +135,19 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <NumberInput
             value={Number(value) || 0}
             onChange={(v) => update({ [field.key]: v })}
+            size="sm"
+          />
+        </FormField>
+      )
+    }
+
+    if (field.type === 'file') {
+      return (
+        <FormField key={field.key} label={field.label}>
+          <FileContentInput
+            value={String(value)}
+            onChange={(content) => update({ [field.key]: content })}
+            accept=".pem,.key"
             size="sm"
           />
         </FormField>
