@@ -98,8 +98,9 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
     }
   },
 
-  fetchTables: async (connectionId, schema) => {
-    const key = cacheKey(connectionId, schema)
+  fetchTables: async (connectionId, schema, database) => {
+    // Include database in cache key so each DB's tables are cached separately
+    const key = database ? cacheKey(connectionId, database, schema) : cacheKey(connectionId, schema)
     const cached = get().tables.get(key)
     if (cached) return cached
     set({ loading: true })

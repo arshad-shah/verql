@@ -46,7 +46,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     ;(async () => {
       try {
         if (databaseName) await switchDatabase(connectionId, databaseName)
-        if (!cancelled) await fetchTables(connectionId, schemaName)
+        if (!cancelled) await fetchTables(connectionId, schemaName, databaseName)
       } catch { /* handled by store */ }
     })()
     return () => { cancelled = true }
@@ -57,7 +57,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     if (!isExpanded) {
       try {
         if (databaseName) await switchDatabase(connectionId, databaseName)
-        await fetchTables(connectionId, schemaName)
+        await fetchTables(connectionId, schemaName, databaseName)
       } catch { /* handled by store */ }
     }
   }
@@ -66,7 +66,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     try {
       if (databaseName) await switchDatabase(connectionId, databaseName)
       clearCache(connectionId)
-      await fetchTables(connectionId, schemaName)
+      await fetchTables(connectionId, schemaName, databaseName)
       addToast({ type: 'success', title: 'Schema refreshed' })
     } catch {
       addToast({ type: 'error', title: 'Failed to refresh schema' })
