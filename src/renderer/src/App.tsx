@@ -12,12 +12,14 @@ import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { Flex, Box, Heading, Text, ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { useSettingsStore } from '@/stores/settings'
 import { useConnectionsStore } from '@/stores/connections'
 import type { QueryTab, ErDiagramTab } from '@shared/types'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab } = useTabsStore()
-  const { sidebarVisible, sidebarWidth, setSidebarWidth } = useUiStore()
+  const { sidebarVisible, setSidebarWidth } = useUiStore()
+  const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -52,12 +54,12 @@ export function App() {
   }, [activeConnectionId, addQueryTab])
 
   const handleSidebarResize = (delta: number) => {
-    const current = useUiStore.getState().sidebarWidth
+    const current = useSettingsStore.getState().settings.appearance.sidebarWidth
     setSidebarWidth(current + delta)
   }
 
   const handleSidebarResizeDoubleClick = () => {
-    const current = useUiStore.getState().sidebarWidth
+    const current = useSettingsStore.getState().settings.appearance.sidebarWidth
     if (current > 180) {
       setPrevSidebarWidth(current)
       setSidebarWidth(180)

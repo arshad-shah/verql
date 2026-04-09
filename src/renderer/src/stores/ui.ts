@@ -1,21 +1,11 @@
 import { create } from 'zustand'
+import { useSettingsStore } from './settings'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings'
-
-function loadNumber(key: string, fallback: number): number {
-  const stored = localStorage.getItem(key)
-  if (stored) {
-    const parsed = parseFloat(stored)
-    if (!isNaN(parsed)) return parsed
-  }
-  return fallback
-}
 
 interface UiState {
   activePanel: ActivityPanel
   sidebarVisible: boolean
-  sidebarWidth: number
-  splitRatio: number
   expandedSections: Record<string, boolean>
   setActivePanel: (panel: ActivityPanel) => void
   toggleSidebar: () => void
@@ -27,35 +17,31 @@ interface UiState {
 export const useUiStore = create<UiState>((set) => ({
   activePanel: 'explorer',
   sidebarVisible: true,
-  sidebarWidth: loadNumber('dbstudio-sidebar-width', 240),
-  splitRatio: loadNumber('dbstudio-split-ratio', 50),
   expandedSections: {
     CONNECTIONS: true,
     DATABASES: true,
     TABLES: true,
-    VIEWS: true
+    VIEWS: true,
   },
   setActivePanel: (panel) =>
     set((state) => ({
       activePanel: panel,
-      sidebarVisible: state.activePanel === panel ? !state.sidebarVisible : true
+      sidebarVisible: state.activePanel === panel ? !state.sidebarVisible : true,
     })),
   toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
   setSidebarWidth: (width) => {
     const clamped = Math.min(480, Math.max(180, width))
-    localStorage.setItem('dbstudio-sidebar-width', String(clamped))
-    set({ sidebarWidth: clamped })
+    useSettingsStore.getState().set('appearance.sidebarWidth', clamped)
   },
   setSplitRatio: (ratio) => {
     const clamped = Math.min(80, Math.max(20, ratio))
-    localStorage.setItem('dbstudio-split-ratio', String(clamped))
-    set({ splitRatio: clamped })
+    useSettingsStore.getState().set('appearance.splitRatio', clamped)
   },
   toggleSection: (title) =>
     set((state) => ({
       expandedSections: {
         ...state.expandedSections,
-        [title]: !state.expandedSections[title]
-      }
-    }))
+        [title]: !state.expandedSections[title],
+      },
+    })),
 }))
