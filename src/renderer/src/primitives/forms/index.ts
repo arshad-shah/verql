@@ -27,3 +27,21 @@ export type { SwitchProps } from './Switch'
 
 export { Slider } from './Slider'
 export type { SliderProps } from './Slider'
+
+export { NumberInput } from './NumberInput'
+export type { NumberInputProps } from './NumberInput'
+
+export { SearchInput } from './SearchInput'
+export type { SearchInputProps } from './SearchInput'
+
+export { PasswordInput } from './PasswordInput'
+export type { PasswordInputProps } from './PasswordInput'
+
+export { TagsInput } from './TagsInput'
+export type { TagsInputProps } from './TagsInput'
+
+export { DatePicker } from './DatePicker'
+export type { DatePickerProps } from './DatePicker'
+
+export { ColorInput } from './ColorInput'
+export type { ColorInputProps } from './ColorInput'
