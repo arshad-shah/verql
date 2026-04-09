@@ -1,3 +1,4 @@
+import { Button, Text } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 
 const DB_ABBREVIATIONS: Record<string, string> = {
@@ -44,10 +45,11 @@ export function ConnectionCard({
   const isDisconnected = !isConnected && !isError
 
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] transition-colors',
+        'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] transition-colors h-auto',
         isError
           ? 'border-error/20 bg-error/8 hover:bg-error/12'
           : isOpen
@@ -67,23 +69,23 @@ export function ConnectionCard({
 
       {isConnected || isError ? (
         <>
-          <span className={cn('font-semibold', isError ? 'text-error' : typeColor)}>
+          <Text as="span" weight="semibold" className={cn(isError ? 'text-error' : typeColor)}>
             {abbreviation}
-          </span>
-          <span className={cn(isError ? 'text-error' : 'text-text-primary')}>{dbName}</span>
+          </Text>
+          <Text as="span" className={cn(isError ? 'text-error' : 'text-text-primary')}>{dbName}</Text>
           {isError ? (
-            <span className="text-error/60">Connection lost</span>
+            <Text as="span" className="text-error/60">Connection lost</Text>
           ) : (
-            schema && <span className="text-text-tertiary">/ {schema}</span>
+            schema && <Text as="span" className="text-text-tertiary">/ {schema}</Text>
           )}
         </>
       ) : (
-        <span className="text-text-tertiary">No connection</span>
+        <Text as="span" className="text-text-tertiary">No connection</Text>
       )}
 
-      <span className={cn('ml-0.5 text-[8px]', isOpen ? 'text-accent' : 'text-text-disabled')}>
+      <Text as="span" className={cn('ml-0.5 text-[8px]', isOpen ? 'text-accent' : 'text-text-disabled')}>
         {isOpen ? '▴' : '▾'}
-      </span>
-    </button>
+      </Text>
+    </Button>
   )
 }

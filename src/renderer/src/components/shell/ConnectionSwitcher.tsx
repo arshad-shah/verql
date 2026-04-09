@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
+import { Button, Input, Text, Box, Flex, ScrollArea } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 
 const DB_ABBREVIATIONS: Record<string, string> = {
@@ -95,37 +96,33 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
     const isLive = connectedIds.has(c.id)
 
     return (
-      <div
+      <Button
         key={c.id}
-        role="button"
-        tabIndex={0}
+        variant="ghost"
         onClick={() => handleSelect(c.id)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSelect(c.id)
-        }}
         className={cn(
-          'flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer',
+          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 h-auto text-left',
           isActive ? 'bg-accent/10 border border-accent/20' : 'hover:bg-hover',
           !isLive && 'opacity-50'
         )}
       >
         <div
           className={cn(
-            'h-[7px] w-[7px] shrink-0 rounded-full',
+            'h-1.75 w-1.75 shrink-0 rounded-full',
             isLive ? 'bg-success shadow-[0_0_4px_rgba(40,200,64,0.4)]' : 'bg-text-tertiary'
           )}
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <span className={cn('text-[10px] font-semibold', color)}>{abbr}</span>
-            <span className="text-[10px] text-text-primary truncate">{c.name}</span>
-          </div>
-          <div className="text-[9px] text-text-tertiary truncate">
+        <Box className="min-w-0 flex-1">
+          <Flex align="center" gap="xs">
+            <Text as="span" weight="semibold" className={cn('text-[10px]', color)}>{abbr}</Text>
+            <Text as="span" truncate className="text-[10px] text-text-primary">{c.name}</Text>
+          </Flex>
+          <Text as="p" truncate className="text-[9px] text-text-tertiary">
             {c.host ? `${c.host}${c.port ? `:${c.port}` : ''}` : c.database}
-          </div>
-        </div>
+          </Text>
+        </Box>
         {isActive && <Check size={10} className="text-accent shrink-0" />}
-      </div>
+      </Button>
     )
   }
 
@@ -139,58 +136,62 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         'animate-in slide-in-from-bottom-2 duration-150'
       )}
     >
-      <div className="p-2 border-b border-border-default">
-        <div className="flex items-center gap-1.5 rounded-[5px] border border-border-default bg-bg-tertiary px-2 py-1">
+      <Box className="p-2 border-b border-border-default">
+        <Flex align="center" gap="xs" className="rounded-[5px] border border-border-default bg-bg-tertiary px-2 py-1">
           <Search size={11} className="text-text-tertiary shrink-0" />
-          <input
+          <Input
             ref={inputRef}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter connections..."
-            className="flex-1 bg-transparent text-[10px] text-text-primary placeholder:text-text-tertiary outline-none"
+            size="sm"
+            className="flex-1 bg-transparent border-0 focus:ring-0 px-0 text-[10px]"
           />
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
-      {activeConn && (
-        <div className="px-1.5 pt-1">
-          <div className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary font-semibold">
-            Active
-          </div>
-          {renderConnection(activeConn, true)}
-        </div>
-      )}
+      <ScrollArea direction="vertical">
+        {activeConn && (
+          <Box className="px-1.5 pt-1">
+            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+              Active
+            </Text>
+            {renderConnection(activeConn, true)}
+          </Box>
+        )}
 
-      {connectedConns.length > 0 && (
-        <div className="px-1.5 pt-0.5">
-          <div className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary font-semibold">
-            Connected
-          </div>
-          {connectedConns.map((c) => renderConnection(c, false))}
-        </div>
-      )}
+        {connectedConns.length > 0 && (
+          <Box className="px-1.5 pt-0.5">
+            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+              Connected
+            </Text>
+            {connectedConns.map((c) => renderConnection(c, false))}
+          </Box>
+        )}
 
-      {savedConns.length > 0 && (
-        <div className="px-1.5 pt-0.5 border-t border-white/[0.03]">
-          <div className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary font-semibold">
-            Saved
-          </div>
-          {savedConns.map((c) => renderConnection(c, false))}
-        </div>
-      )}
+        {savedConns.length > 0 && (
+          <Box className="px-1.5 pt-0.5 border-t border-white/[0.03]">
+            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+              Saved
+            </Text>
+            {savedConns.map((c) => renderConnection(c, false))}
+          </Box>
+        )}
+      </ScrollArea>
 
-      <div className="border-t border-border-default p-1.5">
-        <button
+      <Box className="border-t border-border-default p-1.5">
+        <Button
+          variant="ghost"
           onClick={() => {
             onNewConnection()
             onClose()
           }}
-          className="flex w-full items-center justify-center gap-1 rounded-md py-1 text-[10px] text-accent hover:bg-hover"
+          className="flex w-full items-center justify-center gap-1 rounded-md py-1 text-[10px] text-accent hover:bg-hover h-auto"
         >
           <Plus size={10} />
           New connection
-        </button>
-      </div>
+        </Button>
+      </Box>
     </div>
   )
 }

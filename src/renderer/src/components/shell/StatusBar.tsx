@@ -130,12 +130,12 @@ export function StatusBar() {
 
         {/* Connection count badge */}
         {connectionCount > 1 && (
-          <div className="flex items-center gap-1 rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
+          <Flex align="center" gap="xs" className="rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
             <ArrowLeftRight size={10} className="text-accent" />
             <Text size="xs" color="accent" className="text-[10px]">
               {connectionCount}
             </Text>
-          </div>
+          </Flex>
         )}
       </Flex>
 
@@ -165,10 +165,10 @@ export function StatusBar() {
       {/* Right zone — tools */}
       <Flex align="center" gap="xs" className="ml-auto">
         {/* Plugin status */}
-        <div
-          className={cn(
-            'flex items-center gap-1 rounded-md border border-border-default bg-bg-tertiary px-2 py-1'
-          )}
+        <Flex
+          align="center"
+          gap="xs"
+          className="rounded-md border border-border-default bg-bg-tertiary px-2 py-1"
         >
           {pluginStatus.loading ? (
             <>
@@ -192,16 +192,16 @@ export function StatusBar() {
               </Text>
             </>
           )}
-        </div>
+        </Flex>
 
         {/* Notification bell */}
         <NotificationBell />
 
         {/* DEV badge */}
         {isDev && (
-          <div className="rounded-md bg-accent px-1.5 py-1 text-[9px] font-semibold text-white">
+          <Text as="span" weight="semibold" className="rounded-md bg-accent px-1.5 py-1 text-[9px] text-white">
             DEV
-          </div>
+          </Text>
         )}
       </Flex>
     </Flex>
