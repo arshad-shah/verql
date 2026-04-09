@@ -19,7 +19,7 @@ export function Pagination({ page, totalPages, onPageChange, className }: Pagina
         aria-label="Previous page"
         disabled={isFirst}
         onClick={() => onPageChange(page - 1)}
-        className="px-2 py-1 text-sm disabled:opacity-50 disabled:pointer-events-none"
+        className="px-2 py-1 text-sm disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]"
       >
         ‹
       </button>
@@ -31,7 +31,7 @@ export function Pagination({ page, totalPages, onPageChange, className }: Pagina
         aria-label="Next page"
         disabled={isLast}
         onClick={() => onPageChange(page + 1)}
-        className="px-2 py-1 text-sm disabled:opacity-50 disabled:pointer-events-none"
+        className="px-2 py-1 text-sm disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]"
       >
         ›
       </button>

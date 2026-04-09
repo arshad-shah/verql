@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const alertVariants = cva(
-  'rounded-lg border px-4 py-3',
+  'rounded-lg border border-l-4 px-4 py-3 shadow-[var(--shadow-card)]',
   {
     variants: {
       variant: {

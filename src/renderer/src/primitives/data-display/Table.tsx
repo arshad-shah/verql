@@ -9,7 +9,7 @@ function TableRoot({ className, ...props }: React.HTMLAttributes<HTMLTableElemen
 
 function Header({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn('border-b border-border-default', className)} {...props} />
+    <thead className={cn('border-b border-border-default bg-bg-secondary', className)} {...props} />
   )
 }
 
@@ -24,7 +24,7 @@ function Body({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElem
 
 function Row({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn('hover:bg-hover transition-colors', className)} {...props} />
+    <tr className={cn('hover:bg-hover transition-colors duration-[var(--transition-fast)]', className)} {...props} />
   )
 }
 

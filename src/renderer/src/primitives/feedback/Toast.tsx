@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const toastVariants = cva(
-  'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm',
+  'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm shadow-[var(--shadow-elevated)] toast-enter',
   {
     variants: {
       variant: {

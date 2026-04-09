@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const avatarVariants = cva(
-  'inline-flex items-center justify-center rounded-full bg-accent/10 text-accent font-medium',
+  'inline-flex items-center justify-center rounded-full bg-accent/10 text-accent font-medium shadow-[var(--shadow-card)] ring-1 ring-border-default',
   {
     variants: {
       size: {

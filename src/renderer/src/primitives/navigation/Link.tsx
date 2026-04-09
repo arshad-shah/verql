@@ -9,7 +9,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       <a
         ref={ref}
         className={cn(
-          'text-accent hover:text-accent-hover underline-offset-2 hover:underline text-sm',
+          'text-accent hover:text-accent-hover underline-offset-2 hover:underline text-sm transition-colors duration-[var(--transition-fast)]',
           className
         )}
         {...props}

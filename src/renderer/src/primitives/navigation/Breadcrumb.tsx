@@ -28,7 +28,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
                 <button
                   type="button"
                   onClick={item.onClick}
-                  className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+                  className="text-sm text-text-secondary hover:text-text-primary transition-colors duration-[var(--transition-fast)]"
                 >
                   {item.label}
                 </button>

@@ -9,7 +9,7 @@ export function Tag({ className, children, onDismiss, ...props }: TagProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-bg-elevated text-text-secondary border border-border-default',
+        'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-bg-elevated text-text-secondary border border-border-default transition-all duration-[var(--transition-fast)]',
         className
       )}
       {...props}

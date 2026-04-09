@@ -28,7 +28,7 @@ export function Tabs({ tabs, activeTab, onTabChange, className }: TabsProps) {
             aria-selected={isActive}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              'px-3 py-2 text-sm font-medium transition-colors relative',
+              'px-3 py-2 text-sm font-medium transition-all duration-[var(--transition-fast)] relative',
               isActive
                 ? 'text-text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-accent'
                 : 'text-text-secondary hover:text-text-primary'

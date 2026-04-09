@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useState } from 'react'
 import { cn } from '../utils/cn'
 
 export interface ResizeHandleProps {
@@ -17,6 +17,7 @@ export function ResizeHandle({
   className,
 }: ResizeHandleProps) {
   const startPosRef = useRef<number>(0)
+  const [isDragging, setIsDragging] = useState(false)
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
@@ -33,6 +34,7 @@ export function ResizeHandle({
     document.removeEventListener('pointerup', handlePointerUp)
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
+    setIsDragging(false)
     onResizeEnd?.()
   }, [handlePointerMove, onResizeEnd])
 
@@ -42,6 +44,7 @@ export function ResizeHandle({
       startPosRef.current = direction === 'horizontal' ? e.clientX : e.clientY
       document.body.style.cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize'
       document.body.style.userSelect = 'none'
+      setIsDragging(true)
       document.addEventListener('pointermove', handlePointerMove)
       document.addEventListener('pointerup', handlePointerUp)
     },
@@ -75,21 +78,72 @@ export function ResizeHandle({
     [direction, onResize]
   )
 
+  const isHorizontal = direction === 'horizontal'
+
   return (
     <div
       role="separator"
       tabIndex={0}
       aria-orientation={direction}
+      aria-valuenow={0}
       onPointerDown={handlePointerDown}
       onKeyDown={handleKeyDown}
       onDoubleClick={onDoubleClick}
       className={cn(
-        'shrink-0 bg-transparent hover:bg-accent/50 transition-colors',
-        direction === 'horizontal'
-          ? 'w-[5px] cursor-col-resize hover:w-[5px]'
-          : 'h-[5px] cursor-row-resize hover:h-[5px]',
+        'group/resize relative shrink-0 focus-visible:outline-none hover:bg-accent/20 active:bg-accent/30 transition-colors duration-[var(--transition-fast)]',
+        isHorizontal
+          ? 'w-1 cursor-col-resize'
+          : 'h-1 cursor-row-resize',
         className
       )}
-    />
+    >
+      {/* Wider invisible hit zone */}
+      <div
+        className={cn(
+          'absolute z-10',
+          isHorizontal
+            ? 'inset-y-0 -left-1.5 -right-1.5 cursor-col-resize'
+            : 'inset-x-0 -top-1.5 -bottom-1.5 cursor-row-resize'
+        )}
+      />
+
+      {/* Border line — always visible, tints on hover */}
+      <div
+        className={cn(
+          'absolute transition-colors duration-150',
+          isHorizontal
+            ? 'top-0 bottom-0 left-1/2 w-px -translate-x-1/2'
+            : 'left-0 right-0 top-1/2 h-px -translate-y-1/2',
+          isDragging
+            ? 'bg-accent'
+            : 'bg-border-default group-hover/resize:bg-accent/50'
+        )}
+      />
+
+      {/* Centered pill grab handle — fades in on hover */}
+      <div
+        className={cn(
+          'absolute z-20 pointer-events-none',
+          'transition-all duration-200 ease-out rounded-full',
+          isHorizontal
+            ? 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8'
+            : 'top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-1 w-8',
+          isDragging
+            ? 'bg-accent opacity-100 scale-100'
+            : 'bg-text-quaternary opacity-0 scale-75 group-hover/resize:opacity-100 group-hover/resize:scale-100 group-hover/resize:bg-accent/70'
+        )}
+      />
+
+      {/* Focus indicator */}
+      <div
+        className={cn(
+          'absolute pointer-events-none transition-opacity duration-150',
+          'opacity-0 group-focus-visible/resize:opacity-100',
+          isHorizontal
+            ? 'top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 bg-accent'
+            : 'left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 bg-accent'
+        )}
+      />
+    </div>
   )
 }

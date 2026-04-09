@@ -11,7 +11,7 @@ export const Code = forwardRef<HTMLElement, CodeProps>(
   ({ block = false, className, children, ...props }, ref) => {
     if (block) {
       return (
-        <pre className={cn('block bg-bg-tertiary p-3 rounded-md overflow-x-auto', className)}>
+        <pre className={cn('block bg-bg-tertiary p-3 rounded-md overflow-x-auto shadow-[var(--shadow-input-inset)]', className)}>
           <code ref={ref} className="font-mono text-xs" {...props}>
             {children}
           </code>
