@@ -82,7 +82,7 @@ export class SnowflakeAdapter implements DbAdapter {
       columns: snowflake.Column[]
       statementId: string
     }>((resolve, reject) => {
-      this.connection!.execute({
+      const stmt = this.connection!.execute({
         sqlText: sql,
         binds: params as snowflake.Binds | undefined,
         complete: (err, stmt, rows) => {
@@ -95,6 +95,7 @@ export class SnowflakeAdapter implements DbAdapter {
           })
         },
       })
+      this.activeStatementId = stmt.getStatementId()
     })
 
     this.activeStatementId = null
