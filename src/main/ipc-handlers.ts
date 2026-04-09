@@ -20,6 +20,7 @@ import { safeCall } from './plugins/sdk/safe-call'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
 import * as mongoPlugin from './plugins/bundled/mongodb'
 import * as redisPlugin from './plugins/bundled/redis'
+import * as snowflakePlugin from './plugins/bundled/snowflake'
 
 const activeAdapters = new Map<string, DbAdapter>()
 
@@ -393,6 +394,7 @@ export function registerIpcHandlers(): void {
   pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
   pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
   pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
+  pluginCoordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
 
   pluginCoordinator.boot().catch(err => {
     console.error('[plugins] Boot failed:', err)
