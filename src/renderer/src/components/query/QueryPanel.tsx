@@ -6,6 +6,7 @@ import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useSettingsStore } from '@/stores/settings'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Text, Box, Alert } from '@/primitives'
 
@@ -17,6 +18,7 @@ export function QueryPanel({ tab }: Props) {
   const { updateTabSql, setTabExecuting, setTabResults, setTabError } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
   const addNotification = useNotificationsStore(s => s.addNotification)
+  const queryTimeout = useSettingsStore(s => s.settings.general.queryTimeout)
   const dbType = tab.connectionId ? connections.find(c => c.id === tab.connectionId)?.type : undefined
 
   const executeWithSchema = useCallback(async (sql: string) => {
@@ -36,7 +38,12 @@ export function QueryPanel({ tab }: Props) {
     if (!tab.connectionId || !tab.sql.trim()) return
     setTabExecuting(tab.id, true)
     try {
-      const result = await executeWithSchema(tab.sql)
+      const timeoutMs = queryTimeout * 1000
+      const queryPromise = executeWithSchema(tab.sql)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Query timed out after ${queryTimeout}s`)), timeoutMs)
+      )
+      const result = await Promise.race([queryPromise, timeoutPromise])
       if (result) setTabResults(tab.id, result)
     } catch (err) {
       const message = (err as Error).message
@@ -46,8 +53,12 @@ export function QueryPanel({ tab }: Props) {
         message: `Query failed: ${message}`,
         source: { type: 'tab', id: tab.id, label: tab.title },
       })
+      // Cancel the running query on timeout
+      if (message.includes('timed out') && tab.connectionId) {
+        window.electronAPI.invoke('db:cancel-query', tab.connectionId).catch(() => {})
+      }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, executeWithSchema, setTabExecuting, setTabResults, setTabError, addNotification])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, queryTimeout, executeWithSchema, setTabExecuting, setTabResults, setTabError, addNotification])
 
   const handleCancel = useCallback(async () => {
     if (!tab.connectionId) return

@@ -18,11 +18,31 @@ interface Props {
 
 let completionRegistered = false
 
+function parseKeybinding(key: string, monaco: Monaco): number {
+  const parts = key.split('+')
+  let result = 0
+  for (const part of parts) {
+    const p = part.trim().toLowerCase()
+    if (p === 'ctrl') result |= monaco.KeyMod.CtrlCmd
+    else if (p === 'cmd') result |= monaco.KeyMod.CtrlCmd
+    else if (p === 'shift') result |= monaco.KeyMod.Shift
+    else if (p === 'alt') result |= monaco.KeyMod.Alt
+    else if (p === 'enter') result |= monaco.KeyCode.Enter
+    else if (p === 's') result |= monaco.KeyCode.KeyS
+    else if (p.length === 1) {
+      const code = (monaco.KeyCode as Record<string, number>)[`Key${p.toUpperCase()}`]
+      if (code) result |= code
+    }
+  }
+  return result
+}
+
 export function QueryEditor({ value, onChange, onExecute, connectionId, schema, databaseType }: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const { connectedIds } = useConnectionsStore()
   const { theme } = useTheme()
   const editorSettings = useSettingsStore((s) => s.settings.editor)
+  const keybindings = useSettingsStore((s) => s.settings.keybindings)
 
   const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
 
@@ -36,15 +56,20 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
       completionRegistered = true
     }
 
+    const executeBinding = keybindings.find(k => k.id === 'execute-query')
+    const executeKeys = executeBinding
+      ? executeBinding.keys.map(k => parseKeybinding(k, monaco)).filter(Boolean)
+      : [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter]
+
     editor.addAction({
       id: 'execute-query',
       label: 'Execute Query',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+      keybindings: executeKeys,
       run: () => onExecute()
     })
 
     editor.focus()
-  }, [onExecute, language])
+  }, [onExecute, language, keybindings])
 
   useEffect(() => {
     if (!connectionId || !connectedIds.has(connectionId) || language !== 'sql') {

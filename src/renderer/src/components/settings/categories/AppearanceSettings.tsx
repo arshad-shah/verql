@@ -1,4 +1,4 @@
-import { Stack, Grid, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Grid, Divider, Flex, Button, Heading, Text, Box } from '@/primitives'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'

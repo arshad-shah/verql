@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, type ColDef, themeQuartz } from 'ag-grid-community'
 import type { QueryResult } from '@shared/types'
+import { useSettingsStore } from '@/stores/settings'
 import { Box } from '@/primitives'
 
 ModuleRegistry.registerModules([AllCommunityModule])
@@ -27,6 +28,9 @@ interface Props {
 }
 
 export function ResultsGrid({ results }: Props) {
+  const dataDisplay = useSettingsStore(s => s.settings.dataDisplay)
+  const defaultPageSize = useSettingsStore(s => s.settings.general.defaultPageSize)
+
   const columnDefs = useMemo<ColDef[]>(() => {
     return results.fields.map((field) => ({
       field: field.name,
@@ -35,6 +39,7 @@ export function ResultsGrid({ results }: Props) {
       sortable: true,
       filter: true,
       minWidth: 80,
+      maxWidth: dataDisplay.maxColumnWidth,
       cellStyle: (params: any) => {
         if (params.value === null || params.value === undefined) {
           return { color: '#666', fontStyle: 'italic' }
@@ -45,12 +50,23 @@ export function ResultsGrid({ results }: Props) {
         return null
       },
       valueFormatter: (params: any) => {
-        if (params.value === null || params.value === undefined) return 'NULL'
+        if (params.value === null || params.value === undefined) return dataDisplay.nullDisplay
+        if (params.value instanceof Date || (typeof params.value === 'string' && !isNaN(Date.parse(params.value)) && /^\d{4}-\d{2}/.test(params.value))) {
+          const date = params.value instanceof Date ? params.value : new Date(params.value)
+          if (!isNaN(date.getTime())) {
+            if (dataDisplay.dateFormat === 'locale') return date.toLocaleString()
+            return date.toISOString()
+          }
+        }
+        if (typeof params.value === 'number') {
+          if (dataDisplay.numberFormat === 'locale') return params.value.toLocaleString()
+          return String(params.value)
+        }
         if (typeof params.value === 'object') return JSON.stringify(params.value)
         return String(params.value)
       }
     }))
-  }, [results.fields])
+  }, [results.fields, dataDisplay])
 
   return (
     <Box className="flex-1 overflow-hidden">
@@ -68,6 +84,9 @@ export function ResultsGrid({ results }: Props) {
         animateRows={false}
         rowHeight={28}
         headerHeight={32}
+        pagination={true}
+        paginationPageSize={defaultPageSize}
+        paginationPageSizeSelector={[50, 100, 500, 1000]}
       />
     </Box>
   )

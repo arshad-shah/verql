@@ -9,7 +9,6 @@ import { ViewsSection } from '@/components/explorer/ViewsSection'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
 import { ExtensionsPanel } from '@/components/plugins/ExtensionsPanel'
-import { SettingsPanel } from '@/components/settings/SettingsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
@@ -104,7 +103,6 @@ export function Sidebar() {
           )
         )}
         {activePanel === 'extensions' && <ExtensionsPanel />}
-        {activePanel === 'settings' && <SettingsPanel />}
       </ScrollArea>
 
       {/* Modals */}
