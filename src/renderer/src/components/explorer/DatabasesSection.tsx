@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, ChevronDown, Database, Layers, GitFork } from 'lucide-react'
+import { RefreshCw, Database, GitFork } from 'lucide-react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
+import { useUiStore } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
-import { AccordionSection } from './AccordionSection'
-import { IconButton, Text, ScrollArea, Box, Flex, Button } from '@/primitives'
+import { Accordion, IconButton, Text, Box, Flex, Button, Select, Badge } from '@/primitives'
 
 interface DatabasesSectionProps {
   connectionId: string
@@ -18,12 +18,13 @@ interface DatabasesSectionProps {
 export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, activeDatabase, onDatabaseChange }: DatabasesSectionProps) {
   const { schemas, fetchSchemas, fetchDatabases, clearCache } = useSchemaStore()
   const conn = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId))
+  const expanded = useUiStore((s) => s.expandedSections['DATABASES'] ?? true)
+  const toggleSection = useUiStore((s) => s.toggleSection)
   const { openErDiagram } = useTabsStore()
   const addToast = useToastStore((s) => s.addToast)
 
   const [databaseList, setDatabaseList] = useState<string[]>([])
   const [switching, setSwitching] = useState(false)
-  const [showSchemaPicker, setShowSchemaPicker] = useState(false)
 
   const schemaList = schemas.get(connectionId) ?? []
   const isSqlite = conn?.type === 'sqlite'
@@ -63,97 +64,84 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
     }
   }
 
-  const handleOpenErDiagram = () => {
-    openErDiagram(connectionId, activeSchema)
-  }
-
   if (isSqlite && databaseList.length <= 1 && schemaList.length <= 1) return null
 
   return (
-    <AccordionSection
-      title="DATABASES"
-      count={databaseList.length || undefined}
-      actions={
-        <Flex align="center" gap="xs">
-          <IconButton
-            label="ER Diagram"
-            size="xs"
-            variant="ghost"
-            onClick={handleOpenErDiagram}
-            className="text-text-muted hover:text-accent"
-          >
-            <GitFork size={12} />
-          </IconButton>
-          <IconButton
-            label="Refresh"
-            size="xs"
-            variant="ghost"
-            onClick={handleRefresh}
-            className="text-text-muted hover:text-text-primary"
-          >
-            <RefreshCw size={11} />
-          </IconButton>
-        </Flex>
-      }
-    >
-      <Box className="px-2 py-1">
-        {databaseList.length > 1 && (
-          <Flex wrap gap="xs" className="mb-2">
-            {databaseList.map(db => (
-              <Button
-                key={db}
-                variant="outline"
-                size="xs"
-                onClick={() => handleSwitchDatabase(db)}
-                disabled={switching || db === activeDatabase}
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] h-auto ${
-                  db === activeDatabase
-                    ? 'bg-accent/10 text-accent border-accent/30'
-                    : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-text-secondary border-border'
-                } disabled:opacity-50`}
-              >
-                <Database size={9} />
-                {db}
-              </Button>
-            ))}
-          </Flex>
-        )}
-
-        <Flex align="center" gap="xs" className="relative">
-          <Text size="xs" color="muted" className="text-[10px]">Schema:</Text>
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => setShowSchemaPicker(!showSchemaPicker)}
-            className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors h-auto border-0 p-0"
-          >
-            <Layers size={10} />
-            <Text size="xs" truncate className="max-w-24">{activeSchema}</Text>
-            {schemaList.length > 1 && <ChevronDown size={10} />}
-          </Button>
-          {showSchemaPicker && schemaList.length > 1 && (
-            <>
-              <Box className="fixed inset-0 z-40" onClick={() => setShowSchemaPicker(false)} />
-              <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-32 py-1 max-h-48">
-                {schemaList.map(s => (
+    <Accordion>
+      <Accordion.Item open={expanded} onOpenChange={() => toggleSection('DATABASES')}>
+        <Accordion.Trigger>
+          <Text size="xs" color="muted" className="uppercase tracking-wider flex-1 text-left">DATABASES</Text>
+          {databaseList.length > 0 && <Badge size="sm">{databaseList.length}</Badge>}
+          <Accordion.Actions>
+            <IconButton
+              label="ER Diagram"
+              size="xs"
+              variant="ghost"
+              onClick={() => openErDiagram(connectionId, activeSchema)}
+              className="text-text-muted hover:text-accent"
+            >
+              <GitFork size={12} />
+            </IconButton>
+            <IconButton
+              label="Refresh"
+              size="xs"
+              variant="ghost"
+              onClick={handleRefresh}
+              className="text-text-muted hover:text-text-primary"
+            >
+              <RefreshCw size={11} />
+            </IconButton>
+          </Accordion.Actions>
+        </Accordion.Trigger>
+        <Accordion.Content>
+          <Box className="px-2 py-1">
+            {databaseList.length > 1 && (
+              <Flex wrap gap="xs" className="mb-2">
+                {databaseList.map(db => (
                   <Button
-                    key={s}
-                    variant="ghost"
+                    key={db}
+                    variant="outline"
                     size="xs"
-                    onClick={() => { onSchemaChange(s); setShowSchemaPicker(false) }}
-                    className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                      activeSchema === s ? 'text-accent' : 'text-text-secondary'
-                    }`}
+                    onClick={() => handleSwitchDatabase(db)}
+                    disabled={switching || db === activeDatabase}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] h-auto ${
+                      db === activeDatabase
+                        ? 'bg-accent/10 text-accent border-accent/30'
+                        : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-text-secondary border-border-default'
+                    } disabled:opacity-50`}
                   >
-                    <Layers size={10} className="shrink-0" />
-                    {s}
+                    <Database size={9} />
+                    {db}
                   </Button>
                 ))}
-              </ScrollArea>
-            </>
-          )}
-        </Flex>
-      </Box>
-    </AccordionSection>
+              </Flex>
+            )}
+
+            {schemaList.length > 1 && (
+              <Flex align="center" gap="xs">
+                <Text size="xs" color="muted" className="text-[10px]">Schema:</Text>
+                <Select
+                  size="xs"
+                  value={activeSchema}
+                  onChange={(e) => onSchemaChange(e.target.value)}
+                  className="max-w-32"
+                >
+                  {schemaList.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </Select>
+              </Flex>
+            )}
+
+            {schemaList.length <= 1 && (
+              <Flex align="center" gap="xs">
+                <Text size="xs" color="muted" className="text-[10px]">Schema:</Text>
+                <Text size="xs" color="secondary">{activeSchema}</Text>
+              </Flex>
+            )}
+          </Box>
+        </Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
   )
 }
