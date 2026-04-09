@@ -3,7 +3,7 @@ import { ActivityBar } from '@/components/shell/ActivityBar'
 import { Sidebar } from '@/components/shell/Sidebar'
 import { TitleBar } from '@/components/shell/TitleBar'
 import { StatusBar } from '@/components/shell/StatusBar'
-import { TabBar } from '@/components/shell/TabBar'
+import { TabBar } from '@/components/shell/tab-bar'
 import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
@@ -19,7 +19,7 @@ import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab } from '@shared/types'
 
 export function App() {
-  const { tabs, activeTabId, addQueryTab } = useTabsStore()
+  const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
   const openConnectionForm = useTabsStore(s => s.openConnectionForm)
   const { activePanel, sidebarVisible, setSidebarWidth } = useUiStore()
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
@@ -33,9 +33,22 @@ export function App() {
   // Keyboard shortcuts + native menu events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.shiftKey && e.key === 'p') {
         e.preventDefault()
         setPaletteOpen(prev => !prev)
+      }
+      if (mod && e.key === 'w') {
+        e.preventDefault()
+        if (activeTabId) closeTab(activeTabId)
+      }
+      if (mod && e.key === 't' && !e.shiftKey) {
+        e.preventDefault()
+        addQueryTab(activeConnectionId)
+      }
+      if (mod && e.shiftKey && e.key === 't') {
+        e.preventDefault()
+        reopenTab()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -55,7 +68,7 @@ export function App() {
       window.removeEventListener('statusbar:new-connection', handleStatusBarNewConn)
       cleanups.forEach(cleanup => cleanup())
     }
-  }, [activeConnectionId, addQueryTab, openConnectionForm])
+  }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
 
   const handleSidebarResize = (delta: number) => {
     const current = useSettingsStore.getState().settings.appearance.sidebarWidth

@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function QueryPanel({ tab }: Props) {
-  const { updateTabSql, setTabExecuting, setTabResults, setTabError } = useTabsStore()
+  const { updateTabSql, setTabDirty, setTabExecuting, setTabResults, setTabError } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
   const addNotification = useNotificationsStore(s => s.addNotification)
   const queryTimeout = useSettingsStore(s => s.settings.general.queryTimeout)
@@ -102,7 +102,7 @@ export function QueryPanel({ tab }: Props) {
       <Box className="flex-1 min-h-30 border-b border-border">
         <QueryEditor
           value={tab.sql}
-          onChange={(sql) => updateTabSql(tab.id, sql)}
+          onChange={(sql) => { updateTabSql(tab.id, sql); setTabDirty(tab.id, true) }}
           onExecute={handleExecute}
           connectionId={tab.connectionId}
           schema={tab.schema}

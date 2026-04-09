@@ -12,13 +12,18 @@ import { ViewNode } from './ViewNode'
 interface SchemaNodeProps {
   schemaName: string
   connectionId: string
+  databaseName?: string
   depth: number
   onExportTable?: (tableName: string) => void
 }
 
-export function SchemaNode({ schemaName, connectionId, depth, onExportTable }: SchemaNodeProps) {
-  const nodeKey = `schema:${connectionId}:${schemaName}`
-  const tableCacheKey = `${connectionId}:${schemaName}`
+export function SchemaNode({ schemaName, connectionId, databaseName, depth, onExportTable }: SchemaNodeProps) {
+  const nodeKey = databaseName
+    ? `schema:${connectionId}:${databaseName}:${schemaName}`
+    : `schema:${connectionId}:${schemaName}`
+  const tableCacheKey = databaseName
+    ? `${connectionId}:${databaseName}:${schemaName}`
+    : `${connectionId}:${schemaName}`
 
   const expandedTreeNodes = useUiStore((s) => s.expandedTreeNodes)
   const toggleTreeNode = useUiStore((s) => s.toggleTreeNode)
@@ -26,6 +31,7 @@ export function SchemaNode({ schemaName, connectionId, depth, onExportTable }: S
 
   const tables = useSchemaStore((s) => s.tables)
   const filterText = useSchemaStore((s) => s.filterText)
+  const switchDatabase = useSchemaStore((s) => s.switchDatabase)
   const fetchTables = useSchemaStore((s) => s.fetchTables)
   const clearCache = useSchemaStore((s) => s.clearCache)
 
@@ -35,22 +41,36 @@ export function SchemaNode({ schemaName, connectionId, depth, onExportTable }: S
 
   // Fetch on mount if already expanded and cache is empty
   useEffect(() => {
-    if (isExpanded && allTables.length === 0) {
-      fetchTables(connectionId, schemaName)
-    }
-  }, [isExpanded, connectionId, schemaName]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!isExpanded || allTables.length > 0) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        if (databaseName) await switchDatabase(connectionId, databaseName)
+        if (!cancelled) await fetchTables(connectionId, schemaName)
+      } catch { /* handled by store */ }
+    })()
+    return () => { cancelled = true }
+  }, [isExpanded, connectionId, databaseName, schemaName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleToggle() {
+  async function handleToggle() {
     toggleTreeNode(nodeKey)
     if (!isExpanded) {
-      fetchTables(connectionId, schemaName)
+      try {
+        if (databaseName) await switchDatabase(connectionId, databaseName)
+        await fetchTables(connectionId, schemaName)
+      } catch { /* handled by store */ }
     }
   }
 
-  function handleRefresh() {
-    clearCache(connectionId)
-    fetchTables(connectionId, schemaName)
-    addToast({ type: 'success', title: 'Schema refreshed' })
+  async function handleRefresh() {
+    try {
+      if (databaseName) await switchDatabase(connectionId, databaseName)
+      clearCache(connectionId)
+      await fetchTables(connectionId, schemaName)
+      addToast({ type: 'success', title: 'Schema refreshed' })
+    } catch {
+      addToast({ type: 'error', title: 'Failed to refresh schema' })
+    }
   }
 
   function handleCopySchemaName() {

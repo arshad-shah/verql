@@ -63,6 +63,7 @@ export interface QueryTab {
   results: QueryResult | null
   isExecuting: boolean
   error: string | null
+  isDirty: boolean
 }
 
 export interface TableTab {

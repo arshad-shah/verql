@@ -15,8 +15,9 @@ interface SchemaState {
   cacheVersion: number
 
   fetchDatabases: (connectionId: string) => Promise<string[]>
-  fetchSchemas: (connectionId: string) => Promise<string[]>
-  fetchTables: (connectionId: string, schema: string) => Promise<SchemaTable[]>
+  switchDatabase: (connectionId: string, database: string) => Promise<void>
+  fetchSchemas: (connectionId: string, database?: string) => Promise<string[]>
+  fetchTables: (connectionId: string, schema: string, database?: string) => Promise<SchemaTable[]>
   fetchColumns: (connectionId: string, table: string, schema: string) => Promise<SchemaColumn[]>
   fetchIndexes: (connectionId: string, table: string, schema: string) => Promise<SchemaIndex[]>
   toggleTable: (key: string) => void
@@ -45,27 +46,56 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
     const key = connectionId
     const cached = get().databases.get(key)
     if (cached) return cached
-    const result = await window.electronAPI.invoke('db:get-databases', connectionId)
-    set((s) => {
-      const next = new Map(s.databases)
-      next.set(key, result)
-      return { databases: next }
-    })
-    return result
+    try {
+      const result = await window.electronAPI.invoke('db:get-databases', connectionId)
+      set((s) => {
+        const next = new Map(s.databases)
+        next.set(key, result)
+        return { databases: next }
+      })
+      return result
+    } catch {
+      // Store empty array so hierarchyLoaded can become true
+      set((s) => {
+        const next = new Map(s.databases)
+        next.set(key, [])
+        return { databases: next }
+      })
+      return []
+    }
   },
 
-  fetchSchemas: async (connectionId) => {
-    const key = connectionId
+  switchDatabase: async (connectionId, database) => {
+    try {
+      await window.electronAPI.invoke('db:switch-database', connectionId, database)
+    } catch {
+      // switchDatabase may fail for databases user can't access (e.g. rdsadmin)
+      throw new Error(`Cannot switch to database "${database}"`)
+    }
+  },
+
+  fetchSchemas: async (connectionId, database) => {
+    // Key includes database so each DB gets its own cached schema list
+    const key = database ? cacheKey(connectionId, database) : connectionId
     const cached = get().schemas.get(key)
     if (cached) return cached
     set({ loading: true })
-    const result = await window.electronAPI.invoke('db:get-schemas', connectionId)
-    set((s) => {
-      const next = new Map(s.schemas)
-      next.set(key, result)
-      return { schemas: next, loading: false }
-    })
-    return result
+    try {
+      const result = await window.electronAPI.invoke('db:get-schemas', connectionId)
+      set((s) => {
+        const next = new Map(s.schemas)
+        next.set(key, result)
+        return { schemas: next, loading: false }
+      })
+      return result
+    } catch {
+      set((s) => {
+        const next = new Map(s.schemas)
+        next.set(key, [])
+        return { schemas: next, loading: false }
+      })
+      return []
+    }
   },
 
   fetchTables: async (connectionId, schema) => {
@@ -73,26 +103,35 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
     const cached = get().tables.get(key)
     if (cached) return cached
     set({ loading: true })
-    const result = await window.electronAPI.invoke('db:get-tables', connectionId, schema)
-    set((s) => {
-      const next = new Map(s.tables)
-      next.set(key, result)
-      return { tables: next, loading: false }
-    })
-    return result
+    try {
+      const result = await window.electronAPI.invoke('db:get-tables', connectionId, schema)
+      set((s) => {
+        const next = new Map(s.tables)
+        next.set(key, result)
+        return { tables: next, loading: false }
+      })
+      return result
+    } catch {
+      set({ loading: false })
+      return []
+    }
   },
 
   fetchColumns: async (connectionId, table, schema) => {
     const key = cacheKey(connectionId, schema, table)
     const cached = get().columns.get(key)
     if (cached) return cached
-    const result = await window.electronAPI.invoke('db:get-columns', connectionId, table, schema)
-    set((s) => {
-      const next = new Map(s.columns)
-      next.set(key, result)
-      return { columns: next }
-    })
-    return result
+    try {
+      const result = await window.electronAPI.invoke('db:get-columns', connectionId, table, schema)
+      set((s) => {
+        const next = new Map(s.columns)
+        next.set(key, result)
+        return { columns: next }
+      })
+      return result
+    } catch {
+      return []
+    }
   },
 
   fetchIndexes: async (connectionId, table, schema) => {

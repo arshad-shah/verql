@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronRight, ChevronDown, Database, RefreshCw } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
@@ -28,31 +28,55 @@ export function DatabaseNode({
   const isExpanded = expandedTreeNodes.has(nodeKey)
 
   const schemas = useSchemaStore((s) => s.schemas)
+  const switchDatabase = useSchemaStore((s) => s.switchDatabase)
   const fetchSchemas = useSchemaStore((s) => s.fetchSchemas)
   const clearCache = useSchemaStore((s) => s.clearCache)
 
   const addToast = useToastStore((s) => s.addToast)
 
-  const schemaList = schemas.get(connectionId) ?? []
+  const [switchError, setSwitchError] = useState(false)
 
-  // Fetch on mount if already expanded and cache is empty
+  // Schemas are keyed by connectionId:databaseName
+  const schemaCacheKey = `${connectionId}:${databaseName}`
+  const schemaList = schemas.get(schemaCacheKey) ?? []
+
+  // When expanded, switch to this database and fetch its schemas
   useEffect(() => {
-    if (isExpanded && schemaList.length === 0) {
-      fetchSchemas(connectionId)
-    }
-  }, [isExpanded, connectionId, fetchSchemas, schemaList.length])
+    if (!isExpanded || switchError) return
+    if (schemaList.length > 0) return // already cached
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        await switchDatabase(connectionId, databaseName)
+        if (!cancelled) {
+          await fetchSchemas(connectionId, databaseName)
+        }
+      } catch {
+        if (!cancelled) {
+          setSwitchError(true)
+          addToast({ type: 'error', title: `Cannot access database "${databaseName}"` })
+        }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [isExpanded, connectionId, databaseName, switchError, schemaList.length])
 
   function handleToggle() {
+    setSwitchError(false)
     toggleTreeNode(nodeKey)
-    if (!isExpanded) {
-      fetchSchemas(connectionId)
-    }
   }
 
-  function handleRefresh() {
-    clearCache(connectionId)
-    fetchSchemas(connectionId)
-    addToast({ type: 'success', title: `Refreshed ${databaseName}` })
+  async function handleRefresh() {
+    setSwitchError(false)
+    try {
+      await switchDatabase(connectionId, databaseName)
+      clearCache(connectionId)
+      await fetchSchemas(connectionId, databaseName)
+      addToast({ type: 'success', title: `Refreshed ${databaseName}` })
+    } catch {
+      addToast({ type: 'error', title: `Cannot access "${databaseName}"` })
+    }
   }
 
   function handleCopyName() {
@@ -62,14 +86,8 @@ export function DatabaseNode({
   }
 
   const menuItems = [
-    {
-      label: 'Refresh',
-      onSelect: handleRefresh,
-    },
-    {
-      label: 'Copy database name',
-      onSelect: handleCopyName,
-    },
+    { label: 'Refresh', onSelect: handleRefresh },
+    { label: 'Copy database name', onSelect: handleCopyName },
   ]
 
   const paddingLeft = 8 + depth * 16
@@ -83,7 +101,6 @@ export function DatabaseNode({
   return (
     <ContextMenu items={menuItems}>
       <div>
-        {/* Header row */}
         <div
           className="group flex items-center gap-1.5 h-7 rounded cursor-pointer select-none min-w-0 pr-1"
           style={{ paddingLeft }}
@@ -103,13 +120,9 @@ export function DatabaseNode({
             {databaseName}
           </span>
 
-          {/* Hover action: refresh */}
           <span
             className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleRefresh()
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
             <Tooltip content="Refresh" side="top">
               <IconButton
@@ -117,7 +130,7 @@ export function DatabaseNode({
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
-                tabIndex={-1}
+                onClick={handleRefresh}
               >
                 <RefreshCw size={10} />
               </IconButton>
@@ -125,16 +138,19 @@ export function DatabaseNode({
           </span>
         </div>
 
-        {/* Expanded content */}
         {isExpanded && (
           <div>
-            {schemaList.length === 0 ? (
+            {switchError ? (
               <p
                 className="text-xs px-3 py-1"
-                style={{
-                  paddingLeft: paddingLeft + 20,
-                  color: 'var(--color-text-tertiary)',
-                }}
+                style={{ paddingLeft: paddingLeft + 20, color: 'var(--color-error)' }}
+              >
+                Cannot access this database
+              </p>
+            ) : schemaList.length === 0 ? (
+              <p
+                className="text-xs px-3 py-1"
+                style={{ paddingLeft: paddingLeft + 20, color: 'var(--color-text-tertiary)' }}
               >
                 Loading…
               </p>
@@ -144,6 +160,7 @@ export function DatabaseNode({
                   key={schemaName}
                   schemaName={schemaName}
                   connectionId={connectionId}
+                  databaseName={databaseName}
                   depth={depth + 1}
                   onExportTable={onExportTable}
                 />
