@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Checkbox } from './Checkbox'
 
 const meta: Meta<typeof Checkbox> = {
@@ -14,7 +15,12 @@ export default meta
 type Story = StoryObj<typeof Checkbox>
 
 export const Default: Story = {
-  args: {},
+  args: { onChange: fn() },
+  play: async ({ args, canvas }) => {
+    const checkbox = canvas.getByRole('checkbox')
+    await userEvent.click(checkbox)
+    await expect(args.onChange).toHaveBeenCalledOnce()
+  },
 }
 
 export const States: Story = {
