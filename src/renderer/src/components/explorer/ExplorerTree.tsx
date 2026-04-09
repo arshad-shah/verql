@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Database } from 'lucide-react'
+import { Database, Loader2 } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { EmptyState } from '@/primitives/data-display/EmptyState'
@@ -23,6 +23,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
   const schemas = useSchemaStore((s) => s.schemas)
   const tables = useSchemaStore((s) => s.tables)
   const filterText = useSchemaStore((s) => s.filterText)
+  const loading = useSchemaStore((s) => s.loading)
   const fetchDatabases = useSchemaStore((s) => s.fetchDatabases)
   const fetchSchemas = useSchemaStore((s) => s.fetchSchemas)
   const fetchTables = useSchemaStore((s) => s.fetchTables)
@@ -36,12 +37,17 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
     fetchSchemas(activeConnectionId)
   }, [activeConnectionId, connectedIds, fetchDatabases, fetchSchemas])
 
-  // Derive hierarchy shape
+  // Check if we have loaded the hierarchy metadata yet
+  const hasDatabases = activeConnectionId ? databases.has(activeConnectionId) : false
+  const hasSchemas = activeConnectionId ? schemas.has(activeConnectionId) : false
+  const hierarchyLoaded = hasDatabases && hasSchemas
+
+  // Derive hierarchy shape (only meaningful when data has loaded)
   const databaseList = activeConnectionId ? (databases.get(activeConnectionId) ?? []) : []
   const schemaList = activeConnectionId ? (schemas.get(activeConnectionId) ?? []) : []
 
   const isSingleDb = databaseList.length <= 1
-  const isSingleSchema = schemaList.length === 1
+  const isSingleSchema = schemaList.length <= 1
   const isFlat = isSingleDb && isSingleSchema
 
   // For the flat (single-DB + single-schema) case, fetch tables immediately
@@ -50,9 +56,9 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
   const allTables = tables.get(tableCacheKey) ?? []
 
   useEffect(() => {
-    if (!isFlat || !activeConnectionId || !isConnected) return
+    if (!hierarchyLoaded || !isFlat || !activeConnectionId || !isConnected) return
     fetchTables(activeConnectionId, defaultSchema)
-  }, [isFlat, activeConnectionId, isConnected, defaultSchema, fetchTables])
+  }, [hierarchyLoaded, isFlat, activeConnectionId, isConnected, defaultSchema, fetchTables])
 
   // Filter tables/views for the flat view
   const filter = filterText.toLowerCase()
@@ -75,6 +81,11 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
             icon={<Database size={32} className="text-[var(--color-text-disabled)]" />}
           />
         </div>
+      ) : !hierarchyLoaded ? (
+        /* Show loading while databases/schemas are being fetched */
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Loader2 size={20} className="animate-spin" style={{ color: 'var(--color-text-tertiary)' }} />
+        </div>
       ) : (
         <>
           <SearchFilter />
@@ -82,6 +93,11 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
           {/* Flat: single-DB + single-schema (e.g. SQLite) */}
           {isFlat && (
             <div className="py-1 flex-1 overflow-y-auto min-h-0">
+              {filteredTables.length === 0 && filteredViews.length === 0 && (
+                <Text size="xs" color="muted" className="px-4 py-2">
+                  {allTables.length === 0 ? 'Loading tables…' : 'No matches'}
+                </Text>
+              )}
               {filteredTables.length > 0 && (
                 <div>
                   <Text
@@ -155,11 +171,6 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                   onExportTable={onExportTable}
                 />
               ))}
-              {databaseList.length === 0 && (
-                <Text size="xs" color="muted" className="px-4 py-2">
-                  Loading databases…
-                </Text>
-              )}
             </div>
           )}
         </>
