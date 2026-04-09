@@ -2,8 +2,9 @@ import { useRef, useCallback, useEffect } from 'react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { registerSqlCompletionProvider, updateTableNames } from '@/lib/monaco-sql'
+import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
 import { useConnectionsStore } from '@/stores/connections'
-import { Flex, Text } from '@/primitives'
+import { Flex, Text, useTheme } from '@/primitives'
 
 interface Props {
   value: string
@@ -19,11 +20,14 @@ let completionRegistered = false
 export function QueryEditor({ value, onChange, onExecute, connectionId, schema, databaseType }: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const { connectedIds } = useConnectionsStore()
+  const { theme } = useTheme()
 
   const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
+
+    defineAppThemes(monaco)
 
     if (!completionRegistered && language === 'sql') {
       registerSqlCompletionProvider(monaco)
@@ -55,7 +59,7 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
       language={language}
       value={value}
       onChange={(v) => onChange(v ?? '')}
-      theme="vs-dark"
+      theme={getMonacoThemeName(theme)}
       options={{
         minimap: { enabled: false },
         fontSize: 14,
