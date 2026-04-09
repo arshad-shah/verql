@@ -150,4 +150,8 @@ export interface IpcChannelMap {
     args: [category: string]
     return: unknown
   }
+  'dialog:open-file': {
+    args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
+    return: { filePath: string; content: string } | { cancelled: true }
+  }
 }

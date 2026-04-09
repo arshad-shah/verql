@@ -355,6 +355,21 @@ export function registerIpcHandlers(): void {
     return { filePath }
   })
 
+  // ─── Dialog ─────────────────────────────────────────────────────────────────
+
+  handle('dialog:open-file', async (options) => {
+    const { filePaths, canceled } = await dialog.showOpenDialog({
+      title: options?.title ?? 'Open File',
+      filters: options?.filters ?? [{ name: 'All Files', extensions: ['*'] }],
+      properties: ['openFile']
+    })
+    if (canceled || filePaths.length === 0) return { cancelled: true as const }
+
+    const fullPath = filePaths[0]
+    const content = fs.readFileSync(fullPath, 'utf-8')
+    return { filePath: path.basename(fullPath), content }
+  })
+
   // ─── Import ──────────────────────────────────────────────────────────────────
 
   handle('import:csv', async (profileId, tableName, columnMapping, onConflict) => {
