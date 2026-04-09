@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 import { Popover } from '../../../../src/renderer/src/primitives/surfaces/Popover'
 import { Tooltip } from '../../../../src/renderer/src/primitives/surfaces/Tooltip'
@@ -32,13 +32,23 @@ describe('Tooltip', () => {
     expect(screen.getByText('hover me')).toBeInTheDocument()
   })
 
-  it('renders tooltip content element in DOM', () => {
+  it('renders tooltip content element in DOM', async () => {
+    vi.useFakeTimers()
     render(
-      <Tooltip content="my tooltip">
+      <Tooltip content="my tooltip" delay={0}>
         <span>target</span>
       </Tooltip>
     )
+
+    await act(async () => {
+      fireEvent.mouseEnter(screen.getByText('target'))
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(1)
+    })
+
     expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    vi.useRealTimers()
   })
 })
 
