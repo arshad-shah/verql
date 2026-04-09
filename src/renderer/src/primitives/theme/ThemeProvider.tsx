@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, type ReactNode } from 'react'
+import { useSettingsStore } from '@/stores/settings'
 
-const STORAGE_KEY = 'dbstudio-theme'
 const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
-
 type Theme = (typeof AVAILABLE_THEMES)[number]
 
 interface ThemeContextValue {
@@ -13,25 +12,17 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function getStoredTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored && AVAILABLE_THEMES.includes(stored as Theme)) {
-    return stored as Theme
-  }
-  return 'dark'
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getStoredTheme)
+  const theme = useSettingsStore((s) => s.settings.appearance.theme)
+  const setSetting = useSettingsStore((s) => s.set)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 
   const setTheme = (newTheme: Theme) => {
     if (AVAILABLE_THEMES.includes(newTheme)) {
-      setThemeState(newTheme)
+      setSetting('appearance.theme', newTheme)
     }
   }
 
