@@ -71,7 +71,7 @@ export function Sidebar() {
         {activePanel === 'explorer' && (
           <>
             {isConnected && <SearchFilter />}
-            <ConnectionsSection />
+            {/* <ConnectionsSection /> */}
             {isConnected && activeConnectionId && (
               <>
                 <DatabasesSection

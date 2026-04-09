@@ -22,7 +22,7 @@ export const Default: Story = {
     style: { height: 150, width: 300, border: '1px solid var(--color-border-default)', borderRadius: 6 },
   },
   render: (args) => (
-    <ScrollArea {...args}>
+    <ScrollArea {...args} aria-label="Scrollable rows">
       {Array.from({ length: 20 }, (_, i) => (
         <div key={i} style={{ padding: '6px 12px', fontSize: 12, color: 'var(--color-text-primary)', borderBottom: '1px solid var(--color-border-subtle)' }}>
           Row {i + 1} — scrollable content
@@ -34,7 +34,7 @@ export const Default: Story = {
 
 export const HorizontalScroll: Story = {
   render: () => (
-    <ScrollArea direction="horizontal" style={{ width: 300, border: '1px solid var(--color-border-default)', borderRadius: 6 }}>
+    <ScrollArea direction="horizontal" aria-label="Scrollable items" style={{ width: 300, border: '1px solid var(--color-border-default)', borderRadius: 6 }}>
       <div style={{ display: 'flex', gap: 8, padding: 12, width: 'max-content' }}>
         {Array.from({ length: 15 }, (_, i) => (
           <div key={i} style={{ flexShrink: 0, padding: '6px 12px', background: 'var(--color-bg-tertiary)', borderRadius: 4, fontSize: 12, color: 'var(--color-text-primary)' }}>

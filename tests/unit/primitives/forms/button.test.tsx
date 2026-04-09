@@ -33,32 +33,32 @@ describe('Button', () => {
 
   it('applies md size by default', () => {
     const { container } = render(<Button>Default size</Button>)
-    expect(container.firstChild).toHaveClass('h-8')
-    expect(container.firstChild).toHaveClass('px-4')
+    expect(container.firstChild).toHaveClass('h-9')
+    expect(container.firstChild).toHaveClass('px-3')
   })
 
   it('applies xs size', () => {
     const { container } = render(<Button size="xs">XS</Button>)
-    expect(container.firstChild).toHaveClass('h-6')
+    expect(container.firstChild).toHaveClass('h-7')
     expect(container.firstChild).toHaveClass('px-2')
   })
 
   it('applies sm size', () => {
     const { container } = render(<Button size="sm">SM</Button>)
-    expect(container.firstChild).toHaveClass('h-7')
-    expect(container.firstChild).toHaveClass('px-3')
+    expect(container.firstChild).toHaveClass('h-8')
+    expect(container.firstChild).toHaveClass('px-2.5')
   })
 
   it('applies lg size', () => {
     const { container } = render(<Button size="lg">LG</Button>)
-    expect(container.firstChild).toHaveClass('h-9')
-    expect(container.firstChild).toHaveClass('px-5')
+    expect(container.firstChild).toHaveClass('h-10')
+    expect(container.firstChild).toHaveClass('px-4')
   })
 
   it('applies xl size', () => {
     const { container } = render(<Button size="xl">XL</Button>)
-    expect(container.firstChild).toHaveClass('h-10')
-    expect(container.firstChild).toHaveClass('px-6')
+    expect(container.firstChild).toHaveClass('h-12')
+    expect(container.firstChild).toHaveClass('px-5')
   })
 
   it('calls onClick handler', () => {
@@ -99,14 +99,14 @@ describe('IconButton', () => {
 
   it('applies md size by default', () => {
     const { container } = render(<IconButton label="Icon">X</IconButton>)
-    expect(container.firstChild).toHaveClass('h-8')
-    expect(container.firstChild).toHaveClass('w-8')
+    expect(container.firstChild).toHaveClass('h-9')
+    expect(container.firstChild).toHaveClass('w-9')
   })
 
   it('applies xs size', () => {
     const { container } = render(<IconButton label="Icon" size="xs">X</IconButton>)
-    expect(container.firstChild).toHaveClass('h-6')
-    expect(container.firstChild).toHaveClass('w-6')
+    expect(container.firstChild).toHaveClass('h-7')
+    expect(container.firstChild).toHaveClass('w-7')
   })
 
   it('applies solid variant', () => {

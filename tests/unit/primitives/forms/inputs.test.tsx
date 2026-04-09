@@ -19,27 +19,27 @@ describe('Input', () => {
 
   it('applies md size by default', () => {
     const { container } = render(<Input />)
-    expect(container.firstChild).toHaveClass('h-8')
+    expect(container.firstChild).toHaveClass('h-9')
   })
 
   it('applies xs size', () => {
     const { container } = render(<Input size="xs" />)
-    expect(container.firstChild).toHaveClass('h-6')
+    expect(container.firstChild).toHaveClass('h-7')
   })
 
   it('applies sm size', () => {
     const { container } = render(<Input size="sm" />)
-    expect(container.firstChild).toHaveClass('h-7')
+    expect(container.firstChild).toHaveClass('h-8')
   })
 
   it('applies lg size', () => {
     const { container } = render(<Input size="lg" />)
-    expect(container.firstChild).toHaveClass('h-9')
+    expect(container.firstChild).toHaveClass('h-10')
   })
 
   it('applies xl size', () => {
     const { container } = render(<Input size="xl" />)
-    expect(container.firstChild).toHaveClass('h-10')
+    expect(container.firstChild).toHaveClass('h-12')
   })
 
   it('applies error border when error is true', () => {

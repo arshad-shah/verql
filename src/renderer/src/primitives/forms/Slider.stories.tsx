@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn } from 'storybook/test'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Slider } from './Slider'
 
 const meta: Meta<typeof Slider> = {
@@ -21,16 +21,22 @@ export const Default: Story = {
     min: 0,
     max: 100,
     defaultValue: 40,
+    'aria-label': 'Volume',
     style: { width: 240 },
     onChange: fn(),
+  },
+  play: async ({ canvas }) => {
+    const slider = canvas.getByRole('slider')
+    await expect(slider).toHaveValue('40')
+    await expect(slider).toBeEnabled()
   },
 }
 
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-4" style={{ width: 240 }}>
-      <Slider min={0} max={100} defaultValue={40} />
-      <Slider min={0} max={100} defaultValue={60} disabled />
+      <Slider min={0} max={100} defaultValue={40} aria-label="Active slider" />
+      <Slider min={0} max={100} defaultValue={60} disabled aria-label="Disabled slider" />
     </div>
   ),
 }

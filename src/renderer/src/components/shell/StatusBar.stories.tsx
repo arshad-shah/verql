@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn } from 'storybook/test'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Flex, Text, Spinner } from '@/primitives'
 import { Bell, Zap, AlertTriangle, ArrowLeftRight, Minus } from 'lucide-react'
 import { StatusBarMetric } from './StatusBarMetric'
@@ -110,6 +110,13 @@ export const Default: Story = {
       right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
     />
   ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('No connection')).toBeInTheDocument()
+    await expect(canvas.getByText('3 plugins')).toBeInTheDocument()
+    await expect(canvas.getByText('DEV')).toBeInTheDocument()
+    await userEvent.click(canvas.getByText('No connection'))
+    await expect(onConnectionClick).toHaveBeenCalled()
+  },
 }
 
 /** Connected to PostgreSQL with query results. */

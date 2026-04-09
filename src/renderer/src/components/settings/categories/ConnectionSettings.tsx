@@ -20,11 +20,18 @@ export function ConnectionSettings() {
       </SettingRow>
 
       <SettingRow label="Default SSL Mode" description="SSL mode for new connections">
-        <Select value={conn.defaultSslMode} onChange={(e) => setSetting('connectionDefaults.defaultSslMode', e.target.value)} size="sm" className="w-28">
-          <option value="disable">Disable</option>
-          <option value="prefer">Prefer</option>
-          <option value="require">Require</option>
-        </Select>
+        <Select
+          value={conn.defaultSslMode}
+          onChange={(val) => setSetting('connectionDefaults.defaultSslMode', val)}
+          size="sm"
+          className="w-28"
+          aria-label="Default SSL mode"
+          options={[
+            { value: 'disable', label: 'Disable' },
+            { value: 'prefer', label: 'Prefer' },
+            { value: 'require', label: 'Require' },
+          ]}
+        />
       </SettingRow>
 
       <Divider />

@@ -1,4 +1,5 @@
 import React, { forwardRef, useState, useCallback, useRef, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
@@ -7,11 +8,11 @@ const dateInputVariants = cva(
   {
     variants: {
       size: {
-        xs: 'h-6 px-2 text-xs rounded',
-        sm: 'h-7 px-2 text-xs rounded',
-        md: 'h-8 px-3 text-sm rounded-md',
-        lg: 'h-9 px-3 text-sm rounded-md',
-        xl: 'h-10 px-4 text-base rounded-lg',
+        xs: 'h-7 px-2 text-xs rounded',
+        sm: 'h-8 px-2 text-xs rounded',
+        md: 'h-9 px-3 text-sm rounded-md',
+        lg: 'h-10 px-3 text-sm rounded-md',
+        xl: 'h-12 px-4 text-base rounded-lg',
       },
     },
     defaultVariants: { size: 'md' },
@@ -161,9 +162,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
         {showCalendar && (
           <div className="absolute top-full left-0 mt-1 z-50 rounded-md border border-border-default bg-bg-secondary shadow-[var(--shadow-dropdown)] p-3 w-[260px]">
             <div className="flex items-center justify-between mb-2">
-              <button type="button" onClick={prevMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Previous month">‹</button>
+              <button type="button" onClick={prevMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Previous month"><ChevronLeft size={14} /></button>
               <span className="text-sm font-medium text-text-primary">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-              <button type="button" onClick={nextMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Next month">›</button>
+              <button type="button" onClick={nextMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Next month"><ChevronRight size={14} /></button>
             </div>
             <div className="grid grid-cols-7 gap-0.5 text-center text-[11px] text-text-muted mb-1">
               {DAY_HEADERS.map((d) => <div key={d}>{d}</div>)}

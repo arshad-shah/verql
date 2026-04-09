@@ -21,7 +21,7 @@ export const Default: Story = {
             <span style={{ flex: 1, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Connections</span>
             <Badge size="sm">3</Badge>
             <Accordion.Actions>
-              <button style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: 2 }}>
+              <button aria-label="Add connection" style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: 2 }}>
                 <Plus size={12} />
               </button>
             </Accordion.Actions>

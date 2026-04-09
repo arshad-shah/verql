@@ -48,9 +48,9 @@ export const Variants: Story = {
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-2" style={{ width: 320 }}>
-      <Textarea size="md" rows={3} placeholder="Default" />
-      <Textarea size="md" rows={3} error defaultValue="Error state" />
-      <Textarea size="md" rows={3} disabled defaultValue="Disabled" />
+      <Textarea size="md" rows={3} placeholder="Default" aria-label="Default" />
+      <Textarea size="md" rows={3} error defaultValue="Error state" aria-label="Error" />
+      <Textarea size="md" rows={3} disabled defaultValue="Disabled" aria-label="Disabled" />
     </div>
   ),
 }

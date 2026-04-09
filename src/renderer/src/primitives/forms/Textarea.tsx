@@ -7,9 +7,9 @@ const textareaVariants = cva(
   {
     variants: {
       size: {
-        sm: 'px-3 py-1.5 text-xs rounded',
-        md: 'px-4 py-2 text-sm rounded-md',
-        lg: 'px-5 py-2.5 text-sm rounded-md',
+        sm: 'px-2.5 py-2 text-xs rounded',
+        md: 'px-3 py-2.5 text-sm rounded-md',
+        lg: 'px-4 py-3 text-sm rounded-md',
       },
       error: {
         true: 'border-error focus:shadow-[0_0_0_3px_rgba(255,95,87,0.25),var(--shadow-input-inset)]',

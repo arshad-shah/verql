@@ -18,6 +18,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
     return (
       <div
         ref={ref}
+        tabIndex={0}
         className={cn(overflowMap[direction], className)}
         {...props}
       />

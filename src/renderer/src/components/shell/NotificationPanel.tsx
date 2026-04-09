@@ -69,10 +69,10 @@ export function NotificationPanel() {
     <div
       ref={panelRef}
       className={cn(
-        'fixed bottom-9.5 right-0 w-80 max-h-87.5 overflow-y-auto z-50',
-        'bg-bg-secondary border border-border-default border-b-0',
-        'rounded-t-lg shadow-[0_-4px_24px_rgba(0,0,0,0.4)]',
-        'animate-in slide-in-from-bottom-2 duration-150'
+        'absolute bottom-0 left-full ml-2 w-80 max-h-96 overflow-y-auto z-50',
+        'bg-bg-secondary border border-border-default',
+        'rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.4)]',
+        'animate-in slide-in-from-left-2 duration-150'
       )}
     >
       <Flex

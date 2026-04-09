@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { useState } from 'react'
 import { TreeItem } from './TreeItem'
 import { Table2, Eye, Key, Link, Hash } from 'lucide-react'
@@ -12,11 +13,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+const onToggle = fn()
+
 export const Default: Story = {
-  render: () => {
+  render: function Render() {
     const [expanded, setExpanded] = useState(true)
     return (
-      <div style={{ width: 260, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
+      <div role="tree" aria-label="Database schema" style={{ width: 260, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
         <TreeItem
           label="users"
           icon={<Table2 size={12} className="text-accent" />}
@@ -47,11 +50,19 @@ export const Default: Story = {
       </div>
     )
   },
+  play: async ({ canvas }) => {
+    const usersItem = canvas.getByRole('treeitem', { name: /^users/ })
+    await expect(usersItem).toHaveAttribute('aria-expanded', 'true')
+    await userEvent.click(usersItem)
+    await expect(usersItem).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(usersItem)
+    await expect(usersItem).toHaveAttribute('aria-expanded', 'true')
+  },
 }
 
 export const Selected: Story = {
   render: () => (
-    <div style={{ width: 260, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
+    <div role="tree" aria-label="Tables" style={{ width: 260, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
       <TreeItem label="users" icon={<Table2 size={12} className="text-accent" />} depth={0} selected onToggle={() => {}} />
       <TreeItem label="organizations" icon={<Table2 size={12} className="text-accent" />} depth={0} onToggle={() => {}} />
       <TreeItem label="sessions" icon={<Table2 size={12} className="text-accent" />} depth={0} onToggle={() => {}} />
@@ -61,7 +72,7 @@ export const Selected: Story = {
 
 export const DeepNesting: Story = {
   render: () => (
-    <div style={{ width: 300, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
+    <div role="tree" aria-label="Nested items" style={{ width: 300, border: '1px solid var(--color-border-default)', borderRadius: 8, padding: '4px 0', overflow: 'hidden' }}>
       <TreeItem label="Level 0" depth={0} expanded onToggle={() => {}}>
         <TreeItem label="Level 1" depth={1} expanded onToggle={() => {}}>
           <TreeItem label="Level 2" depth={2} expanded onToggle={() => {}}>

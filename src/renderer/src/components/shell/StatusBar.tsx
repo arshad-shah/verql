@@ -8,7 +8,6 @@ import { cn } from '@/primitives/utils/cn'
 import { ConnectionCard } from './ConnectionCard'
 import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { StatusBarMetric } from './StatusBarMetric'
-import { NotificationBell } from './NotificationBell'
 import type { QueryTab } from '@shared/types'
 
 interface PluginStatus {
@@ -193,9 +192,6 @@ export function StatusBar() {
             </>
           )}
         </Flex>
-
-        {/* Notification bell */}
-        <NotificationBell />
 
         {/* DEV badge */}
         {isDev && (

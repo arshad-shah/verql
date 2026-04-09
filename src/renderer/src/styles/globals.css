@@ -89,29 +89,29 @@ dialog[open] { display: flex; flex-direction: column; }
 
 /* UI Density scaling */
 [data-density="compact"] {
-  --density-spacing: 0.75;
-  --density-font-scale: 0.92;
-  font-size: 12.5px;
-}
-[data-density="comfortable"] {
   --density-spacing: 1;
   --density-font-scale: 1;
   font-size: 13px;
 }
-[data-density="spacious"] {
+[data-density="comfortable"] {
   --density-spacing: 1.25;
   --density-font-scale: 1.05;
   font-size: 14px;
 }
+[data-density="spacious"] {
+  --density-spacing: 1.5;
+  --density-font-scale: 1.12;
+  font-size: 15px;
+}
 
 /* Apply density to common spacing patterns */
-[data-density="compact"] button { padding-top: 0.2rem; padding-bottom: 0.2rem; }
-[data-density="spacious"] button { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+[data-density="compact"] button { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+[data-density="spacious"] button { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 
-[data-density="compact"] .px-3 { padding-left: 0.5rem; padding-right: 0.5rem; }
-[data-density="compact"] .py-2 { padding-top: 0.35rem; padding-bottom: 0.35rem; }
-[data-density="compact"] .gap-sm, [data-density="compact"] .gap-md { gap: 0.35rem; }
+[data-density="compact"] .px-3 { padding-left: 0.625rem; padding-right: 0.625rem; }
+[data-density="compact"] .py-2 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+[data-density="compact"] .gap-sm, [data-density="compact"] .gap-md { gap: 0.4rem; }
 
-[data-density="spacious"] .py-2 { padding-top: 0.65rem; padding-bottom: 0.65rem; }
-[data-density="spacious"] .gap-sm { gap: 0.65rem; }
-[data-density="spacious"] .gap-md { gap: 1rem; }
+[data-density="spacious"] .py-2 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+[data-density="spacious"] .gap-sm { gap: 0.75rem; }
+[data-density="spacious"] .gap-md { gap: 1.125rem; }

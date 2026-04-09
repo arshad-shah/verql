@@ -18,6 +18,7 @@ export const Default: Story = {
   args: {
     value: 60,
     max: 100,
+    'aria-label': 'Upload progress',
   },
   decorators: [(Story) => <div style={{ width: 320 }}><Story /></div>],
 }
@@ -28,7 +29,7 @@ export const States: Story = {
       {[0, 25, 50, 75, 100].map((value) => (
         <div key={value}>
           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 4 }}>{value}%</div>
-          <Progress value={value} />
+          <Progress value={value} aria-label={`Progress ${value}%`} />
         </div>
       ))}
     </div>

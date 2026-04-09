@@ -9,11 +9,11 @@ const colorInputVariants = cva(
   {
     variants: {
       size: {
-        xs: 'h-6 px-2 text-xs rounded',
-        sm: 'h-7 px-2 text-xs rounded',
-        md: 'h-8 px-3 text-sm rounded-md',
-        lg: 'h-9 px-3 text-sm rounded-md',
-        xl: 'h-10 px-4 text-base rounded-lg',
+        xs: 'h-7 px-2 text-xs rounded',
+        sm: 'h-8 px-2 text-xs rounded',
+        md: 'h-9 px-3 text-sm rounded-md',
+        lg: 'h-10 px-3 text-sm rounded-md',
+        xl: 'h-12 px-4 text-base rounded-lg',
       },
     },
     defaultVariants: { size: 'md' },
@@ -32,10 +32,11 @@ export interface ColorInputProps extends VariantProps<typeof colorInputVariants>
   showPicker?: boolean
   disabled?: boolean
   className?: string
+  'aria-label'?: string
 }
 
 export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
-  ({ value: controlledValue, defaultValue = '#7c6ff7', onChange, presets, showPicker = true, disabled, size, className }, ref) => {
+  ({ value: controlledValue, defaultValue = '#7c6ff7', onChange, presets, showPicker = true, disabled, size, className, 'aria-label': ariaLabel }, ref) => {
     const isControlled = controlledValue !== undefined
     const [internalValue, setInternalValue] = useState(defaultValue)
     const [isOpen, setIsOpen] = useState(false)
@@ -108,6 +109,7 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
             onChange={handleTextChange}
             onBlur={handleBlur}
             disabled={disabled}
+            aria-label={ariaLabel ?? 'Color value'}
             className="flex-1 h-full bg-transparent outline-none min-w-0 font-mono text-inherit"
             maxLength={7}
           />

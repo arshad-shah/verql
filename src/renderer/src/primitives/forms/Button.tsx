@@ -14,11 +14,11 @@ const buttonVariants = cva(
         danger: 'bg-error-emphasis text-white hover:bg-error shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.2)]',
       },
       size: {
-        xs: 'h-6 px-2 text-xs rounded',
-        sm: 'h-7 px-3 text-xs rounded',
-        md: 'h-8 px-4 text-sm rounded-md',
-        lg: 'h-9 px-5 text-sm rounded-md',
-        xl: 'h-10 px-6 text-base rounded-lg',
+        xs: 'h-7 px-2 text-xs rounded',
+        sm: 'h-8 px-2.5 text-xs rounded',
+        md: 'h-9 px-3 text-sm rounded-md',
+        lg: 'h-10 px-4 text-sm rounded-md',
+        xl: 'h-12 px-5 text-base rounded-lg',
       },
     },
     defaultVariants: {
@@ -58,11 +58,11 @@ const iconButtonVariants = cva(
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
       },
       size: {
-        xs: 'h-6 w-6 rounded',
-        sm: 'h-7 w-7 rounded',
-        md: 'h-8 w-8 rounded-md',
-        lg: 'h-9 w-9 rounded-md',
-        xl: 'h-10 w-10 rounded-lg',
+        xs: 'h-7 w-7 rounded',
+        sm: 'h-8 w-8 rounded',
+        md: 'h-9 w-9 rounded-md',
+        lg: 'h-10 w-10 rounded-md',
+        xl: 'h-12 w-12 rounded-lg',
       },
     },
     defaultVariants: {

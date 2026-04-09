@@ -123,13 +123,10 @@ export function DatabasesSection({ connectionId, activeSchema, onSchemaChange, a
                 <Select
                   size="xs"
                   value={activeSchema}
-                  onChange={(e) => onSchemaChange(e.target.value)}
+                  onChange={(v) => onSchemaChange(v)}
+                  options={schemaList.map(s => ({ value: s, label: s }))}
                   className="max-w-32"
-                >
-                  {schemaList.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </Select>
+                />
               </Flex>
             )}
 

@@ -5,9 +5,10 @@ export interface ProgressProps {
   value: number
   max?: number
   className?: string
+  'aria-label'?: string
 }
 
-export function Progress({ value, max = 100, className }: ProgressProps) {
+export function Progress({ value, max = 100, className, 'aria-label': ariaLabel }: ProgressProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100))
 
   return (
@@ -16,6 +17,7 @@ export function Progress({ value, max = 100, className }: ProgressProps) {
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={max}
+      aria-label={ariaLabel}
       className={cn(
         'h-1.5 w-full bg-bg-elevated rounded-full overflow-hidden shadow-[var(--shadow-input-inset)]',
         className

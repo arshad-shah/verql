@@ -42,9 +42,8 @@ describe('ConnectionFormView', () => {
 
   it('renders database type select', () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    const select = screen.getByLabelText('Database Type')
+    const select = screen.getByRole('combobox', { name: 'Database Type' })
     expect(select).toBeTruthy()
-    expect(select.tagName).toBe('SELECT')
   })
 
   it('renders connection name input', () => {
@@ -77,8 +76,10 @@ describe('ConnectionFormView', () => {
 
   it('shows database file input for sqlite', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    const select = screen.getByLabelText('Database Type')
-    await userEvent.selectOptions(select, 'sqlite')
+    const trigger = screen.getByRole('combobox', { name: 'Database Type' })
+    await userEvent.click(trigger)
+    const sqliteOption = await screen.findByRole('option', { name: 'SQLite' })
+    await userEvent.click(sqliteOption)
     expect(screen.getByLabelText('Database File')).toBeTruthy()
     expect(screen.queryByLabelText('Host')).toBeNull()
   })

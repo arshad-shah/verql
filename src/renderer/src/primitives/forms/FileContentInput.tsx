@@ -10,11 +10,11 @@ const browseRowVariants = cva(
   {
     variants: {
       size: {
-        xs: 'h-6 px-2 text-xs rounded',
-        sm: 'h-7 px-2 text-xs rounded',
-        md: 'h-8 px-3 text-sm rounded-md',
-        lg: 'h-9 px-3 text-sm rounded-md',
-        xl: 'h-10 px-4 text-base rounded-lg',
+        xs: 'h-7 px-2 text-xs rounded',
+        sm: 'h-8 px-2 text-xs rounded',
+        md: 'h-9 px-3 text-sm rounded-md',
+        lg: 'h-10 px-3 text-sm rounded-md',
+        xl: 'h-12 px-4 text-base rounded-lg',
       },
     },
     defaultVariants: { size: 'md' },
@@ -111,7 +111,7 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
               </span>
               <DropdownMenu
                 trigger={
-                  <button type="button" className="flex items-center p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors">
+                  <button type="button" aria-label="Input mode" className="flex items-center p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors">
                     <ChevronDown size={12} />
                   </button>
                 }
@@ -185,6 +185,7 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
               <button
                 type="button"
                 disabled={disabled}
+                aria-label="Input mode"
                 className="shrink-0 p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors"
               >
                 <ChevronDown size={12} />

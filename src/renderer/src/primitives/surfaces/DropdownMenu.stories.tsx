@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn, expect, userEvent } from 'storybook/test'
+import { ChevronDown } from 'lucide-react'
 import { DropdownMenu } from './DropdownMenu'
 import { Button } from '../forms/Button'
 
@@ -20,7 +21,7 @@ const onDelete = fn()
 export const Default: Story = {
   render: () => (
     <DropdownMenu
-      trigger={<Button variant="outline">Actions ▾</Button>}
+      trigger={<Button variant="outline">Actions <ChevronDown size={12} className="inline" /></Button>}
       items={[
         { label: 'Edit table', onSelect: onEditTable },
         { label: 'Duplicate', onSelect: onDuplicate },
@@ -31,7 +32,7 @@ export const Default: Story = {
   ),
   play: async ({ canvas }) => {
     const user = userEvent.setup()
-    await user.click(canvas.getByText('Actions ▾'))
+    await user.click(canvas.getByRole('button', { name: /actions/i }))
     const editItem = await canvas.findByText('Edit table')
     await user.click(editItem)
     await expect(onEditTable).toHaveBeenCalled()
@@ -45,7 +46,7 @@ const onDeleteOption = fn()
 export const States: Story = {
   render: () => (
     <DropdownMenu
-      trigger={<Button variant="outline">Options ▾</Button>}
+      trigger={<Button variant="outline">Options <ChevronDown size={12} className="inline" /></Button>}
       items={[
         { label: 'Rename', onSelect: onRename },
         { label: 'Move (unavailable)', onSelect: onMove, disabled: true },

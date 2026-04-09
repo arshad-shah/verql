@@ -3,31 +3,41 @@ import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, type ColDef, themeQuartz } from 'ag-grid-community'
 import type { QueryResult } from '@shared/types'
 import { useSettingsStore } from '@/stores/settings'
+import { useTheme } from '@/primitives/theme/ThemeProvider'
 import { Box } from '@/primitives'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
-const darkTheme = themeQuartz.withParams({
-  backgroundColor: '#1a1a2e',
-  foregroundColor: '#ffffff',
-  headerBackgroundColor: '#12121f',
-  headerForegroundColor: '#888888',
-  borderColor: '#2a2a3e',
-  rowHoverColor: 'rgba(124, 111, 247, 0.05)',
-  selectedRowBackgroundColor: 'rgba(124, 111, 247, 0.1)',
-  fontFamily: "'SF Mono', 'Fira Code', monospace",
-  fontSize: 12,
-  headerFontSize: 11,
-  headerFontWeight: 600,
-  cellHorizontalPadding: 10,
-  oddRowBackgroundColor: 'rgba(255, 255, 255, 0.01)',
-})
+function useGridTheme() {
+  const { theme } = useTheme()
+  return useMemo(() => {
+    const style = getComputedStyle(document.documentElement)
+    const get = (v: string) => style.getPropertyValue(v).trim()
+
+    return themeQuartz.withParams({
+      backgroundColor: get('--color-bg-secondary'),
+      foregroundColor: get('--color-text-primary'),
+      headerBackgroundColor: get('--color-bg-primary'),
+      headerForegroundColor: get('--color-text-secondary'),
+      borderColor: get('--color-border-default'),
+      rowHoverColor: get('--color-hover'),
+      selectedRowBackgroundColor: get('--color-active'),
+      fontFamily: "'SF Mono', 'Fira Code', monospace",
+      fontSize: 12,
+      headerFontSize: 11,
+      headerFontWeight: 600,
+      cellHorizontalPadding: 10,
+      oddRowBackgroundColor: get('--color-bg-primary'),
+    })
+  }, [theme])
+}
 
 interface Props {
   results: QueryResult
 }
 
 export function ResultsGrid({ results }: Props) {
+  const gridTheme = useGridTheme()
   const dataDisplay = useSettingsStore(s => s.settings.dataDisplay)
   const defaultPageSize = useSettingsStore(s => s.settings.general.defaultPageSize)
 
@@ -42,10 +52,10 @@ export function ResultsGrid({ results }: Props) {
       maxWidth: dataDisplay.maxColumnWidth,
       cellStyle: (params: any) => {
         if (params.value === null || params.value === undefined) {
-          return { color: '#666', fontStyle: 'italic' }
+          return { color: 'var(--color-text-disabled)', fontStyle: 'italic' }
         }
         if (typeof params.value === 'number') {
-          return { color: '#e5c07b' }
+          return { color: 'var(--color-warning)' }
         }
         return null
       },
@@ -71,7 +81,7 @@ export function ResultsGrid({ results }: Props) {
   return (
     <Box className="flex-1 overflow-hidden">
       <AgGridReact
-        theme={darkTheme}
+        theme={gridTheme}
         rowData={results.rows}
         columnDefs={columnDefs}
         defaultColDef={{

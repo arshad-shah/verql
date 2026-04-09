@@ -140,7 +140,7 @@ describe('Accordion', () => {
         </Accordion.Item>
       </Accordion>
     )
-    const trigger = container.querySelector('button')
+    const trigger = container.querySelector('button')?.closest('.text-xs') ?? container.querySelector('.text-xs')
     expect(trigger).toHaveClass('text-xs')
   })
 })

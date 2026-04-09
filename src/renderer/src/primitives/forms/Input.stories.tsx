@@ -46,9 +46,9 @@ export const Variants: Story = {
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-2" style={{ width: 280 }}>
-      <Input size="md" placeholder="Default" />
-      <Input size="md" error defaultValue="Error state" />
-      <Input size="md" disabled defaultValue="Disabled" />
+      <Input size="md" placeholder="Default" aria-label="Default" />
+      <Input size="md" error defaultValue="Error state" aria-label="Error" />
+      <Input size="md" disabled defaultValue="Disabled" aria-label="Disabled" />
     </div>
   ),
 }

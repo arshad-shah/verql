@@ -40,16 +40,18 @@ export function GeneralSettings() {
 
       <SettingRow label="Default Page Size" description="Number of rows to fetch per page when browsing tables">
         <Select
-          value={general.defaultPageSize}
-          onChange={(e) => setSetting('general.defaultPageSize', parseInt(e.target.value))}
+          value={String(general.defaultPageSize)}
+          onChange={(val) => setSetting('general.defaultPageSize', parseInt(val))}
           size="sm"
           className="w-24"
-        >
-          <option value={50}>50</option>
-          <option value={100}>100</option>
-          <option value={500}>500</option>
-          <option value={1000}>1000</option>
-        </Select>
+          aria-label="Default page size"
+          options={[
+            { value: '50', label: '50' },
+            { value: '100', label: '100' },
+            { value: '500', label: '500' },
+            { value: '1000', label: '1000' },
+          ]}
+        />
       </SettingRow>
 
       <Divider />

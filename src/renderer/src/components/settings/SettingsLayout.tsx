@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Flex, Box, ScrollArea, Text, Button } from '@/primitives'
+import { JSX, useState } from 'react'
+import { Flex, Box, ScrollArea, Text, Button, Divider } from '@/primitives'
 import { GeneralSettings } from './categories/GeneralSettings'
 import { AppearanceSettings } from './categories/AppearanceSettings'
 import { EditorSettings } from './categories/EditorSettings'
@@ -38,15 +38,19 @@ export function SettingsLayout() {
     <Flex direction="row" className="h-full">
       <Box className="w-48 border-r border-border-default shrink-0">
         <ScrollArea direction="vertical" className="h-full">
-          <Box className="py-2">
-            <Text size="xs" color="muted" className="px-4 py-2 uppercase tracking-wider font-semibold">
-              Settings
-            </Text>
+          <Box paddingY='sm'>
+            <Box paddingY='md'>
+              <Text size="sm" color="muted" weight={'bold'} className="px-4 py-2 uppercase tracking-wider">
+                Settings
+              </Text>
+            </Box>
+
+            <Divider />
             {categories.map((cat) => (
               <Button
                 key={cat.id}
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={() => setActiveCategory(cat.id)}
                 className={`w-full justify-start rounded-none px-4 ${
                   activeCategory === cat.id

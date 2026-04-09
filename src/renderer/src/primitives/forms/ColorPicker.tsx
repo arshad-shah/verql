@@ -307,6 +307,7 @@ export function ColorPicker({
               type="text"
               value={hexValue}
               onChange={(e) => handleInputChange({ hex: e.target.value })}
+              aria-label="HEX color value"
               className="w-full h-6 px-1.5 rounded border border-border-default bg-bg-tertiary text-text-primary text-xs text-center font-mono outline-none focus:border-accent transition-colors"
             />
             <span className="text-[10px] text-text-muted mt-0.5">HEX</span>
@@ -327,6 +328,7 @@ export function ColorPicker({
                   max={field.max}
                   step={field.step}
                   onChange={(e) => handleInputChange({ [field.id]: e.target.value })}
+                  aria-label={field.label}
                   className="w-full h-6 px-1 rounded border border-border-default bg-bg-tertiary text-text-primary text-xs text-center font-mono outline-none focus:border-accent transition-colors [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="text-[10px] text-text-muted mt-0.5">{field.label}</span>
@@ -349,6 +351,7 @@ export function ColorPicker({
                   max={field.max}
                   step={field.step}
                   onChange={(e) => handleInputChange({ [field.id]: e.target.value })}
+                  aria-label={field.label}
                   className="w-full h-6 px-1 rounded border border-border-default bg-bg-tertiary text-text-primary text-xs text-center font-mono outline-none focus:border-accent transition-colors [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="text-[10px] text-text-muted mt-0.5">{field.label}</span>

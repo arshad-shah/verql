@@ -8,11 +8,11 @@ const tagsInputVariants = cva(
   {
     variants: {
       size: {
-        xs: 'min-h-6 px-1.5 py-0.5 text-xs rounded',
-        sm: 'min-h-7 px-2 py-0.5 text-xs rounded',
-        md: 'min-h-8 px-2 py-1 text-sm rounded-md',
-        lg: 'min-h-9 px-3 py-1 text-sm rounded-md',
-        xl: 'min-h-10 px-3 py-1.5 text-base rounded-lg',
+        xs: 'min-h-7 px-1.5 py-0.5 text-xs rounded',
+        sm: 'min-h-8 px-2 py-0.5 text-xs rounded',
+        md: 'min-h-9 px-2 py-1 text-sm rounded-md',
+        lg: 'min-h-10 px-3 py-1 text-sm rounded-md',
+        xl: 'min-h-12 px-3 py-1.5 text-base rounded-lg',
       },
     },
     defaultVariants: { size: 'md' },
@@ -29,6 +29,7 @@ export interface TagsInputProps extends VariantProps<typeof tagsInputVariants> {
   disabled?: boolean
   placeholder?: string
   className?: string
+  'aria-label'?: string
 }
 
 export const TagsInput = forwardRef<HTMLInputElement, TagsInputProps>(
@@ -44,6 +45,7 @@ export const TagsInput = forwardRef<HTMLInputElement, TagsInputProps>(
       placeholder = 'Add tag...',
       size,
       className,
+      'aria-label': ariaLabel,
     },
     ref
   ) => {
@@ -132,6 +134,7 @@ export const TagsInput = forwardRef<HTMLInputElement, TagsInputProps>(
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ''}
           disabled={disabled || (maxTags !== undefined && tags.length >= maxTags)}
+          aria-label={ariaLabel ?? placeholder}
           className="flex-1 h-full bg-transparent outline-none min-w-[60px] text-inherit placeholder:text-text-muted"
         />
       </div>

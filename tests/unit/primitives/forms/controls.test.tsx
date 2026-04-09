@@ -7,62 +7,63 @@ import { Radio } from '../../../../src/renderer/src/primitives/forms/Radio'
 import { Switch } from '../../../../src/renderer/src/primitives/forms/Switch'
 import { Slider } from '../../../../src/renderer/src/primitives/forms/Slider'
 
+const testOptions = [
+  { value: 'a', label: 'Option A' },
+  { value: 'b', label: 'Option B' },
+]
+
+const noop = () => {}
+
 describe('Select', () => {
-  it('renders a select element', () => {
-    const { container } = render(
-      <Select>
-        <option value="a">Option A</option>
-      </Select>
-    )
-    expect(container.querySelector('select')).toBeInTheDocument()
+  it('renders a combobox trigger', () => {
+    render(<Select options={testOptions} value="" onChange={noop} />)
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
-  it('renders children options', () => {
-    render(
-      <Select>
-        <option value="a">Option A</option>
-        <option value="b">Option B</option>
-      </Select>
-    )
-    expect(screen.getByText('Option A')).toBeInTheDocument()
-    expect(screen.getByText('Option B')).toBeInTheDocument()
+  it('shows placeholder when no value selected', () => {
+    const { container } = render(<Select options={testOptions} value="" onChange={noop} />)
+    expect(container.textContent).toContain('Select')
+  })
+
+  it('shows selected option label', () => {
+    render(<Select options={testOptions} value="a" onChange={noop} />)
+    expect(screen.getByRole('combobox')).toHaveTextContent('Option A')
+  })
+
+  it('shows custom placeholder when no value', () => {
+    render(<Select options={testOptions} value="" onChange={noop} placeholder="Pick one" />)
+    expect(screen.getByRole('combobox')).toHaveTextContent('Pick one')
   })
 
   it('applies md size by default', () => {
-    const { container } = render(<Select><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('h-8')
+    render(<Select options={testOptions} value="" onChange={noop} />)
+    const trigger = screen.getByRole('combobox')
+    expect(trigger).toHaveClass('h-9')
   })
 
   it('applies xs size', () => {
-    const { container } = render(<Select size="xs"><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('h-6')
+    render(<Select options={testOptions} value="" onChange={noop} size="xs" />)
+    expect(screen.getByRole('combobox')).toHaveClass('h-7')
   })
 
   it('applies sm size', () => {
-    const { container } = render(<Select size="sm"><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('h-7')
+    render(<Select options={testOptions} value="" onChange={noop} size="sm" />)
+    expect(screen.getByRole('combobox')).toHaveClass('h-8')
   })
 
   it('applies lg size', () => {
-    const { container } = render(<Select size="lg"><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('h-9')
+    render(<Select options={testOptions} value="" onChange={noop} size="lg" />)
+    expect(screen.getByRole('combobox')).toHaveClass('h-10')
   })
 
   it('applies xl size', () => {
-    const { container } = render(<Select size="xl"><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('h-10')
+    render(<Select options={testOptions} value="" onChange={noop} size="xl" />)
+    expect(screen.getByRole('combobox')).toHaveClass('h-12')
   })
 
-  it('applies appearance-none class', () => {
-    const { container } = render(<Select><option>A</option></Select>)
-    expect(container.firstChild).toHaveClass('appearance-none')
-  })
-
-  it('forwards ref', () => {
-    const ref = createRef<HTMLSelectElement>()
-    render(<Select ref={ref}><option>A</option></Select>)
-    expect(ref.current).not.toBeNull()
-    expect(ref.current?.nodeName).toBe('SELECT')
+  it('is disabled when disabled prop is true', () => {
+    render(<Select options={testOptions} value="" onChange={noop} disabled />)
+    expect(screen.getByRole('combobox')).toBeDisabled()
   })
 })
 

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, userEvent } from 'storybook/test'
 import { ConnectionTestButton } from './ConnectionTestButton'
 
 const meta: Meta<typeof ConnectionTestButton> = {
@@ -21,4 +22,10 @@ const meta: Meta<typeof ConnectionTestButton> = {
 export default meta
 type Story = StoryObj<typeof ConnectionTestButton>
 
-export const Default: Story = {}
+export const Default: Story = {
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: 'Test Connection' })
+    await expect(button).toBeInTheDocument()
+    await expect(button).toBeEnabled()
+  },
+}

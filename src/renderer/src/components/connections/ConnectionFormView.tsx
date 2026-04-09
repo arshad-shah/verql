@@ -93,7 +93,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     await saveConnection(profile as ConnectionProfile)
     closeTab(tabId)
@@ -106,13 +106,13 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
     if (field.type === 'boolean') {
       return (
-        <Flex key={field.key} direction="row" align="center" gap="sm">
+        <Flex key={field.key} direction="row" align="center" gap="md">
           <Switch
             label={field.label}
             checked={!!profile[field.key]}
             onChange={(e) => update({ [field.key]: e.target.checked })}
           />
-          <Text size="sm" color="secondary">{field.label}</Text>
+          <Text size="lg" color="secondary">{field.label}</Text>
         </Flex>
       )
     }
@@ -123,7 +123,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <PasswordInput
             value={String(value)}
             onChange={(e) => update({ [field.key]: e.target.value })}
-            size="sm"
+            size="lg"
           />
         </FormField>
       )
@@ -135,7 +135,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <NumberInput
             value={Number(value) || 0}
             onChange={(v) => update({ [field.key]: v })}
-            size="sm"
+            size="lg"
           />
         </FormField>
       )
@@ -148,7 +148,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             value={String(value)}
             onChange={(content) => update({ [field.key]: content })}
             accept=".pem,.key"
-            size="sm"
+            size="lg"
           />
         </FormField>
       )
@@ -160,7 +160,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           required={field.required}
           value={String(value)}
           onChange={(e) => update({ [field.key]: e.target.value })}
-          size="sm"
+          size="lg"
         />
       </FormField>
     )
@@ -168,15 +168,15 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   return (
     <ScrollArea direction="vertical" className="h-full bg-bg-primary">
-      <Container size="sm" className="py-8">
+      <Container size="md" className="py-8">
         <form onSubmit={handleSubmit}>
           <Stack gap="xl">
             {/* Header */}
             <Flex direction="row" align="center" justify="between">
               <Heading level={2}>{editingId ? 'Edit Connection' : 'New Connection'}</Heading>
-              <Flex direction="row" gap="sm">
-                <Button type="button" variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
-                <Button type="submit" variant="solid" size="sm">
+              <Flex direction="row" gap="md">
+                <Button type="button" variant="outline" size="md" onClick={handleCancel}>Cancel</Button>
+                <Button type="submit" variant="solid" size="md">
                   {editingId ? 'Save Changes' : 'Add Connection'}
                 </Button>
               </Flex>
@@ -189,27 +189,24 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
               <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Database Type</Text>
               <FormField label="Database Type">
                 <Select
-                  size="sm"
+                  size="lg"
                   value={String(profile.type)}
-                  onChange={(e) => handleTypeChange(e.target.value as DatabaseType)}
-                >
-                  {allTypes.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </Select>
+                  onChange={(v) => handleTypeChange(v as DatabaseType)}
+                  options={allTypes}
+                />
               </FormField>
             </Stack>
 
             {/* General */}
             <Stack gap="md">
-              <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">General</Text>
+              <Text size="sm" color="muted" weight="semibold" className="uppercase tracking-wider">General</Text>
               <FormField label="Connection Name">
                 <Input
                   required
                   value={String(profile.name ?? '')}
                   onChange={(e) => update({ name: e.target.value })}
                   placeholder="My Database"
-                  size="sm"
+                  size="lg"
                 />
               </FormField>
               <FormField label="Color">
@@ -217,7 +214,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   value={String(profile.color ?? '#7c6ff7')}
                   onChange={(v) => update({ color: v })}
                   presets={COLOR_PRESETS}
-                  size="sm"
+                  size="lg"
                 />
               </FormField>
             </Stack>
@@ -233,7 +230,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       value={String(profile.database ?? '')}
                       onChange={(e) => update({ database: e.target.value })}
                       placeholder="/path/to/database.sqlite"
-                      size="sm"
+                      size="lg"
                     />
                   </FormField>
                 ) : (
@@ -245,7 +242,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                           value={String(profile.host ?? '')}
                           onChange={(e) => update({ host: e.target.value })}
                           placeholder="localhost"
-                          size="sm"
+                          size="lg"
                         />
                       </FormField>
                       <FormField label="Port" className="w-28">
@@ -254,7 +251,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                           onChange={(v) => update({ port: v })}
                           min={0}
                           max={65535}
-                          size="sm"
+                          size="lg"
                         />
                       </FormField>
                     </Flex>
@@ -264,7 +261,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                         value={String(profile.database ?? '')}
                         onChange={(e) => update({ database: e.target.value })}
                         placeholder="mydb"
-                        size="sm"
+                        size="lg"
                       />
                     </FormField>
                   </>
@@ -287,24 +284,24 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       value={String(profile.username ?? '')}
                       onChange={(e) => update({ username: e.target.value })}
                       placeholder="postgres"
-                      size="sm"
+                      size="lg"
                     />
                   </FormField>
                   <FormField label="Password" className="flex-1">
                     <PasswordInput
                       value={String(profile.password ?? '')}
                       onChange={(e) => update({ password: e.target.value })}
-                      size="sm"
+                      size="lg"
                     />
                   </FormField>
                 </Flex>
-                <Flex direction="row" align="center" gap="sm">
+                <Flex direction="row" align="center" gap="md">
                   <Switch
                     label="Use SSL"
                     checked={!!profile.ssl}
                     onChange={(e) => update({ ssl: e.target.checked })}
                   />
-                  <Text size="sm" color="secondary">Use SSL</Text>
+                  <Text size="lg" color="secondary">Use SSL</Text>
                 </Flex>
               </Stack>
             )}
@@ -319,7 +316,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-none border-0 h-auto justify-start"
                 >
                   {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <Text size="sm" color="secondary">SSH Tunnel</Text>
+                  <Text size="lg" color="secondary">SSH Tunnel</Text>
                 </Button>
                 {sshExpanded && (
                   <Stack gap="md" className="px-3 pb-3">

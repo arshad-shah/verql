@@ -7,11 +7,11 @@ const numberInputVariants = cva(
   {
     variants: {
       size: {
-        xs: 'h-6 text-xs rounded',
-        sm: 'h-7 text-xs rounded',
-        md: 'h-8 text-sm rounded-md',
-        lg: 'h-9 text-sm rounded-md',
-        xl: 'h-10 text-base rounded-lg',
+        xs: 'h-7 text-xs rounded',
+        sm: 'h-8 text-xs rounded',
+        md: 'h-9 text-sm rounded-md',
+        lg: 'h-10 text-sm rounded-md',
+        xl: 'h-12 text-base rounded-lg',
       },
       error: {
         true: 'border-error focus-within:shadow-[0_0_0_3px_rgba(255,95,87,0.25),var(--shadow-input-inset)]',

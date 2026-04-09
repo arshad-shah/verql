@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import React from 'react'
 import { Popover } from '../../../../src/renderer/src/primitives/surfaces/Popover'
 import { Tooltip } from '../../../../src/renderer/src/primitives/surfaces/Tooltip'
@@ -63,7 +64,7 @@ describe('DropdownMenu', () => {
     expect(screen.getByText('Menu')).toBeInTheDocument()
   })
 
-  it('renders menu items in DOM', () => {
+  it('renders menu items in DOM after opening', async () => {
     render(
       <DropdownMenu
         trigger={<button>Menu</button>}
@@ -73,6 +74,7 @@ describe('DropdownMenu', () => {
         ]}
       />
     )
+    await userEvent.click(screen.getByText('Menu'))
     expect(screen.getByText('Item 1')).toBeInTheDocument()
     expect(screen.getByText('Item 2')).toBeInTheDocument()
   })

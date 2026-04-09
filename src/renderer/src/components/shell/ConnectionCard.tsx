@@ -1,3 +1,4 @@
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Button, Text } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 
@@ -83,9 +84,9 @@ export function ConnectionCard({
         <Text as="span" className="text-text-tertiary">No connection</Text>
       )}
 
-      <Text as="span" className={cn('ml-0.5 text-[8px]', isOpen ? 'text-accent' : 'text-text-disabled')}>
-        {isOpen ? '▴' : '▾'}
-      </Text>
+      <span className={cn('ml-0.5', isOpen ? 'text-accent' : 'text-text-disabled')}>
+        {isOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+      </span>
     </Button>
   )
 }

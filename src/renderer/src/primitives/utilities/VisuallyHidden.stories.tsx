@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent } from 'storybook/test'
+import { X, Check, ArrowUp, ArrowDown, Search } from 'lucide-react'
 import { VisuallyHidden } from './VisuallyHidden'
 
 const meta = {
@@ -30,7 +31,7 @@ export const Default: Story = {
       }}
     >
       {/* Icon-only button — label is hidden visually but accessible */}
-      <span aria-hidden="true">×</span>
+      <span aria-hidden="true"><X size={16} /></span>
       <VisuallyHidden>Close dialog</VisuallyHidden>
     </button>
   ),
@@ -56,9 +57,14 @@ export const States: Story = {
           Icon-only button with accessible label
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          {(['×', '✓', '↑', '↓'] as const).map((icon) => (
+          {([
+            { icon: <X size={14} />, label: 'Close' },
+            { icon: <Check size={14} />, label: 'Confirm' },
+            { icon: <ArrowUp size={14} />, label: 'Move up' },
+            { icon: <ArrowDown size={14} />, label: 'Move down' },
+          ] as const).map((item) => (
             <button
-              key={icon}
+              key={item.label}
               type="button"
               style={{
                 display: 'flex',
@@ -71,11 +77,10 @@ export const States: Story = {
                 borderRadius: 6,
                 cursor: 'pointer',
                 color: 'var(--color-text-primary)',
-                fontSize: 16,
               }}
             >
-              <span aria-hidden="true">{icon}</span>
-              <VisuallyHidden>Action {icon}</VisuallyHidden>
+              <span aria-hidden="true">{item.icon}</span>
+              <VisuallyHidden>{item.label}</VisuallyHidden>
             </button>
           ))}
         </div>
@@ -86,9 +91,9 @@ export const States: Story = {
           VisuallyHidden inside a label for a custom input
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label htmlFor="search-demo" style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+          <label htmlFor="search-demo" style={{ fontSize: 13, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}>
             <VisuallyHidden>Search</VisuallyHidden>
-            <span aria-hidden="true" style={{ marginRight: 4 }}>🔍</span>
+            <span aria-hidden="true" style={{ marginRight: 4 }}><Search size={14} /></span>
           </label>
           <input
             id="search-demo"

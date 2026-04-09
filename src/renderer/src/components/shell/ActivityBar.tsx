@@ -1,6 +1,7 @@
 import { Database, PenSquare, BarChart3, Puzzle, Settings } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
+import { NotificationBell } from './NotificationBell'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
   { id: 'explorer', icon: Database, label: 'Explorer' },
@@ -42,6 +43,7 @@ export function ActivityBar() {
     >
       {topItems.map(({ id, icon, label }) => renderButton(id, icon, label))}
       <Spacer />
+      <NotificationBell />
       {renderButton('settings', Settings, 'Settings')}
     </Stack>
   )

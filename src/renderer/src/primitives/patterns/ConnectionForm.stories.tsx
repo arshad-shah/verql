@@ -19,6 +19,13 @@ const meta: Meta = {
 }
 export default meta
 
+const dbTypeOptions = [
+  { value: 'postgresql', label: 'PostgreSQL' },
+  { value: 'mysql', label: 'MySQL' },
+  { value: 'sqlite', label: 'SQLite' },
+  { value: 'mongodb', label: 'MongoDB' },
+]
+
 export const Default: StoryObj = {
   render: function Render() {
     const [dbType, setDbType] = useState('postgresql')
@@ -27,12 +34,12 @@ export const Default: StoryObj = {
         <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
         <div className="flex flex-col gap-4">
           <FormField label="Database Type">
-            <Select value={dbType} onChange={(e) => setDbType(e.target.value)}>
-              <option value="postgresql">PostgreSQL</option>
-              <option value="mysql">MySQL</option>
-              <option value="sqlite">SQLite</option>
-              <option value="mongodb">MongoDB</option>
-            </Select>
+            <Select
+              options={dbTypeOptions}
+              value={dbType}
+              onChange={(val) => setDbType(val)}
+              aria-label="Database type"
+            />
           </FormField>
           <FormField label="Host">
             <Input placeholder="localhost" defaultValue="localhost" />
@@ -75,12 +82,12 @@ export const States: StoryObj = {
         <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
         <div className="flex flex-col gap-4">
           <FormField label="Database Type">
-            <Select value="sqlite" onChange={() => {}}>
-              <option value="postgresql">PostgreSQL</option>
-              <option value="mysql">MySQL</option>
-              <option value="sqlite">SQLite</option>
-              <option value="mongodb">MongoDB</option>
-            </Select>
+            <Select
+              options={dbTypeOptions}
+              value="sqlite"
+              onChange={() => {}}
+              aria-label="Database type"
+            />
           </FormField>
           <FormField label="Database File">
             <Input placeholder="/path/to/database.sqlite" />

@@ -23,7 +23,7 @@ export default meta
 type Story = StoryObj<typeof NumberInput>
 
 export const Default: Story = {
-  args: { defaultValue: 42, min: 0, max: 100, step: 1, size: 'md' },
+  args: { defaultValue: 42, min: 0, max: 100, step: 1, size: 'md', 'aria-label': 'Value' },
   play: async ({ canvas, args }) => {
     const incrementButton = canvas.getByRole('button', { name: 'Increment' })
     await userEvent.click(incrementButton)
@@ -35,7 +35,7 @@ export const Variants: Story = {
   render: () => (
     <div className="flex flex-col gap-3 w-48">
       {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-        <NumberInput key={size} size={size} defaultValue={10} min={0} max={99} />
+        <NumberInput key={size} size={size} defaultValue={10} min={0} max={99} aria-label={`Size ${size}`} />
       ))}
     </div>
   ),
@@ -44,13 +44,13 @@ export const Variants: Story = {
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-3 w-48">
-      <NumberInput defaultValue={50} min={0} max={100} />
-      <NumberInput defaultValue={50} min={0} max={100} error />
-      <NumberInput defaultValue={50} min={0} max={100} disabled />
+      <NumberInput defaultValue={50} min={0} max={100} aria-label="Default" />
+      <NumberInput defaultValue={50} min={0} max={100} error aria-label="Error" />
+      <NumberInput defaultValue={50} min={0} max={100} disabled aria-label="Disabled" />
     </div>
   ),
 }
 
 export const WithPrecision: Story = {
-  args: { defaultValue: 3.14, step: 0.01, precision: 2, size: 'md' },
+  args: { defaultValue: 3.14, step: 0.01, precision: 2, size: 'md', 'aria-label': 'Precision value' },
 }

@@ -20,28 +20,49 @@ export function EditorSettings() {
       </SettingRow>
 
       <SettingRow label="Font Family" description="Font used in the editor">
-        <Select value={editor.fontFamily} onChange={(e) => setSetting('editor.fontFamily', e.target.value)} size="sm" className="w-48">
-          <option value="'JetBrains Mono', 'SF Mono', 'Fira Code', monospace">JetBrains Mono</option>
-          <option value="'SF Mono', 'Fira Code', monospace">SF Mono</option>
-          <option value="'Fira Code', monospace">Fira Code</option>
-          <option value="'Cascadia Code', monospace">Cascadia Code</option>
-          <option value="monospace">System Monospace</option>
-        </Select>
+        <Select
+          value={editor.fontFamily}
+          onChange={(val) => setSetting('editor.fontFamily', val)}
+          size="sm"
+          className="w-48"
+          aria-label="Font family"
+          options={[
+            { value: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace", label: 'JetBrains Mono' },
+            { value: "'SF Mono', 'Fira Code', monospace", label: 'SF Mono' },
+            { value: "'Fira Code', monospace", label: 'Fira Code' },
+            { value: "'Cascadia Code', monospace", label: 'Cascadia Code' },
+            { value: 'monospace', label: 'System Monospace' },
+          ]}
+        />
       </SettingRow>
 
       <SettingRow label="Tab Size" description="Number of spaces per tab">
-        <Select value={editor.tabSize} onChange={(e) => setSetting('editor.tabSize', parseInt(e.target.value))} size="sm" className="w-24">
-          <option value={2}>2 spaces</option>
-          <option value={4}>4 spaces</option>
-        </Select>
+        <Select
+          value={String(editor.tabSize)}
+          onChange={(val) => setSetting('editor.tabSize', parseInt(val))}
+          size="sm"
+          className="w-24"
+          aria-label="Tab size"
+          options={[
+            { value: '2', label: '2 spaces' },
+            { value: '4', label: '4 spaces' },
+          ]}
+        />
       </SettingRow>
 
       <SettingRow label="Cursor Style" description="Shape of the editor cursor">
-        <Select value={editor.cursorStyle} onChange={(e) => setSetting('editor.cursorStyle', e.target.value)} size="sm" className="w-28">
-          <option value="line">Line</option>
-          <option value="block">Block</option>
-          <option value="underline">Underline</option>
-        </Select>
+        <Select
+          value={editor.cursorStyle}
+          onChange={(val) => setSetting('editor.cursorStyle', val)}
+          size="sm"
+          className="w-28"
+          aria-label="Cursor style"
+          options={[
+            { value: 'line', label: 'Line' },
+            { value: 'block', label: 'Block' },
+            { value: 'underline', label: 'Underline' },
+          ]}
+        />
       </SettingRow>
 
       <Divider />

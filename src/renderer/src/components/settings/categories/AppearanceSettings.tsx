@@ -1,9 +1,11 @@
+import { Check } from 'lucide-react'
 import { Stack, Grid, Divider, Flex, Button, Heading, Text, Box } from '@/primitives'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
 import { SettingRow } from '../SettingRow'
 import type { Theme } from '@shared/settings'
+import { SettingLabel } from '@/components/settings/SettingLabel'
 
 const themePreview: Record<string, { bg: string; sidebar: string; text: string; accent: string; label: string }> = {
   dark: { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#b4befe', label: 'Dark' },
@@ -23,14 +25,13 @@ export function AppearanceSettings() {
 
   return (
     <Stack gap="md">
-      <div>
+      <Box>
         <Heading level={4}>Appearance</Heading>
         <Text size="xs" color="muted" className="mt-1">Customize how dbstudio looks and feels</Text>
-      </div>
+      </Box>
 
-      <div>
-        <Text size="sm" color="primary" className="mb-1">Theme</Text>
-        <Text size="xs" color="muted" className="mb-3">Choose a color theme for the application</Text>
+      <Box>
+        <SettingLabel label="Theme" description="Choose a color theme for the application" />
         <Grid columns={4} gap="sm">
           {Object.entries(themePreview).map(([key, preview]) => (
             <Box
@@ -46,7 +47,7 @@ export function AppearanceSettings() {
             >
               <Flex gap="xs" className="mb-2 h-1.5">
                 <div className="flex-1 rounded-sm" style={{ background: preview.sidebar }} />
-                <div className="flex-[2] rounded-sm" style={{ background: preview.bg, border: `1px solid ${preview.sidebar}` }} />
+                <div className="flex-2 rounded-sm" style={{ background: preview.bg, border: `1px solid ${preview.sidebar}` }} />
               </Flex>
               <Flex gap="xs" className="mb-1.5">
                 <div className="h-0.5 w-3 rounded-sm" style={{ background: preview.text }} />
@@ -57,38 +58,40 @@ export function AppearanceSettings() {
                 <div className="h-0.5 w-4 rounded-sm" style={{ background: preview.sidebar }} />
               </Flex>
               <Text size="xs" className="mt-2 text-center block" style={{ color: preview.text }}>
-                {preview.label} {currentTheme === key ? '✓' : ''}
+                {preview.label} {currentTheme === key && <Check size={10} className="inline ml-0.5" />}
               </Text>
             </Box>
           ))}
         </Grid>
-      </div>
+      </Box>
 
       <Divider />
 
       <SettingRow label="UI Density" description="Controls spacing and padding across the interface">
         <Select
           value={appearance.uiDensity}
-          onChange={(e) => setSetting('appearance.uiDensity', e.target.value)}
+          onChange={(v) => setSetting('appearance.uiDensity', v)}
+          options={[
+            { value: 'compact', label: 'Compact' },
+            { value: 'comfortable', label: 'Comfortable' },
+            { value: 'spacious', label: 'Spacious' },
+          ]}
           size="sm"
           className="w-32"
-        >
-          <option value="compact">Compact</option>
-          <option value="comfortable">Comfortable</option>
-          <option value="spacious">Spacious</option>
-        </Select>
+        />
       </SettingRow>
 
       <SettingRow label="Sidebar Position" description="Place the sidebar on the left or right side">
         <Select
           value={appearance.sidebarPosition}
-          onChange={(e) => setSetting('appearance.sidebarPosition', e.target.value)}
+          onChange={(v) => setSetting('appearance.sidebarPosition', v)}
+          options={[
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' },
+          ]}
           size="sm"
           className="w-32"
-        >
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </Select>
+        />
       </SettingRow>
 
       <SettingRow label="Accent Color" description="Highlight color for active elements and focus rings">

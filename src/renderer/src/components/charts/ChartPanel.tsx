@@ -48,13 +48,21 @@ export function ChartPanel({ results }: Props) {
         </Flex>
         <Flex align="center" gap="sm" className="text-xs ml-auto">
           <Label className="text-text-muted">X:</Label>
-          <Select value={xKey} onChange={e => setXKey(e.target.value)} size="xs">
-            {results.fields.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
-          </Select>
+          <Select
+            value={xKey}
+            onChange={setXKey}
+            size="xs"
+            options={results.fields.map(f => ({ value: f.name, label: f.name }))}
+            aria-label="X axis"
+          />
           <Label className="text-text-muted">Y:</Label>
-          <Select value={yKey} onChange={e => setYKey(e.target.value)} size="xs">
-            {results.fields.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
-          </Select>
+          <Select
+            value={yKey}
+            onChange={setYKey}
+            size="xs"
+            options={results.fields.map(f => ({ value: f.name, label: f.name }))}
+            aria-label="Y axis"
+          />
         </Flex>
       </Flex>
       <Box padding="lg" className="flex-1">

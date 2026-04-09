@@ -48,22 +48,33 @@ function Actions({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) 
   )
 }
 
-function Trigger({ children, className, ...props }: React.HTMLAttributes<HTMLButtonElement>) {
+function Trigger({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const { open, toggle } = useContext(ItemContext)
   const size = useContext(SizeContext)
   const Chevron = open ? ChevronDown : ChevronRight
 
+  // Separate Actions from other children so they live outside the button
+  const childArray = React.Children.toArray(children)
+  const actions = childArray.filter(
+    (c) => React.isValidElement(c) && c.type === Actions
+  )
+  const rest = childArray.filter(
+    (c) => !(React.isValidElement(c) && c.type === Actions)
+  )
+
   return (
-    <button
-      type="button"
-      className={cn(triggerVariants({ size }), className)}
-      onClick={toggle}
-      aria-expanded={open}
-      {...props}
-    >
-      <Chevron size={12} className="text-text-muted shrink-0" />
-      {children}
-    </button>
+    <div className={cn(triggerVariants({ size }), className)} {...props}>
+      <button
+        type="button"
+        className="flex items-center gap-1 flex-1 min-w-0 bg-transparent border-0 p-0 text-inherit cursor-pointer"
+        onClick={toggle}
+        aria-expanded={open}
+      >
+        <Chevron size={12} className="text-text-muted shrink-0" />
+        {rest}
+      </button>
+      {actions}
+    </div>
   )
 }
 

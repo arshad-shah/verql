@@ -20,18 +20,32 @@ export function DataDisplaySettings() {
       </SettingRow>
 
       <SettingRow label="Date Format" description="How date values are formatted">
-        <Select value={display.dateFormat} onChange={(e) => setSetting('dataDisplay.dateFormat', e.target.value)} size="sm" className="w-28">
-          <option value="iso">ISO 8601</option>
-          <option value="locale">Locale</option>
-          <option value="custom">Custom</option>
-        </Select>
+        <Select
+          value={display.dateFormat}
+          onChange={(val) => setSetting('dataDisplay.dateFormat', val)}
+          size="sm"
+          className="w-28"
+          aria-label="Date format"
+          options={[
+            { value: 'iso', label: 'ISO 8601' },
+            { value: 'locale', label: 'Locale' },
+            { value: 'custom', label: 'Custom' },
+          ]}
+        />
       </SettingRow>
 
       <SettingRow label="Number Format" description="How numeric values are formatted">
-        <Select value={display.numberFormat} onChange={(e) => setSetting('dataDisplay.numberFormat', e.target.value)} size="sm" className="w-28">
-          <option value="raw">Raw</option>
-          <option value="locale">Locale</option>
-        </Select>
+        <Select
+          value={display.numberFormat}
+          onChange={(val) => setSetting('dataDisplay.numberFormat', val)}
+          size="sm"
+          className="w-28"
+          aria-label="Number format"
+          options={[
+            { value: 'raw', label: 'Raw' },
+            { value: 'locale', label: 'Locale' },
+          ]}
+        />
       </SettingRow>
 
       <SettingRow label="Max Column Width" description="Maximum width in pixels for result columns">

@@ -47,11 +47,11 @@ export const States: Story = {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 6 }}>First page</div>
-        <Pagination page={1} totalPages={5} onPageChange={fn()} />
+        <Pagination page={1} totalPages={5} onPageChange={fn()} aria-label="First page pagination" />
       </div>
       <div>
         <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 6 }}>Last page</div>
-        <Pagination page={5} totalPages={5} onPageChange={fn()} />
+        <Pagination page={5} totalPages={5} onPageChange={fn()} aria-label="Last page pagination" />
       </div>
     </div>
   ),
