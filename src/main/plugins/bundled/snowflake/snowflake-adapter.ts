@@ -1,5 +1,5 @@
 import snowflake from 'snowflake-sdk'
-import fs from 'fs'
+import fs from 'fs/promises'
 import type { DbAdapter } from '../../../db/adapter'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
 
@@ -30,7 +30,7 @@ export class SnowflakeAdapter implements DbAdapter {
       // Key-pair authentication
       opts.username = this.config.username as string
       opts.authenticator = 'SNOWFLAKE_JWT'
-      opts.privateKey = fs.readFileSync(this.config.privateKeyPath as string, 'utf-8')
+      opts.privateKey = await fs.readFile(this.config.privateKeyPath as string, 'utf-8')
       if (this.config.passphrase) {
         opts.privateKeyPass = this.config.passphrase as string
       }
@@ -60,6 +60,7 @@ export class SnowflakeAdapter implements DbAdapter {
     if (this.connection) {
       await new Promise<void>((resolve) => {
         this.connection!.destroy((err) => {
+          if (err) console.error('[snowflake] disconnect error:', err)
           resolve()
         })
       })
@@ -98,7 +99,6 @@ export class SnowflakeAdapter implements DbAdapter {
       this.activeStatementId = stmt.getStatementId()
     })
 
-    this.activeStatementId = null
     const duration = Math.round(performance.now() - start)
 
     const fields: FieldInfo[] = columns.map((col) => ({
@@ -114,6 +114,10 @@ export class SnowflakeAdapter implements DbAdapter {
       duration,
       affectedRows: rows.length,
     }
+  }
+
+  private escapeIdentifier(name: string): string {
+    return '"' + name.replace(/"/g, '""') + '"'
   }
 
   cancelQuery(): void {
@@ -150,12 +154,12 @@ export class SnowflakeAdapter implements DbAdapter {
       [s, table]
     )
     const pkResult = await this.query(
-      `SHOW PRIMARY KEYS IN TABLE "${s}"."${table}"`
+      `SHOW PRIMARY KEYS IN TABLE ${this.escapeIdentifier(s)}.${this.escapeIdentifier(table)}`
     )
     const pkCols = new Set(pkResult.rows.map((r) => r['"column_name"'] as string))
 
     const fkResult = await this.query(
-      `SHOW IMPORTED KEYS IN TABLE "${s}"."${table}"`
+      `SHOW IMPORTED KEYS IN TABLE ${this.escapeIdentifier(s)}.${this.escapeIdentifier(table)}`
     )
     const fkMap = new Map<string, { table: string; column: string }>()
     for (const r of fkResult.rows) {
@@ -177,13 +181,14 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   async getIndexes(_table: string, _schema?: string): Promise<SchemaIndex[]> {
+    // Snowflake uses micro-partitions instead of traditional indexes
     return []
   }
 
   async getRowCount(table: string, schema?: string): Promise<number> {
     if (!this.connection) throw new Error('Not connected')
     const s = schema ?? 'PUBLIC'
-    const result = await this.query(`SELECT COUNT(*) AS CNT FROM "${s}"."${table}"`)
+    const result = await this.query(`SELECT COUNT(*) AS CNT FROM ${this.escapeIdentifier(s)}.${this.escapeIdentifier(table)}`)
     return Number(result.rows[0]?.CNT ?? 0)
   }
 
@@ -205,11 +210,11 @@ export class SnowflakeAdapter implements DbAdapter {
 
   async switchDatabase(database: string): Promise<void> {
     if (!this.connection) throw new Error('Not connected')
-    await this.query(`USE DATABASE "${database}"`)
+    await this.query(`USE DATABASE ${this.escapeIdentifier(database)}`)
   }
 
   async setSchema(schema: string): Promise<void> {
     if (!this.connection) throw new Error('Not connected')
-    await this.query(`USE SCHEMA "${schema}"`)
+    await this.query(`USE SCHEMA ${this.escapeIdentifier(schema)}`)
   }
 }
