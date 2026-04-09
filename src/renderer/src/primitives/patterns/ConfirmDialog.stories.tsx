@@ -66,3 +66,57 @@ export const Default: StoryObj = {
     await expect(onConfirm).toHaveBeenCalledTimes(1)
   },
 }
+
+export const Variants: StoryObj<{ onInfoCancel: () => void; onInfoConfirm: () => void }> = {
+  args: {
+    onInfoCancel: fn(),
+    onInfoConfirm: fn(),
+  },
+  render: function Render({ onInfoCancel, onInfoConfirm }) {
+    const [open, setOpen] = useState(false)
+
+    function handleCancel() {
+      onInfoCancel()
+      setOpen(false)
+    }
+
+    function handleConfirm() {
+      onInfoConfirm()
+      setOpen(false)
+    }
+
+    return (
+      <>
+        <Button variant="solid" onClick={() => setOpen(true)}>
+          Save Changes
+        </Button>
+        <Modal open={open} onClose={handleCancel}>
+          <div className="p-6 max-w-sm">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">Save changes?</h3>
+            <Text size="sm" color="secondary">
+              You have unsaved changes to the <strong>users</strong> table schema. Would you like to save them now?
+            </Text>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="ghost" onClick={handleCancel}>Discard</Button>
+              <Button variant="solid" onClick={handleConfirm}>Save</Button>
+            </div>
+          </div>
+        </Modal>
+      </>
+    )
+  },
+  play: async ({ canvas, args }) => {
+    // Open the dialog and confirm
+    const triggerBtn = canvas.getByRole('button', { name: 'Save Changes' })
+    await userEvent.click(triggerBtn)
+    const saveBtn = canvas.getByRole('button', { name: 'Save' })
+    await userEvent.click(saveBtn)
+    await expect(args.onInfoConfirm).toHaveBeenCalled()
+
+    // Re-open and discard
+    await userEvent.click(triggerBtn)
+    const discardBtn = canvas.getByRole('button', { name: 'Discard' })
+    await userEvent.click(discardBtn)
+    await expect(args.onInfoCancel).toHaveBeenCalled()
+  },
+}

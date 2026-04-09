@@ -22,6 +22,21 @@ const TABS = [
   { id: 'constraints', label: 'Constraints' },
 ]
 
+const TWO_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'settings', label: 'Settings' },
+]
+
+const MANY_TABS = [
+  { id: 'data', label: 'Data' },
+  { id: 'schema', label: 'Schema' },
+  { id: 'indexes', label: 'Indexes' },
+  { id: 'constraints', label: 'Constraints' },
+  { id: 'triggers', label: 'Triggers' },
+  { id: 'policies', label: 'Policies' },
+  { id: 'stats', label: 'Statistics' },
+]
+
 export const Default: Story = {
   render: function Render() {
     const [active, setActive] = useState('data')
@@ -42,5 +57,25 @@ export const Default: Story = {
     const indexesTab = canvas.getByRole('tab', { name: 'Indexes' })
     await userEvent.click(indexesTab)
     await expect(indexesTab).toHaveAttribute('aria-selected', 'true')
+  },
+}
+
+export const States: Story = {
+  render: function Render() {
+    const [activeTwoTab, setActiveTwoTab] = useState('overview')
+    const [activeManyTab, setActiveManyTab] = useState('data')
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: 560 }}>
+        <div>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Minimal (two tabs)</p>
+          <Tabs tabs={TWO_TABS} activeTab={activeTwoTab} onTabChange={setActiveTwoTab} />
+        </div>
+
+        <div>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Many tabs (7) — overflow behavior</p>
+          <Tabs tabs={MANY_TABS} activeTab={activeManyTab} onTabChange={setActiveManyTab} />
+        </div>
+      </div>
+    )
   },
 }

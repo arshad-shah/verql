@@ -9,6 +9,42 @@ const meta: Meta = {
 }
 export default meta
 
+export const States: StoryObj = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Minimal card — header + badges only, no table */}
+      <div className="w-90 rounded-lg border border-border-default bg-bg-secondary shadow-card">
+        <div className="flex items-center justify-between p-4">
+          <h3 className="text-sm font-semibold text-text-primary">orders</h3>
+          <div className="flex gap-1.5">
+            <Badge variant="accent">MySQL</Badge>
+            <Badge variant="warning">Connecting…</Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Minimal card — header + badges + key-value, no table */}
+      <div className="w-90 rounded-lg border border-border-default bg-bg-secondary shadow-card">
+        <div className="flex items-center justify-between p-4 border-b border-border-default">
+          <h3 className="text-sm font-semibold text-text-primary">products</h3>
+          <div className="flex gap-1.5">
+            <Badge variant="accent">SQLite</Badge>
+            <Badge variant="success">Connected</Badge>
+          </div>
+        </div>
+        <div className="p-4">
+          <KeyValue
+            items={[
+              { label: 'Rows', value: '342' },
+              { label: 'Size', value: '128 KB' },
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  ),
+}
+
 export const Default: StoryObj = {
   render: () => (
     <div className="w-[480px] rounded-lg border border-border-default bg-bg-secondary shadow-[var(--shadow-card)]">
