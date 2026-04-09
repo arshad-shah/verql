@@ -18,6 +18,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
+  args: { direction: 'horizontal' as const, onResize: () => {} },
   render: () => {
     const [leftWidth, setLeftWidth] = useState(200)
     return (
@@ -39,6 +40,7 @@ export const Default: Story = {
 }
 
 export const Vertical: Story = {
+  args: { direction: 'vertical' as const, onResize: () => {} },
   render: () => {
     const [topHeight, setTopHeight] = useState(100)
     return (

@@ -27,6 +27,7 @@ export const Default: Story = {
 }
 
 export const Variants: Story = {
+  args: { content: '', children: null as any },
   render: () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, padding: 40 }}>
       {(['top', 'bottom', 'left', 'right'] as const).map((side) => (

@@ -12,6 +12,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
+  args: { trigger: null as any, content: null as any },
   render: () => (
     <Popover
       trigger={<Button variant="outline">Open Popover</Button>}
