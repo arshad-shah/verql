@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const textareaVariants = cva(
-  'w-full border bg-bg-tertiary text-text-primary placeholder:text-text-muted transition-colors focus:outline-none focus:ring-2 focus:ring-focus-ring disabled:pointer-events-none disabled:opacity-50 resize-y',
+  'w-full border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary placeholder:text-text-muted shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus:outline-none focus:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)] disabled:pointer-events-none disabled:opacity-50 resize-y',
   {
     variants: {
       size: {
@@ -12,8 +12,8 @@ const textareaVariants = cva(
         lg: 'px-5 py-2.5 text-sm rounded-md',
       },
       error: {
-        true: 'border-error focus:ring-error',
-        false: 'border-border-default',
+        true: 'border-error focus:shadow-[0_0_0_3px_rgba(255,95,87,0.25),var(--shadow-input-inset)]',
+        false: 'border-border-default hover:border-border-strong',
       },
     },
     defaultVariants: {

@@ -10,8 +10,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         type="checkbox"
         ref={ref}
         className={cn(
-          'h-4 w-4 rounded border border-border-default bg-bg-tertiary transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-focus-ring focus:ring-offset-0',
+          'h-4 w-4 rounded border border-border-default bg-bg-tertiary transition-all duration-[var(--transition-fast)]',
+          'focus:outline-none focus:shadow-[var(--shadow-focus-glow)]',
           'checked:bg-accent checked:border-accent',
           'disabled:pointer-events-none disabled:opacity-50',
           className
