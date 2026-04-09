@@ -1,11 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useUiStore } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
-import { SearchFilter } from '@/components/explorer/SearchFilter'
-import { ConnectionsSection } from '@/components/explorer/ConnectionsSection'
-import { DatabasesSection } from '@/components/explorer/DatabasesSection'
-import { TablesSection } from '@/components/explorer/TablesSection'
-import { ViewsSection } from '@/components/explorer/ViewsSection'
+import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
 import { ExtensionsPanel } from '@/components/plugins/ExtensionsPanel'
@@ -16,7 +12,7 @@ import { Panel, Flex, Text, ScrollArea, IconButton, Tooltip } from '@/primitives
 
 export function Sidebar() {
   const { activePanel } = useUiStore()
-  const { activeConnectionId, connectedIds, connections } = useConnectionsStore()
+  const { activeConnectionId, connectedIds } = useConnectionsStore()
 
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
@@ -30,18 +26,6 @@ export function Sidebar() {
   }
 
   const isConnected = activeConnectionId && connectedIds.has(activeConnectionId)
-  const conn = connections.find(c => c.id === activeConnectionId)
-
-  const defaultSchema = conn?.type === 'sqlite' ? 'main' : conn?.type === 'mysql' ? conn.database : 'public'
-  const [activeSchema, setActiveSchema] = useState(defaultSchema ?? 'public')
-  const [activeDatabase, setActiveDatabase] = useState(conn?.database ?? '')
-
-  // Reset schema and database when connection changes
-  useEffect(() => {
-    const newDefault = conn?.type === 'sqlite' ? 'main' : conn?.type === 'mysql' ? conn.database : 'public'
-    setActiveSchema(newDefault ?? 'public')
-    setActiveDatabase(conn?.database ?? '')
-  }, [activeConnectionId, conn?.type, conn?.database])
 
   return (
     <Panel className="w-full h-full flex flex-col border-r border-b-0 border-t-0">
@@ -69,30 +53,7 @@ export function Sidebar() {
       </Flex>
       <ScrollArea direction="vertical" className="flex-1">
         {activePanel === 'explorer' && (
-          <>
-            {isConnected && <SearchFilter />}
-            {/* <ConnectionsSection /> */}
-            {isConnected && activeConnectionId && (
-              <>
-                <DatabasesSection
-                  connectionId={activeConnectionId}
-                  activeSchema={activeSchema}
-                  onSchemaChange={setActiveSchema}
-                  activeDatabase={activeDatabase}
-                  onDatabaseChange={setActiveDatabase}
-                />
-                <TablesSection
-                  connectionId={activeConnectionId}
-                  activeSchema={activeSchema}
-                  onExportTable={setExportTable}
-                />
-                <ViewsSection
-                  connectionId={activeConnectionId}
-                  activeSchema={activeSchema}
-                />
-              </>
-            )}
-          </>
+          <ExplorerTree onExportTable={(name) => setExportTable(name)} />
         )}
         {activePanel === 'query' && <SavedQueriesPanel />}
         {activePanel === 'charts' && (
