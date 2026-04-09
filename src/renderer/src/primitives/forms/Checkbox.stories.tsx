@@ -15,7 +15,7 @@ export default meta
 type Story = StoryObj<typeof Checkbox>
 
 export const Default: Story = {
-  args: { onChange: fn() },
+  args: { 'aria-label': 'Toggle option', onChange: fn() },
   play: async ({ args, canvas }) => {
     const checkbox = canvas.getByRole('checkbox')
     await userEvent.click(checkbox)

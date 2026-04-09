@@ -15,6 +15,7 @@ type Story = StoryObj<typeof Radio>
 
 export const Default: Story = {
   args: {
+    'aria-label': 'Select option',
     name: 'default',
     value: 'option',
     onChange: fn(),
