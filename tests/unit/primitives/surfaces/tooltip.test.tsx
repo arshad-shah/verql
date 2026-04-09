@@ -131,7 +131,8 @@ describe('Tooltip', () => {
       vi.advanceTimersByTime(1)
     })
 
-    expect(screen.getByRole('tooltip')).toHaveClass('custom-class')
+    const tooltipInner = screen.getByRole('tooltip').firstElementChild!
+    expect(tooltipInner).toHaveClass('custom-class')
     vi.useRealTimers()
   })
 

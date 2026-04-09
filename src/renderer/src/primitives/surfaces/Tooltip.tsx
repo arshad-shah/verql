@@ -164,27 +164,29 @@ export function Tooltip({
         <div
           ref={refs.setFloating}
           role="tooltip"
-          className={cn(
-            'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
-            'bg-bg-elevated border border-border-default text-text-primary',
-            'shadow-elevated',
-            'pointer-events-none whitespace-nowrap',
-            className
-          )}
-          style={{
-            ...floatingStyles,
-            ...transitionStyles,
-            zIndex: 50,
-            letterSpacing: '0.01em',
-          }}
+          style={{ ...floatingStyles, zIndex: 50 }}
           {...getFloatingProps()}
         >
-          {content}
-          <TooltipBeak
-            side={resolvedSide}
-            x={arrowData?.x}
-            y={arrowData?.y}
-          />
+          <div
+            className={cn(
+              'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
+              'bg-bg-elevated border border-border-default text-text-primary',
+              'shadow-elevated',
+              'pointer-events-none whitespace-nowrap',
+              className
+            )}
+            style={{
+              ...transitionStyles,
+              letterSpacing: '0.01em',
+            }}
+          >
+            {content}
+            <TooltipBeak
+              side={resolvedSide}
+              x={arrowData?.x}
+              y={arrowData?.y}
+            />
+          </div>
         </div>
       )}
     </>
