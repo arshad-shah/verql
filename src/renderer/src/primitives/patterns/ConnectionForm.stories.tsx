@@ -1,0 +1,54 @@
+import type { Meta, StoryObj } from '@storybook/react'
+import { useState } from 'react'
+import { FormField } from '../forms/FormField'
+import { Input } from '../forms/Input'
+import { PasswordInput } from '../forms/PasswordInput'
+import { Select } from '../forms/Select'
+import { Button } from '../forms/Button'
+import { NumberInput } from '../forms/NumberInput'
+
+const meta: Meta = {
+  title: 'Patterns/ConnectionForm',
+  tags: ['autodocs'],
+}
+export default meta
+
+export const Default: StoryObj = {
+  render: function Render() {
+    const [dbType, setDbType] = useState('postgresql')
+    return (
+      <div className="w-96 rounded-lg border border-border-default bg-bg-secondary p-6 shadow-[var(--shadow-card)]">
+        <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
+        <div className="flex flex-col gap-4">
+          <FormField label="Database Type">
+            <Select value={dbType} onChange={(e) => setDbType(e.target.value)}>
+              <option value="postgresql">PostgreSQL</option>
+              <option value="mysql">MySQL</option>
+              <option value="sqlite">SQLite</option>
+              <option value="mongodb">MongoDB</option>
+            </Select>
+          </FormField>
+          <FormField label="Host">
+            <Input placeholder="localhost" defaultValue="localhost" />
+          </FormField>
+          <FormField label="Port">
+            <NumberInput defaultValue={5432} min={1} max={65535} />
+          </FormField>
+          <FormField label="Database">
+            <Input placeholder="mydb" />
+          </FormField>
+          <FormField label="Username">
+            <Input placeholder="postgres" />
+          </FormField>
+          <FormField label="Password">
+            <PasswordInput placeholder="Enter password" showStrength />
+          </FormField>
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" className="flex-1">Test</Button>
+            <Button variant="solid" className="flex-1">Connect</Button>
+          </div>
+        </div>
+      </div>
+    )
+  },
+}
