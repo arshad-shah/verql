@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryResult } from '@shared/types'
+import type { Tab, QueryTab, QueryResult, ConnectionFormTab } from '@shared/types'
 
 let tabCounter = 0
 
@@ -31,6 +31,7 @@ interface TabsState {
   setTabResults: (id: string, results: QueryResult) => void
   setTabError: (id: string, error: string) => void
   openErDiagram: (connectionId: string, schema: string) => string
+  openConnectionForm: (editingId?: string) => string
 }
 
 export const useTabsStore = create<TabsState>((set, get) => ({
@@ -127,5 +128,25 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       activeTabId: id
     }))
     return id
+  },
+
+  openConnectionForm: (editingId?: string) => {
+    const formId = editingId ? `conn-form-${editingId}` : 'conn-form-new'
+    const existing = get().tabs.find(t => t.id === formId)
+    if (existing) {
+      set({ activeTabId: formId })
+      return formId
+    }
+    const tab: ConnectionFormTab = {
+      id: formId,
+      type: 'connection-form',
+      title: editingId ? 'Edit Connection' : 'New Connection',
+      editingId
+    }
+    set((s) => ({
+      tabs: [...s.tabs, tab],
+      activeTabId: tab.id
+    }))
+    return tab.id
   }
 }))
