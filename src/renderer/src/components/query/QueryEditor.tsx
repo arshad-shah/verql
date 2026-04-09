@@ -4,6 +4,7 @@ import type { editor } from 'monaco-editor'
 import { registerSqlCompletionProvider, updateTableNames } from '@/lib/monaco-sql'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
 import { useConnectionsStore } from '@/stores/connections'
+import { useSettingsStore } from '@/stores/settings'
 import { Flex, Text, useTheme } from '@/primitives'
 
 interface Props {
@@ -21,6 +22,7 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const { connectedIds } = useConnectionsStore()
   const { theme } = useTheme()
+  const editorSettings = useSettingsStore((s) => s.settings.editor)
 
   const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
 
@@ -61,22 +63,25 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
       onChange={(v) => onChange(v ?? '')}
       theme={getMonacoThemeName(theme)}
       options={{
-        minimap: { enabled: false },
-        fontSize: 14,
-        fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
-        lineNumbers: 'on',
+        minimap: { enabled: editorSettings.minimap },
+        fontSize: editorSettings.fontSize,
+        fontFamily: editorSettings.fontFamily,
+        lineNumbers: editorSettings.lineNumbers ? 'on' : 'off',
         scrollBeyondLastLine: false,
         automaticLayout: true,
-        tabSize: 2,
-        wordWrap: 'on',
+        tabSize: editorSettings.tabSize,
+        wordWrap: editorSettings.wordWrap ? 'on' : 'off',
+        cursorStyle: editorSettings.cursorStyle,
+        fontLigatures: editorSettings.ligatures,
+        matchBrackets: editorSettings.bracketMatching ? 'always' : 'never',
         padding: { top: 8, bottom: 8 },
         renderLineHighlight: 'line',
         suggestOnTriggerCharacters: true,
         quickSuggestions: true,
         scrollbar: {
           verticalScrollbarSize: 8,
-          horizontalScrollbarSize: 8
-        }
+          horizontalScrollbarSize: 8,
+        },
       }}
       onMount={handleMount}
       loading={
