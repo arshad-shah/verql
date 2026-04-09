@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { useState } from 'react'
 import { FormField } from '../forms/FormField'
 import { Input } from '../forms/Input'
@@ -6,6 +7,9 @@ import { PasswordInput } from '../forms/PasswordInput'
 import { Select } from '../forms/Select'
 import { Button } from '../forms/Button'
 import { NumberInput } from '../forms/NumberInput'
+
+const onTest = fn()
+const onConnect = fn()
 
 const meta: Meta = {
   title: 'Patterns/ConnectionForm',
@@ -17,7 +21,7 @@ export const Default: StoryObj = {
   render: function Render() {
     const [dbType, setDbType] = useState('postgresql')
     return (
-      <div className="w-96 rounded-lg border border-border-default bg-bg-secondary p-6 shadow-[var(--shadow-card)]">
+      <div className="w-96 rounded-lg border border-border-default bg-bg-secondary p-6 shadow-card">
         <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
         <div className="flex flex-col gap-4">
           <FormField label="Database Type">
@@ -44,11 +48,20 @@ export const Default: StoryObj = {
             <PasswordInput placeholder="Enter password" showStrength />
           </FormField>
           <div className="flex gap-2 mt-2">
-            <Button variant="outline" className="flex-1">Test</Button>
-            <Button variant="solid" className="flex-1">Connect</Button>
+            <Button variant="outline" className="flex-1" onClick={onTest}>Test</Button>
+            <Button variant="solid" className="flex-1" onClick={onConnect}>Connect</Button>
           </div>
         </div>
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const testBtn = canvas.getByRole('button', { name: 'Test' })
+    await userEvent.click(testBtn)
+    await expect(onTest).toHaveBeenCalledTimes(1)
+
+    const connectBtn = canvas.getByRole('button', { name: 'Connect' })
+    await userEvent.click(connectBtn)
+    await expect(onConnect).toHaveBeenCalledTimes(1)
   },
 }

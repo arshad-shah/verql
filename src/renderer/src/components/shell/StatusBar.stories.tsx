@@ -1,10 +1,13 @@
 import React from 'react'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
 import { Flex, Text, Spinner } from '@/primitives'
-import { Bell } from 'lucide-react'
+import { Bell, Zap, AlertTriangle, ArrowLeftRight, Minus } from 'lucide-react'
 import { StatusBarMetric } from './StatusBarMetric'
 import { ConnectionCard } from './ConnectionCard'
 import { cn } from '@/primitives/utils/cn'
+
+const onConnectionClick = fn()
 
 /**
  * The Command Dock sits at the bottom of the application window.
@@ -101,9 +104,9 @@ export const Default: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={onConnectionClick} />
       }
-      center={<Text size="xs" color="disabled">—</Text>}
+      center={<Minus size={12} className="text-text-disabled" />}
       right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
     />
   ),
@@ -114,11 +117,11 @@ export const ConnectedPostgres: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="my_app_db" schema="public" isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="my_app_db" schema="public" isOpen={false} onClick={onConnectionClick} />
       }
       center={
         <>
-          <StatusBarMetric color="success" label="⚡ 142ms" />
+          <StatusBarMetric color="success" icon={<Zap size={10} />} label="142ms" />
           <StatusBarMetric color="info" label="248 rows" />
         </>
       }
@@ -133,13 +136,14 @@ export const MultipleConnections: Story = {
     <DockWrapper
       left={
         <>
-          <ConnectionCard isConnected isError={false} dbType="mysql" dbName="staging_mysql" schema={null} isOpen={false} onClick={() => {}} />
+          <ConnectionCard isConnected isError={false} dbType="mysql" dbName="staging_mysql" schema={null} isOpen={false} onClick={onConnectionClick} />
           <div className="flex items-center gap-1 rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
-            <Text size="xs" color="accent" className="text-[10px]">↔ 3</Text>
+            <ArrowLeftRight size={10} className="text-accent" />
+            <Text size="xs" color="accent" className="text-[10px]">3</Text>
           </div>
         </>
       }
-      center={<StatusBarMetric color="success" label="⚡ 89ms" />}
+      center={<StatusBarMetric color="success" icon={<Zap size={10} />} label="89ms" />}
       right={<><PluginCard active={4} total={4} /><BellCard count={0} /></>}
     />
   ),
@@ -150,7 +154,7 @@ export const QueryRunning: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="analytics_db" schema="reporting" isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="analytics_db" schema="reporting" isOpen={false} onClick={onConnectionClick} />
       }
       center={<StatusBarMetric color="warning" label="Running..." animated />}
       right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
@@ -163,9 +167,9 @@ export const ConnectionError: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected isError dbType="postgresql" dbName="prod_db" schema={null} isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected isError dbType="postgresql" dbName="prod_db" schema={null} isOpen={false} onClick={onConnectionClick} />
       }
-      center={<StatusBarMetric color="error" label="⚠ Reconnecting..." />}
+      center={<StatusBarMetric color="error" icon={<AlertTriangle size={10} />} label="Reconnecting..." />}
       right={<><PluginCard active={3} total={3} /><BellCard count={3} /><DevBadge /></>}
     />
   ),
@@ -176,9 +180,9 @@ export const PluginsLoading: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={onConnectionClick} />
       }
-      center={<Text size="xs" color="disabled">—</Text>}
+      center={<Minus size={12} className="text-text-disabled" />}
       right={<><PluginCard active={0} total={0} loading /><BellCard count={0} /></>}
     />
   ),
@@ -189,9 +193,9 @@ export const PluginsFailed: Story = {
   render: () => (
     <DockWrapper
       left={
-        <ConnectionCard isConnected isError={false} dbType="sqlite" dbName="local.db" schema={null} isOpen={false} onClick={() => {}} />
+        <ConnectionCard isConnected isError={false} dbType="sqlite" dbName="local.db" schema={null} isOpen={false} onClick={onConnectionClick} />
       }
-      center={<StatusBarMetric color="success" label="⚡ 12ms" />}
+      center={<StatusBarMetric color="success" icon={<Zap size={10} />} label="12ms" />}
       right={<><PluginCard active={3} total={5} /><BellCard count={1} /><DevBadge /></>}
     />
   ),

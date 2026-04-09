@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronRight, Search } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search, X } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import { Modal, Button, Input, Text, Flex, Stack, Checkbox, Label, ScrollArea, Box } from '@/primitives'
@@ -138,7 +138,7 @@ export function ConnectionForm({ initial, onSave, onClose }: Props) {
       <form onSubmit={handleSubmit}>
         <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
           <Text size="sm" weight="semibold">{initial ? 'Edit Connection' : 'New Connection'}</Text>
-          <Button type="button" variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
+          <Button type="button" variant="ghost" size="xs" onClick={onClose} aria-label="Close"><X size={14} /></Button>
         </Flex>
 
         <ScrollArea direction="vertical" className="max-h-[70vh]">

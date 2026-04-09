@@ -11,7 +11,7 @@ interface Props {
   onClick?: () => void
   actions?: React.ReactNode
   children?: React.ReactNode
-  meta?: string
+  meta?: React.ReactNode
 }
 
 export function SchemaTreeItem({ label, icon, depth = 0, expanded, onToggle, onClick, actions, children, meta }: Props) {

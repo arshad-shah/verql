@@ -1,4 +1,5 @@
 import React from 'react'
+import { X } from 'lucide-react'
 import { cn } from '../utils/cn'
 
 export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -22,7 +23,7 @@ export function Tag({ className, children, onDismiss, ...props }: TagProps) {
           onClick={onDismiss}
           className="inline-flex items-center justify-center leading-none"
         >
-          ×
+          <X size={12} />
         </button>
       )}
     </span>

@@ -1,8 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
 import { useRef, useCallback, useState, useEffect } from 'react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
+
+const onExecute = fn()
 
 const meta: Meta = {
   title: 'Components/QueryEditor',
@@ -39,7 +42,6 @@ export const Default: StoryObj = {
   render: function Render() {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
     const [language, setLanguage] = useState<'sql' | 'json' | 'plaintext'>('sql')
-    const onExecute = () => console.log('Query executed')
 
     const [theme, setTheme] = useState(
       document.documentElement.getAttribute('data-theme') ?? 'dark'

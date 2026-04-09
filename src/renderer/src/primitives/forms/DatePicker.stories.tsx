@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { fn, expect, userEvent } from 'storybook/test'
 import { DatePicker } from './DatePicker'
 
 const meta: Meta<typeof DatePicker> = {
@@ -14,14 +15,23 @@ const meta: Meta<typeof DatePicker> = {
 export default meta
 type Story = StoryObj<typeof DatePicker>
 
+const onChangeMock = fn()
+
 export const Default: Story = {
   render: function Render() {
     const [value, setValue] = useState('2026-04-09')
     return (
       <div className="w-56">
-        <DatePicker value={value} onChange={setValue} />
+        <DatePicker value={value} onChange={(next) => { setValue(next); onChangeMock(next) }} />
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const calendarButton = canvas.getByRole('button', { name: 'Toggle calendar' })
+    await userEvent.click(calendarButton)
+    const todayButton = canvas.getByRole('button', { name: 'Today' })
+    await userEvent.click(todayButton)
+    await expect(onChangeMock).toHaveBeenCalled()
   },
 }
 

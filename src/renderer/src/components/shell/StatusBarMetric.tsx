@@ -1,3 +1,4 @@
+import React from 'react'
 import { cn } from '@/primitives/utils/cn'
 
 const colorMap = {
@@ -32,7 +33,7 @@ type MetricColor = keyof typeof colorMap
 interface StatusBarMetricProps {
   color: MetricColor
   label: string
-  icon?: string
+  icon?: React.ReactNode
   animated?: boolean
   className?: string
 }
@@ -56,7 +57,7 @@ export function StatusBarMetric({ color, label, icon, animated, className }: Sta
           className={cn('h-1.5 w-1.5 rounded-full animate-pulse', colors.dot)}
         />
       )}
-      {icon && <span>{icon}</span>}
+      {icon}
       <span>{label}</span>
     </div>
   )

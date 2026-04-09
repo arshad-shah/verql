@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { Modal, Button, Input, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 
 interface Props {
@@ -53,7 +53,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
     <Modal open={true} onClose={onClose}>
       <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
         <Text size="sm" weight="semibold">Import Data</Text>
-        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
+        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close"><X size={14} /></Button>
       </Flex>
 
       <Stack gap="md" className="p-4">

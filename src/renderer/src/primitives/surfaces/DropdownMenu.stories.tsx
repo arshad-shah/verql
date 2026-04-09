@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { DropdownMenu } from './DropdownMenu'
 import { Button } from '../forms/Button'
 
@@ -11,28 +12,44 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+const onEditTable = fn()
+const onDuplicate = fn()
+const onExport = fn()
+const onDelete = fn()
+
 export const Default: Story = {
   render: () => (
     <DropdownMenu
       trigger={<Button variant="outline">Actions ▾</Button>}
       items={[
-        { label: 'Edit table', onSelect: () => alert('Edit') },
-        { label: 'Duplicate', onSelect: () => alert('Duplicate') },
-        { label: 'Export as CSV', onSelect: () => alert('Export') },
-        { label: 'Delete', onSelect: () => alert('Delete'), disabled: false },
+        { label: 'Edit table', onSelect: onEditTable },
+        { label: 'Duplicate', onSelect: onDuplicate },
+        { label: 'Export as CSV', onSelect: onExport },
+        { label: 'Delete', onSelect: onDelete, disabled: false },
       ]}
     />
   ),
+  play: async ({ canvas }) => {
+    const user = userEvent.setup()
+    await user.click(canvas.getByText('Actions ▾'))
+    const editItem = await canvas.findByText('Edit table')
+    await user.click(editItem)
+    await expect(onEditTable).toHaveBeenCalled()
+  },
 }
+
+const onRename = fn()
+const onMove = fn()
+const onDeleteOption = fn()
 
 export const States: Story = {
   render: () => (
     <DropdownMenu
       trigger={<Button variant="outline">Options ▾</Button>}
       items={[
-        { label: 'Rename', onSelect: () => {} },
-        { label: 'Move (unavailable)', onSelect: () => {}, disabled: true },
-        { label: 'Delete', onSelect: () => {} },
+        { label: 'Rename', onSelect: onRename },
+        { label: 'Move (unavailable)', onSelect: onMove, disabled: true },
+        { label: 'Delete', onSelect: onDeleteOption },
       ]}
     />
   ),

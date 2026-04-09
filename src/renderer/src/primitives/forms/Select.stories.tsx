@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Select } from './Select'
 
 const meta: Meta<typeof Select> = {
@@ -31,6 +32,12 @@ export const Default: Story = {
     size: 'md',
     style: { width: 240 },
     children: options,
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const select = canvas.getByRole('combobox')
+    await userEvent.selectOptions(select, 'postgresql')
+    await expect(args.onChange).toHaveBeenCalledOnce()
   },
 }
 

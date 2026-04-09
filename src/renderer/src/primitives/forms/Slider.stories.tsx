@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
 import { Slider } from './Slider'
 
 const meta: Meta<typeof Slider> = {
@@ -21,6 +22,7 @@ export const Default: Story = {
     max: 100,
     defaultValue: 40,
     style: { width: 240 },
+    onChange: fn(),
   },
 }
 

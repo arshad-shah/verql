@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Switch } from './Switch'
 
 const meta: Meta<typeof Switch> = {
@@ -16,6 +17,12 @@ type Story = StoryObj<typeof Switch>
 export const Default: Story = {
   args: {
     label: 'Enable feature',
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const switchEl = canvas.getByRole('switch')
+    await userEvent.click(switchEl)
+    await expect(args.onChange).toHaveBeenCalledOnce()
   },
 }
 

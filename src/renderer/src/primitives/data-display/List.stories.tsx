@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { List } from './List'
+import { Table2 } from 'lucide-react'
 
 const meta = {
   title: 'Primitives/Data Display/List',
@@ -29,13 +30,13 @@ export const WithIcons: Story = {
     <div style={{ width: 240, border: '1px solid var(--color-border-default)', borderRadius: 8, overflow: 'hidden' }}>
       <List>
         {[
-          { label: 'users', icon: '📋' },
-          { label: 'orders', icon: '📋' },
-          { label: 'products', icon: '📋' },
-          { label: 'categories', icon: '📋' },
-        ].map(({ label, icon }) => (
+          { label: 'users' },
+          { label: 'orders' },
+          { label: 'products' },
+          { label: 'categories' },
+        ].map(({ label }) => (
           <List.Item key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', borderBottom: '1px solid var(--color-border-subtle)' }}>
-            <span>{icon}</span>
+            <Table2 size={14} className="text-accent" />
             {label}
           </List.Item>
         ))}

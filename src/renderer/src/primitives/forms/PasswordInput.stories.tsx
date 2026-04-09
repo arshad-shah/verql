@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { PasswordInput } from './PasswordInput'
 
 const meta: Meta<typeof PasswordInput> = {
@@ -11,12 +12,24 @@ const meta: Meta<typeof PasswordInput> = {
     disabled: { control: 'boolean' },
     showStrength: { control: 'boolean' },
   },
+  args: {
+    onChange: fn(),
+  },
 }
 export default meta
 type Story = StoryObj<typeof PasswordInput>
 
 export const Default: Story = {
   args: { placeholder: 'Enter password', size: 'md' },
+  play: async ({ canvas, args }) => {
+    const input = canvas.getByPlaceholderText('Enter password')
+    await userEvent.type(input, 'secret')
+    await expect(args.onChange).toHaveBeenCalled()
+
+    const toggleButton = canvas.getByRole('button', { name: 'Show password' })
+    await userEvent.click(toggleButton)
+    await expect(canvas.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
+  },
 }
 
 export const WithStrengthMeter: Story = {

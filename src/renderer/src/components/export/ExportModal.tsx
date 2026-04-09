@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 
@@ -39,7 +39,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
     <Modal open={true} onClose={onClose}>
       <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
         <Text size="sm" weight="semibold">Export {tableName}</Text>
-        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close">&times;</Button>
+        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close"><X size={14} /></Button>
       </Flex>
 
       <Stack gap="md" className="p-4">

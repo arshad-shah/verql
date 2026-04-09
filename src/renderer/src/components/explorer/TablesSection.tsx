@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Download, Copy, PenSquare } from 'lucide-react'
+import { Download, Copy, PenSquare, ArrowRight } from 'lucide-react'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
@@ -110,7 +110,7 @@ export function TablesSection({ connectionId, activeSchema, onExportTable }: Tab
                   label={`${col.name} ${col.dataType}`}
                   icon={<ColumnIcon column={col} />}
                   depth={1}
-                  meta={col.isForeignKey && col.references ? `→ ${col.references.table}.${col.references.column}` : undefined}
+                  meta={col.isForeignKey && col.references ? <span className="inline-flex items-center gap-0.5"><ArrowRight size={9} />{col.references.table}.{col.references.column}</span> : undefined}
                 />
               ))}
             </SchemaTreeItem>

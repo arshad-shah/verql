@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Textarea } from './Textarea'
 
 const meta: Meta<typeof Textarea> = {
@@ -25,6 +26,12 @@ export const Default: Story = {
     placeholder: 'Enter your message\u2026',
     rows: 4,
     style: { width: 320 },
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const textarea = canvas.getByRole('textbox')
+    await userEvent.type(textarea, 'hello')
+    await expect(args.onChange).toHaveBeenCalled()
   },
 }
 

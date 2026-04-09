@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useNotificationsStore } from '@/stores/notifications'
+import { Zap, AlertTriangle, ArrowLeftRight, Minus } from 'lucide-react'
 import { Flex, Spinner, Text } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 import { ConnectionCard } from './ConnectionCard'
@@ -130,8 +131,9 @@ export function StatusBar() {
         {/* Connection count badge */}
         {connectionCount > 1 && (
           <div className="flex items-center gap-1 rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
+            <ArrowLeftRight size={10} className="text-accent" />
             <Text size="xs" color="accent" className="text-[10px]">
-              ↔ {connectionCount}
+              {connectionCount}
             </Text>
           </div>
         )}
@@ -140,16 +142,17 @@ export function StatusBar() {
       {/* Center zone — contextual metrics */}
       <Flex align="center" gap="xs">
         {!isConnected ? (
-          <Text size="xs" color="disabled">—</Text>
+          <Minus size={12} className="text-text-disabled" />
         ) : queryTab?.isExecuting ? (
           <StatusBarMetric color="warning" label="Running..." animated />
         ) : queryTab?.error ? (
-          <StatusBarMetric color="error" label="Query failed" icon="⚠" />
+          <StatusBarMetric color="error" label="Query failed" icon={<AlertTriangle size={10} />} />
         ) : queryTab?.results ? (
           <>
             <StatusBarMetric
               color="success"
-              label={`⚡ ${queryTab.results.duration}ms`}
+              icon={<Zap size={10} />}
+              label={`${queryTab.results.duration}ms`}
             />
             <StatusBarMetric
               color="info"

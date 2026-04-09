@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { fn, expect, userEvent } from 'storybook/test'
 import { SearchInput } from './SearchInput'
 
 const meta: Meta<typeof SearchInput> = {
@@ -16,6 +17,9 @@ const meta: Meta<typeof SearchInput> = {
 export default meta
 type Story = StoryObj<typeof SearchInput>
 
+const onChangeMock = fn()
+const onClearMock = fn()
+
 export const Default: Story = {
   render: function Render() {
     const [value, setValue] = useState('')
@@ -23,13 +27,18 @@ export const Default: Story = {
       <div className="w-72">
         <SearchInput
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onClear={() => setValue('')}
+          onChange={(e) => { setValue(e.target.value); onChangeMock(e) }}
+          onClear={() => { setValue(''); onClearMock() }}
           placeholder="Search tables..."
           shortcut="⌘K"
         />
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox')
+    await userEvent.type(input, 'users')
+    await expect(onChangeMock).toHaveBeenCalled()
   },
 }
 

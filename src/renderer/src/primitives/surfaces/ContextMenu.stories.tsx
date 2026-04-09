@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
 import { ContextMenu } from './ContextMenu'
 
 const meta = {
@@ -10,14 +11,19 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+const onOpenInNewTab = fn()
+const onCopyPath = fn()
+const onRename = fn()
+const onDelete = fn()
+
 export const Default: Story = {
   render: () => (
     <ContextMenu
       items={[
-        { label: 'Open in new tab', onSelect: () => {} },
-        { label: 'Copy path', onSelect: () => {} },
-        { label: 'Rename', onSelect: () => {} },
-        { label: 'Delete', onSelect: () => {} },
+        { label: 'Open in new tab', onSelect: onOpenInNewTab },
+        { label: 'Copy path', onSelect: onCopyPath },
+        { label: 'Rename', onSelect: onRename },
+        { label: 'Delete', onSelect: onDelete },
       ]}
     >
       <div style={{

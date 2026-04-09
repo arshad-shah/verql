@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { EmptyState } from './EmptyState'
 import { Button } from '../forms/Button'
+import { Database } from 'lucide-react'
 
 const meta = {
   title: 'Primitives/Data Display/EmptyState',
@@ -19,7 +20,7 @@ export const Default: Story = {
   args: {
     title: 'No tables found',
     description: 'Create your first table to get started.',
-    icon: <span style={{ fontSize: 32 }}>🗄️</span>,
+    icon: <Database size={32} className="text-text-muted" />,
     action: <Button size="sm">Create table</Button>,
   },
 }

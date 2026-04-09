@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Toast } from './Toast'
 
 const meta = {
@@ -21,9 +22,14 @@ export const Default: Story = {
   args: {
     variant: 'default',
     message: 'Action completed successfully.',
-    onDismiss: () => {},
+    onDismiss: fn(),
   },
   decorators: [(Story) => <div style={{ width: 320 }}><Story /></div>],
+  play: async ({ canvas, args }) => {
+    const user = userEvent.setup()
+    await user.click(canvas.getByRole('button', { name: 'Dismiss' }))
+    await expect(args.onDismiss).toHaveBeenCalled()
+  },
 }
 
 export const Variants: Story = {
@@ -36,7 +42,7 @@ export const Variants: Story = {
         { variant: 'warning', message: 'SSL certificate expires in 7 days' },
         { variant: 'info', message: 'New version available' },
       ] as const).map(({ variant, message }) => (
-        <Toast key={variant} variant={variant} message={message} onDismiss={() => {}} />
+        <Toast key={variant} variant={variant} message={message} onDismiss={fn()} />
       ))}
     </div>
   ),

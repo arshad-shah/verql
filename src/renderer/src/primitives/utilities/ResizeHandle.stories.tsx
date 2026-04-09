@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { useState } from 'react'
 import { ResizeHandle } from './ResizeHandle'
 
@@ -12,13 +13,17 @@ const meta = {
       options: ['horizontal', 'vertical'],
     },
   },
+  args: {
+    onResize: fn(),
+    onDoubleClick: fn(),
+  },
 } satisfies Meta<typeof ResizeHandle>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: { direction: 'horizontal' as const, onResize: () => {} },
+  args: { direction: 'horizontal' as const },
   render: () => {
     const [leftWidth, setLeftWidth] = useState(200)
     return (
@@ -37,10 +42,18 @@ export const Default: Story = {
       </div>
     )
   },
+  play: async ({ canvas }) => {
+    const handle = canvas.getByRole('separator')
+    await expect(handle).toBeInTheDocument()
+    // Keyboard resize: ArrowRight moves the handle
+    handle.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    await userEvent.keyboard('{ArrowLeft}')
+  },
 }
 
 export const Vertical: Story = {
-  args: { direction: 'vertical' as const, onResize: () => {} },
+  args: { direction: 'vertical' as const },
   render: () => {
     const [topHeight, setTopHeight] = useState(100)
     return (
@@ -58,5 +71,12 @@ export const Vertical: Story = {
         </div>
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const handle = canvas.getByRole('separator')
+    await expect(handle).toBeInTheDocument()
+    handle.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard('{ArrowUp}')
   },
 }

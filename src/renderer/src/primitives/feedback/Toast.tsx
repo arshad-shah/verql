@@ -1,5 +1,6 @@
 import React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { X } from 'lucide-react'
 import { cn } from '../utils/cn'
 
 const toastVariants = cva(
@@ -36,7 +37,7 @@ export function Toast({ message, onDismiss, variant, className }: ToastProps) {
         onClick={onDismiss}
         className="inline-flex items-center justify-center"
       >
-        ×
+        <X size={14} />
       </button>
     </div>
   )

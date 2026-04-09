@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Button } from './Button'
 
 const meta: Meta<typeof Button> = {
@@ -21,7 +22,12 @@ export default meta
 type Story = StoryObj<typeof Button>
 
 export const Default: Story = {
-  args: { children: 'Button', variant: 'solid', size: 'md' },
+  args: { children: 'Button', variant: 'solid', size: 'md', onClick: fn() },
+  play: async ({ args, canvas }) => {
+    const button = canvas.getByRole('button', { name: /button/i })
+    await userEvent.click(button)
+    await expect(args.onClick).toHaveBeenCalledOnce()
+  },
 }
 
 export const Variants: Story = {

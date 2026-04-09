@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Input } from './Input'
 
 const meta: Meta<typeof Input> = {
@@ -23,6 +24,12 @@ export const Default: Story = {
     size: 'md',
     placeholder: 'Enter value\u2026',
     style: { width: 280 },
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const input = canvas.getByRole('textbox')
+    await userEvent.type(input, 'hello')
+    await expect(args.onChange).toHaveBeenCalled()
   },
 }
 

@@ -1,5 +1,6 @@
 import React, { forwardRef, useState, useCallback, useRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { X } from 'lucide-react'
 import { cn } from '../utils/cn'
 
 const tagsInputVariants = cva(
@@ -118,7 +119,7 @@ export const TagsInput = forwardRef<HTMLInputElement, TagsInputProps>(
                 className="opacity-60 hover:opacity-100 transition-opacity"
                 aria-label={`Remove ${tag}`}
               >
-                ×
+                <X size={10} />
               </button>
             )}
           </span>

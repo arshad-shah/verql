@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Link } from './Link'
 
 const meta = {
@@ -9,6 +10,9 @@ const meta = {
     href: { control: 'text' },
     children: { control: 'text' },
   },
+  args: {
+    onClick: fn(),
+  },
 } satisfies Meta<typeof Link>
 
 export default meta
@@ -18,6 +22,11 @@ export const Default: Story = {
   args: {
     href: '#',
     children: 'View documentation',
+  },
+  play: async ({ args, canvas }) => {
+    const link = canvas.getByRole('link', { name: 'View documentation' })
+    await userEvent.click(link)
+    await expect(args.onClick).toHaveBeenCalledTimes(1)
   },
 }
 

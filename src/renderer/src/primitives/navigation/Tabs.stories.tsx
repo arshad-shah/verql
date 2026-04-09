@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { useState } from 'react'
 import { Tabs } from './Tabs'
 
@@ -6,6 +7,9 @@ const meta = {
   title: 'Primitives/Navigation/Tabs',
   component: Tabs,
   tags: ['autodocs'],
+  args: {
+    onTabChange: fn(),
+  },
 } satisfies Meta<typeof Tabs>
 
 export default meta
@@ -19,7 +23,7 @@ const TABS = [
 ]
 
 export const Default: Story = {
-  render: () => {
+  render: function Render() {
     const [active, setActive] = useState('data')
     return (
       <div style={{ width: 480 }}>
@@ -29,5 +33,14 @@ export const Default: Story = {
         </div>
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const schemaTab = canvas.getByRole('tab', { name: 'Schema' })
+    await userEvent.click(schemaTab)
+    await expect(schemaTab).toHaveAttribute('aria-selected', 'true')
+
+    const indexesTab = canvas.getByRole('tab', { name: 'Indexes' })
+    await userEvent.click(indexesTab)
+    await expect(indexesTab).toHaveAttribute('aria-selected', 'true')
   },
 }

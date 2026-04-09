@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNotificationsStore } from '@/stores/notifications'
 import { NotificationItem } from './NotificationItem'
-import { Bell } from 'lucide-react'
+import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
 
 const categoryOrder = ['error', 'warning', 'info', 'success'] as const
@@ -90,7 +90,7 @@ export function NotificationPanel() {
             </button>
           )}
           <button onClick={closePanel} className="text-[10px] text-text-tertiary hover:text-text-secondary">
-            ✕
+            <X size={12} />
           </button>
         </div>
       </div>

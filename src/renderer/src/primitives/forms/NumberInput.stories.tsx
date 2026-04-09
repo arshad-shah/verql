@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { NumberInput } from './NumberInput'
 
 const meta: Meta<typeof NumberInput> = {
@@ -14,12 +15,20 @@ const meta: Meta<typeof NumberInput> = {
     step: { control: 'number' },
     precision: { control: 'number' },
   },
+  args: {
+    onChange: fn(),
+  },
 }
 export default meta
 type Story = StoryObj<typeof NumberInput>
 
 export const Default: Story = {
   args: { defaultValue: 42, min: 0, max: 100, step: 1, size: 'md' },
+  play: async ({ canvas, args }) => {
+    const incrementButton = canvas.getByRole('button', { name: 'Increment' })
+    await userEvent.click(incrementButton)
+    await expect(args.onChange).toHaveBeenCalledWith(43)
+  },
 }
 
 export const Variants: Story = {

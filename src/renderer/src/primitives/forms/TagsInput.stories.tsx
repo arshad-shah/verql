@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { fn, expect, userEvent } from 'storybook/test'
 import { TagsInput } from './TagsInput'
 
 const meta: Meta<typeof TagsInput> = {
@@ -15,14 +16,21 @@ const meta: Meta<typeof TagsInput> = {
 export default meta
 type Story = StoryObj<typeof TagsInput>
 
+const onChangeMock = fn()
+
 export const Default: Story = {
   render: function Render() {
     const [tags, setTags] = useState(['users', 'orders'])
     return (
       <div className="w-80">
-        <TagsInput value={tags} onChange={setTags} placeholder="Add table..." />
+        <TagsInput value={tags} onChange={(next) => { setTags(next); onChangeMock(next) }} placeholder="Add table..." />
       </div>
     )
+  },
+  play: async ({ canvas }) => {
+    const input = canvas.getByRole('textbox')
+    await userEvent.type(input, 'products{Enter}')
+    await expect(onChangeMock).toHaveBeenCalledWith(['users', 'orders', 'products'])
   },
 }
 
