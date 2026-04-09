@@ -41,7 +41,7 @@ describe('Tooltip', () => {
     )
 
     await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('target'))
+      fireEvent.mouseEnter(screen.getByText('target').parentElement!)
     })
     await act(async () => {
       vi.advanceTimersByTime(1)

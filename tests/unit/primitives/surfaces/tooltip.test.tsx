@@ -3,6 +3,11 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 import { Tooltip } from '../../../../src/renderer/src/primitives/surfaces/Tooltip'
 
+/** Tooltip wraps children in a span — mouseEnter must target that wrapper. */
+function getTriggerWrapper() {
+  return screen.getByText('Trigger').closest('span')!
+}
+
 describe('Tooltip', () => {
   it('renders the trigger element', () => {
     render(
@@ -31,7 +36,7 @@ describe('Tooltip', () => {
     )
 
     await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('Trigger'))
+      fireEvent.mouseEnter(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(1)
@@ -51,7 +56,7 @@ describe('Tooltip', () => {
     )
 
     await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('Trigger'))
+      fireEvent.mouseEnter(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(1)
@@ -60,7 +65,7 @@ describe('Tooltip', () => {
     expect(screen.getByRole('tooltip')).toBeInTheDocument()
 
     await act(async () => {
-      fireEvent.mouseLeave(screen.getByText('Trigger'))
+      fireEvent.mouseLeave(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(200)
@@ -79,7 +84,7 @@ describe('Tooltip', () => {
     )
 
     await act(async () => {
-      fireEvent.focus(screen.getByText('Trigger'))
+      fireEvent.focus(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(1)
@@ -92,14 +97,14 @@ describe('Tooltip', () => {
 
   it('renders the SVG beak element', async () => {
     vi.useFakeTimers()
-    const { container } = render(
+    render(
       <Tooltip content="With beak" delay={0}>
         <button>Trigger</button>
       </Tooltip>
     )
 
     await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('Trigger'))
+      fireEvent.mouseEnter(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(1)
@@ -120,7 +125,7 @@ describe('Tooltip', () => {
     )
 
     await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('Trigger'))
+      fireEvent.mouseEnter(getTriggerWrapper())
     })
     await act(async () => {
       vi.advanceTimersByTime(1)
@@ -131,7 +136,6 @@ describe('Tooltip', () => {
   })
 
   it('defaults side to top', () => {
-    // Verify the component renders without specifying side (no crash)
     const { container } = render(
       <Tooltip content="Default side">
         <button>Trigger</button>

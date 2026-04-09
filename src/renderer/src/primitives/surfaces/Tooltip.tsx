@@ -28,19 +28,11 @@ type TooltipProps = {
   children: React.ReactNode
 }
 
-const BEAK_WIDTH = 22
-const BEAK_HEIGHT = 9
+const BEAK_DEPTH = 9
 
 function buildPlacement(side: TooltipSide, align: TooltipAlign): Placement {
   if (align === 'center') return side
   return `${side}-${align}`
-}
-
-const beakRotation: Record<string, string> = {
-  top: 'rotate(0deg)',
-  bottom: 'rotate(180deg)',
-  left: 'rotate(-90deg)',
-  right: 'rotate(90deg)',
 }
 
 const transformOriginMap: Record<string, string> = {
@@ -48,6 +40,31 @@ const transformOriginMap: Record<string, string> = {
   bottom: 'top center',
   left: 'right center',
   right: 'left center',
+}
+
+// Pre-computed SVG paths per side — no CSS rotation needed.
+// Vertical (top/bottom): 22x9 viewBox. Horizontal (left/right): 9x22 viewBox.
+const beakGeometry: Record<string, { fill: string; stroke: string; w: number; h: number }> = {
+  top: {
+    fill: 'M0 0C0 0 6 0 9 6.5C10 8.5 12 8.5 13 6.5C16 0 22 0 22 0Z',
+    stroke: 'M0.5 0C0.5 0 6 0 9 6.5C10 8.5 12 8.5 13 6.5C16 0 21.5 0 21.5 0',
+    w: 22, h: 9,
+  },
+  bottom: {
+    fill: 'M0 9C0 9 6 9 9 2.5C10 0.5 12 0.5 13 2.5C16 9 22 9 22 9Z',
+    stroke: 'M0.5 9C0.5 9 6 9 9 2.5C10 0.5 12 0.5 13 2.5C16 9 21.5 9 21.5 9',
+    w: 22, h: 9,
+  },
+  left: {
+    fill: 'M0 0C0 0 0 6 6.5 9C8.5 10 8.5 12 6.5 13C0 16 0 22 0 22Z',
+    stroke: 'M0 0.5C0 0.5 0 6 6.5 9C8.5 10 8.5 12 6.5 13C0 16 0 21.5 0 21.5',
+    w: 9, h: 22,
+  },
+  right: {
+    fill: 'M9 0C9 0 9 6 2.5 9C0.5 10 0.5 12 2.5 13C9 16 9 22 9 22Z',
+    stroke: 'M9 0.5C9 0.5 9 6 2.5 9C0.5 10 0.5 12 2.5 13C9 16 9 21.5 9 21.5',
+    w: 9, h: 22,
+  },
 }
 
 function TooltipBeak({
@@ -61,13 +78,14 @@ function TooltipBeak({
 }) {
   const isVertical = side === 'top' || side === 'bottom'
   const staticSide = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[side]!
+  const geo = beakGeometry[side] ?? beakGeometry.top
 
   const style: React.CSSProperties = {
     position: 'absolute',
-    [staticSide]: `-${BEAK_HEIGHT}px`,
+    [staticSide]: `-${BEAK_DEPTH}px`,
     ...(isVertical
-      ? { left: x != null ? `${x}px` : '50%', transform: `translateX(-50%) ${beakRotation[side]}` }
-      : { top: y != null ? `${y}px` : '50%', transform: `translateY(-50%) ${beakRotation[side]}` }),
+      ? { left: x != null ? `${x}px` : '50%', transform: 'translateX(-50%)' }
+      : { top: y != null ? `${y}px` : '50%', transform: 'translateY(-50%)' }),
     pointerEvents: 'none',
   }
 
@@ -75,21 +93,13 @@ function TooltipBeak({
     <svg
       data-tooltip-beak=""
       style={style}
-      width={BEAK_WIDTH}
-      height={BEAK_HEIGHT}
-      viewBox={`0 0 ${BEAK_WIDTH} ${BEAK_HEIGHT}`}
+      width={geo.w}
+      height={geo.h}
+      viewBox={`0 0 ${geo.w} ${geo.h}`}
       fill="none"
     >
-      <path
-        d="M0 0C0 0 6 0 9 6.5C10 8.5 12 8.5 13 6.5C16 0 22 0 22 0Z"
-        className="fill-bg-elevated"
-      />
-      <path
-        d="M0.5 0C0.5 0 6 0 9 6.5C10 8.5 12 8.5 13 6.5C16 0 21.5 0 21.5 0"
-        className="stroke-border-default"
-        strokeWidth="1"
-        fill="none"
-      />
+      <path d={geo.fill} className="fill-bg-elevated" />
+      <path d={geo.stroke} className="stroke-border-default" strokeWidth="1" fill="none" />
     </svg>
   )
 }
@@ -111,7 +121,7 @@ export function Tooltip({
     onOpenChange: setIsOpen,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(8 + BEAK_HEIGHT),
+      offset(8 + BEAK_DEPTH),
       flip(),
       shift({ padding: 8 }),
       arrow({ element: arrowRef, padding: 8 }),
@@ -145,25 +155,11 @@ export function Tooltip({
 
   const arrowData = middlewareData.arrow
 
-  // Merge floating-ui reference props onto the child element so that
-  // event listeners (mouseenter, focus, etc.) are attached directly to
-  // the trigger rather than an intermediate wrapper.  This ensures
-  // non-bubbling events like mouseenter reach the reference element.
-  const referenceProps = getReferenceProps()
-  const child = React.isValidElement(children)
-    ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-        ref: refs.setReference,
-        ...referenceProps,
-      })
-    : (
-        <span ref={refs.setReference} {...referenceProps} className="inline-flex">
-          {children}
-        </span>
-      )
-
   return (
     <>
-      {child}
+      <span ref={refs.setReference} {...getReferenceProps()} className="inline-flex">
+        {children}
+      </span>
       {isMounted && (
         <div
           ref={refs.setFloating}
@@ -171,7 +167,7 @@ export function Tooltip({
           className={cn(
             'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
             'bg-bg-elevated border border-border-default text-text-primary',
-            'shadow-[var(--shadow-elevated)]',
+            'shadow-elevated',
             'pointer-events-none whitespace-nowrap',
             className
           )}
