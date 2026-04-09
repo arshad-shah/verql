@@ -8,7 +8,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "postinstall": "electron-rebuild --only better-sqlite3 && bash scripts/patch-electron-name.sh",
+    "postinstall": "electron-rebuild --only better-sqlite3",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:mac": "npm run build && electron-builder --mac",
@@ -37,6 +37,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "recharts": "^3.8.1",
+    "snowflake-sdk": "^2.4.0",
     "ssh2": "^1.17.0",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.12"
