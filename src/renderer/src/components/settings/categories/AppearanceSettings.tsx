@@ -33,8 +33,9 @@ export function AppearanceSettings() {
         <Text size="xs" color="muted" className="mb-3">Choose a color theme for the application</Text>
         <Grid columns={4} gap="sm">
           {Object.entries(themePreview).map(([key, preview]) => (
-            <button
+            <Box
               key={key}
+              as="button"
               onClick={() => setTheme(key as Theme)}
               className={`rounded-lg border-2 p-2.5 transition-colors cursor-pointer ${
                 currentTheme === key
@@ -58,7 +59,7 @@ export function AppearanceSettings() {
               <Text size="xs" className="mt-2 text-center block" style={{ color: preview.text }}>
                 {preview.label} {currentTheme === key ? '✓' : ''}
               </Text>
-            </button>
+            </Box>
           ))}
         </Grid>
       </div>

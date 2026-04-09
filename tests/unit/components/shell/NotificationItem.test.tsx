@@ -48,7 +48,7 @@ describe('NotificationItem', () => {
   it('calls onClick when clicked', () => {
     const handler = vi.fn()
     render(<NotificationItem notification={makeNotification()} onClick={handler} />)
-    fireEvent.click(screen.getByText(/Query failed/).closest('div[role="button"]')!)
+    fireEvent.click(screen.getByText(/Query failed/).closest('button')!)
     expect(handler).toHaveBeenCalledWith('n1')
   })
 })
