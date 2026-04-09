@@ -9,9 +9,9 @@
   --color-text-tertiary: #555578;
   --color-text-disabled: #3a3a55;
 
-  --color-border-default: #1e1e32;
-  --color-border-subtle: #141422;
-  --color-border-strong: #3a3a55;
+  --color-border-default: rgba(255, 255, 255, 0.06);
+  --color-border-subtle: rgba(255, 255, 255, 0.03);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
 
   --color-accent: #8b7cf8;
   --color-accent-hover: #a89bf9;

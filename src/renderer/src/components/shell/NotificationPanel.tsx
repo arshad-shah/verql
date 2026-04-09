@@ -68,7 +68,7 @@ export function NotificationPanel() {
     <div
       ref={panelRef}
       className={cn(
-        'absolute bottom-full right-0 mb-0 w-80 max-h-[350px] overflow-y-auto',
+        'fixed bottom-9.5 right-0 w-80 max-h-87.5 overflow-y-auto z-50',
         'bg-bg-secondary border border-border-default border-b-0',
         'rounded-t-lg shadow-[0_-4px_24px_rgba(0,0,0,0.4)]',
         'animate-in slide-in-from-bottom-2 duration-150'

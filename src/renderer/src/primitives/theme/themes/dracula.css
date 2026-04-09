@@ -7,9 +7,9 @@
   --color-text-secondary: #6272a4;
   --color-text-tertiary: #4a5480;
   --color-text-disabled: #3a3f5c;
-  --color-border-default: #44475a;
-  --color-border-subtle: #2c2d3a;
-  --color-border-strong: #6272a4;
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
   --color-accent: #bd93f9;
   --color-accent-hover: #caa9fa;
   --color-accent-muted: #2d2540;

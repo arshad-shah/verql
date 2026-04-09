@@ -9,9 +9,9 @@
   --color-text-tertiary: var(--raw-neutral-400);
   --color-text-disabled: var(--raw-neutral-300);
 
-  --color-border-default: var(--raw-neutral-200);
-  --color-border-subtle: var(--raw-neutral-100);
-  --color-border-strong: var(--raw-neutral-400);
+  --color-border-default: rgba(0, 0, 0, 0.08);
+  --color-border-subtle: rgba(0, 0, 0, 0.04);
+  --color-border-strong: rgba(0, 0, 0, 0.16);
 
   --color-accent: var(--raw-purple-500);
   --color-accent-hover: var(--raw-purple-600);

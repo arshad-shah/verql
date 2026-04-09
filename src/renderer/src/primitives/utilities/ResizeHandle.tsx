@@ -107,16 +107,16 @@ export function ResizeHandle({
         )}
       />
 
-      {/* Border line — always visible, tints on hover */}
+      {/* Center line — invisible at rest, appears on hover/drag */}
       <div
         className={cn(
-          'absolute transition-colors duration-150',
+          'absolute transition-all duration-150',
           isHorizontal
             ? 'top-0 bottom-0 left-1/2 w-px -translate-x-1/2'
             : 'left-0 right-0 top-1/2 h-px -translate-y-1/2',
           isDragging
-            ? 'bg-accent'
-            : 'bg-border-default group-hover/resize:bg-accent/50'
+            ? 'bg-accent opacity-100'
+            : 'bg-accent/50 opacity-0 group-hover/resize:opacity-100'
         )}
       />
 

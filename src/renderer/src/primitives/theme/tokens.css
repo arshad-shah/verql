@@ -82,9 +82,9 @@
   --color-text-disabled: var(--raw-neutral-600);
 
   /* Borders */
-  --color-border-default: var(--raw-neutral-700);
-  --color-border-subtle: var(--raw-neutral-800);
-  --color-border-strong: var(--raw-neutral-500);
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
 
   /* Accent */
   --color-accent: var(--raw-purple-500);

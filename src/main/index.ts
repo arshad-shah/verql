@@ -1,17 +1,9 @@
-import { app, BrowserWindow, Menu, nativeImage, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, Menu, type MenuItemConstructorOptions } from 'electron'
 import path from 'path'
 import { registerIpcHandlers } from './ipc-handlers'
 
 const isDev = !app.isPackaged
 const APP_NAME = 'dbstudio'
-
-// Set the app name so macOS menu bar / dock shows "dbstudio" instead of "Electron"
-app.setName(APP_NAME)
-
-// Resolve the icon path — works for both dev and packaged builds
-const iconPath = isDev
-  ? path.join(process.cwd(), 'build', 'icon.png')
-  : path.join(__dirname, '../../build', 'icon.png')
 
 function buildAppMenu(): void {
   const template: MenuItemConstructorOptions[] = [
@@ -114,11 +106,9 @@ function buildAppMenu(): void {
 
 function createWindow(): BrowserWindow {
   const title = isDev ? `${APP_NAME} — Dev` : APP_NAME
-  const appIcon = nativeImage.createFromPath(iconPath)
 
   const win = new BrowserWindow({
     title,
-    icon: appIcon,
     width: 1400,
     height: 900,
     minWidth: 800,
@@ -142,14 +132,6 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  // Set macOS dock icon
-  if (process.platform === 'darwin') {
-    const dockIcon = nativeImage.createFromPath(iconPath)
-    if (!dockIcon.isEmpty()) {
-      app.dock.setIcon(dockIcon)
-    }
-  }
-
   registerIpcHandlers()
   buildAppMenu()
   createWindow()

@@ -14,8 +14,10 @@
   --color-bg-tertiary: var(--color-bg-tertiary);
   --color-bg-elevated: var(--color-bg-elevated);
   --color-border: var(--color-border-default);
+  --color-border-default: var(--color-border-default);
   --color-border-subtle: var(--color-border-subtle);
   --color-border-strong: var(--color-border-strong);
+  --color-border-muted: var(--color-border-subtle);
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-muted: var(--color-accent-muted);
