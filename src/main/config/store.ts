@@ -1,14 +1,20 @@
 import fs from 'fs'
 import path from 'path'
 import type { ConnectionProfile } from '@shared/types'
+import type { AppSettings } from '@shared/settings'
+import { defaultSettings, mergeWithDefaults } from '@shared/settings'
 
 interface ConfigData {
   connections: ConnectionProfile[]
+  settings: AppSettings
 }
+
+type SettingsListener = (key: string, value: unknown) => void
 
 export class ConfigStore {
   private filePath: string
   private data: ConfigData
+  private listeners: SettingsListener[] = []
 
   constructor(filePath: string) {
     this.filePath = filePath
@@ -19,12 +25,16 @@ export class ConfigStore {
     try {
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf-8')
-        return JSON.parse(raw)
+        const parsed = JSON.parse(raw)
+        return {
+          connections: parsed.connections ?? [],
+          settings: mergeWithDefaults(parsed.settings ?? {}),
+        }
       }
     } catch {
       // Corrupted file — start fresh
     }
-    return { connections: [] }
+    return { connections: [], settings: { ...defaultSettings } }
   }
 
   private save(): void {
@@ -33,6 +43,7 @@ export class ConfigStore {
     fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
   }
 
+  // ─── Connections ──────────────────────────────────────────────
   listConnections(): ConnectionProfile[] {
     return [...this.data.connections]
   }
@@ -55,5 +66,45 @@ export class ConfigStore {
   deleteConnection(id: string): void {
     this.data.connections = this.data.connections.filter(c => c.id !== id)
     this.save()
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────
+  getAllSettings(): AppSettings {
+    return this.data.settings
+  }
+
+  getSettingsCategory<K extends keyof AppSettings>(category: K): AppSettings[K] {
+    return this.data.settings[category]
+  }
+
+  setSetting(keyPath: string, value: unknown): void {
+    const parts = keyPath.split('.')
+    let target: any = this.data.settings
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (target[parts[i]] === undefined) target[parts[i]] = {}
+      target = target[parts[i]]
+    }
+    target[parts[parts.length - 1]] = value
+    this.save()
+    this.notifyListeners(keyPath, value)
+  }
+
+  resetCategory(category: keyof AppSettings): void {
+    (this.data.settings as any)[category] = (defaultSettings as any)[category]
+    this.save()
+    this.notifyListeners(category, (this.data.settings as any)[category])
+  }
+
+  onSettingsChanged(listener: SettingsListener): () => void {
+    this.listeners.push(listener)
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener)
+    }
+  }
+
+  private notifyListeners(key: string, value: unknown): void {
+    for (const listener of this.listeners) {
+      listener(key, value)
+    }
   }
 }
