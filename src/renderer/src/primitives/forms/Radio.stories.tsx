@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn, expect, userEvent } from 'storybook/test'
 import { Radio } from './Radio'
 
 const meta: Meta<typeof Radio> = {
@@ -16,6 +17,12 @@ export const Default: Story = {
   args: {
     name: 'default',
     value: 'option',
+    onChange: fn(),
+  },
+  play: async ({ args, canvas }) => {
+    const radio = canvas.getByRole('radio')
+    await userEvent.click(radio)
+    await expect(args.onChange).toHaveBeenCalledOnce()
   },
 }
 
