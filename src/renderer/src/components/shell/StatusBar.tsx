@@ -8,6 +8,8 @@ import { cn } from '@/primitives/utils/cn'
 import { ConnectionCard } from './ConnectionCard'
 import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { StatusBarMetric } from './StatusBarMetric'
+import { usePluginUIStore } from '@/stores/plugin-ui'
+import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import type { QueryTab } from '@shared/types'
 
 interface PluginStatus {
@@ -37,6 +39,13 @@ export function StatusBar() {
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [showNewConnection, setShowNewConnection] = useState(false)
   const pluginFailNotified = useRef(false)
+
+  const statusBarContributions = usePluginUIStore((s) => s.contributions.statusBar ?? [])
+  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+
+  useEffect(() => {
+    fetchContributions('statusBar')
+  }, [fetchContributions])
 
   // Plugin polling (same logic as before, with notification on failure)
   useEffect(() => {
@@ -136,6 +145,13 @@ export function StatusBar() {
             </Text>
           </Flex>
         )}
+
+        {/* Plugin-contributed status bar widgets (left zone) */}
+        {statusBarContributions
+          .filter((c) => c.meta.zone === 'left' || !c.meta.zone)
+          .map((c) => (
+            <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
+          ))}
       </Flex>
 
       {/* Center zone — contextual metrics */}
@@ -163,6 +179,13 @@ export function StatusBar() {
 
       {/* Right zone — tools */}
       <Flex align="center" gap="xs" className="ml-auto">
+        {/* Plugin-contributed status bar widgets (right zone) */}
+        {statusBarContributions
+          .filter((c) => c.meta.zone === 'right')
+          .map((c) => (
+            <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
+          ))}
+
         {/* Plugin status */}
         <Flex
           align="center"
