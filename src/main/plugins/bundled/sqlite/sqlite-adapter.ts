@@ -1,19 +1,25 @@
 import Database from 'better-sqlite3'
-import type { DbAdapter } from './adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { DbAdapter } from '../../../db/adapter'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class SqliteAdapter implements DbAdapter {
   private db: Database.Database | null = null
   private dbPath: string
 
-  constructor(dbPath: string) {
-    this.dbPath = dbPath
+  constructor(config: Record<string, unknown>) {
+    this.dbPath = config.database as string
   }
 
   async connect(): Promise<void> {
     this.db = new Database(this.dbPath)
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    if (!this.db) throw new Error('Not connected')
+    const row = this.db.prepare('SELECT sqlite_version() as version').get() as { version: string }
+    return { version: row.version }
   }
 
   async disconnect(): Promise<void> {
@@ -56,7 +62,6 @@ export class SqliteAdapter implements DbAdapter {
     const rows = this.db.prepare(
       "SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY name"
     ).all() as { name: string; type: string }[]
-
     return rows.map(r => ({
       name: r.name,
       schema: schema ?? 'main',
@@ -69,12 +74,10 @@ export class SqliteAdapter implements DbAdapter {
     const rows = this.db.prepare(`PRAGMA table_info("${table}")`).all() as {
       cid: number; name: string; type: string; notnull: number; dflt_value: string | null; pk: number
     }[]
-
     const fkRows = this.db.prepare(`PRAGMA foreign_key_list("${table}")`).all() as {
       from: string; table: string; to: string
     }[]
     const fkMap = new Map(fkRows.map(fk => [fk.from, { table: fk.table, column: fk.to }]))
-
     return rows.map(r => ({
       name: r.name,
       dataType: r.type || 'TEXT',
@@ -91,7 +94,6 @@ export class SqliteAdapter implements DbAdapter {
     const idxRows = this.db.prepare(`PRAGMA index_list("${table}")`).all() as {
       name: string; unique: number
     }[]
-
     return idxRows.map(idx => {
       const cols = this.db!.prepare(`PRAGMA index_info("${idx.name}")`).all() as { name: string }[]
       return {
@@ -115,12 +117,10 @@ export class SqliteAdapter implements DbAdapter {
   }
 
   async getDatabases(): Promise<string[]> {
-    // SQLite is a single-file database — no concept of multiple databases
     return [this.dbPath.split('/').pop() ?? this.dbPath]
   }
 
   async switchDatabase(_database: string): Promise<void> {
-    // SQLite is single-file — switching databases is not supported
     throw new Error('SQLite does not support switching databases')
   }
 }

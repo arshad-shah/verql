@@ -1,18 +1,18 @@
 import pg from 'pg'
-import type { DbAdapter } from './adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { DbAdapter } from '../../../db/adapter'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class PostgresAdapter implements DbAdapter {
   private pool: pg.Pool | null = null
   private config: pg.PoolConfig
 
-  constructor(config: { host: string; port: number; database: string; user?: string; password?: string; ssl?: boolean }) {
+  constructor(config: Record<string, unknown>) {
     this.config = {
-      host: config.host,
-      port: config.port,
-      database: config.database,
-      user: config.user,
-      password: config.password,
+      host: config.host as string,
+      port: config.port as number,
+      database: config.database as string,
+      user: config.username as string | undefined,
+      password: config.password as string | undefined,
       ssl: config.ssl ? { rejectUnauthorized: false } : false,
       max: 5,
       idleTimeoutMillis: 30000
@@ -23,6 +23,12 @@ export class PostgresAdapter implements DbAdapter {
     this.pool = new pg.Pool(this.config)
     const client = await this.pool.connect()
     client.release()
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    if (!this.pool) throw new Error('Not connected')
+    const result = await this.pool.query('SELECT version() as version')
+    return { version: String(result.rows[0]?.version ?? 'unknown') }
   }
 
   async setSchema(schema: string): Promise<void> {

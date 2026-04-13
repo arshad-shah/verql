@@ -1,17 +1,21 @@
 import mysql from 'mysql2/promise'
-import type { DbAdapter } from './adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { DbAdapter } from '../../../db/adapter'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class MysqlAdapter implements DbAdapter {
   private pool: mysql.Pool | null = null
   private config: mysql.PoolOptions
 
-  constructor(config: { host: string; port: number; database: string; user?: string; password?: string; ssl?: boolean }) {
+  constructor(config: Record<string, unknown>) {
     this.config = {
-      host: config.host, port: config.port, database: config.database,
-      user: config.user, password: config.password,
+      host: config.host as string,
+      port: config.port as number,
+      database: config.database as string,
+      user: config.username as string | undefined,
+      password: config.password as string | undefined,
       ssl: config.ssl ? {} : undefined,
-      waitForConnections: true, connectionLimit: 5
+      waitForConnections: true,
+      connectionLimit: 5
     }
   }
 
@@ -19,6 +23,13 @@ export class MysqlAdapter implements DbAdapter {
     this.pool = mysql.createPool(this.config)
     const conn = await this.pool.getConnection()
     conn.release()
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    if (!this.pool) throw new Error('Not connected')
+    const [rows] = await this.pool.query('SELECT VERSION() as version')
+    const version = String((rows as Record<string, unknown>[])[0]?.version ?? 'unknown')
+    return { version }
   }
 
   async switchDatabase(database: string): Promise<void> {
@@ -96,9 +107,7 @@ export class MysqlAdapter implements DbAdapter {
   async getRowCount(table: string, schema?: string): Promise<number> {
     if (!this.pool) throw new Error('Not connected')
     const db = schema ?? this.config.database
-    const [rows] = await this.pool.query(
-      `SELECT count(*) as cnt FROM \`${db}\`.\`${table}\``
-    )
+    const [rows] = await this.pool.query(`SELECT count(*) as cnt FROM \`${db}\`.\`${table}\``)
     return (rows as { cnt: number }[])[0].cnt
   }
 }
