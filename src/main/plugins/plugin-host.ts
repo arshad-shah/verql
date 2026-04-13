@@ -253,6 +253,9 @@ export class PluginBootCoordinator {
 
     plugin.status = { state: 'activating' }
 
+    // Set the current plugin name so UIRegistry can track ownership
+    this.deps.uiRegistry.currentPluginName = plugin.manifest.name
+
     const context = createPluginContext({
       pluginName: plugin.manifest.name,
       driverRegistry: this.deps.driverRegistry,

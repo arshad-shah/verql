@@ -69,4 +69,17 @@ describe('UIRegistryImpl', () => {
     expect(panels).toHaveLength(1)
     expect(statusBars).toHaveLength(1)
   })
+
+  it('tracks plugin ownership via currentPluginName', () => {
+    const registry = new UIRegistryImpl()
+    registry.currentPluginName = 'plugin-a'
+    registry.registerPanel('panel-a', [{ type: 'text' as const, id: 'a', content: 'A' }])
+    registry.currentPluginName = 'plugin-b'
+    registry.registerPanel('panel-b', [{ type: 'text' as const, id: 'b', content: 'B' }])
+
+    const panels = registry.getAllPanels()
+    expect(panels).toHaveLength(2)
+    expect(panels.find(p => p.id === 'panel-a')?.pluginName).toBe('plugin-a')
+    expect(panels.find(p => p.id === 'panel-b')?.pluginName).toBe('plugin-b')
+  })
 })

@@ -145,9 +145,10 @@ export function StatusBar() {
           </Flex>
         )}
 
-        {/* Plugin-contributed status bar widgets (left zone) */}
-        {statusBarContributions
-          .filter((c) => c.meta.zone === 'left' || !c.meta.zone)
+        {/* Plugin-contributed status bar widgets (left zone) — only for active connection's driver */}
+        {isConnected && statusBarContributions
+          .filter((c) => (c.meta.zone === 'left' || !c.meta.zone)
+            && active?.type && c.pluginId.includes(active.type))
           .map((c) => (
             <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
           ))}
@@ -178,9 +179,10 @@ export function StatusBar() {
 
       {/* Right zone — tools */}
       <Flex align="center" gap="xs" className="ml-auto">
-        {/* Plugin-contributed status bar widgets (right zone) */}
-        {statusBarContributions
-          .filter((c) => c.meta.zone === 'right')
+        {/* Plugin-contributed status bar widgets (right zone) — only for active connection's driver */}
+        {isConnected && statusBarContributions
+          .filter((c) => c.meta.zone === 'right'
+            && active?.type && c.pluginId.includes(active.type))
           .map((c) => (
             <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
           ))}

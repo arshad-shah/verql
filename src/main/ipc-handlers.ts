@@ -608,55 +608,64 @@ export function registerIpcHandlers(): void {
   handle('plugins:ui:get-contributions', async (surface) => {
     const contributions: import('@shared/plugin-ui-types').UIContribution[] = []
 
+    // Helper to resolve display name from plugin name
+    const getDisplayName = (pluginName: string) => {
+      const plugin = pluginCoordinator.getPlugin(pluginName)
+      return plugin?.manifest.displayName ?? pluginName
+    }
+
+    // Registry-based surfaces: entries already track their owning plugin
+    if (surface === 'statusBar') {
+      for (const entry of uiRegistry.getAllStatusBars()) {
+        const plugin = pluginCoordinator.getPlugin(entry.pluginName)
+        const manifest = plugin?.manifest.contributes.statusBar?.find(s => s.id === entry.id)
+        contributions.push({
+          pluginId: entry.pluginName,
+          pluginName: getDisplayName(entry.pluginName),
+          surface: 'statusBar',
+          contributionId: entry.id,
+          widgets: entry.widgets,
+          meta: manifest ?? {}
+        })
+      }
+    }
+
+    if (surface === 'panels') {
+      for (const entry of uiRegistry.getAllPanels()) {
+        contributions.push({
+          pluginId: entry.pluginName,
+          pluginName: getDisplayName(entry.pluginName),
+          surface: 'panels',
+          contributionId: entry.id,
+          widgets: entry.widgets,
+          meta: {}
+        })
+      }
+    }
+
+    if (surface === 'tabs') {
+      for (const entry of uiRegistry.getAllTabs()) {
+        contributions.push({
+          pluginId: entry.pluginName,
+          pluginName: getDisplayName(entry.pluginName),
+          surface: 'tabs',
+          contributionId: entry.id,
+          widgets: entry.widgets,
+          meta: {}
+        })
+      }
+    }
+
+    // Manifest-based surfaces: still iterate plugins
     for (const plugin of pluginCoordinator.getLoadedPlugins()) {
       if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
-      const pluginId = plugin.manifest.name
-
-      if (surface === 'statusBar') {
-        for (const entry of uiRegistry.getAllStatusBars()) {
-          contributions.push({
-            pluginId,
-            pluginName: plugin.manifest.displayName,
-            surface: 'statusBar',
-            contributionId: entry.id,
-            widgets: entry.widgets,
-            meta: plugin.manifest.contributes.statusBar?.find(s => s.id === entry.id) ?? {}
-          })
-        }
-      }
-
-      if (surface === 'panels') {
-        for (const entry of uiRegistry.getAllPanels()) {
-          contributions.push({
-            pluginId,
-            pluginName: plugin.manifest.displayName,
-            surface: 'panels',
-            contributionId: entry.id,
-            widgets: entry.widgets,
-            meta: {}
-          })
-        }
-      }
-
-      if (surface === 'tabs') {
-        for (const entry of uiRegistry.getAllTabs()) {
-          contributions.push({
-            pluginId,
-            pluginName: plugin.manifest.displayName,
-            surface: 'tabs',
-            contributionId: entry.id,
-            widgets: entry.widgets,
-            meta: {}
-          })
-        }
-      }
 
       if (surface === 'contextMenu') {
         const menus = plugin.manifest.contributes.contextMenus
         if (menus) {
           for (const menu of menus) {
             contributions.push({
-              pluginId,
+              pluginId: plugin.manifest.name,
               pluginName: plugin.manifest.displayName,
               surface: 'contextMenu',
               contributionId: menu.id,
@@ -672,7 +681,7 @@ export function registerIpcHandlers(): void {
         if (bars) {
           for (const bar of bars) {
             contributions.push({
-              pluginId,
+              pluginId: plugin.manifest.name,
               pluginName: plugin.manifest.displayName,
               surface: 'activityBar',
               contributionId: bar.id,

@@ -3,6 +3,7 @@ import { validateManifest, PluginBootCoordinator } from '../../src/main/plugins/
 import { DriverRegistryImpl } from '../../src/main/plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry'
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
+import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 
 describe('PluginBootCoordinator', () => {
   let coordinator: PluginBootCoordinator
@@ -14,10 +15,12 @@ describe('PluginBootCoordinator', () => {
     driverRegistry = new DriverRegistryImpl()
     commandRegistry = new CommandRegistryImpl()
     panelRegistry = new PanelRegistryImpl()
+    const uiRegistry = new UIRegistryImpl()
     coordinator = new PluginBootCoordinator({
       driverRegistry,
       commandRegistry,
       panelRegistry,
+      uiRegistry,
       getAdapter: () => undefined,
       getProfile: () => undefined,
       settingsStore: { get: () => undefined, set: () => {} }
