@@ -102,6 +102,7 @@ export interface IpcChannelMap {
       version: string
       description: string
       bundled: boolean
+      icon?: string
       status: { state: string; error?: string; phase?: string; contributions?: string[] }
       contributions: string[]
     }[]

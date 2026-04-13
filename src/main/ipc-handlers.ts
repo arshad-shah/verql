@@ -478,6 +478,16 @@ export function registerIpcHandlers(): void {
     console.error('[plugins] Boot failed:', err)
   })
 
+  function resolvePluginIcon(plugin: { manifest: { icon?: string }; path: string }): string | undefined {
+    if (!plugin.manifest.icon || plugin.path === '<bundled>') return undefined
+    const iconPath = path.resolve(plugin.path, plugin.manifest.icon)
+    if (!fs.existsSync(iconPath)) return undefined
+    const ext = path.extname(iconPath).toLowerCase()
+    const mime = ext === '.svg' ? 'image/svg+xml' : ext === '.png' ? 'image/png' : 'image/jpeg'
+    const data = fs.readFileSync(iconPath)
+    return `data:${mime};base64,${data.toString('base64')}`
+  }
+
   handle('plugins:list', async () => {
     return pluginCoordinator.getLoadedPlugins().map(p => ({
       name: p.manifest.name,
@@ -485,6 +495,7 @@ export function registerIpcHandlers(): void {
       version: p.manifest.version,
       description: p.manifest.description,
       bundled: p.path === '<bundled>',
+      icon: resolvePluginIcon(p),
       status: p.status as { state: string; error?: string; phase?: string; contributions?: string[] },
       contributions: p.status.state === 'active' ? p.status.contributions
         : p.status.state === 'degraded' ? p.status.contributions

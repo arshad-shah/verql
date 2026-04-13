@@ -7,6 +7,7 @@ export interface PluginManifest {
   displayName: string
   description: string
   main: string
+  icon?: string
   contributes: {
     drivers?: DriverContribution[]
     themes?: ThemeContribution[]
