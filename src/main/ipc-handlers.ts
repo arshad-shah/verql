@@ -530,6 +530,23 @@ export function registerIpcHandlers(): void {
     return pluginCoordinator.getErrorBudget().getErrors(name)
   })
 
+  handle('plugins:get-settings', async (name) => {
+    const plugin = pluginCoordinator.getPlugin(name)
+    if (!plugin) return { schema: [], values: {} }
+    const schema = plugin.manifest.contributes.settings ?? []
+    const pluginSettings = (configStore.getSettingsCategory('plugins') as Record<string, unknown>)?.[name] as Record<string, unknown> | undefined
+    const values: Record<string, unknown> = {}
+    for (const setting of schema) {
+      const stored = pluginSettings?.[setting.key]
+      values[setting.key] = stored !== undefined ? stored : setting.default
+    }
+    return { schema, values }
+  })
+
+  handle('plugins:set-setting', async (name, key, value) => {
+    configStore.setSetting(`plugins.${name}.${key}`, value)
+  })
+
   handle('plugins:connection-fields', async () => {
     return driverRegistry.getDriverIds().map(id => {
       const factory = driverRegistry.get(id)!

@@ -127,6 +127,14 @@ export interface IpcChannelMap {
     args: [name: string]
     return: { timestamp: number; error: string; stack?: string }[]
   }
+  'plugins:get-settings': {
+    args: [name: string]
+    return: { schema: { key: string; title: string; type: string; default?: string | number | boolean }[]; values: Record<string, unknown> }
+  }
+  'plugins:set-setting': {
+    args: [name: string, key: string, value: unknown]
+    return: void
+  }
   'plugins:connection-fields': {
     args: []
     return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[] }[]
