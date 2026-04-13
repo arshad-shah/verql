@@ -53,10 +53,11 @@ export interface DriverFactory {
 export interface ConnectionField {
   key: string
   label: string
-  type: 'text' | 'password' | 'number' | 'boolean' | 'file'
+  type: 'text' | 'password' | 'number' | 'boolean' | 'file' | 'select'
   required?: boolean
   default?: string | number | boolean
   group?: string
+  fetchable?: boolean
 }
 
 export interface ConnectionMiddleware {
