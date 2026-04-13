@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
-import { useToastStore } from '@/stores/toast'
-import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Modal, Input, Button, Spinner, SearchInput, cn } from '@/primitives'
+import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Spinner, SearchInput, cn } from '@/primitives'
 
 interface PluginInfo {
   name: string
@@ -68,12 +67,9 @@ export function ExtensionsPanel() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [showInstallPath, setShowInstallPath] = useState(false)
-  const [installPath, setInstallPath] = useState('')
   const openPluginDetail = useTabsStore(s => s.openPluginDetail)
+  const openInstallPlugin = useTabsStore(s => s.openInstallPlugin)
   const activeTabId = useTabsStore(s => s.activeTabId)
-  const addToast = useToastStore(s => s.addToast)
-
   const loadPlugins = async () => {
     setLoading(true)
     const list = await window.electronAPI.invoke('plugins:list')
@@ -82,18 +78,6 @@ export function ExtensionsPanel() {
   }
 
   useEffect(() => { loadPlugins() }, [])
-
-  const handleInstallFromFolder = async () => {
-    if (!installPath.trim()) return
-    const result = await window.electronAPI.invoke('plugins:install-from-path', installPath.trim())
-    if (result.success) {
-      setShowInstallPath(false)
-      setInstallPath('')
-      await loadPlugins()
-    } else {
-      addToast({ type: 'error', title: 'Install failed', message: result.error })
-    }
-  }
 
   if (loading) {
     return (
@@ -124,7 +108,7 @@ export function ExtensionsPanel() {
           label="Install from folder"
           size="xs"
           variant="ghost"
-          onClick={() => setShowInstallPath(true)}
+          onClick={openInstallPlugin}
           className="text-text-muted hover:text-text-primary shrink-0"
         >
           <FolderOpen size={12} />
@@ -188,23 +172,6 @@ export function ExtensionsPanel() {
         )}
       </ScrollArea>
 
-      <Modal open={showInstallPath} onClose={() => { setShowInstallPath(false); setInstallPath('') }} className="w-[420px] max-w-[90vw]">
-        <Stack gap="md" className="p-4">
-          <Text size="sm" weight="semibold">Install Plugin from Directory</Text>
-          <Input
-            value={installPath}
-            onChange={e => setInstallPath(e.target.value)}
-            placeholder="/path/to/plugin"
-            size="sm"
-            autoFocus
-            onKeyDown={e => { if (e.key === 'Enter') handleInstallFromFolder() }}
-          />
-        </Stack>
-        <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-          <Button variant="outline" size="sm" onClick={() => { setShowInstallPath(false); setInstallPath('') }}>Cancel</Button>
-          <Button variant="solid" size="sm" onClick={handleInstallFromFolder} disabled={!installPath.trim()}>Install</Button>
-        </Flex>
-      </Modal>
     </Stack>
   )
 }

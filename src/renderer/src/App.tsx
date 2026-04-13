@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import { PluginDetailView } from '@/components/plugins/PluginDetailView'
+import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
@@ -131,6 +132,9 @@ export function App() {
                   <PluginDetailView
                     pluginName={(activeTab as PluginDetailTab).pluginName}
                   />
+                )}
+                {activeTab?.type === 'install-plugin' && (
+                  <InstallPluginTab />
                 )}
                 {!activeTab && (
                   <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
