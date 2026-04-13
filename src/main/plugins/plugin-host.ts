@@ -10,6 +10,7 @@ import { safeCall, ErrorBudget } from './sdk/safe-call'
 import type { DriverRegistryImpl } from './sdk/driver-registry'
 import type { CommandRegistryImpl } from './sdk/command-registry'
 import type { PanelRegistryImpl } from './sdk/panel-registry'
+import type { UIRegistryImpl } from './sdk/ui-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import type { DbAdapter } from '../db/adapter'
@@ -95,6 +96,7 @@ interface BootDeps {
   driverRegistry: DriverRegistryImpl
   commandRegistry: CommandRegistryImpl
   panelRegistry: PanelRegistryImpl
+  uiRegistry: UIRegistryImpl
   getAdapter: (connectionId: string) => DbAdapter | undefined
   getProfile: (connectionId: string) => ConnectionProfile | undefined
   keyring: import('./sdk/types').KeyringAccess
@@ -256,6 +258,7 @@ export class PluginBootCoordinator {
       driverRegistry: this.deps.driverRegistry,
       commandRegistry: this.deps.commandRegistry,
       panelRegistry: this.deps.panelRegistry,
+      uiRegistry: this.deps.uiRegistry,
       schemaAccess: new SchemaAccessImpl(this.deps.getAdapter),
       connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
       settingsStore: this.deps.settingsStore,

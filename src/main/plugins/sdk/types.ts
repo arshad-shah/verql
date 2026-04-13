@@ -1,6 +1,7 @@
 // src/main/plugins/sdk/types.ts
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex } from '@shared/types'
 import type { DbAdapter } from '../../db/adapter'
+import type { UIRegistry } from './ui-registry'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ export interface PluginContext {
   drivers: DriverRegistry
   commands: CommandRegistry
   panels: PanelRegistry
+  ui: UIRegistry
   schema: SchemaAccess
   connections: ConnectionAccess
   settings: PluginSettings
@@ -73,7 +75,7 @@ export interface ConnectionMiddleware {
 // ─── Command Registry ────────────────────────────────────────────────────────
 
 export interface CommandRegistry {
-  register(id: string, handler: () => void | Promise<void>): Disposable
+  register(id: string, handler: (payload?: Record<string, unknown>) => void | Promise<void>): Disposable
 }
 
 // ─── Panel Registry ──────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ import { PluginBootCoordinator } from './plugins/plugin-host'
 import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
+import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { safeCall } from './plugins/sdk/safe-call'
 import { KeyringService } from './keyring'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
@@ -302,6 +303,7 @@ export function registerIpcHandlers(): void {
   })
 
   handle('db:switch-database', async (profileId: string, database: string) => {
+    if (!database) throw new Error('Database name is required')
     const adapter = activeAdapters.get(profileId)
     if (!adapter) throw new Error('Not connected — select a connection first')
     try {
@@ -463,10 +465,13 @@ export function registerIpcHandlers(): void {
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────
 
+  const uiRegistry = new UIRegistryImpl()
+
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry,
     commandRegistry,
     panelRegistry,
+    uiRegistry,
     getAdapter: (id) => activeAdapters.get(id),
     getProfile: (id) => configStore.getConnection(id),
     keyring,
@@ -596,5 +601,107 @@ export function registerIpcHandlers(): void {
       }
     }
     return fields
+  })
+
+  // ─── Plugin UI ──────────────────────────────────────────────────────────────
+
+  handle('plugins:ui:get-contributions', async (surface) => {
+    const contributions: import('@shared/plugin-ui-types').UIContribution[] = []
+
+    for (const plugin of pluginCoordinator.getLoadedPlugins()) {
+      if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
+      const pluginId = plugin.manifest.name
+
+      if (surface === 'statusBar') {
+        for (const entry of uiRegistry.getAllStatusBars()) {
+          contributions.push({
+            pluginId,
+            pluginName: plugin.manifest.displayName,
+            surface: 'statusBar',
+            contributionId: entry.id,
+            widgets: entry.widgets,
+            meta: plugin.manifest.contributes.statusBar?.find(s => s.id === entry.id) ?? {}
+          })
+        }
+      }
+
+      if (surface === 'panels') {
+        for (const entry of uiRegistry.getAllPanels()) {
+          contributions.push({
+            pluginId,
+            pluginName: plugin.manifest.displayName,
+            surface: 'panels',
+            contributionId: entry.id,
+            widgets: entry.widgets,
+            meta: {}
+          })
+        }
+      }
+
+      if (surface === 'tabs') {
+        for (const entry of uiRegistry.getAllTabs()) {
+          contributions.push({
+            pluginId,
+            pluginName: plugin.manifest.displayName,
+            surface: 'tabs',
+            contributionId: entry.id,
+            widgets: entry.widgets,
+            meta: {}
+          })
+        }
+      }
+
+      if (surface === 'contextMenu') {
+        const menus = plugin.manifest.contributes.contextMenus
+        if (menus) {
+          for (const menu of menus) {
+            contributions.push({
+              pluginId,
+              pluginName: plugin.manifest.displayName,
+              surface: 'contextMenu',
+              contributionId: menu.id,
+              widgets: [],
+              meta: { target: menu.target, label: menu.label, command: menu.command }
+            })
+          }
+        }
+      }
+
+      if (surface === 'activityBar') {
+        const bars = plugin.manifest.contributes.activityBar
+        if (bars) {
+          for (const bar of bars) {
+            contributions.push({
+              pluginId,
+              pluginName: plugin.manifest.displayName,
+              surface: 'activityBar',
+              contributionId: bar.id,
+              widgets: [],
+              meta: { title: bar.title, icon: bar.icon, zone: bar.zone ?? 'top' }
+            })
+          }
+        }
+      }
+    }
+
+    return contributions
+  })
+
+  handle('plugins:ui:resolve', async (pluginId, resolverId, context) => {
+    return pluginCoordinator.safeCallWithBudget(pluginId, () =>
+      uiRegistry.resolve(resolverId, context)
+    )
+  })
+
+  handle('plugins:ui:action', async (pluginId, commandId, payload) => {
+    await pluginCoordinator.safeCallWithBudget(pluginId, () =>
+      commandRegistry.execute(commandId, undefined, payload)
+    )
+  })
+
+  // Forward UIRegistry changes to renderer
+  uiRegistry.onChange(() => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win) win.webContents.send('plugins:ui:contributions-changed')
   })
 }

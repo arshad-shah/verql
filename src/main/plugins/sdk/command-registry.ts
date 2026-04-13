@@ -2,9 +2,9 @@
 import type { Disposable, CommandRegistry } from './types'
 
 export class CommandRegistryImpl implements CommandRegistry {
-  private commands = new Map<string, () => void | Promise<void>>()
+  private commands = new Map<string, (payload?: Record<string, unknown>) => void | Promise<void>>()
 
-  register(id: string, handler: () => void | Promise<void>): Disposable {
+  register(id: string, handler: (payload?: Record<string, unknown>) => void | Promise<void>): Disposable {
     if (this.commands.has(id)) {
       throw new Error(`Command '${id}' is already registered`)
     }
@@ -12,15 +12,15 @@ export class CommandRegistryImpl implements CommandRegistry {
     return { dispose: () => { this.commands.delete(id) } }
   }
 
-  async execute(id: string, wrapper?: <T>(fn: () => T | Promise<T>) => Promise<T>): Promise<void> {
+  async execute(id: string, wrapper?: <T>(fn: () => T | Promise<T>) => Promise<T>, payload?: Record<string, unknown>): Promise<void> {
     const handler = this.commands.get(id)
     if (!handler) {
       throw new Error(`Command '${id}' not found`)
     }
     if (wrapper) {
-      await wrapper(handler)
+      await wrapper(() => handler(payload))
     } else {
-      await handler()
+      await handler(payload)
     }
   }
 

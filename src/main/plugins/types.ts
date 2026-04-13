@@ -1,5 +1,6 @@
 // src/main/plugins/types.ts
 import type { PluginStatus, PluginContext } from './sdk/types'
+import type { ActivityBarContribution, StatusBarContribution, ContextMenuContribution, TabContribution, SelectorContribution } from '@shared/plugin-ui-types'
 
 export interface PluginManifest {
   name: string
@@ -18,6 +19,11 @@ export interface PluginManifest {
     connectionFields?: ConnectionFieldContribution[]
     panels?: PanelContributionManifest[]
     settings?: SettingContribution[]
+    activityBar?: ActivityBarContribution[]
+    statusBar?: StatusBarContribution[]
+    contextMenus?: ContextMenuContribution[]
+    tabs?: TabContribution[]
+    selectors?: SelectorContribution[]
   }
 }
 
