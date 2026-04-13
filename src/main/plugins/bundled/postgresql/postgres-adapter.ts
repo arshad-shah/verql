@@ -5,8 +5,11 @@ import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, Te
 export class PostgresAdapter implements DbAdapter {
   private pool: pg.Pool | null = null
   private config: pg.PoolConfig
+  private currentDatabase: string
+  private switchLock: Promise<void> = Promise.resolve()
 
   constructor(config: Record<string, unknown>) {
+    this.currentDatabase = config.database as string
     this.config = {
       host: config.host as string,
       port: config.port as number,
@@ -37,11 +40,23 @@ export class PostgresAdapter implements DbAdapter {
   }
 
   async switchDatabase(database: string): Promise<void> {
-    await this.pool?.end()
-    this.config = { ...this.config, database }
-    this.pool = new pg.Pool(this.config)
-    const client = await this.pool.connect()
-    client.release()
+    if (this.pool && this.currentDatabase === database) return
+    // Serialize pool switches so concurrent calls don't destroy each other's pools
+    const prev = this.switchLock
+    let resolve!: () => void
+    this.switchLock = new Promise<void>((r) => { resolve = r })
+    try {
+      await prev
+      if (this.pool && this.currentDatabase === database) return
+      await this.pool?.end()
+      this.currentDatabase = database
+      this.config = { ...this.config, database }
+      this.pool = new pg.Pool(this.config)
+      const client = await this.pool.connect()
+      client.release()
+    } finally {
+      resolve()
+    }
   }
 
   async disconnect(): Promise<void> {
