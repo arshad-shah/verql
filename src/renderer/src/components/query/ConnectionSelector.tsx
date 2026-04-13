@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Database, ChevronDown, Layers, Warehouse, ShieldCheck } from 'lucide-react'
+import { Database, ChevronDown, Layers } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
-import { useToastStore } from '@/stores/toast'
 import { useTabsStore } from '@/stores/tabs'
 import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
 
@@ -14,39 +13,21 @@ interface Props {
 
 export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
   const { connections, connectedIds, connect } = useConnectionsStore()
-  const { fetchSchemas, fetchDatabases, clearCache } = useSchemaStore()
-  const addToast = useToastStore((s) => s.addToast)
+  const { fetchSchemas } = useSchemaStore()
   const { setTabConnection, setTabSchema } = useTabsStore()
   const [showConnDropdown, setShowConnDropdown] = useState(false)
   const [showSchemaDropdown, setShowSchemaDropdown] = useState(false)
-  const [showWarehouseDropdown, setShowWarehouseDropdown] = useState(false)
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false)
   const [schemaList, setSchemaList] = useState<string[]>([])
-  const [databaseList, setDatabaseList] = useState<string[]>([])
-  const [warehouseList, setWarehouseList] = useState<string[]>([])
-  const [roleList, setRoleList] = useState<string[]>([])
-  const [activeDatabase, setActiveDatabase] = useState('')
-  const [activeWarehouse, setActiveWarehouse] = useState('')
-  const [activeRole, setActiveRole] = useState('')
 
   const connectedList = connections.filter(c => connectedIds.has(c.id))
   const activeConn = connections.find(c => c.id === connectionId)
-  const isSnowflake = activeConn?.type === 'snowflake'
 
-  // Fetch schemas and databases when connection changes
+  // Fetch schemas when connection changes
   useEffect(() => {
     if (!connectionId || !connectedIds.has(connectionId)) {
       setSchemaList([])
-      setDatabaseList([])
-      setActiveDatabase('')
       return
     }
-
-    setActiveDatabase(activeConn?.database ?? '')
-
-    fetchDatabases(connectionId)
-      .then(dbs => setDatabaseList(dbs))
-      .catch(() => setDatabaseList([]))
 
     fetchSchemas(connectionId).then(s => {
       setSchemaList(s)
@@ -58,24 +39,6 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
         setTabSchema(tabId, resolved)
       }
     })
-
-    // Fetch warehouse/role lists for Snowflake via live connection
-    const conn = connections.find(c => c.id === connectionId)
-    if (conn?.type === 'snowflake') {
-      setActiveWarehouse((conn as Record<string, unknown>).warehouse as string ?? '')
-      setActiveRole((conn as Record<string, unknown>).role as string ?? '')
-
-      window.electronAPI.invoke('db:query', connectionId, 'SHOW WAREHOUSES')
-        .then(result => setWarehouseList(result.rows.map((r: Record<string, unknown>) => String(r['"name"'] ?? r.name ?? '')).filter(Boolean)))
-        .catch(() => setWarehouseList([]))
-
-      window.electronAPI.invoke('db:query', connectionId, 'SHOW ROLES')
-        .then(result => setRoleList(result.rows.map((r: Record<string, unknown>) => String(r['"name"'] ?? r.name ?? '')).filter(Boolean)))
-        .catch(() => setRoleList([]))
-    } else {
-      setWarehouseList([])
-      setRoleList([])
-    }
   }, [connectionId, connectedIds])
 
   const handleSelectConnection = (id: string) => {
@@ -88,55 +51,9 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
     setShowSchemaDropdown(false)
   }
 
-  const handleSwitchDatabase = async (db: string) => {
-    if (!connectionId || db === activeDatabase) return
-    try {
-      await window.electronAPI.invoke('db:switch-database', connectionId, db)
-      clearCache(connectionId)
-      setActiveDatabase(db)
-      // Re-fetch schemas for the new database
-      const newSchemas = await fetchSchemas(connectionId)
-      setSchemaList(newSchemas)
-      const conn = connections.find(c => c.id === connectionId)
-      const newDefault = conn?.type === 'mysql' ? db : 'public'
-      const resolved = newSchemas.includes(newDefault) ? newDefault : newSchemas[0] ?? 'public'
-      setTabSchema(tabId, resolved)
-      addToast({ type: 'success', title: `Switched to ${db}` })
-    } catch (err) {
-      addToast({ type: 'error', title: 'Failed to switch database', message: (err as Error).message })
-    }
-    setShowConnDropdown(false)
-  }
-
-  const handleSwitchWarehouse = async (wh: string) => {
-    if (!connectionId || wh === activeWarehouse) return
-    try {
-      await window.electronAPI.invoke('db:switch-warehouse', connectionId, wh)
-      setActiveWarehouse(wh)
-      addToast({ type: 'success', title: `Warehouse → ${wh}` })
-    } catch (err) {
-      addToast({ type: 'error', title: 'Failed to switch warehouse', message: (err as Error).message })
-    }
-    setShowWarehouseDropdown(false)
-  }
-
-  const handleSwitchRole = async (role: string) => {
-    if (!connectionId || role === activeRole) return
-    try {
-      await window.electronAPI.invoke('db:switch-role', connectionId, role)
-      setActiveRole(role)
-      addToast({ type: 'success', title: `Role → ${role}` })
-    } catch (err) {
-      addToast({ type: 'error', title: 'Failed to switch role', message: (err as Error).message })
-    }
-    setShowRoleDropdown(false)
-  }
-
   const closeAllDropdowns = () => {
     setShowConnDropdown(false)
     setShowSchemaDropdown(false)
-    setShowWarehouseDropdown(false)
-    setShowRoleDropdown(false)
   }
 
   return (
@@ -179,42 +96,8 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
         </>
       )}
 
-      {/* Warehouse selector (Snowflake) */}
-      {isSnowflake && warehouseList.length > 0 && (
-        <>
-          <Text size="xs" color="muted">/</Text>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => { setShowWarehouseDropdown(!showWarehouseDropdown); closeAllDropdowns() }}
-            className="flex items-center gap-1"
-          >
-            <Warehouse size={11} className="text-text-muted" />
-            <Text size="xs" color="secondary" truncate className="max-w-24">{activeWarehouse || 'warehouse'}</Text>
-            <ChevronDown size={10} className="text-text-muted" />
-          </Button>
-        </>
-      )}
-
-      {/* Role selector (Snowflake) */}
-      {isSnowflake && roleList.length > 0 && (
-        <>
-          <Text size="xs" color="muted">/</Text>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => { setShowRoleDropdown(!showRoleDropdown); closeAllDropdowns() }}
-            className="flex items-center gap-1"
-          >
-            <ShieldCheck size={11} className="text-text-muted" />
-            <Text size="xs" color="secondary" truncate className="max-w-24">{activeRole || 'role'}</Text>
-            <ChevronDown size={10} className="text-text-muted" />
-          </Button>
-        </>
-      )}
-
       {/* Backdrop for any dropdown */}
-      {(showConnDropdown || showSchemaDropdown || showWarehouseDropdown || showRoleDropdown) && (
+      {(showConnDropdown || showSchemaDropdown) && (
         <Box className="fixed inset-0 z-40" onClick={closeAllDropdowns} />
       )}
 
@@ -240,33 +123,6 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
               <Text size="xs" color="muted" className="ml-auto">{conn.database}</Text>
             </Button>
           ))}
-
-          {/* Databases on current server */}
-          {databaseList.length > 1 && connectionId && (
-            <>
-              <Divider />
-              <Text size="xs" color="muted" as="p" className="px-3 py-0.5 text-[10px] uppercase tracking-wider">Databases on server</Text>
-              {databaseList.map(db => {
-                const isCurrent = db === activeDatabase
-                return (
-                  <Button
-                    key={db}
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => handleSwitchDatabase(db)}
-                    disabled={isCurrent}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors rounded-none border-0 h-auto ${
-                      isCurrent ? 'text-accent' : 'text-text-muted hover:bg-white/5 hover:text-text-secondary'
-                    }`}
-                  >
-                    <Database size={11} className="shrink-0" />
-                    <Text size="xs" truncate>{db}</Text>
-                    {isCurrent && <Text size="xs" color="accent" className="ml-auto text-[10px]">active</Text>}
-                  </Button>
-                )
-              })}
-            </>
-          )}
 
           {/* Disconnected connections */}
           {connections.filter(c => !connectedIds.has(c.id)).length > 0 && (
@@ -313,48 +169,6 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
             >
               <Layers size={11} className="shrink-0" />
               <Text size="xs" truncate>{s}</Text>
-            </Button>
-          ))}
-        </ScrollArea>
-      )}
-
-      {/* Warehouse dropdown (Snowflake) */}
-      {showWarehouseDropdown && (
-        <ScrollArea direction="vertical" className="absolute top-full mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[180px] py-1 max-h-60">
-          {warehouseList.map(wh => (
-            <Button
-              key={wh}
-              variant="ghost"
-              size="xs"
-              onClick={() => handleSwitchWarehouse(wh)}
-              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                wh === activeWarehouse ? 'text-accent' : 'text-text-secondary'
-              }`}
-            >
-              <Warehouse size={11} className="shrink-0" />
-              <Text size="xs" truncate>{wh}</Text>
-              {wh === activeWarehouse && <Text size="xs" color="accent" className="ml-auto text-[10px]">active</Text>}
-            </Button>
-          ))}
-        </ScrollArea>
-      )}
-
-      {/* Role dropdown (Snowflake) */}
-      {showRoleDropdown && (
-        <ScrollArea direction="vertical" className="absolute top-full mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[180px] py-1 max-h-60">
-          {roleList.map(r => (
-            <Button
-              key={r}
-              variant="ghost"
-              size="xs"
-              onClick={() => handleSwitchRole(r)}
-              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                r === activeRole ? 'text-accent' : 'text-text-secondary'
-              }`}
-            >
-              <ShieldCheck size={11} className="shrink-0" />
-              <Text size="xs" truncate>{r}</Text>
-              {r === activeRole && <Text size="xs" color="accent" className="ml-auto text-[10px]">active</Text>}
             </Button>
           ))}
         </ScrollArea>

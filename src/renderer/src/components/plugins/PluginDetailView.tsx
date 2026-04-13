@@ -3,6 +3,7 @@ import { Power, PowerOff, Trash2, CheckCircle, AlertTriangle, XCircle, Clock } f
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { PluginIcon } from './ExtensionsPanel'
 import { useToastStore } from '@/stores/toast'
+import { usePluginUIStore } from '@/stores/plugin-ui'
 import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput } from '@/primitives'
 
 interface PluginInfo {
@@ -98,11 +99,29 @@ export function PluginDetailView({ pluginName }: Props) {
   const handleActivate = async () => {
     const result = await window.electronAPI.invoke('plugins:activate', pluginName)
     if (!result.success) addToast({ type: 'error', title: 'Failed to activate', message: result.error })
+    // Force immediate UI refresh
+    const uiStore = usePluginUIStore.getState()
+    uiStore.invalidateAll()
+    await Promise.all([
+      uiStore.fetchContributions('statusBar'),
+      uiStore.fetchContributions('activityBar'),
+      uiStore.fetchContributions('panels'),
+      uiStore.fetchContributions('contextMenu'),
+    ])
     await loadPlugin()
   }
 
   const handleDeactivate = async () => {
     await window.electronAPI.invoke('plugins:deactivate', pluginName)
+    // Force immediate UI cleanup — don't wait for debounced event
+    const uiStore = usePluginUIStore.getState()
+    uiStore.invalidateAll()
+    await Promise.all([
+      uiStore.fetchContributions('statusBar'),
+      uiStore.fetchContributions('activityBar'),
+      uiStore.fetchContributions('panels'),
+      uiStore.fetchContributions('contextMenu'),
+    ])
     await loadPlugin()
   }
 

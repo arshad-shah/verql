@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Stack, Flex, Divider, Heading, Text } from '@/primitives'
 import { Switch } from '@/primitives'
 import { Spinner } from '@/primitives'
+import { usePluginUIStore } from '@/stores/plugin-ui'
 
 interface PluginInfo {
   name: string
@@ -30,6 +31,15 @@ export function PluginSettings() {
     } else {
       await window.electronAPI.invoke('plugins:deactivate', name)
     }
+    // Force immediate UI cleanup/refresh
+    const uiStore = usePluginUIStore.getState()
+    uiStore.invalidateAll()
+    await Promise.all([
+      uiStore.fetchContributions('statusBar'),
+      uiStore.fetchContributions('activityBar'),
+      uiStore.fetchContributions('panels'),
+      uiStore.fetchContributions('contextMenu'),
+    ])
     const list = await window.electronAPI.invoke('plugins:list')
     setPlugins(list)
   }
