@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUiStore } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
+import { usePluginUIStore } from '@/stores/plugin-ui'
+import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
@@ -17,6 +19,13 @@ export function Sidebar() {
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
+  const panelContributions = usePluginUIStore((s) => s.contributions.panels ?? [])
+  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+
+  useEffect(() => {
+    fetchContributions('panels')
+  }, [fetchContributions])
+
   const titles: Record<string, string> = {
     explorer: 'Explorer',
     query: 'Saved Queries',
@@ -24,6 +33,10 @@ export function Sidebar() {
     extensions: 'Extensions',
     settings: 'Settings'
   }
+  const pluginTitles = Object.fromEntries(
+    panelContributions.map((c) => [`plugin:${c.contributionId}`, c.pluginName])
+  )
+  const allTitles: Record<string, string> = { ...titles, ...pluginTitles }
 
   const isConnected = activeConnectionId && connectedIds.has(activeConnectionId)
 
@@ -35,7 +48,7 @@ export function Sidebar() {
         className="px-3 py-2 border-b border-border"
       >
         <Text size="xs" color="muted" className="uppercase tracking-wider">
-          {titles[activePanel] ?? 'Explorer'}
+          {allTitles[activePanel] ?? 'Explorer'}
         </Text>
         {isConnected && activePanel === 'explorer' && (
           <Tooltip content="Import data" side="left">
@@ -64,6 +77,14 @@ export function Sidebar() {
           )
         )}
         {activePanel === 'extensions' && <ExtensionsPanel />}
+        {/* Plugin-contributed panels */}
+        {panelContributions
+          .filter((c) => activePanel === `plugin:${c.contributionId}`)
+          .map((c) => (
+            <div key={c.contributionId} className="p-3 space-y-2">
+              <WidgetRenderer widgets={c.widgets} pluginId={c.pluginId} />
+            </div>
+          ))}
       </ScrollArea>
 
       {/* Modals */}

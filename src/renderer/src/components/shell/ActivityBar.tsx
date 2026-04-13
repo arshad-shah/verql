@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Database, PenSquare, BarChart3, Puzzle, Settings } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
+import { usePluginUIStore } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { NotificationBell } from './NotificationBell'
 
@@ -12,6 +14,12 @@ const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = 
 
 export function ActivityBar() {
   const { activePanel, sidebarVisible, setActivePanel } = useUiStore()
+  const activityBarContributions = usePluginUIStore((s) => s.contributions.activityBar ?? [])
+  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+
+  useEffect(() => {
+    fetchContributions('activityBar')
+  }, [fetchContributions])
 
   const renderButton = (id: ActivityPanel, Icon: typeof Database, label: string) => {
     const isActive = activePanel === id && sidebarVisible
@@ -42,6 +50,13 @@ export function ActivityBar() {
       className="w-12 bg-bg-primary border-r border-border shrink-0 pt-2"
     >
       {topItems.map(({ id, icon, label }) => renderButton(id, icon, label))}
+      {activityBarContributions
+        .filter((c) => c.meta.zone === 'top' || !c.meta.zone)
+        .map((c) => renderButton(
+          `plugin:${c.contributionId}` as ActivityPanel,
+          Puzzle,
+          c.meta.title as string
+        ))}
       <Spacer />
       <NotificationBell />
       {renderButton('settings', Settings, 'Settings')}

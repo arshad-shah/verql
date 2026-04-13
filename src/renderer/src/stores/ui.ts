@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { useSettingsStore } from './settings'
 
-export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings'
+export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
 interface UiState {
   activePanel: ActivityPanel
