@@ -56,6 +56,7 @@ const iconButtonVariants = cva(
         solid: 'bg-accent-emphasis text-white hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)]',
         outline: 'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
+        'tab-action': 'bg-transparent hover:bg-[rgba(255,255,255,0.06)] text-text-tertiary hover:text-text-primary rounded-full',
       },
       size: {
         xs: 'h-7 w-7 rounded',
@@ -63,6 +64,7 @@ const iconButtonVariants = cva(
         md: 'h-9 w-9 rounded-md',
         lg: 'h-10 w-10 rounded-md',
         xl: 'h-12 w-12 rounded-lg',
+        'tab-action': 'h-4 w-4',
       },
     },
     defaultVariants: {

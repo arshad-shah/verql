@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Settings } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { Select } from '@/primitives/forms/Select'
@@ -72,14 +72,27 @@ export function ConnectionSwitcher() {
           )}
         />
       </div>
-      <Tooltip content="Manage connections">
+      <Tooltip content="Edit connection" side="bottom">
         <IconButton
           size="sm"
           variant="ghost"
-          label="Manage connections"
-          onClick={() => openConnectionForm()}
+          label="Edit connection"
+          disabled={!activeConnectionId}
+          onClick={() => {
+            if (activeConnectionId) openConnectionForm(activeConnectionId)
+          }}
         >
           <Settings size={14} />
+        </IconButton>
+      </Tooltip>
+      <Tooltip content="New connection" side="bottom">
+        <IconButton
+          size="sm"
+          variant="ghost"
+          label="New connection"
+          onClick={() => openConnectionForm()}
+        >
+          <Plus size={14} />
         </IconButton>
       </Tooltip>
     </Flex>

@@ -9,11 +9,11 @@ const meta: Meta<typeof IconButton> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['solid', 'outline', 'ghost'],
+      options: ['solid', 'outline', 'ghost', 'tab-action'],
     },
     size: {
       control: 'select',
-      options: ['xs', 'sm', 'md', 'lg', 'xl'],
+      options: ['xs', 'sm', 'md', 'lg', 'xl', 'tab-action'],
     },
     disabled: { control: 'boolean' },
   },

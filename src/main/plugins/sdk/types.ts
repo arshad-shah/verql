@@ -60,6 +60,8 @@ export interface ConnectionField {
   group?: string
   fetchable?: boolean
   step?: number
+  /** Static options for non-fetchable select fields */
+  options?: { value: string; label: string }[]
 }
 
 export interface ConnectionMiddleware {

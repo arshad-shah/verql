@@ -19,6 +19,7 @@ interface Props {
 interface PluginField {
   key: string; label: string; type: string; required?: boolean
   default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number
+  options?: { value: string; label: string }[]
 }
 
 interface PluginDriver {
@@ -142,6 +143,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <FormField key={field.key} label={field.label}>
             <Select
               size="lg"
+              searchable
+              searchPlaceholder={`Search ${field.label.toLowerCase()}…`}
               value={String(value)}
               onChange={(v) => update({ [field.key]: v })}
               options={options.map(o => ({ value: o, label: o }))}
@@ -158,6 +161,19 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             placeholder={authStatus === 'authenticated' ? 'Type a value' : 'Authenticate first'}
             disabled={authStatus !== 'authenticated'}
             size="lg"
+          />
+        </FormField>
+      )
+    }
+
+    if (!field.fetchable && field.type === 'select' && field.options) {
+      return (
+        <FormField key={field.key} label={field.label}>
+          <Select
+            size="lg"
+            value={String(value)}
+            onChange={(v) => update({ [field.key]: v })}
+            options={field.options}
           />
         </FormField>
       )
@@ -236,10 +252,10 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     return (
       <Box
         key={step}
-        className={`border rounded-lg overflow-hidden transition-colors ${
-          isCompleted ? 'border-border-success bg-bg-success/5' :
-          isActive ? 'border-border-accent' :
-          'border-border-default opacity-60'
+        className={`border rounded-lg transition-colors ${
+          isCompleted ? 'border-success/20 bg-success/5' :
+          isActive ? 'border-accent/30' :
+          'border-border-subtle opacity-60'
         }`}
       >
         <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
@@ -340,10 +356,10 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             {hasFetchableFields && (
               <Stack gap="md">
                 {/* Step 1: Authenticate */}
-                <Box className={`border rounded-lg overflow-hidden transition-colors ${
-                  authStatus === 'authenticated' ? 'border-border-success bg-bg-success/5' :
-                  authStatus === 'authenticating' ? 'border-border-accent' :
-                  'border-border-default'
+                <Box className={`border rounded-lg transition-colors ${
+                  authStatus === 'authenticated' ? 'border-success/20 bg-success/5' :
+                  authStatus === 'authenticating' ? 'border-accent/30' :
+                  'border-border-subtle'
                 }`}>
                   <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
@@ -401,7 +417,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
             {/* SSH Tunnel */}
             {sshFields.length > 0 && (
-              <Box className="border border-border-default rounded-lg overflow-hidden">
+              <Box className="border border-border-subtle rounded-lg overflow-hidden">
                 <Button
                   type="button"
                   variant="ghost"

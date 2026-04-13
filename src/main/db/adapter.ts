@@ -13,6 +13,8 @@ export interface DbAdapter {
   getDatabases(): Promise<string[]>
   switchDatabase(database: string): Promise<void>
   setSchema?(schema: string): Promise<void>
+  switchWarehouse?(warehouse: string): Promise<void>
+  switchRole?(role: string): Promise<void>
   cancelQuery?(): void
   isConnected(): boolean
   getConnectionOptions?(field: string): Promise<string[]>

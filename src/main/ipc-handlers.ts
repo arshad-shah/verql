@@ -319,6 +319,22 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  handle('db:switch-warehouse', async (profileId: string, warehouse: string) => {
+    const adapter = activeAdapters.get(profileId)
+    if (!adapter) throw new Error('Not connected')
+    if (adapter.switchWarehouse) {
+      await adapter.switchWarehouse(warehouse)
+    }
+  })
+
+  handle('db:switch-role', async (profileId: string, role: string) => {
+    const adapter = activeAdapters.get(profileId)
+    if (!adapter) throw new Error('Not connected')
+    if (adapter.switchRole) {
+      await adapter.switchRole(role)
+    }
+  })
+
   handle('db:cancel-query', async (profileId: string) => {
     const adapter = activeAdapters.get(profileId)
     if (adapter?.cancelQuery) {

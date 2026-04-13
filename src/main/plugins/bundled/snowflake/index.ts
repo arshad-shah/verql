@@ -21,7 +21,16 @@ export function activate(ctx: PluginContext): void {
       { key: 'host', label: 'Host Override', type: 'text' },
       { key: 'username', label: 'Username', type: 'text' },
       { key: 'password', label: 'Password', type: 'password' },
-      { key: 'authenticator', label: 'Authenticator', type: 'text', default: 'externalbrowser' },
+      {
+        key: 'authenticator', label: 'Authenticator', type: 'select', default: 'externalbrowser',
+        options: [
+          { value: 'externalbrowser', label: 'SSO (Browser)' },
+          { value: 'snowflake', label: 'Username / Password' },
+          { value: 'SNOWFLAKE_JWT', label: 'Key Pair (JWT)' },
+          { value: 'oauth', label: 'OAuth' },
+          { value: 'https://okta.example.com', label: 'Okta (enter URL)' },
+        ],
+      },
       { key: 'privateKeyPath', label: 'Private Key File', type: 'file' },
       { key: 'passphrase', label: 'Key Passphrase', type: 'password' },
       { key: 'role', label: 'Role', type: 'select', fetchable: true, step: 1 },

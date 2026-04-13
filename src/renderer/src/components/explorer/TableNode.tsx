@@ -187,8 +187,10 @@ export function TableNode({
   return (
     <ContextMenu items={menuItems}>
       <div
-        className="mx-1 mb-1 rounded-lg overflow-hidden"
+        className="mb-1 rounded-lg overflow-hidden"
         style={{
+          marginLeft: paddingLeft,
+          marginRight: 4,
           border: '1px solid var(--color-border-default)',
           background: 'var(--color-bg-secondary)',
         }}
@@ -197,7 +199,7 @@ export function TableNode({
         <button
           className="group w-full flex items-center gap-1.5 text-left transition-colors duration-[var(--transition-fast)]"
           style={{
-            paddingLeft,
+            paddingLeft: 8,
             paddingRight: 6,
             paddingTop: 3,
             paddingBottom: 3,

@@ -6,6 +6,7 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,
+  FloatingPortal,
   offset,
   flip,
   shift,
@@ -84,6 +85,8 @@ export interface SelectProps extends VariantProps<typeof triggerVariants> {
   renderValue?: (option: SelectOption | undefined) => React.ReactNode
   placeholder?: string
   disabled?: boolean
+  searchable?: boolean
+  searchPlaceholder?: string
   className?: string
   'aria-label'?: string
 }
@@ -103,18 +106,28 @@ export function Select({
   renderValue,
   placeholder = 'Select\u2026',
   disabled = false,
+  searchable = false,
+  searchPlaceholder = 'Search\u2026',
   size,
   className,
   'aria-label': ariaLabel,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [searchQuery, setSearchQuery] = useState('')
   const typeaheadRef = useRef('')
   const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const listRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const allOptions = useMemo(() => flattenOptions(options), [options])
   const selectedOption = allOptions.find((o) => o.value === value)
+
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !searchQuery) return allOptions
+    const q = searchQuery.toLowerCase()
+    return allOptions.filter((o) => o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q))
+  }, [allOptions, searchQuery, searchable])
 
   /* ---- floating-ui ---- */
 
@@ -153,26 +166,40 @@ export function Select({
 
   /* ---- Focus management ---- */
 
+  const visibleOptions = searchable ? filteredOptions : allOptions
+
   const getEnabledIndices = useCallback(() => {
-    return allOptions.reduce<number[]>((acc, opt, i) => {
+    return visibleOptions.reduce<number[]>((acc, opt, i) => {
       if (!opt.disabled) acc.push(i)
       return acc
     }, [])
-  }, [allOptions])
+  }, [visibleOptions])
 
   useEffect(() => {
     if (isOpen) {
-      const selectedIdx = allOptions.findIndex((o) => o.value === value)
-      if (selectedIdx >= 0 && !allOptions[selectedIdx].disabled) {
+      const selectedIdx = visibleOptions.findIndex((o) => o.value === value)
+      if (selectedIdx >= 0 && !visibleOptions[selectedIdx].disabled) {
         setFocusedIndex(selectedIdx)
       } else {
         const enabled = getEnabledIndices()
         setFocusedIndex(enabled[0] ?? -1)
       }
+      if (searchable) {
+        requestAnimationFrame(() => searchInputRef.current?.focus())
+      }
     } else {
       setFocusedIndex(-1)
+      setSearchQuery('')
     }
-  }, [isOpen, allOptions, value, getEnabledIndices])
+  }, [isOpen, visibleOptions, value, getEnabledIndices, searchable])
+
+  // Re-focus first enabled option when search query changes
+  useEffect(() => {
+    if (isOpen && searchable && searchQuery) {
+      const enabled = getEnabledIndices()
+      setFocusedIndex(enabled[0] ?? -1)
+    }
+  }, [searchQuery, isOpen, searchable, getEnabledIndices])
 
   useEffect(() => {
     if (focusedIndex < 0 || !listRef.current) return
@@ -206,38 +233,46 @@ export function Select({
       }
 
       const enabled = getEnabledIndices()
-      if (enabled.length === 0) return
-
       const currentEnabledPos = enabled.indexOf(focusedIndex)
 
       switch (e.key) {
         case 'ArrowDown': {
           e.preventDefault()
+          if (enabled.length === 0) break
           const next = currentEnabledPos < enabled.length - 1 ? enabled[currentEnabledPos + 1] : enabled[0]
           setFocusedIndex(next)
           break
         }
         case 'ArrowUp': {
           e.preventDefault()
+          if (enabled.length === 0) break
           const prev = currentEnabledPos > 0 ? enabled[currentEnabledPos - 1] : enabled[enabled.length - 1]
           setFocusedIndex(prev)
           break
         }
         case 'Home': {
           e.preventDefault()
-          setFocusedIndex(enabled[0])
+          setFocusedIndex(enabled[0] ?? -1)
           break
         }
         case 'End': {
           e.preventDefault()
-          setFocusedIndex(enabled[enabled.length - 1])
+          setFocusedIndex(enabled[enabled.length - 1] ?? -1)
           break
         }
-        case 'Enter':
-        case ' ': {
+        case 'Enter': {
           e.preventDefault()
-          if (focusedIndex >= 0 && allOptions[focusedIndex]) {
-            selectOption(allOptions[focusedIndex])
+          if (focusedIndex >= 0 && visibleOptions[focusedIndex]) {
+            selectOption(visibleOptions[focusedIndex])
+          }
+          break
+        }
+        case ' ': {
+          // Allow space in search input for typing
+          if (searchable) break
+          e.preventDefault()
+          if (focusedIndex >= 0 && visibleOptions[focusedIndex]) {
+            selectOption(visibleOptions[focusedIndex])
           }
           break
         }
@@ -251,7 +286,8 @@ export function Select({
           break
         }
         default: {
-          if (e.key.length === 1) {
+          // Only do typeahead when not searchable (search input handles its own typing)
+          if (!searchable && e.key.length === 1) {
             e.preventDefault()
             typeaheadRef.current += e.key.toLowerCase()
             clearTimeout(typeaheadTimerRef.current)
@@ -259,7 +295,7 @@ export function Select({
               typeaheadRef.current = ''
             }, TYPEAHEAD_RESET_MS)
 
-            const match = allOptions.findIndex(
+            const match = visibleOptions.findIndex(
               (opt, i) => !opt.disabled && opt.label.toLowerCase().startsWith(typeaheadRef.current) && enabled.includes(i)
             )
             if (match >= 0) setFocusedIndex(match)
@@ -267,7 +303,7 @@ export function Select({
         }
       }
     },
-    [isOpen, focusedIndex, allOptions, getEnabledIndices, selectOption]
+    [isOpen, focusedIndex, visibleOptions, getEnabledIndices, selectOption, searchable]
   )
 
   /* ---- Render helpers ---- */
@@ -296,6 +332,15 @@ export function Select({
 
   const renderItems = useMemo(() => {
     const items: RenderItem[] = []
+
+    // When searchable, use the flat filtered list (groups are flattened by filter)
+    if (searchable && searchQuery) {
+      for (let i = 0; i < filteredOptions.length; i++) {
+        items.push({ kind: 'option', option: filteredOptions[i], flatIndex: i })
+      }
+      return items
+    }
+
     let flatIdx = 0
     for (const item of options) {
       if (isGroup(item)) {
@@ -308,7 +353,7 @@ export function Select({
       }
     }
     return items
-  }, [options])
+  }, [options, searchable, searchQuery, filteredOptions])
 
   /* ---- JSX ---- */
 
@@ -339,64 +384,87 @@ export function Select({
       </button>
 
       {isMounted && (
-        <div
-          ref={refs.setFloating}
-          style={{ ...floatingStyles, zIndex: 50 }}
-          {...getFloatingProps({
-            onKeyDown: handleKeyDown,
-          })}
-          aria-label={ariaLabel}
-          aria-activedescendant={focusedIndex >= 0 ? `select-option-${focusedIndex}` : undefined}
-        >
+        <FloatingPortal>
           <div
-            ref={listRef}
-            className={cn(
-              'overflow-auto max-h-60 py-1 outline-none',
-              'bg-bg-elevated border border-border-default rounded-lg',
-              'shadow-dropdown',
-            )}
-            style={transitionStyles}
-          >
-            {renderItems.map((item, i) => {
-              if (item.kind === 'group') {
-                return (
-                  <div
-                    key={`group-${i}`}
-                    className="px-3 pt-2 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider select-none"
-                  >
-                    {item.label}
-                  </div>
-                )
-              }
-
-              const { option, flatIndex } = item
-              const isSelected = option.value === value
-              const isFocused = flatIndex === focusedIndex
-
-              return (
-                <div
-                  key={option.value}
-                  id={`select-option-${flatIndex}`}
-                  role="option"
-                  aria-selected={isSelected}
-                  aria-disabled={option.disabled || undefined}
-                  data-option-index={flatIndex}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors duration-(--transition-fast)',
-                    isFocused && 'bg-hover',
-                    option.disabled && 'opacity-50 pointer-events-none',
-                  )}
-                  onPointerMove={() => {
-                    if (!option.disabled && focusedIndex !== flatIndex) setFocusedIndex(flatIndex)
-                  }}
-                  onClick={() => selectOption(option)}
-                >
-                  {renderOptionContent(option, { selected: isSelected, focused: isFocused })}
-                </div>
-              )
+            ref={refs.setFloating}
+            style={{ ...floatingStyles, zIndex: 50 }}
+            {...getFloatingProps({
+              onKeyDown: handleKeyDown,
             })}
+            aria-label={ariaLabel}
+            aria-activedescendant={focusedIndex >= 0 ? `select-option-${focusedIndex}` : undefined}
+          >
+            <div
+              className={cn(
+                'outline-none',
+                'bg-bg-elevated border border-border-default rounded-lg',
+                'shadow-dropdown',
+              )}
+              style={transitionStyles}
+            >
+              {searchable && (
+                <div className="px-2 pt-2 pb-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={searchPlaceholder}
+                    className="w-full h-7 px-2 text-xs rounded bg-bg-tertiary border border-border-default text-text-primary placeholder:text-text-tertiary outline-none focus:shadow-[var(--shadow-focus-glow)]"
+                    aria-label="Filter options"
+                  />
+                </div>
+              )}
+              <div
+                ref={listRef}
+                className="overflow-auto max-h-60 py-1"
+              >
+                {renderItems.length === 0 && searchable && searchQuery && (
+                  <div className="px-3 py-2 text-xs text-text-tertiary">No matches</div>
+                )}
+                {renderItems.map((item, i) => {
+                  if (item.kind === 'group') {
+                    return (
+                      <div
+                        key={`group-${i}`}
+                        className="px-3 pt-2 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider select-none"
+                      >
+                        {item.label}
+                      </div>
+                    )
+                  }
+
+                  const { option, flatIndex } = item
+                  const isSelected = option.value === value
+                  const isFocused = flatIndex === focusedIndex
+
+                  return (
+                    <div
+                      key={option.value}
+                      id={`select-option-${flatIndex}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      aria-disabled={option.disabled || undefined}
+                      data-option-index={flatIndex}
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors duration-(--transition-fast)',
+                        isFocused && 'bg-hover',
+                        option.disabled && 'opacity-50 pointer-events-none',
+                      )}
+                      onPointerMove={() => {
+                        if (!option.disabled && focusedIndex !== flatIndex) setFocusedIndex(flatIndex)
+                      }}
+                      onClick={() => selectOption(option)}
+                    >
+                      {renderOptionContent(option, { selected: isSelected, focused: isFocused })}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
-        </div>
+        </FloatingPortal>
       )}
     </div>
   )

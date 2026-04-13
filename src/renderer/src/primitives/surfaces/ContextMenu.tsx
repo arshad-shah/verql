@@ -20,6 +20,7 @@ export function ContextMenu({ items, className, children }: ContextMenuProps) {
 
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault()
+    e.stopPropagation()
     setPosition({ x: e.clientX, y: e.clientY })
   }
 

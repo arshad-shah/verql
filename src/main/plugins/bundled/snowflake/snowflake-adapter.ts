@@ -64,22 +64,25 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   async getConnectionOptions(field: string): Promise<string[]> {
+    // SHOW commands return quoted-lowercase column names (e.g. '"name"')
+    const extractName = (r: Record<string, unknown>) => String(r['"name"'] ?? r.name ?? '')
+
     switch (field) {
       case 'warehouse': {
         const result = await this.query('SHOW WAREHOUSES')
-        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+        return result.rows.map(extractName).filter(Boolean)
       }
       case 'role': {
         const result = await this.query('SHOW ROLES')
-        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+        return result.rows.map(extractName).filter(Boolean)
       }
       case 'database': {
         const result = await this.query('SHOW DATABASES')
-        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+        return result.rows.map(extractName).filter(Boolean)
       }
       case 'schema': {
         const result = await this.query('SHOW SCHEMAS')
-        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+        return result.rows.map(extractName).filter(Boolean)
       }
       default:
         return []
@@ -147,6 +150,7 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   private escapeIdentifier(name: string): string {
+    if (!name) throw new Error('Identifier cannot be empty')
     return '"' + name.replace(/"/g, '""') + '"'
   }
 
@@ -235,7 +239,9 @@ export class SnowflakeAdapter implements DbAdapter {
   async getDatabases(): Promise<string[]> {
     if (!this.connection) throw new Error('Not connected')
     const result = await this.query(`SHOW DATABASES`)
-    return result.rows.map((r) => r['"name"'] as string)
+    return result.rows
+      .map((r) => String(r['"name"'] ?? r.name ?? ''))
+      .filter(Boolean)
   }
 
   async switchDatabase(database: string): Promise<void> {
@@ -246,5 +252,15 @@ export class SnowflakeAdapter implements DbAdapter {
   async setSchema(schema: string): Promise<void> {
     if (!this.connection) throw new Error('Not connected')
     await this.query(`USE SCHEMA ${this.escapeIdentifier(schema)}`)
+  }
+
+  async switchWarehouse(warehouse: string): Promise<void> {
+    if (!this.connection) throw new Error('Not connected')
+    await this.query(`USE WAREHOUSE ${this.escapeIdentifier(warehouse)}`)
+  }
+
+  async switchRole(role: string): Promise<void> {
+    if (!this.connection) throw new Error('Not connected')
+    await this.query(`USE ROLE ${this.escapeIdentifier(role)}`)
   }
 }

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
@@ -21,11 +22,18 @@ export function TabBar() {
   } = useTabsStore()
   const { activeConnectionId } = useConnectionsStore()
 
-  const { scrollRef, canScrollLeft, canScrollRight, scrollLeft, scrollRight, onWheel } =
+  const { scrollRef, canScrollLeft, canScrollRight, scrollLeft, scrollRight, scrollIntoView, onWheel } =
     useTabScroll()
   const { draggedIndex, dropIndex, onDragStart, onDragOver, onDragEnd } = useTabDrag({
     onReorder: reorderTabs,
   })
+
+  // Keep the active tab scrolled into view
+  useEffect(() => {
+    if (activeTabId) {
+      scrollIntoView(activeTabId)
+    }
+  }, [activeTabId, scrollIntoView])
 
   const getContextMenuItems = (tabId: string, index: number) => {
     const tab = tabs.find(t => t.id === tabId)
@@ -43,24 +51,33 @@ export function TabBar() {
   }
 
   return (
-    <Flex align="center" className="h-9 bg-bg-secondary border-b border-border shrink-0">
+    <Flex
+      align="center"
+      gap="xs"
+      className="h-10 shrink-0 bg-bg-secondary px-1.5 border-b border-border-subtle"
+    >
       {/* Scroll left arrow */}
-      <button
+      <IconButton
+        label="Scroll tabs left"
+        size="xs"
+        variant="ghost"
         onClick={scrollLeft}
+        tabIndex={-1}
         className={cn(
-          'shrink-0 w-7 h-full flex items-center justify-center text-text-muted hover:text-text-primary transition-opacity',
+          'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
           canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
-        tabIndex={-1}
       >
         <ChevronLeft size={14} />
-      </button>
+      </IconButton>
 
-      {/* Scrollable tab list */}
-      <div
+      {/* Scrollable tab trough */}
+      <Flex
         ref={scrollRef}
         onWheel={onWheel}
-        className="flex-1 flex items-stretch h-full overflow-x-hidden"
+        align="center"
+        gap="xs"
+        className="flex-1 h-full overflow-x-hidden py-1"
       >
         {tabs.map((tab, index) => (
           <TabItem
@@ -78,34 +95,35 @@ export function TabBar() {
             onDragEnd={onDragEnd}
           />
         ))}
-      </div>
+      </Flex>
 
       {/* Scroll right arrow */}
-      <button
+      <IconButton
+        label="Scroll tabs right"
+        size="xs"
+        variant="ghost"
         onClick={scrollRight}
+        tabIndex={-1}
         className={cn(
-          'shrink-0 w-7 h-full flex items-center justify-center text-text-muted hover:text-text-primary transition-opacity',
+          'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
           canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
-        tabIndex={-1}
       >
         <ChevronRight size={14} />
-      </button>
+      </IconButton>
 
       {/* New tab button */}
-      <div className="shrink-0 border-l border-border h-full flex items-center">
-        <Tooltip content="New Query Tab" side="bottom">
-          <IconButton
-            label="New Query Tab"
-            size="xs"
-            variant="ghost"
-            onClick={() => addQueryTab(activeConnectionId)}
-            className="px-3 h-full w-auto rounded-none text-text-muted hover:text-text-primary"
-          >
-            <Plus size={14} />
-          </IconButton>
-        </Tooltip>
-      </div>
+      <Tooltip content="New Query Tab" side="bottom">
+        <IconButton
+          label="New Query Tab"
+          size="xs"
+          variant="ghost"
+          onClick={() => addQueryTab(activeConnectionId)}
+          className="shrink-0 text-text-tertiary hover:text-text-primary"
+        >
+          <Plus size={14} />
+        </IconButton>
+      </Tooltip>
     </Flex>
   )
 }

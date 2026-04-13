@@ -46,6 +46,14 @@ export interface IpcChannelMap {
     args: [profileId: string, database: string]
     return: void
   }
+  'db:switch-warehouse': {
+    args: [profileId: string, warehouse: string]
+    return: void
+  }
+  'db:switch-role': {
+    args: [profileId: string, role: string]
+    return: void
+  }
   'connections:list': {
     args: []
     return: ConnectionProfile[]
@@ -145,7 +153,7 @@ export interface IpcChannelMap {
   }
   'plugins:connection-fields': {
     args: []
-    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[] }[]
+    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[] }[] }[]
   }
   'plugins:middleware-fields': {
     args: []

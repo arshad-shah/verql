@@ -7,6 +7,7 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,
+  FloatingPortal,
   offset,
   flip,
   shift,
@@ -161,33 +162,35 @@ export function Tooltip({
         {children}
       </span>
       {isMounted && (
-        <div
-          ref={refs.setFloating}
-          role="tooltip"
-          style={{ ...floatingStyles, zIndex: 50 }}
-          {...getFloatingProps()}
-        >
+        <FloatingPortal>
           <div
-            className={cn(
-              'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
-              'bg-bg-elevated border border-border-default text-text-primary',
-              'shadow-elevated',
-              'pointer-events-none whitespace-nowrap',
-              className
-            )}
-            style={{
-              ...transitionStyles,
-              letterSpacing: '0.01em',
-            }}
+            ref={refs.setFloating}
+            role="tooltip"
+            style={{ ...floatingStyles, zIndex: 50 }}
+            {...getFloatingProps()}
           >
-            {content}
-            <TooltipBeak
-              side={resolvedSide}
-              x={arrowData?.x}
-              y={arrowData?.y}
-            />
+            <div
+              className={cn(
+                'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
+                'bg-bg-elevated border border-border-default text-text-primary',
+                'shadow-elevated',
+                'pointer-events-none whitespace-nowrap',
+                className
+              )}
+              style={{
+                ...transitionStyles,
+                letterSpacing: '0.01em',
+              }}
+            >
+              {content}
+              <TooltipBeak
+                side={resolvedSide}
+                x={arrowData?.x}
+                y={arrowData?.y}
+              />
+            </div>
           </div>
-        </div>
+        </FloatingPortal>
       )}
     </>
   )

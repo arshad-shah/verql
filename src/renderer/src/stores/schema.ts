@@ -180,12 +180,19 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
         for (const [k, v] of m) if (!k.startsWith(connectionId)) next.set(k, v)
         return next
       }
+      // Clear per-database schemas (connectionId:dbName) but keep the root-level
+      // schemas entry (key = exactly connectionId) so ExplorerTree's
+      // hierarchyLoaded stays true — its useEffect deps won't re-trigger a fetch.
+      const nextSchemas = new Map(s.schemas)
+      for (const k of nextSchemas.keys()) {
+        if (k.startsWith(connectionId) && k !== connectionId) nextSchemas.delete(k)
+      }
       return {
         tables: filterMap(s.tables),
         columns: filterMap(s.columns),
         indexes: filterMap(s.indexes),
-        schemas: filterMap(s.schemas),
-        databases: filterMap(s.databases),
+        // Preserve databases list (tree structure, rarely changes)
+        schemas: nextSchemas,
         rowCounts: filterMap(s.rowCounts),
         cacheVersion: s.cacheVersion + 1
       }

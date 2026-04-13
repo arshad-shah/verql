@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
-import { Flex, Text, Tooltip, ContextMenu, cn } from '@/primitives'
+import { Flex, Text, Tooltip, ContextMenu, cn, IconButton } from '@/primitives'
 import { getTabIcon } from './tab-icons'
 
 interface TabItemProps {
@@ -47,42 +47,57 @@ export function TabItem({
         onClick={onActivate}
         onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); onClose() } }}
         className={cn(
-          'group relative px-3 cursor-pointer shrink-0 h-full select-none',
-          'border-r border-border',
+          'group relative px-2.5 py-1 cursor-pointer shrink-0 select-none rounded-lg transition-all duration-[var(--transition-fast)]',
           isActive
-            ? 'bg-bg-primary border-t-2 border-t-accent'
-            : 'bg-bg-secondary hover:bg-bg-tertiary border-t-2 border-t-transparent',
+            ? 'bg-bg-tertiary border border-border-subtle shadow-[var(--shadow-card)]'
+            : 'bg-transparent border border-transparent hover:bg-[rgba(255,255,255,0.04)] hover:border-border-subtle',
           isDragged && 'opacity-50',
-          isDropTarget && 'before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:bg-accent before:rounded-full',
+          isDropTarget && 'before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-accent before:rounded-full',
         )}
       >
         <Icon size={14} className={cn(iconColor, 'shrink-0')} />
         <Tooltip content={tab.title} side="bottom" delay={600}>
           <Text
             size="xs"
-            color={isActive ? 'primary' : 'muted'}
+            color={isActive ? 'primary' : 'secondary'}
             truncate
-            className="max-w-32"
+            className={cn('max-w-32', isActive && 'font-medium')}
           >
             {tab.title}
           </Text>
         </Tooltip>
-        <div
+
+        {/* Close / dirty indicator */}
+        <IconButton
+          size="tab-action"
+          label={isDirty ? 'Close tab (unsaved changes)' : 'Close tab'}
+          variant="tab-action"
           className={cn(
-            'shrink-0 w-4 h-4 flex items-center justify-center rounded',
-            'transition-opacity',
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            'ml-0.5 transition-opacity duration-[var(--transition-fast)]',
+            !isActive && !isDirty && 'opacity-0 group-hover:opacity-100',
           )}
           onClick={(e) => { e.stopPropagation(); onClose() }}
           onMouseEnter={() => setCloseHovered(true)}
           onMouseLeave={() => setCloseHovered(false)}
         >
           {isDirty && !closeHovered ? (
-            <div className="w-2 h-2 rounded-full bg-text-muted" />
+            <span
+              className="block h-[7px] w-[7px] rounded-full bg-warning"
+              aria-label="Unsaved changes"
+            />
           ) : (
-            <X size={10} className="text-text-muted hover:text-text-primary" />
+            <X
+              size={10}
+              strokeWidth={2.5}
+              className={cn(
+                'transition-colors duration-[var(--transition-fast)]',
+                isDirty && closeHovered
+                  ? 'text-error'
+                  : 'text-text-tertiary group-hover:text-text-secondary',
+              )}
+            />
           )}
-        </div>
+        </IconButton>
       </Flex>
     </ContextMenu>
   )
