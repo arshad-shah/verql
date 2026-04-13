@@ -61,6 +61,29 @@ export class SnowflakeAdapter implements DbAdapter {
     return { version: String(result.rows[0]?.version ?? 'unknown') }
   }
 
+  async getConnectionOptions(field: string): Promise<string[]> {
+    switch (field) {
+      case 'warehouse': {
+        const result = await this.query('SHOW WAREHOUSES')
+        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+      }
+      case 'role': {
+        const result = await this.query('SHOW ROLES')
+        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+      }
+      case 'database': {
+        const result = await this.query('SHOW DATABASES')
+        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+      }
+      case 'schema': {
+        const result = await this.query('SHOW SCHEMAS')
+        return result.rows.map((r: Record<string, unknown>) => String(r.name))
+      }
+      default:
+        return []
+    }
+  }
+
   async disconnect(): Promise<void> {
     if (this.connection) {
       await new Promise<void>((resolve) => {
