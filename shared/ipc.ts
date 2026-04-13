@@ -119,6 +119,14 @@ export interface IpcChannelMap {
     args: [path: string]
     return: { success: boolean; name?: string; error?: string }
   }
+  'plugins:install-from-zip': {
+    args: [zipPath: string]
+    return: { success: boolean; name?: string; error?: string }
+  }
+  'plugins:open-install-dialog': {
+    args: []
+    return: string | null
+  }
   'plugins:uninstall': {
     args: [name: string]
     return: void

@@ -102,4 +102,10 @@ export interface PluginDetailTab {
   pluginName: string
 }
 
-export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab
+export interface InstallPluginTab {
+  id: string
+  type: 'install-plugin'
+  title: string
+}
+
+export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab
