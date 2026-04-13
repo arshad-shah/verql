@@ -24,6 +24,7 @@ interface ContextDeps {
   schemaAccess: SchemaAccessImpl
   connectionAccess: ConnectionAccessImpl
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
+  keyring: import('./types').KeyringAccess
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
@@ -70,6 +71,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     schema: deps.schemaAccess,
     connections: deps.connectionAccess,
     settings,
+    keyring: deps.keyring,
     subscriptions
   }
 }

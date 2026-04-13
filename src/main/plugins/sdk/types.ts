@@ -35,6 +35,7 @@ export interface PluginContext {
   schema: SchemaAccess
   connections: ConnectionAccess
   settings: PluginSettings
+  keyring: KeyringAccess
   subscriptions: Disposable[]
 }
 
@@ -124,6 +125,14 @@ export interface PluginSettings {
   get<T>(key: string): T | undefined
   set(key: string, value: unknown): void
   onChanged(key: string, listener: (value: unknown) => void): Disposable
+}
+
+// ─── Keyring Access ─────────────────────────────────────────────────────────
+
+export interface KeyringAccess {
+  store(profileId: string, key: string, value: string): Promise<void>
+  retrieve(profileId: string, key: string): Promise<string | null>
+  delete(profileId: string, key: string): Promise<void>
 }
 
 // ─── Boot Report ─────────────────────────────────────────────────────────────
