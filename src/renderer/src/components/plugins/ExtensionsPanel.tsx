@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Power, PowerOff, Trash2, FolderOpen, RefreshCw, Package } from 'lucide-react'
-import { PluginDetailView } from './PluginDetailView'
-import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
+import { FolderOpen, RefreshCw, Package } from 'lucide-react'
+import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
-import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Button, Badge, Spinner, Box, Modal, Input, Alert } from '@/primitives'
+import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Modal, Input, Button, Spinner, SearchInput, cn } from '@/primitives'
 
 interface PluginInfo {
   name: string
@@ -11,17 +10,68 @@ interface PluginInfo {
   version: string
   description: string
   bundled: boolean
+  icon?: string
   status: { state: string; error?: string; phase?: string; contributions?: string[] }
   contributions: string[]
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  active: 'bg-green-400',
+  degraded: 'bg-yellow-400',
+  error: 'bg-red-400',
+}
+
+const ICON_GRADIENTS = [
+  'from-blue-500 to-blue-600',
+  'from-emerald-500 to-emerald-600',
+  'from-purple-500 to-purple-600',
+  'from-red-500 to-red-600',
+  'from-amber-500 to-amber-600',
+  'from-cyan-500 to-cyan-600',
+  'from-pink-500 to-pink-600',
+  'from-indigo-500 to-indigo-600',
+]
+
+function hashToIndex(str: string, max: number): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash) % max
+}
+
+export function PluginIcon({ plugin, size = 28 }: { plugin: PluginInfo; size?: number }) {
+  if (plugin.icon) {
+    return (
+      <img
+        src={plugin.icon}
+        alt={plugin.displayName}
+        className="rounded-lg object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+  const gradient = ICON_GRADIENTS[hashToIndex(plugin.name, ICON_GRADIENTS.length)]
+  return (
+    <Flex
+      align="center"
+      justify="center"
+      className={`bg-gradient-to-br ${gradient} rounded-lg text-white font-bold shrink-0`}
+      style={{ width: size, height: size, fontSize: size * 0.43 }}
+    >
+      {plugin.displayName.charAt(0).toUpperCase()}
+    </Flex>
+  )
 }
 
 export function ExtensionsPanel() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null)
-  const [uninstallTarget, setUninstallTarget] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
   const [showInstallPath, setShowInstallPath] = useState(false)
   const [installPath, setInstallPath] = useState('')
+  const openPluginDetail = useTabsStore(s => s.openPluginDetail)
+  const activeTabId = useTabsStore(s => s.activeTabId)
   const addToast = useToastStore(s => s.addToast)
 
   const loadPlugins = async () => {
@@ -32,24 +82,6 @@ export function ExtensionsPanel() {
   }
 
   useEffect(() => { loadPlugins() }, [])
-
-  const handleActivate = async (name: string) => {
-    const result = await window.electronAPI.invoke('plugins:activate', name)
-    if (!result.success) addToast({ type: 'error', title: 'Failed to activate', message: result.error })
-    await loadPlugins()
-  }
-
-  const handleDeactivate = async (name: string) => {
-    await window.electronAPI.invoke('plugins:deactivate', name)
-    await loadPlugins()
-  }
-
-  const handleUninstall = async (name: string) => {
-    await window.electronAPI.invoke('plugins:uninstall', name)
-    setSelectedPlugin(null)
-    setUninstallTarget(null)
-    await loadPlugins()
-  }
 
   const handleInstallFromFolder = async () => {
     if (!installPath.trim()) return
@@ -63,18 +95,6 @@ export function ExtensionsPanel() {
     }
   }
 
-  // Detail view
-  const activePlugin = plugins.find(p => p.name === selectedPlugin)
-  if (activePlugin) {
-    return (
-      <PluginDetailView
-        plugin={activePlugin}
-        onBack={() => setSelectedPlugin(null)}
-        onRefresh={loadPlugins}
-      />
-    )
-  }
-
   if (loading) {
     return (
       <Flex align="center" justify="center" className="py-8">
@@ -83,104 +103,48 @@ export function ExtensionsPanel() {
     )
   }
 
-  const bundledPlugins = plugins.filter(p => p.bundled)
-  const installedPlugins = plugins.filter(p => !p.bundled)
-
-  const statusColor = (state: string) => {
-    if (state === 'active') return 'bg-green-400'
-    if (state === 'degraded') return 'bg-yellow-400'
-    if (state === 'error') return 'bg-red-400'
-    return 'bg-gray-500'
-  }
-
-  const renderPlugin = (plugin: PluginInfo) => (
-    <Box key={plugin.name}
-      onClick={() => setSelectedPlugin(plugin.name)}
-      className="group px-2 py-2 rounded-md hover:bg-white/5 transition-colors mb-0.5 cursor-pointer"
-    >
-      <Flex direction="row" align="start" gap="sm">
-        <Box className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusColor(plugin.status.state)}`} />
-        <Box className="flex-1 min-w-0">
-          <Flex direction="row" align="center" gap="sm">
-            <Text size="xs" weight="medium" color="primary" truncate>{plugin.displayName}</Text>
-            <Text size="xs" color="muted" className="text-[10px]">v{plugin.version}</Text>
-            {plugin.bundled && (
-              <Badge size="sm" className="text-[9px]">built-in</Badge>
-            )}
-          </Flex>
-          <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 block">{plugin.description}</Text>
-          {plugin.contributions.length > 0 && (
-            <Text size="xs" color="muted" className="text-[10px] mt-0.5 block">{plugin.contributions.join(', ')}</Text>
-          )}
-          {plugin.status.error && (
-            <Text size="xs" color="error" truncate className="text-[10px] mt-0.5 block">{plugin.status.error}</Text>
-          )}
-        </Box>
-        <Flex className="hidden group-hover:flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-          {plugin.status.state === 'active' || plugin.status.state === 'degraded' ? (
-            <IconButton
-              label="Disable"
-              size="xs"
-              variant="ghost"
-              onClick={() => handleDeactivate(plugin.name)}
-              className="text-text-muted hover:text-warning"
-            >
-              <PowerOff size={12} />
-            </IconButton>
-          ) : (
-            <IconButton
-              label="Enable"
-              size="xs"
-              variant="ghost"
-              onClick={() => handleActivate(plugin.name)}
-              className="text-text-muted hover:text-success"
-            >
-              <Power size={12} />
-            </IconButton>
-          )}
-          {!plugin.bundled && (
-            <IconButton
-              label="Uninstall"
-              size="xs"
-              variant="ghost"
-              onClick={() => setUninstallTarget(plugin.name)}
-              className="text-text-muted hover:text-error"
-            >
-              <Trash2 size={12} />
-            </IconButton>
-          )}
-        </Flex>
-      </Flex>
-    </Box>
+  const filtered = plugins.filter(p =>
+    p.displayName.toLowerCase().includes(search.toLowerCase())
   )
+  const bundledPlugins = filtered.filter(p => p.bundled)
+  const installedPlugins = filtered.filter(p => !p.bundled)
 
   return (
     <Stack className="h-full">
-      <Flex direction="row" align="center" className="px-2 py-1 gap-1">
-        <Button
+      <Flex direction="row" align="center" gap="xs" className="px-2 py-1.5">
+        <SearchInput
+          size="xs"
+          placeholder="Search extensions..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onClear={() => setSearch('')}
+          className="flex-1"
+        />
+        <IconButton
+          label="Install from folder"
+          size="xs"
           variant="ghost"
-          size="sm"
           onClick={() => setShowInstallPath(true)}
-          className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary"
+          className="text-text-muted hover:text-text-primary shrink-0"
         >
-          <FolderOpen size={12} /> Install
-        </Button>
+          <FolderOpen size={12} />
+        </IconButton>
         <IconButton
           label="Refresh"
           size="xs"
           variant="ghost"
           onClick={loadPlugins}
-          className="ml-auto text-text-muted hover:text-text-primary"
+          className="text-text-muted hover:text-text-primary shrink-0"
         >
           <RefreshCw size={11} />
         </IconButton>
       </Flex>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">
-        {plugins.length === 0 && (
+        {filtered.length === 0 && (
           <EmptyState
             icon={<Package size={24} className="text-text-muted" />}
-            title="No plugins"
+            title={search ? 'No matches' : 'No extensions'}
             className="py-8"
           />
         )}
@@ -190,7 +154,14 @@ export function ExtensionsPanel() {
             <Box className="px-2 pt-2 pb-1">
               <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">Built-in</Text>
             </Box>
-            {bundledPlugins.map(renderPlugin)}
+            {bundledPlugins.map(plugin => (
+              <PluginRow
+                key={plugin.name}
+                plugin={plugin}
+                isSelected={activeTabId === `plugin-${plugin.name}`}
+                onClick={() => openPluginDetail(plugin.name, plugin.displayName)}
+              />
+            ))}
           </>
         )}
 
@@ -199,20 +170,23 @@ export function ExtensionsPanel() {
             <Box className="px-2 pt-3 pb-1">
               <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">Installed</Text>
             </Box>
-            {installedPlugins.map(renderPlugin)}
+            {installedPlugins.map(plugin => (
+              <PluginRow
+                key={plugin.name}
+                plugin={plugin}
+                isSelected={activeTabId === `plugin-${plugin.name}`}
+                onClick={() => openPluginDetail(plugin.name, plugin.displayName)}
+              />
+            ))}
           </>
         )}
-      </ScrollArea>
 
-      <ConfirmDialog
-        open={uninstallTarget !== null}
-        title={`Uninstall "${uninstallTarget}"?`}
-        message="This plugin will be permanently removed."
-        confirmLabel="Uninstall"
-        variant="danger"
-        onConfirm={() => { if (uninstallTarget) handleUninstall(uninstallTarget) }}
-        onCancel={() => setUninstallTarget(null)}
-      />
+        {filtered.length > 0 && (
+          <Text size="xs" color="muted" className="text-[10px] text-center py-3 block">
+            {plugins.length} extension{plugins.length !== 1 ? 's' : ''}
+          </Text>
+        )}
+      </ScrollArea>
 
       <Modal open={showInstallPath} onClose={() => { setShowInstallPath(false); setInstallPath('') }} className="w-[420px] max-w-[90vw]">
         <Stack gap="md" className="p-4">
@@ -232,5 +206,30 @@ export function ExtensionsPanel() {
         </Flex>
       </Modal>
     </Stack>
+  )
+}
+
+function PluginRow({ plugin, isSelected, onClick }: { plugin: PluginInfo; isSelected: boolean; onClick: () => void }) {
+  const statusColor = STATUS_COLORS[plugin.status.state] ?? 'bg-gray-500'
+
+  return (
+    <Flex
+      direction="row"
+      align="center"
+      gap="sm"
+      onClick={onClick}
+      className={cn(
+        'px-2 py-1.5 rounded-md cursor-pointer transition-colors',
+        isSelected
+          ? 'bg-accent/10 border-l-2 border-l-accent'
+          : 'hover:bg-white/5'
+      )}
+    >
+      <PluginIcon plugin={plugin} size={28} />
+      <Text size="xs" weight="medium" color="primary" truncate className="flex-1 min-w-0">
+        {plugin.displayName}
+      </Text>
+      <Box className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusColor}`} />
+    </Flex>
   )
 }
