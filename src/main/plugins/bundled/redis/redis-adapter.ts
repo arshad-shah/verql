@@ -1,6 +1,6 @@
 import Redis from 'ioredis'
 import type { DbAdapter } from '../../../db/adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export interface CommandResult {
   command: string
@@ -81,6 +81,14 @@ export class RedisAdapter implements DbAdapter {
     }
     // Ping to verify connection
     await this.client.ping()
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    if (!this.client) throw new Error('Not connected')
+    const info = await this.client.info('server')
+    const versionMatch = info.match(/redis_version:(.+)/)
+    const version = versionMatch ? versionMatch[1].trim() : 'unknown'
+    return { version: `Redis ${version}` }
   }
 
   async disconnect(): Promise<void> {

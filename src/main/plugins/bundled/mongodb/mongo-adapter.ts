@@ -1,6 +1,6 @@
 import { MongoClient, type Db, type Document } from 'mongodb'
 import type { DbAdapter } from '../../../db/adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 const ALLOWED_OPERATIONS = new Set([
   'find',
@@ -136,6 +136,12 @@ export class MongoAdapter implements DbAdapter {
     this.client = new MongoClient(this.uri)
     await this.client.connect()
     this.db = this.client.db(this.currentDatabase)
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    if (!this.db) throw new Error('Not connected')
+    const result = await this.db.admin().serverInfo()
+    return { version: `MongoDB ${result.version ?? 'unknown'}` }
   }
 
   async disconnect(): Promise<void> {

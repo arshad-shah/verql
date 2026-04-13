@@ -1,7 +1,7 @@
 import snowflake from 'snowflake-sdk'
 import fs from 'fs/promises'
 import type { DbAdapter } from '../../../db/adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class SnowflakeAdapter implements DbAdapter {
   private connection: snowflake.Connection | null = null
@@ -54,6 +54,11 @@ export class SnowflakeAdapter implements DbAdapter {
     })
 
     this.connected = true
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    const result = await this.query('SELECT CURRENT_VERSION() as version')
+    return { version: String(result.rows[0]?.version ?? 'unknown') }
   }
 
   async disconnect(): Promise<void> {
