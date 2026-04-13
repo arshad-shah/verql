@@ -8,7 +8,7 @@ import { cn } from '@/primitives/utils/cn'
 import { ConnectionCard } from './ConnectionCard'
 import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { StatusBarMetric } from './StatusBarMetric'
-import { usePluginUIStore } from '@/stores/plugin-ui'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import type { QueryTab } from '@shared/types'
 
@@ -40,12 +40,11 @@ export function StatusBar() {
   const [showNewConnection, setShowNewConnection] = useState(false)
   const pluginFailNotified = useRef(false)
 
-  const statusBarContributions = usePluginUIStore((s) => s.contributions.statusBar ?? [])
-  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+  const statusBarContributions = usePluginUIStore(selectContributions('statusBar'))
 
   useEffect(() => {
-    fetchContributions('statusBar')
-  }, [fetchContributions])
+    usePluginUIStore.getState().fetchContributions('statusBar')
+  }, [])
 
   // Plugin polling (same logic as before, with notification on failure)
   useEffect(() => {

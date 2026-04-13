@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Database, PenSquare, BarChart3, Puzzle, Settings } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
-import { usePluginUIStore } from '@/stores/plugin-ui'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { NotificationBell } from './NotificationBell'
 
@@ -14,12 +14,11 @@ const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = 
 
 export function ActivityBar() {
   const { activePanel, sidebarVisible, setActivePanel } = useUiStore()
-  const activityBarContributions = usePluginUIStore((s) => s.contributions.activityBar ?? [])
-  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+  const activityBarContributions = usePluginUIStore(selectContributions('activityBar'))
 
   useEffect(() => {
-    fetchContributions('activityBar')
-  }, [fetchContributions])
+    usePluginUIStore.getState().fetchContributions('activityBar')
+  }, [])
 
   const renderButton = (id: ActivityPanel, Icon: typeof Database, label: string) => {
     const isActive = activePanel === id && sidebarVisible

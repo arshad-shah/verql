@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useUiStore } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
-import { usePluginUIStore } from '@/stores/plugin-ui'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
@@ -19,12 +19,11 @@ export function Sidebar() {
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
 
-  const panelContributions = usePluginUIStore((s) => s.contributions.panels ?? [])
-  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+  const panelContributions = usePluginUIStore(selectContributions('panels'))
 
   useEffect(() => {
-    fetchContributions('panels')
-  }, [fetchContributions])
+    usePluginUIStore.getState().fetchContributions('panels')
+  }, [])
 
   const titles: Record<string, string> = {
     explorer: 'Explorer',

@@ -1,15 +1,14 @@
 import { useEffect } from 'react'
-import { usePluginUIStore } from '@/stores/plugin-ui'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import type { ContextMenuTarget } from '@shared/plugin-ui-types'
 
 export function usePluginContextMenuItems(target: ContextMenuTarget) {
-  const contributions = usePluginUIStore((s) => s.contributions.contextMenu ?? [])
-  const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
+  const contributions = usePluginUIStore(selectContributions('contextMenu'))
   const executeAction = usePluginUIStore((s) => s.executeAction)
 
   useEffect(() => {
-    fetchContributions('contextMenu')
-  }, [fetchContributions])
+    usePluginUIStore.getState().fetchContributions('contextMenu')
+  }, [])
 
   const items = contributions
     .filter((c) => c.meta.target === target)

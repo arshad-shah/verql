@@ -45,9 +45,9 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
   fetchDatabases: async (connectionId) => {
     const key = connectionId
     const cached = get().databases.get(key)
-    if (cached) return cached
+    if (cached && cached.every(Boolean)) return cached
     try {
-      const result = await window.electronAPI.invoke('db:get-databases', connectionId)
+      const result = (await window.electronAPI.invoke('db:get-databases', connectionId)).filter(Boolean)
       set((s) => {
         const next = new Map(s.databases)
         next.set(key, result)
@@ -66,6 +66,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
   },
 
   switchDatabase: async (connectionId, database) => {
+    if (!database) throw new Error('Database name is required')
     try {
       await window.electronAPI.invoke('db:switch-database', connectionId, database)
     } catch {

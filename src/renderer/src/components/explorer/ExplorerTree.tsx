@@ -162,7 +162,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
           {/* Multiple databases */}
           {!isSingleDb && (
             <div className="py-1 flex-1 overflow-y-auto min-h-0">
-              {databaseList.map((db) => (
+              {databaseList.filter(Boolean).map((db) => (
                 <DatabaseNode
                   key={db}
                   databaseName={db}

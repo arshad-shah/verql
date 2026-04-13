@@ -3,6 +3,9 @@ import fs from 'fs/promises'
 import type { DbAdapter } from '../../../db/adapter'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
+// Suppress SDK precision-loss warnings — we handle large numbers via fetchAsString on execute()
+snowflake.configure({ logLevel: 'ERROR' })
+
 export class SnowflakeAdapter implements DbAdapter {
   private connection: snowflake.Connection | null = null
   private connected = false
@@ -119,6 +122,7 @@ export class SnowflakeAdapter implements DbAdapter {
       const stmt = this.connection!.execute({
         sqlText: sql,
         binds: params as snowflake.Binds | undefined,
+        fetchAsString: ['Number'] as unknown as snowflake.DataType[],
         complete: (err, stmt, rows) => {
           this.activeStatementId = null
           if (err) reject(err)

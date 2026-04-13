@@ -15,6 +15,9 @@ interface PluginUIState {
   invalidateAll: () => void
 }
 
+// Stable empty array — avoids creating new references in selectors
+const EMPTY: UIContribution[] = []
+
 export const usePluginUIStore = create<PluginUIState>((set, get) => ({
   contributions: {},
   resolverCache: {},
@@ -56,10 +59,20 @@ export const usePluginUIStore = create<PluginUIState>((set, get) => ({
   },
 }))
 
-// Listen for contribution changes from main process
+/** Stable selector — returns EMPTY instead of creating a new [] each render */
+export function selectContributions(surface: string) {
+  return (state: PluginUIState) => state.contributions[surface] ?? EMPTY
+}
+
+// Listen for contribution changes from main process.
+// Debounce to avoid re-render storms during plugin boot.
 if (typeof window !== 'undefined' && window.electronAPI) {
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
   window.electronAPI.on('plugins:ui:contributions-changed', () => {
-    const store = usePluginUIStore.getState()
-    store.invalidateAll()
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      const store = usePluginUIStore.getState()
+      store.invalidateAll()
+    }, 300)
   })
 }
