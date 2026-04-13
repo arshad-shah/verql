@@ -5,6 +5,7 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { ColumnRow } from './ColumnRow'
@@ -51,6 +52,7 @@ export function TableNode({
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
   const addToast = useToastStore((s) => s.addToast)
+  const pluginTableItems = usePluginContextMenuItems('table')
 
   // Lazy-fetch when expanded
   useEffect(() => {
@@ -105,6 +107,7 @@ export function TableNode({
           },
         ]
       : []),
+    ...pluginTableItems,
   ]
 
   const paddingLeft = 8 + depth * 16
