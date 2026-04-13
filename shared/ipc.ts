@@ -16,7 +16,7 @@ export interface IpcChannelMap {
   }
   'db:test-connection': {
     args: [profile: ConnectionProfile]
-    return: { success: boolean; error?: string; version?: string }
+    return: { success: boolean; error?: string; version?: string; details?: Record<string, string> }
   }
   'db:get-tables': {
     args: [profileId: string, schema?: string]
@@ -153,5 +153,21 @@ export interface IpcChannelMap {
   'dialog:open-file': {
     args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
     return: { filePath: string; content: string } | { cancelled: true }
+  }
+  'db:connection-options': {
+    args: [profile: ConnectionProfile, field: string]
+    return: string[]
+  }
+  'keyring:store': {
+    args: [profileId: string, key: string, value: string]
+    return: void
+  }
+  'keyring:retrieve': {
+    args: [profileId: string, key: string]
+    return: string | null
+  }
+  'keyring:delete': {
+    args: [profileId: string, key: string]
+    return: void
   }
 }

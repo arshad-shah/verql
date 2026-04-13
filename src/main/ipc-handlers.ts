@@ -18,12 +18,17 @@ import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { safeCall } from './plugins/sdk/safe-call'
+import { KeyringService } from './keyring'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
 import * as mongoPlugin from './plugins/bundled/mongodb'
 import * as redisPlugin from './plugins/bundled/redis'
 import * as snowflakePlugin from './plugins/bundled/snowflake'
+import * as postgresqlPlugin from './plugins/bundled/postgresql'
+import * as mysqlPlugin from './plugins/bundled/mysql'
+import * as sqlitePlugin from './plugins/bundled/sqlite'
 
 const activeAdapters = new Map<string, DbAdapter>()
+const keyring = new KeyringService()
 
 /** Turn raw database errors into user-friendly messages */
 function formatDbError(err: unknown): string {
@@ -191,20 +196,41 @@ export function registerIpcHandlers(): void {
     try {
       adapter = createAdapter(profile)
       await adapter.connect()
-      const result = await adapter.query(
-        profile.type === 'sqlite'
-          ? 'SELECT sqlite_version() as version'
-          : profile.type === 'postgresql'
-            ? 'SELECT version() as version'
-            : 'SELECT VERSION() as version'
-      )
-      const version = String(result.rows[0]?.version ?? 'unknown')
-      return { success: true, version }
+      const result = await adapter.testConnection()
+      return { success: true, ...result }
     } catch (err) {
       return { success: false, error: (err as Error).message }
     } finally {
       await adapter?.disconnect()
     }
+  })
+
+  handle('db:connection-options', async (profile: ConnectionProfile, field: string) => {
+    let adapter: DbAdapter | null = null
+    try {
+      adapter = createAdapter(profile)
+      await adapter.connect()
+      if (!adapter.getConnectionOptions) {
+        return []
+      }
+      return await adapter.getConnectionOptions(field)
+    } finally {
+      await adapter?.disconnect()
+    }
+  })
+
+  // ─── Keyring ──────────────────────────────────────────────────────────────────
+
+  handle('keyring:store', async (profileId: string, key: string, value: string) => {
+    await keyring.store(profileId, key, value)
+  })
+
+  handle('keyring:retrieve', async (profileId: string, key: string) => {
+    return keyring.retrieve(profileId, key)
+  })
+
+  handle('keyring:delete', async (profileId: string, key: string) => {
+    await keyring.delete(profileId, key)
   })
 
   handle('db:get-tables', async (profileId: string, schema?: string) => {
@@ -419,6 +445,7 @@ export function registerIpcHandlers(): void {
     panelRegistry,
     getAdapter: (id) => activeAdapters.get(id),
     getProfile: (id) => configStore.getConnection(id),
+    keyring,
     settingsStore: {
       get: (key) => {
         const pluginSettings = configStore.getSettingsCategory('plugins')
@@ -435,6 +462,9 @@ export function registerIpcHandlers(): void {
   pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
   pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
   pluginCoordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
+  pluginCoordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
+  pluginCoordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
+  pluginCoordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
 
   pluginCoordinator.boot().catch(err => {
     console.error('[plugins] Boot failed:', err)
