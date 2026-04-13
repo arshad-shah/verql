@@ -1,10 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ConnectionFormView } from '../../../../src/renderer/src/components/connections/ConnectionFormView'
 
+// Plugin driver data matching what the real plugins register
+const mockPluginDrivers = [
+  {
+    driverId: 'postgresql',
+    driverName: 'PostgreSQL',
+    connectionFields: [
+      { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
+      { key: 'port', label: 'Port', type: 'number', required: true, default: 5432 },
+      { key: 'database', label: 'Database', type: 'text', required: true },
+      { key: 'username', label: 'Username', type: 'text' },
+      { key: 'password', label: 'Password', type: 'password' },
+      { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
+    ]
+  },
+  {
+    driverId: 'sqlite',
+    driverName: 'SQLite',
+    connectionFields: [
+      { key: 'database', label: 'Database File', type: 'file', required: true },
+    ]
+  }
+]
+
 // Mock electronAPI
-const mockInvoke = vi.fn().mockResolvedValue([])
+const mockInvoke = vi.fn().mockImplementation((channel: string) => {
+  if (channel === 'plugins:connection-fields') return Promise.resolve(mockPluginDrivers)
+  if (channel === 'plugins:middleware-fields') return Promise.resolve([])
+  return Promise.resolve([])
+})
 const mockOn = vi.fn().mockReturnValue(vi.fn())
 Object.defineProperty(window, 'electronAPI', {
   value: { invoke: mockInvoke, on: mockOn },
@@ -32,7 +59,11 @@ vi.mock('../../../../src/renderer/src/stores/tabs', () => ({
 describe('ConnectionFormView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInvoke.mockResolvedValue([])
+    mockInvoke.mockImplementation((channel: string) => {
+      if (channel === 'plugins:connection-fields') return Promise.resolve(mockPluginDrivers)
+      if (channel === 'plugins:middleware-fields') return Promise.resolve([])
+      return Promise.resolve([])
+    })
   })
 
   it('renders the new connection heading', () => {
@@ -40,10 +71,12 @@ describe('ConnectionFormView', () => {
     expect(screen.getByText('New Connection')).toBeTruthy()
   })
 
-  it('renders database type select', () => {
+  it('renders database type select', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    const select = screen.getByRole('combobox', { name: 'Database Type' })
-    expect(select).toBeTruthy()
+    await waitFor(() => {
+      const select = screen.getByRole('combobox', { name: 'Database Type' })
+      expect(select).toBeTruthy()
+    })
   })
 
   it('renders connection name input', () => {
@@ -51,21 +84,26 @@ describe('ConnectionFormView', () => {
     expect(screen.getByLabelText('Connection Name')).toBeTruthy()
   })
 
-  it('renders host and port for postgresql', () => {
+  it('renders host and port for postgresql', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    expect(screen.getByLabelText('Host')).toBeTruthy()
-    expect(screen.getByLabelText('Port')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.getByLabelText('Host')).toBeTruthy()
+      expect(screen.getByLabelText('Port')).toBeTruthy()
+    })
   })
 
-  it('renders password input with visibility toggle', () => {
+  it('renders password input for postgresql', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    expect(screen.getByPlaceholderText('Password')).toBeTruthy()
-    expect(screen.getByLabelText('Show password')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.getByLabelText('Password')).toBeTruthy()
+    })
   })
 
-  it('renders SSL switch', () => {
+  it('renders SSL switch for postgresql', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
-    expect(screen.getByRole('switch')).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.getByRole('switch')).toBeTruthy()
+    })
   })
 
   it('renders cancel and save buttons', () => {
@@ -76,12 +114,18 @@ describe('ConnectionFormView', () => {
 
   it('shows database file input for sqlite', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
+    // Wait for plugin drivers to load
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Database Type' })).toBeTruthy()
+    })
     const trigger = screen.getByRole('combobox', { name: 'Database Type' })
     await userEvent.click(trigger)
     const sqliteOption = await screen.findByRole('option', { name: 'SQLite' })
     await userEvent.click(sqliteOption)
-    expect(screen.getByLabelText('Database File')).toBeTruthy()
-    expect(screen.queryByLabelText('Host')).toBeNull()
+    await waitFor(() => {
+      expect(screen.getByText('Database File')).toBeTruthy()
+      expect(screen.queryByText('Host')).toBeNull()
+    })
   })
 
   it('closes tab on cancel click', async () => {

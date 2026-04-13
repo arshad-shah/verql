@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
-import { createAdapter } from '../../src/main/db/factory'
 import type { DbAdapter } from '../../src/main/db/adapter'
-import type { ConnectionProfile } from '../../shared/types'
 import Database from 'better-sqlite3'
-import { SqliteAdapter } from '../../src/main/db/sqlite'
+import { SqliteAdapter } from '../../src/main/plugins/bundled/sqlite/sqlite-adapter'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -14,13 +12,7 @@ describe('SQLite Adapter', () => {
   let adapter: DbAdapter
 
   beforeAll(async () => {
-    const profile: ConnectionProfile = {
-      id: 'test-sqlite',
-      name: 'Test DB',
-      type: 'sqlite',
-      database: TEST_DB
-    }
-    adapter = createAdapter(profile)
+    adapter = new SqliteAdapter({ database: TEST_DB })
     await adapter.connect()
   })
 
@@ -95,7 +87,7 @@ describe('SqliteAdapter.getRowCount', () => {
     db.exec('CREATE VIEW active_users AS SELECT * FROM users WHERE id > 1')
     db.close()
 
-    adapter = new SqliteAdapter(dbPath)
+    adapter = new SqliteAdapter({ database: dbPath })
     await adapter.connect()
   })
 
