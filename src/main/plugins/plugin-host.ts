@@ -1,5 +1,7 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
+import { execFileSync } from 'child_process'
 import { app } from 'electron'
 import type { PluginManifest, LoadedPlugin } from './types'
 import type { PluginStatus, BootReport } from './sdk/types'
@@ -503,6 +505,23 @@ export class PluginBootCoordinator {
       return { success: true, name }
     } catch (err) {
       return { success: false, error: (err as Error).message }
+    }
+  }
+
+  installFromZip(zipPath: string): { success: boolean; name?: string; error?: string } {
+    const tmpDir = path.join(os.tmpdir(), `dbstudio-plugin-${Date.now()}`)
+    try {
+      fs.mkdirSync(tmpDir, { recursive: true })
+      execFileSync('unzip', ['-o', '-q', zipPath, '-d', tmpDir])
+      // The zip may contain a single top-level directory or files at root.
+      // Check if there's exactly one subdirectory — if so, install from that.
+      const entries = fs.readdirSync(tmpDir).filter(e => fs.statSync(path.join(tmpDir, e)).isDirectory())
+      const installDir = entries.length === 1 ? path.join(tmpDir, entries[0]) : tmpDir
+      return this.installFromPath(installDir)
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
     }
   }
 

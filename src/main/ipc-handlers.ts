@@ -522,6 +522,20 @@ export function registerIpcHandlers(): void {
     return pluginCoordinator.installFromPath(pluginPath)
   })
 
+  handle('plugins:install-from-zip', async (zipPath) => {
+    return pluginCoordinator.installFromZip(zipPath)
+  })
+
+  handle('plugins:open-install-dialog', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select Plugin',
+      properties: ['openFile', 'openDirectory'],
+      filters: [{ name: 'Plugin Archive', extensions: ['zip'] }]
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    return result.filePaths[0]
+  })
+
   handle('plugins:uninstall', async (name) => {
     pluginCoordinator.uninstall(name)
   })
