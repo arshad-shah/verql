@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryResult, ConnectionFormTab } from '@shared/types'
+import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 let tabCounter = 0
 
@@ -40,6 +40,7 @@ interface TabsState {
   setTabError: (id: string, error: string) => void
   openErDiagram: (connectionId: string, schema: string) => string
   openConnectionForm: (editingId?: string) => string
+  openPluginDetail: (pluginName: string, displayName: string) => string
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
@@ -208,6 +209,26 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       activeTabId: tab.id
     }))
     return tab.id
+  },
+
+  openPluginDetail: (pluginName: string, displayName: string) => {
+    const id = `plugin-${pluginName}`
+    const existing = get().tabs.find(t => t.id === id)
+    if (existing) {
+      set({ activeTabId: id })
+      return id
+    }
+    const tab: PluginDetailTab = {
+      id,
+      type: 'plugin-detail',
+      title: displayName,
+      pluginName
+    }
+    set((s) => ({
+      tabs: [...s.tabs, tab],
+      activeTabId: id
+    }))
+    return id
   },
 
   reorderTabs: (fromIndex, toIndex) => {

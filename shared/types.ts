@@ -95,4 +95,11 @@ export interface ConnectionFormTab {
   editingId?: string
 }
 
-export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab
+export interface PluginDetailTab {
+  id: string
+  type: 'plugin-detail'
+  title: string
+  pluginName: string
+}
+
+export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab
