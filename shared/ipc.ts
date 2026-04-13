@@ -159,6 +159,22 @@ export interface IpcChannelMap {
     args: []
     return: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[]
   }
+  'plugins:ui:get-contributions': {
+    args: [surface: string]
+    return: import('./plugin-ui-types').UIContribution[]
+  }
+  'plugins:ui:resolve': {
+    args: [pluginId: string, resolverId: string, context: import('./plugin-ui-types').ResolverContext]
+    return: { value: string; label: string }[]
+  }
+  'plugins:ui:action': {
+    args: [pluginId: string, commandId: string, payload: Record<string, unknown>]
+    return: void
+  }
+  'plugins:ui:contributions-changed': {
+    args: []
+    return: void
+  }
   'settings:get-all': {
     args: []
     return: AppSettings

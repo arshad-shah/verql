@@ -1,0 +1,136 @@
+// shared/plugin-ui-types.ts
+
+// ─── Widget Base ────────────────────────────────────────────────────────────
+
+export interface WidgetBase {
+  id: string
+  type: string
+  visible?: boolean
+  tooltip?: string
+}
+
+// ─── Widget Types ───────────────────────────────────────────────────────────
+
+export interface SelectorWidget extends WidgetBase {
+  type: 'selector'
+  label: string
+  options?: { value: string; label: string }[]
+  resolver?: string
+  value?: string
+  onChange: string
+}
+
+export interface ActionButtonWidget extends WidgetBase {
+  type: 'action-button'
+  label: string
+  icon?: string
+  command: string
+  variant?: 'primary' | 'secondary' | 'ghost'
+}
+
+export interface StatusIndicatorWidget extends WidgetBase {
+  type: 'status-indicator'
+  label: string
+  icon: string
+  status?: 'ok' | 'warning' | 'error' | 'loading'
+}
+
+export interface TextWidget extends WidgetBase {
+  type: 'text'
+  content: string
+  style?: 'label' | 'value' | 'muted'
+}
+
+export interface TreeWidget extends WidgetBase {
+  type: 'tree'
+  resolver: string
+  onSelect?: string
+}
+
+export interface ListWidget extends WidgetBase {
+  type: 'list'
+  items?: { id: string; label: string; icon?: string; action?: string }[]
+  resolver?: string
+}
+
+export interface SectionWidget extends WidgetBase {
+  type: 'section'
+  label: string
+  collapsible?: boolean
+  collapsed?: boolean
+  children: Widget[]
+}
+
+export interface SeparatorWidget extends WidgetBase {
+  type: 'separator'
+}
+
+export type Widget =
+  | SelectorWidget
+  | ActionButtonWidget
+  | StatusIndicatorWidget
+  | TextWidget
+  | TreeWidget
+  | ListWidget
+  | SectionWidget
+  | SeparatorWidget
+
+// ─── Contribution Surfaces ──────────────────────────────────────────────────
+
+export type StatusBarZone = 'left' | 'center' | 'right'
+export type ActivityBarZone = 'top' | 'bottom'
+export type ContextMenuTarget = 'table' | 'column' | 'connection' | 'tab'
+export type SelectorZone = 'statusBar.left' | 'statusBar.right' | 'panel'
+
+// ─── Manifest Contribution Types ────────────────────────────────────────────
+
+export interface ActivityBarContribution {
+  id: string
+  title: string
+  icon: string
+  zone?: ActivityBarZone
+}
+
+export interface StatusBarContribution {
+  id: string
+  zone: StatusBarZone
+}
+
+export interface ContextMenuContribution {
+  id: string
+  target: ContextMenuTarget
+  label: string
+  command: string
+}
+
+export interface TabContribution {
+  id: string
+  title: string
+  icon: string
+}
+
+export interface SelectorContribution {
+  id: string
+  label: string
+  zone: SelectorZone
+  resolver?: string
+  options?: { value: string; label: string }[]
+  onChange: string
+}
+
+// ─── IPC Payloads ───────────────────────────────────────────────────────────
+
+export type ContributionSurface = 'activityBar' | 'statusBar' | 'contextMenu' | 'tabs' | 'panels'
+
+export interface UIContribution {
+  pluginId: string
+  pluginName: string
+  surface: ContributionSurface
+  contributionId: string
+  widgets: Widget[]
+  meta: Record<string, unknown>
+}
+
+export interface ResolverContext {
+  connectionId: string
+}
