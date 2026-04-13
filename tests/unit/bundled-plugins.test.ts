@@ -3,6 +3,7 @@ import { PluginBootCoordinator } from '../../src/main/plugins/plugin-host'
 import { DriverRegistryImpl } from '../../src/main/plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry'
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
+import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 
 import * as sshPlugin from '../../src/main/plugins/bundled/ssh-tunnel/index'
 import * as mongoPlugin from '../../src/main/plugins/bundled/mongodb/index'
@@ -26,10 +27,12 @@ describe('Bundled Plugins', () => {
     driverRegistry = new DriverRegistryImpl()
     const commandRegistry = new CommandRegistryImpl()
     const panelRegistry = new PanelRegistryImpl()
+    const uiRegistry = new UIRegistryImpl()
     coordinator = new PluginBootCoordinator({
       driverRegistry,
       commandRegistry,
       panelRegistry,
+      uiRegistry,
       getAdapter: () => undefined,
       getProfile: () => undefined,
       keyring: noopKeyring,
