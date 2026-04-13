@@ -15,7 +15,13 @@ export function ConnectionTestButton({ profile }: Props) {
     const result = await window.electronAPI.invoke('db:test-connection', profile)
     if (result.success) {
       setStatus('success')
-      setMessage(result.version ?? 'Connected')
+      const parts = [result.version ?? 'Connected']
+      if (result.details) {
+        for (const [k, v] of Object.entries(result.details)) {
+          parts.push(`${k}: ${v}`)
+        }
+      }
+      setMessage(parts.join(' | '))
     } else {
       setStatus('error')
       setMessage(result.error ?? 'Connection failed')
