@@ -16,7 +16,8 @@ import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
-import type { QueryTab, ErDiagramTab, ConnectionFormTab } from '@shared/types'
+import { PluginDetailView } from '@/components/plugins/PluginDetailView'
+import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
@@ -124,6 +125,11 @@ export function App() {
                   <ConnectionFormView
                     tabId={activeTab.id}
                     editingId={(activeTab as ConnectionFormTab).editingId}
+                  />
+                )}
+                {activeTab?.type === 'plugin-detail' && (
+                  <PluginDetailView
+                    pluginName={(activeTab as PluginDetailTab).pluginName}
                   />
                 )}
                 {!activeTab && (
