@@ -16,11 +16,13 @@ export class SnowflakeAdapter implements DbAdapter {
   async connect(): Promise<void> {
     const opts: snowflake.ConnectionOptions = {
       account: this.config.account as string,
-      database: this.config.database as string,
-      schema: (this.config.schema as string) || 'PUBLIC',
-      warehouse: this.config.warehouse as string | undefined,
-      role: this.config.role as string | undefined,
     }
+
+    // Only set these if provided — allows auth-only connections for fetching options
+    if (this.config.database) opts.database = this.config.database as string
+    if (this.config.schema) opts.schema = this.config.schema as string
+    if (this.config.warehouse) opts.warehouse = this.config.warehouse as string
+    if (this.config.role) opts.role = this.config.role as string
 
     if (this.config.host) {
       opts.accessUrl = `https://${this.config.host}`

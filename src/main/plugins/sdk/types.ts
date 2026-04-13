@@ -59,6 +59,7 @@ export interface ConnectionField {
   default?: string | number | boolean
   group?: string
   fetchable?: boolean
+  step?: number
 }
 
 export interface ConnectionMiddleware {

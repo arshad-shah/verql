@@ -155,8 +155,8 @@ export interface IpcChannelMap {
     return: { filePath: string; content: string } | { cancelled: true }
   }
   'db:connection-options': {
-    args: [profile: ConnectionProfile, field: string]
-    return: string[]
+    args: [profile: ConnectionProfile, fields: string[]]
+    return: Record<string, string[]>
   }
   'keyring:store': {
     args: [profileId: string, key: string, value: string]

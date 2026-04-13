@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
@@ -16,10 +16,15 @@ interface Props {
   editingId?: string
 }
 
+interface PluginField {
+  key: string; label: string; type: string; required?: boolean
+  default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number
+}
+
 interface PluginDriver {
   driverId: string
   driverName: string
-  connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean }[]
+  connectionFields: PluginField[]
 }
 
 interface MiddlewareField {
@@ -39,6 +44,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   const [fetchableOptions, setFetchableOptions] = useState<Record<string, string[]>>({})
   const [authStatus, setAuthStatus] = useState<'idle' | 'authenticating' | 'authenticated' | 'error'>('idle')
   const [authError, setAuthError] = useState('')
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
 
   const existingProfile = editingId ? connections.find(c => c.id === editingId) : undefined
 
@@ -67,7 +73,12 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   const activePluginDriver = pluginDrivers.find(d => d.driverId === profile.type)
   const sshFields = middlewareFields.filter(f => f.group === 'ssh')
-  const hasFetchableFields = activePluginDriver?.connectionFields.some(f => f.fetchable) ?? false
+
+  // Derive step structure from plugin fields
+  const fetchableFields = activePluginDriver?.connectionFields.filter(f => f.fetchable) ?? []
+  const hasFetchableFields = fetchableFields.length > 0
+  const steps = [...new Set(fetchableFields.map(f => f.step ?? 1))].sort((a, b) => a - b)
+  const currentStep = steps.find(s => !completedSteps.has(s)) ?? (steps.length > 0 ? Math.max(...steps) + 1 : 0)
 
   const update = (patch: Record<string, unknown>) => setProfile(p => ({ ...p, ...patch }))
 
@@ -84,6 +95,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     update(defaults)
     setAuthStatus('idle')
     setFetchableOptions({})
+    setCompletedSteps(new Set())
   }
 
   const handleAuthenticate = async () => {
@@ -91,18 +103,23 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     setAuthStatus('authenticating')
     setAuthError('')
     try {
-      const fetchableFields = activePluginDriver.connectionFields.filter(f => f.fetchable)
-      const options: Record<string, string[]> = {}
-      for (const field of fetchableFields) {
-        const result = await window.electronAPI.invoke('db:connection-options', profile as ConnectionProfile, field.key)
-        options[field.key] = result
-      }
+      // Fetch ALL fetchable fields in one connection (single browser auth)
+      const fieldKeys = fetchableFields.map(f => f.key)
+      const options = await window.electronAPI.invoke(
+        'db:connection-options',
+        profile as ConnectionProfile,
+        fieldKeys
+      )
       setFetchableOptions(options)
       setAuthStatus('authenticated')
     } catch (err) {
       setAuthStatus('error')
       setAuthError((err as Error).message)
     }
+  }
+
+  const handleStepComplete = (step: number) => {
+    setCompletedSteps(prev => new Set([...prev, step]))
   }
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -113,7 +130,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   const handleCancel = () => closeTab(tabId)
 
-  const renderPluginField = (field: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; fetchable?: boolean }) => {
+  const renderPluginField = (field: PluginField) => {
     const value = profile[field.key] ?? field.default ?? ''
 
     if (field.fetchable && field.type === 'select') {
@@ -208,6 +225,56 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     )
   }
 
+  const renderStepSection = (step: number, stepFields: PluginField[]) => {
+    const stepIndex = steps.indexOf(step)
+    const isCompleted = completedSteps.has(step)
+    const isActive = step === currentStep && authStatus === 'authenticated'
+    const isPending = !isCompleted && !isActive
+
+    const stepLabel = stepIndex === 0 ? 'Select Role & Warehouse' : 'Select Database & Schema'
+
+    return (
+      <Box
+        key={step}
+        className={`border rounded-lg overflow-hidden transition-colors ${
+          isCompleted ? 'border-border-success bg-bg-success/5' :
+          isActive ? 'border-border-accent' :
+          'border-border-default opacity-60'
+        }`}
+      >
+        <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+            isCompleted ? 'bg-bg-success text-text-on-solid' :
+            isActive ? 'bg-bg-accent text-text-on-solid' :
+            'bg-bg-tertiary text-text-muted'
+          }`}>
+            {isCompleted ? <Check size={14} /> : stepIndex + 2}
+          </div>
+          <Text size="sm" weight="semibold" color={isPending ? 'muted' : 'primary'}>
+            Step {stepIndex + 2}: {stepLabel}
+          </Text>
+        </Flex>
+        {(isActive || isCompleted) && (
+          <Stack gap="md" className="px-3 pb-3">
+            {stepFields.map(renderPluginField)}
+            {isActive && !isCompleted && (
+              <div>
+                <Button
+                  type="button"
+                  variant="solid"
+                  size="sm"
+                  onClick={() => handleStepComplete(step)}
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+          </Stack>
+        )}
+      </Box>
+    )
+  }
+
   return (
     <ScrollArea direction="vertical" className="h-full bg-bg-primary">
       <Container size="md" className="py-8">
@@ -261,7 +328,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
               </FormField>
             </Stack>
 
-            {/* Connection fields — all from plugins */}
+            {/* Connection fields — non-fetchable, non-grouped */}
             {activePluginDriver && (
               <Stack gap="md">
                 <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Connection</Text>
@@ -269,37 +336,66 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
               </Stack>
             )}
 
-            {/* Authenticate button for fetchable fields */}
+            {/* Step-based auth wizard for fetchable fields */}
             {hasFetchableFields && (
               <Stack gap="md">
-                <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Authenticate to load options</Text>
-                <Flex direction="row" align="center" gap="md">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="md"
-                    onClick={handleAuthenticate}
-                    disabled={authStatus === 'authenticating'}
-                    className="flex items-center gap-1.5"
-                  >
-                    {authStatus === 'authenticating' ? <Spinner size="xs" /> : null}
-                    {authStatus === 'authenticated' ? 'Re-authenticate' : 'Authenticate'}
-                  </Button>
-                  {authStatus === 'authenticated' && (
-                    <Text size="sm" color="success">Authenticated — select options below</Text>
-                  )}
-                </Flex>
-                {authStatus === 'error' && (
-                  <Text size="sm" color="error">{authError}</Text>
-                )}
-              </Stack>
-            )}
+                {/* Step 1: Authenticate */}
+                <Box className={`border rounded-lg overflow-hidden transition-colors ${
+                  authStatus === 'authenticated' ? 'border-border-success bg-bg-success/5' :
+                  authStatus === 'authenticating' ? 'border-border-accent' :
+                  'border-border-default'
+                }`}>
+                  <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+                      authStatus === 'authenticated' ? 'bg-bg-success text-text-on-solid' :
+                      authStatus === 'authenticating' ? 'bg-bg-accent text-text-on-solid' :
+                      'bg-bg-tertiary text-text-muted'
+                    }`}>
+                      {authStatus === 'authenticated' ? <Check size={14} /> : '1'}
+                    </div>
+                    <Text size="sm" weight="semibold">
+                      Step 1: Authenticate
+                    </Text>
+                  </Flex>
+                  <Stack gap="sm" className="px-3 pb-3">
+                    {authStatus === 'authenticated' ? (
+                      <Flex direction="row" align="center" gap="md">
+                        <Text size="sm" color="success">Authenticated successfully</Text>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleAuthenticate}>
+                          Re-authenticate
+                        </Button>
+                      </Flex>
+                    ) : (
+                      <>
+                        <Text size="sm" color="muted">
+                          Connect to your account to load available roles, warehouses, databases, and schemas.
+                        </Text>
+                        <div>
+                          <Button
+                            type="button"
+                            variant="solid"
+                            size="md"
+                            onClick={handleAuthenticate}
+                            disabled={authStatus === 'authenticating'}
+                            className="flex items-center gap-1.5"
+                          >
+                            {authStatus === 'authenticating' ? <Spinner size="xs" /> : null}
+                            {authStatus === 'authenticating' ? 'Authenticating...' : 'Authenticate'}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                    {authStatus === 'error' && (
+                      <Text size="sm" color="error">{authError}</Text>
+                    )}
+                  </Stack>
+                </Box>
 
-            {/* Fetchable fields (dropdowns after auth) */}
-            {activePluginDriver && activePluginDriver.connectionFields.some(f => f.fetchable) && (
-              <Stack gap="md">
-                <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Configuration</Text>
-                {activePluginDriver.connectionFields.filter(f => f.fetchable).map(renderPluginField)}
+                {/* Subsequent steps — grouped by step number */}
+                {steps.map(step => {
+                  const stepFields = fetchableFields.filter(f => (f.step ?? 1) === step)
+                  return renderStepSection(step, stepFields)
+                })}
               </Stack>
             )}
 

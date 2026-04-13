@@ -58,6 +58,7 @@ export interface ConnectionFieldContribution {
   default?: string | number | boolean
   group?: string
   fetchable?: boolean
+  step?: number
 }
 
 export interface PanelContributionManifest {

@@ -205,15 +205,23 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  handle('db:connection-options', async (profile: ConnectionProfile, field: string) => {
+  handle('db:connection-options', async (profile: ConnectionProfile, fields: string[]) => {
     let adapter: DbAdapter | null = null
     try {
       adapter = createAdapter(profile)
       await adapter.connect()
       if (!adapter.getConnectionOptions) {
-        return []
+        return {}
       }
-      return await adapter.getConnectionOptions(field)
+      const result: Record<string, string[]> = {}
+      for (const field of fields) {
+        try {
+          result[field] = await adapter.getConnectionOptions(field)
+        } catch {
+          result[field] = []
+        }
+      }
+      return result
     } finally {
       await adapter?.disconnect()
     }

@@ -24,10 +24,10 @@ export function activate(ctx: PluginContext): void {
       { key: 'authenticator', label: 'Authenticator', type: 'text', default: 'externalbrowser' },
       { key: 'privateKeyPath', label: 'Private Key File', type: 'file' },
       { key: 'passphrase', label: 'Key Passphrase', type: 'password' },
-      { key: 'database', label: 'Database', type: 'select', fetchable: true },
-      { key: 'warehouse', label: 'Warehouse', type: 'select', fetchable: true },
-      { key: 'role', label: 'Role', type: 'select', fetchable: true },
-      { key: 'schema', label: 'Schema', type: 'select', fetchable: true, default: 'PUBLIC' },
+      { key: 'role', label: 'Role', type: 'select', fetchable: true, step: 1 },
+      { key: 'warehouse', label: 'Warehouse', type: 'select', fetchable: true, step: 1 },
+      { key: 'database', label: 'Database', type: 'select', fetchable: true, step: 2 },
+      { key: 'schema', label: 'Schema', type: 'select', fetchable: true, step: 2, default: 'PUBLIC' },
     ]
   })
 }
