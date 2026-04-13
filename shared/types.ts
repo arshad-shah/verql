@@ -53,6 +53,11 @@ export interface SchemaIndex {
   unique: boolean
 }
 
+export interface TestConnectionResult {
+  version: string
+  details?: Record<string, string>
+}
+
 export interface QueryTab {
   id: string
   type: 'query'

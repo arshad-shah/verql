@@ -1,8 +1,9 @@
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, TestConnectionResult } from '@shared/types'
 
 export interface DbAdapter {
   connect(): Promise<void>
   disconnect(): Promise<void>
+  testConnection(): Promise<TestConnectionResult>
   query(sql: string, params?: unknown[]): Promise<QueryResult>
   getTables(schema?: string): Promise<SchemaTable[]>
   getColumns(table: string, schema?: string): Promise<SchemaColumn[]>
@@ -14,4 +15,5 @@ export interface DbAdapter {
   setSchema?(schema: string): Promise<void>
   cancelQuery?(): void
   isConnected(): boolean
+  getConnectionOptions?(field: string): Promise<string[]>
 }
