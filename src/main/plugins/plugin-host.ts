@@ -95,6 +95,7 @@ interface BootDeps {
   panelRegistry: PanelRegistryImpl
   getAdapter: (connectionId: string) => DbAdapter | undefined
   getProfile: (connectionId: string) => ConnectionProfile | undefined
+  keyring: import('./sdk/types').KeyringAccess
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
 }
 
@@ -255,7 +256,8 @@ export class PluginBootCoordinator {
       panelRegistry: this.deps.panelRegistry,
       schemaAccess: new SchemaAccessImpl(this.deps.getAdapter),
       connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
-      settingsStore: this.deps.settingsStore
+      settingsStore: this.deps.settingsStore,
+      keyring: this.deps.keyring
     })
     plugin.context = context
 
