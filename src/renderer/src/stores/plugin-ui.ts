@@ -70,9 +70,16 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
   window.electronAPI.on('plugins:ui:contributions-changed', () => {
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
+    debounceTimer = setTimeout(async () => {
       const store = usePluginUIStore.getState()
       store.invalidateAll()
+      // Re-fetch all surfaces so components get fresh data
+      await Promise.all([
+        store.fetchContributions('statusBar'),
+        store.fetchContributions('activityBar'),
+        store.fetchContributions('panels'),
+        store.fetchContributions('contextMenu'),
+      ])
     }, 300)
   })
 }
