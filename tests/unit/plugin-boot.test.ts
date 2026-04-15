@@ -5,6 +5,10 @@ import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
 import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-registry'
+import { AIToolRegistry } from '../../src/main/ai/tool-registry'
+import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
+import { ConversationManager } from '../../src/main/ai/conversation-manager'
+import { PermissionManager } from '../../src/main/ai/permission-manager'
 
 describe('PluginBootCoordinator', () => {
   let coordinator: PluginBootCoordinator
@@ -26,7 +30,16 @@ describe('PluginBootCoordinator', () => {
       completionRegistry,
       getAdapter: () => undefined,
       getProfile: () => undefined,
-      settingsStore: { get: () => undefined, set: () => {} }
+      settingsStore: { get: () => undefined, set: () => {} },
+      aiToolRegistry: new AIToolRegistry(),
+      aiProviderRegistry: new AIProviderRegistry(),
+      aiConversationManager: new ConversationManager({
+        providerRegistry: new AIProviderRegistry(),
+        toolRegistry: new AIToolRegistry(),
+        permissionManager: new PermissionManager(),
+        getSchemaContext: async () => '',
+        getConnectionId: () => null
+      })
     })
   })
 

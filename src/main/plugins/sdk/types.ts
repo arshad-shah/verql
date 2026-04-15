@@ -3,6 +3,7 @@ import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaI
 import type { DbAdapter } from '../../db/adapter'
 import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
+import type { AIAccess } from './ai-access'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ export interface PluginContext {
   connections: ConnectionAccess
   settings: PluginSettings
   keyring: KeyringAccess
+  ai: AIAccess
   subscriptions: Disposable[]
 }
 

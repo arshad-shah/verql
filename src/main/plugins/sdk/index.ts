@@ -8,6 +8,7 @@ import { CompletionRegistryImpl } from './completion-registry'
 import { SchemaAccessImpl } from './schema-access'
 import { ConnectionAccessImpl } from './connection-access'
 import { PluginSettingsImpl } from './settings'
+import { AIAccessImpl } from './ai-access'
 
 export { DriverRegistryImpl } from './driver-registry'
 export { CommandRegistryImpl } from './command-registry'
@@ -31,6 +32,9 @@ interface ContextDeps {
   connectionAccess: ConnectionAccessImpl
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   keyring: import('./types').KeyringAccess
+  aiToolRegistry: import('../../ai/tool-registry').AIToolRegistry
+  aiProviderRegistry: import('../../ai/provider-registry').AIProviderRegistry
+  aiConversationManager: import('../../ai/conversation-manager').ConversationManager
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
@@ -109,6 +113,30 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
 
   const settings = new PluginSettingsImpl(pluginName, deps.settingsStore)
 
+  const aiAccessImpl = new AIAccessImpl(
+    deps.aiToolRegistry,
+    deps.aiProviderRegistry,
+    deps.aiConversationManager
+  )
+
+  const ai = {
+    registerTool(tool: Parameters<AIAccessImpl['registerTool']>[0]) {
+      const disposable = aiAccessImpl.registerTool(tool)
+      subscriptions.push(disposable)
+      return disposable
+    },
+    registerProvider(provider: Parameters<AIAccessImpl['registerProvider']>[0]) {
+      const disposable = aiAccessImpl.registerProvider(provider)
+      subscriptions.push(disposable)
+      return disposable
+    },
+    registerContextProvider(provider: Parameters<AIAccessImpl['registerContextProvider']>[0]) {
+      const disposable = aiAccessImpl.registerContextProvider(provider)
+      subscriptions.push(disposable)
+      return disposable
+    }
+  }
+
   return {
     drivers,
     commands,
@@ -119,6 +147,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     connections: deps.connectionAccess,
     settings,
     keyring: deps.keyring,
+    ai,
     subscriptions
   }
 }

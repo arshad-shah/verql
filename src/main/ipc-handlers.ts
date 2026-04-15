@@ -21,6 +21,9 @@ import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { safeCall } from './plugins/sdk/safe-call'
 import { KeyringService } from './keyring'
+import { createAIModule } from './ai'
+import { SchemaAccessImpl } from './plugins/sdk/schema-access'
+import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
 import * as mongoPlugin from './plugins/bundled/mongodb'
 import * as redisPlugin from './plugins/bundled/redis'
@@ -28,6 +31,7 @@ import * as snowflakePlugin from './plugins/bundled/snowflake'
 import * as postgresqlPlugin from './plugins/bundled/postgresql'
 import * as mysqlPlugin from './plugins/bundled/mysql'
 import * as sqlitePlugin from './plugins/bundled/sqlite'
+import * as aiPlugin from './plugins/bundled/ai'
 
 const activeAdapters = new Map<string, DbAdapter>()
 const keyring = new KeyringService()
@@ -479,6 +483,30 @@ export function registerIpcHandlers(): void {
   const uiRegistry = new UIRegistryImpl()
   const completionRegistry = new CompletionRegistryImpl()
 
+  const schemaAccess = new SchemaAccessImpl((id) => activeAdapters.get(id))
+  const connectionAccess = new ConnectionAccessImpl(
+    (id) => activeAdapters.get(id),
+    (id) => configStore.getConnection(id)
+  )
+
+  const settingsStore = {
+    get: (key: string): unknown => {
+      const pluginSettings = configStore.getSettingsCategory('plugins')
+      return pluginSettings[key]
+    },
+    set: (key: string, value: unknown): void => {
+      configStore.setSetting(`plugins.${key}`, value)
+    }
+  }
+
+  const aiModule = createAIModule({
+    keyring,
+    schemaAccess,
+    connectionAccess,
+    handle,
+    settingsStore
+  })
+
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry,
     commandRegistry,
@@ -488,15 +516,10 @@ export function registerIpcHandlers(): void {
     getAdapter: (id) => activeAdapters.get(id),
     getProfile: (id) => configStore.getConnection(id),
     keyring,
-    settingsStore: {
-      get: (key) => {
-        const pluginSettings = configStore.getSettingsCategory('plugins')
-        return pluginSettings[key]
-      },
-      set: (key, value) => {
-        configStore.setSetting(`plugins.${key}`, value)
-      }
-    }
+    settingsStore,
+    aiToolRegistry: aiModule.toolRegistry,
+    aiProviderRegistry: aiModule.providerRegistry,
+    aiConversationManager: aiModule.conversationManager
   })
 
   // Register bundled plugins
@@ -507,6 +530,7 @@ export function registerIpcHandlers(): void {
   pluginCoordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
   pluginCoordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
   pluginCoordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
+  pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
 
   pluginCoordinator.boot().catch(err => {
     console.error('[plugins] Boot failed:', err)

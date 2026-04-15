@@ -1,5 +1,6 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, DatabaseType } from './types'
 import type { AppSettings } from './settings'
+import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -218,5 +219,54 @@ export interface IpcChannelMap {
   'keyring:delete': {
     args: [profileId: string, key: string]
     return: void
+  }
+  // ─── AI ─────────────────────────────────────────────────────────────────────
+  'ai:chat:start': {
+    args: [request: AIChatStartRequest]
+    return: { streamId: string }
+  }
+  'ai:chat:abort': {
+    args: [streamId: string]
+    return: void
+  }
+  'ai:chat:approval-response': {
+    args: [requestId: string, approved: boolean]
+    return: void
+  }
+  'ai:providers:list': {
+    args: []
+    return: AIProviderInfo[]
+  }
+  'ai:providers:set-active': {
+    args: [providerId: string]
+    return: void
+  }
+  'ai:providers:get-active': {
+    args: []
+    return: AIProviderInfo | null
+  }
+  'ai:models:list': {
+    args: []
+    return: AIModelInfo[]
+  }
+  'ai:models:set-active': {
+    args: [modelId: string]
+    return: void
+  }
+  'ai:models:get-active': {
+    args: []
+    return: string | null
+  }
+  'ai:messages:list': {
+    args: []
+    return: AIChatMessage[]
+  }
+  'ai:messages:clear': {
+    args: []
+    return: void
+  }
+  'ai:tools:list': {
+    args: []
+    return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
   }
 }
