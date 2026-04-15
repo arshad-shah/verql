@@ -195,6 +195,10 @@ export interface IpcChannelMap {
     args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
     return: { filePath: string; content: string } | { cancelled: true }
   }
+  'dialog:open-file-path': {
+    args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
+    return: { filePath: string } | { cancelled: true }
+  }
   'db:connection-options': {
     args: [profile: ConnectionProfile, fields: string[]]
     return: Record<string, string[]>

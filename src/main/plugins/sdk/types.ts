@@ -56,7 +56,7 @@ export interface DriverFactory {
 export interface ConnectionField {
   key: string
   label: string
-  type: 'text' | 'password' | 'number' | 'boolean' | 'file' | 'select'
+  type: 'text' | 'password' | 'number' | 'boolean' | 'file' | 'file-path' | 'select'
   required?: boolean
   default?: string | number | boolean
   group?: string

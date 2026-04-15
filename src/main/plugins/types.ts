@@ -21,6 +21,7 @@ export interface PluginManifest {
     settings?: SettingContribution[]
     activityBar?: ActivityBarContribution[]
     statusBar?: StatusBarContribution[]
+    toolbar?: StatusBarContribution[]
     contextMenus?: ContextMenuContribution[]
     tabs?: TabContribution[]
     selectors?: SelectorContribution[]

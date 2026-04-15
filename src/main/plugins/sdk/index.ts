@@ -76,6 +76,11 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
       subscriptions.push(disposable)
       return disposable
     },
+    registerToolbar(id: string, widgets: Parameters<UIRegistryImpl['registerToolbar']>[1]) {
+      const disposable = deps.uiRegistry.registerToolbar(id, widgets)
+      subscriptions.push(disposable)
+      return disposable
+    },
     registerTab(id: string, widgets: Parameters<UIRegistryImpl['registerTab']>[1]) {
       const disposable = deps.uiRegistry.registerTab(id, widgets)
       subscriptions.push(disposable)

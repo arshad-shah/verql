@@ -23,6 +23,14 @@ export function QueryPanel({ tab }: Props) {
 
   const executeWithSchema = useCallback(async (sql: string) => {
     if (!tab.connectionId) return
+    // Set database context before executing if selected
+    if (tab.database) {
+      try {
+        await window.electronAPI.invoke('db:switch-database', tab.connectionId, tab.database)
+      } catch {
+        // ignore — some adapters don't support switchDatabase
+      }
+    }
     // Set search_path/USE before executing if schema is selected
     if (tab.schema) {
       try {
@@ -32,7 +40,7 @@ export function QueryPanel({ tab }: Props) {
       }
     }
     return window.electronAPI.invoke('db:query', tab.connectionId, sql)
-  }, [tab.connectionId, tab.schema])
+  }, [tab.connectionId, tab.database, tab.schema])
 
   const handleExecute = useCallback(async () => {
     if (!tab.connectionId || !tab.sql.trim()) return
@@ -50,7 +58,8 @@ export function QueryPanel({ tab }: Props) {
       setTabError(tab.id, message)
       addNotification({
         type: 'error',
-        message: `Query failed: ${message}`,
+        title: 'Query failed',
+        message,
         source: { type: 'tab', id: tab.id, label: tab.title },
       })
       // Cancel the running query on timeout
@@ -85,16 +94,14 @@ export function QueryPanel({ tab }: Props) {
     <Flex direction="column" className="h-full">
       {/* Connection + schema selector + toolbar */}
       <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
-        <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} schema={tab.schema} />
+        <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} database={tab.database} schema={tab.schema} />
         <Divider orientation="vertical" className="h-4" />
         <QueryToolbar
           onExecute={handleExecute}
           onCancel={handleCancel}
           onExplain={handleExplain}
           isExecuting={tab.isExecuting}
-          duration={tab.results?.duration ?? null}
-          rowCount={tab.results?.rowCount ?? null}
-          error={tab.error}
+          connectionType={dbType}
         />
       </Flex>
 

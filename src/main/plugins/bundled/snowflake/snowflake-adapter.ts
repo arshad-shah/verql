@@ -43,6 +43,8 @@ export class SnowflakeAdapter implements DbAdapter {
       // SSO / OAuth authentication
       opts.username = this.config.username as string
       opts.authenticator = this.config.authenticator as string
+      // Cache the SSO token so the browser doesn't re-open on every connection
+      opts.clientStoreTemporaryCredential = true
     } else {
       // Username / password authentication
       opts.username = this.config.username as string

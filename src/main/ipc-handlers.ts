@@ -422,6 +422,16 @@ export function registerIpcHandlers(): void {
     return { filePath: path.basename(fullPath), content }
   })
 
+  handle('dialog:open-file-path', async (options) => {
+    const { filePaths, canceled } = await dialog.showOpenDialog({
+      title: options?.title ?? 'Select File',
+      filters: options?.filters ?? [{ name: 'All Files', extensions: ['*'] }],
+      properties: ['openFile']
+    })
+    if (canceled || filePaths.length === 0) return { cancelled: true as const }
+    return { filePath: filePaths[0] }
+  })
+
   // ─── Import ──────────────────────────────────────────────────────────────────
 
   handle('import:csv', async (profileId, tableName, columnMapping, onConflict) => {
@@ -623,6 +633,21 @@ export function registerIpcHandlers(): void {
           pluginId: entry.pluginName,
           pluginName: getDisplayName(entry.pluginName),
           surface: 'statusBar',
+          contributionId: entry.id,
+          widgets: entry.widgets,
+          meta: manifest ?? {}
+        })
+      }
+    }
+
+    if (surface === 'toolbar') {
+      for (const entry of uiRegistry.getAllToolbars()) {
+        const plugin = pluginCoordinator.getPlugin(entry.pluginName)
+        const manifest = plugin?.manifest.contributes.toolbar?.find(s => s.id === entry.id)
+        contributions.push({
+          pluginId: entry.pluginName,
+          pluginName: getDisplayName(entry.pluginName),
+          surface: 'toolbar',
           contributionId: entry.id,
           widgets: entry.widgets,
           meta: manifest ?? {}

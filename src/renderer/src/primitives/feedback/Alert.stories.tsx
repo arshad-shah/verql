@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
+import { Shield } from 'lucide-react'
 import { Alert } from './Alert'
 
 const meta = {
@@ -36,4 +38,50 @@ export const Variants: Story = {
       <Alert variant="info" title="Info">Indexes will be rebuilt on next startup.</Alert>
     </div>
   ),
+}
+
+export const Dismissible: Story = {
+  args: {
+    variant: 'warning',
+    title: 'Unsaved changes',
+    children: 'You have unsaved changes that will be lost if you navigate away.',
+    onClose: fn(),
+  },
+  decorators: [(Story) => <div style={{ width: 380 }}><Story /></div>],
+}
+
+export const CustomIcon: Story = {
+  args: {
+    variant: 'info',
+    title: 'Security update',
+    children: 'A new security patch is available for your database driver.',
+    icon: <Shield size={16} className="mt-0.5 shrink-0" />,
+  },
+  decorators: [(Story) => <div style={{ width: 380 }}><Story /></div>],
+}
+
+export const NoIcon: Story = {
+  args: {
+    variant: 'success',
+    title: 'Done',
+    children: 'All migrations completed successfully.',
+    icon: null,
+  },
+  decorators: [(Story) => <div style={{ width: 380 }}><Story /></div>],
+}
+
+export const TitleOnly: Story = {
+  args: {
+    variant: 'error',
+    title: 'Connection lost',
+  },
+  decorators: [(Story) => <div style={{ width: 380 }}><Story /></div>],
+}
+
+export const DescriptionOnly: Story = {
+  args: {
+    variant: 'info',
+    children: 'Indexes will be rebuilt on next startup.',
+  },
+  decorators: [(Story) => <div style={{ width: 380 }}><Story /></div>],
 }

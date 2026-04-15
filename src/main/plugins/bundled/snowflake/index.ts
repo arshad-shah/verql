@@ -10,8 +10,8 @@ export const manifest: PluginManifest = {
   main: 'index.js',
   contributes: {
     drivers: [{ id: 'snowflake', name: 'Snowflake' }],
-    statusBar: [
-      { id: 'snowflake-selectors', zone: 'left' }
+    toolbar: [
+      { id: 'snowflake-context', zone: 'right' }
     ]
   }
 }
@@ -43,13 +43,11 @@ export function activate(ctx: PluginContext): void {
     ]
   })
 
-  // ── Declarative UI: Status bar selectors ──────────────────────────────────
+  // ── Declarative UI: Toolbar selectors (Snowsight-style Role + Warehouse) ──
 
-  ctx.ui.registerStatusBar('snowflake-selectors', [
-    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'dbstudio-plugin-snowflake:use-role' },
-    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'dbstudio-plugin-snowflake:use-warehouse' },
-    { type: 'selector', id: 'sf-database', label: 'Database', resolver: 'sf-databases', onChange: 'dbstudio-plugin-snowflake:use-database' },
-    { type: 'selector', id: 'sf-schema', label: 'Schema', resolver: 'sf-schemas', onChange: 'dbstudio-plugin-snowflake:use-schema' },
+  ctx.ui.registerToolbar('snowflake-context', [
+    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'dbstudio-plugin-snowflake:use-role', searchable: true },
+    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'dbstudio-plugin-snowflake:use-warehouse', searchable: true },
   ])
 
   // ── Dynamic resolvers ─────────────────────────────────────────────────────
@@ -70,42 +68,18 @@ export function activate(ctx: PluginContext): void {
     return result.rows.map(extractName).filter(filterEmpty)
   })
 
-  ctx.ui.registerResolver('sf-databases', async ({ connectionId }) => {
-    const result = await ctx.connections.query(connectionId, 'SHOW DATABASES')
-    return result.rows.map(extractName).filter(filterEmpty)
-  })
-
-  ctx.ui.registerResolver('sf-schemas', async ({ connectionId }) => {
-    const result = await ctx.connections.query(connectionId, 'SHOW SCHEMAS')
-    return result.rows.map(extractName).filter(filterEmpty)
-  })
-
   // ── Commands for selector onChange ─────────────────────────────────────────
 
   ctx.commands.register('use-role', async (payload) => {
     if (payload?.value && payload?.connectionId) {
       await ctx.connections.query(payload.connectionId as string, `USE ROLE "${payload.value}"`)
       ctx.ui.invalidate('sf-warehouses')
-      ctx.ui.invalidate('sf-databases')
     }
   })
 
   ctx.commands.register('use-warehouse', async (payload) => {
     if (payload?.value && payload?.connectionId) {
       await ctx.connections.query(payload.connectionId as string, `USE WAREHOUSE "${payload.value}"`)
-    }
-  })
-
-  ctx.commands.register('use-database', async (payload) => {
-    if (payload?.value && payload?.connectionId) {
-      await ctx.connections.query(payload.connectionId as string, `USE DATABASE "${payload.value}"`)
-      ctx.ui.invalidate('sf-schemas')
-    }
-  })
-
-  ctx.commands.register('use-schema', async (payload) => {
-    if (payload?.value && payload?.connectionId) {
-      await ctx.connections.query(payload.connectionId as string, `USE SCHEMA "${payload.value}"`)
     }
   })
 }

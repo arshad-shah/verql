@@ -1,28 +1,32 @@
 import { Bell } from 'lucide-react'
 import { useNotificationsStore } from '@/stores/notifications'
-import { NotificationPanel } from './NotificationPanel'
-import { Box, IconButton, Badge, BadgeIndicator } from '@/primitives'
+import { useUiStore } from '@/stores/ui'
+import { Box, IconButton, BadgeIndicator } from '@/primitives'
+import { cn } from '@/primitives/utils/cn'
 
 export function NotificationBell() {
-  const { panelOpen, togglePanel, unreadCount } = useNotificationsStore()
-  const unread = unreadCount()
+  const unread = useNotificationsStore((s) => s.unreadCount())
+  const { activePanel, sidebarVisible, setActivePanel } = useUiStore()
+  const isActive = activePanel === 'notifications' && sidebarVisible
 
   return (
-    <Box className="relative">
-      <BadgeIndicator variant={'number'} count={unread} >
-
+    <Box>
+      <BadgeIndicator variant="number" count={unread}>
         <IconButton
-          onClick={togglePanel}
-          variant={panelOpen ? 'outline' : 'ghost'}
+          onClick={() => setActivePanel('notifications')}
+          variant={isActive ? 'outline' : 'ghost'}
           size="lg"
           label="Notifications"
-          className={panelOpen ? 'border-accent/30 bg-accent/10' : ''}
+          className={cn(
+            'rounded-lg transition-colors',
+            isActive
+              ? 'bg-accent/10 text-accent hover:bg-accent/10'
+              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
+          )}
         >
-          <Bell size={12} />
+          <Bell size={20} />
         </IconButton>
       </BadgeIndicator>
-
-      <NotificationPanel />
     </Box>
   )
 }

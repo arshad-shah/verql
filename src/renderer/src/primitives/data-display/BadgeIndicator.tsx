@@ -9,7 +9,7 @@ const indicatorVariants = cva(
       variant: {
         dot: 'h-2.5 w-2.5',
         number:
-          'min-w-[12px] h-[12px] px-1 text-[8px] font-bold leading-none text-white',
+          'min-w-[18px] h-[18px] px-1 text-[12px] font-bold leading-none text-white',
       },
     },
     defaultVariants: {
@@ -59,7 +59,7 @@ export function BadgeIndicator({
       <span
         className={cn(
           indicatorVariants({ variant }),
-          variant === 'dot' ? 'top-0.5 right-0.5' : 'top-0 right-0 -translate-y-1/3 translate-x-1/3',
+          variant === 'dot' ? 'top-1 right' : 'top-0.5 right-0.5 -translate-y-1/3 translate-x-1/3',
           className
         )}
       >

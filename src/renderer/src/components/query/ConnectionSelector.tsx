@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Database, ChevronDown, Layers } from 'lucide-react'
+import { Database, ChevronDown, Layers, HardDrive } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
@@ -8,42 +8,87 @@ import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
 interface Props {
   tabId: string
   connectionId: string | null
+  database: string | null
   schema: string | null
 }
 
-export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
+function resolveDefaultSchema(dbType: string | undefined, schemaList: string[], connDatabase?: string): string | undefined {
+  if (schemaList.length === 0) return undefined
+  if (dbType === 'sqlite') return schemaList.includes('main') ? 'main' : schemaList[0]
+  if (dbType === 'mysql') return connDatabase && schemaList.includes(connDatabase) ? connDatabase : schemaList[0]
+  // Snowflake uses uppercase PUBLIC, PostgreSQL uses lowercase public
+  if (schemaList.includes('PUBLIC')) return 'PUBLIC'
+  if (schemaList.includes('public')) return 'public'
+  return schemaList[0]
+}
+
+export function ConnectionSelector({ tabId, connectionId, database, schema }: Props) {
   const { connections, connectedIds, connect } = useConnectionsStore()
-  const { fetchSchemas } = useSchemaStore()
-  const { setTabConnection, setTabSchema } = useTabsStore()
+  const { fetchSchemas, fetchDatabases, switchDatabase } = useSchemaStore()
+  const { setTabConnection, setTabDatabase, setTabSchema } = useTabsStore()
   const [showConnDropdown, setShowConnDropdown] = useState(false)
+  const [showDbDropdown, setShowDbDropdown] = useState(false)
   const [showSchemaDropdown, setShowSchemaDropdown] = useState(false)
   const [schemaList, setSchemaList] = useState<string[]>([])
+  const [databaseList, setDatabaseList] = useState<string[]>([])
 
   const connectedList = connections.filter(c => connectedIds.has(c.id))
   const activeConn = connections.find(c => c.id === connectionId)
+  const hasMultipleDatabases = databaseList.length > 1
 
-  // Fetch schemas when connection changes
+  // Fetch databases when connection changes
+  useEffect(() => {
+    if (!connectionId || !connectedIds.has(connectionId)) {
+      setDatabaseList([])
+      return
+    }
+
+    fetchDatabases(connectionId).then(dbs => {
+      setDatabaseList(dbs)
+      // Auto-set default database if none selected and multi-DB
+      if (!database && dbs.length > 0) {
+        const conn = connections.find(c => c.id === connectionId)
+        const defaultDb = conn?.database && dbs.includes(conn.database) ? conn.database : dbs[0]
+        setTabDatabase(tabId, defaultDb)
+      }
+    })
+  }, [connectionId, connectedIds])
+
+  // Fetch schemas when connection or database changes
   useEffect(() => {
     if (!connectionId || !connectedIds.has(connectionId)) {
       setSchemaList([])
       return
     }
 
-    fetchSchemas(connectionId).then(s => {
+    fetchSchemas(connectionId, database ?? undefined).then(s => {
       setSchemaList(s)
       // Auto-set default schema if none selected
       if (!schema && s.length > 0) {
         const conn = connections.find(c => c.id === connectionId)
-        const defaultSchema = conn?.type === 'sqlite' ? 'main' : conn?.type === 'mysql' ? conn.database : 'public'
-        const resolved = s.includes(defaultSchema) ? defaultSchema : s[0]
-        setTabSchema(tabId, resolved)
+        const defaultSchema = resolveDefaultSchema(conn?.type, s, conn?.database)
+        if (defaultSchema) setTabSchema(tabId, defaultSchema)
       }
     })
-  }, [connectionId, connectedIds])
+  }, [connectionId, database, connectedIds])
 
   const handleSelectConnection = (id: string) => {
     setTabConnection(tabId, id)
     setShowConnDropdown(false)
+  }
+
+  const handleSelectDatabase = async (db: string) => {
+    if (connectionId) {
+      try {
+        await switchDatabase(connectionId, db)
+      } catch {
+        // ignore — some adapters don't support switchDatabase
+      }
+    }
+    setTabDatabase(tabId, db)
+    // Reset schema when database changes — will be re-fetched by the useEffect
+    setTabSchema(tabId, '')
+    setShowDbDropdown(false)
   }
 
   const handleSelectSchema = (s: string) => {
@@ -53,6 +98,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
 
   const closeAllDropdowns = () => {
     setShowConnDropdown(false)
+    setShowDbDropdown(false)
     setShowSchemaDropdown(false)
   }
 
@@ -62,7 +108,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
       <Button
         variant="outline"
         size="xs"
-        onClick={() => { setShowConnDropdown(!showConnDropdown); setShowSchemaDropdown(false) }}
+        onClick={() => { setShowConnDropdown(!showConnDropdown); setShowDbDropdown(false); setShowSchemaDropdown(false) }}
         className="flex items-center gap-1.5"
       >
         {activeConn ? (
@@ -79,6 +125,23 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
         <ChevronDown size={10} className="text-text-muted" />
       </Button>
 
+      {/* Database selector — only for multi-database connections */}
+      {activeConn && hasMultipleDatabases && (
+        <>
+          <Text size="xs" color="muted">/</Text>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => { setShowDbDropdown(!showDbDropdown); setShowConnDropdown(false); setShowSchemaDropdown(false) }}
+            className="flex items-center gap-1"
+          >
+            <HardDrive size={11} className="text-text-muted" />
+            <Text size="xs" color="secondary" truncate className="max-w-24">{database ?? 'database'}</Text>
+            <ChevronDown size={10} className="text-text-muted" />
+          </Button>
+        </>
+      )}
+
       {/* Schema selector */}
       {activeConn && schemaList.length > 0 && (
         <>
@@ -86,7 +149,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
           <Button
             variant="outline"
             size="xs"
-            onClick={() => { setShowSchemaDropdown(!showSchemaDropdown); setShowConnDropdown(false) }}
+            onClick={() => { setShowSchemaDropdown(!showSchemaDropdown); setShowConnDropdown(false); setShowDbDropdown(false) }}
             className="flex items-center gap-1"
           >
             <Layers size={11} className="text-text-muted" />
@@ -97,7 +160,7 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
       )}
 
       {/* Backdrop for any dropdown */}
-      {(showConnDropdown || showSchemaDropdown) && (
+      {(showConnDropdown || showDbDropdown || showSchemaDropdown) && (
         <Box className="fixed inset-0 z-40" onClick={closeAllDropdowns} />
       )}
 
@@ -148,6 +211,29 @@ export function ConnectionSelector({ tabId, connectionId, schema }: Props) {
               ))}
             </>
           )}
+        </ScrollArea>
+      )}
+
+      {/* Database dropdown */}
+      {showDbDropdown && (
+        <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[200px] py-1 max-h-60">
+          {databaseList.length === 0 && (
+            <Text size="xs" color="muted" as="p" className="px-3 py-2">No databases found</Text>
+          )}
+          {databaseList.map(db => (
+            <Button
+              key={db}
+              variant="ghost"
+              size="xs"
+              onClick={() => handleSelectDatabase(db)}
+              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
+                database === db ? 'text-accent' : 'text-text-secondary'
+              }`}
+            >
+              <HardDrive size={11} className="shrink-0" />
+              <Text size="xs" truncate>{db}</Text>
+            </Button>
+          ))}
         </ScrollArea>
       )}
 

@@ -18,6 +18,7 @@ export interface SelectorWidget extends WidgetBase {
   resolver?: string
   value?: string
   onChange: string
+  searchable?: boolean
 }
 
 export interface ActionButtonWidget extends WidgetBase {
@@ -120,7 +121,7 @@ export interface SelectorContribution {
 
 // ─── IPC Payloads ───────────────────────────────────────────────────────────
 
-export type ContributionSurface = 'activityBar' | 'statusBar' | 'contextMenu' | 'tabs' | 'panels'
+export type ContributionSurface = 'activityBar' | 'statusBar' | 'toolbar' | 'contextMenu' | 'tabs' | 'panels'
 
 export interface UIContribution {
   pluginId: string

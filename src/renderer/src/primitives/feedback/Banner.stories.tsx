@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { fn } from 'storybook/test'
 import { Banner } from './Banner'
+import { Button } from '../forms/Button'
 
 const meta = {
   title: 'Primitives/Feedback/Banner',
@@ -33,4 +35,41 @@ export const Variants: Story = {
       <Banner variant="error">Error: failed to sync — check connection.</Banner>
     </div>
   ),
+}
+
+export const Dismissible: Story = {
+  args: {
+    variant: 'warning',
+    children: 'Your trial expires in 3 days.',
+    onDismiss: fn(),
+    style: { width: 480 },
+  },
+}
+
+export const WithAction: Story = {
+  args: {
+    variant: 'info',
+    children: 'A new version of dbstudio is available.',
+    action: <Button variant="ghost" size="xs">Update now</Button>,
+    style: { width: 480 },
+  },
+}
+
+export const WithActionAndDismiss: Story = {
+  args: {
+    variant: 'error',
+    children: 'Connection lost. Reconnect to continue.',
+    action: <Button variant="ghost" size="xs">Reconnect</Button>,
+    onDismiss: fn(),
+    style: { width: 480 },
+  },
+}
+
+export const NoIcon: Story = {
+  args: {
+    variant: 'info',
+    children: 'Simple text-only banner without an icon.',
+    icon: null,
+    style: { width: 480 },
+  },
 }

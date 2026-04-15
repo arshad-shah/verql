@@ -1,6 +1,6 @@
-import React, { forwardRef, useState } from 'react'
+import React, { forwardRef, useState, useCallback } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { File, Shield, X, ChevronDown, ClipboardPaste } from 'lucide-react'
+import { File, Shield, X, ChevronDown, ClipboardPaste, Upload } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { DropdownMenu } from '../surfaces/DropdownMenu'
 import { Textarea } from './Textarea'
@@ -53,6 +53,7 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
     const [internalValue, setInternalValue] = useState(defaultValue)
     const [mode, setMode] = useState<'browse' | 'paste'>(defaultMode)
     const [fileName, setFileName] = useState<string | null>(null)
+    const [dragOver, setDragOver] = useState(false)
 
     const currentValue = isControlled ? controlledValue : internalValue
 
@@ -62,6 +63,26 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
     }
 
     const hasContent = currentValue.length > 0
+
+    const acceptExtensions = accept
+      ?.split(',')
+      .map((e) => e.trim().toLowerCase().replace(/^\./, ''))
+
+    const isAcceptedFile = (name: string) => {
+      if (!acceptExtensions) return true
+      const ext = name.split('.').pop()?.toLowerCase()
+      return ext ? acceptExtensions.includes(ext) : true
+    }
+
+    const readFileContent = (file: globalThis.File) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        setFileName(file.name)
+        setMode('browse')
+        setValue(reader.result as string)
+      }
+      reader.readAsText(file)
+    }
 
     const handleBrowse = async () => {
       const filters = accept
@@ -83,6 +104,39 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
       setValue(e.target.value)
     }
 
+    const handleDragOver = useCallback(
+      (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!disabled) setDragOver(true)
+      },
+      [disabled]
+    )
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setDragOver(false)
+    }, [])
+
+    const handleDrop = useCallback(
+      (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragOver(false)
+        if (disabled) return
+        const files = e.dataTransfer.files
+        if (files.length === 0) return
+        const file = files[0]
+        if (!isAcceptedFile(file.name)) return
+        // In Electron, dropped files have a .path property for native dialog fallback
+        // But for content reading, use FileReader
+        readFileContent(file)
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [disabled, acceptExtensions]
+    )
+
     const menuItems = mode === 'browse'
       ? [
           { label: 'Browse file', onSelect: handleBrowse },
@@ -97,11 +151,19 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
 
     if (mode === 'paste') {
       return (
-        <div ref={ref} id={id} className={cn('flex flex-col', className)}>
+        <div
+          ref={ref}
+          id={id}
+          className={cn('flex flex-col', className)}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <div className={cn(
-            'border border-border-default rounded-md overflow-hidden',
+            'border rounded-md overflow-hidden',
             'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
             'shadow-[var(--shadow-input-inset)]',
+            dragOver ? 'border-accent ring-1 ring-accent/30' : 'border-border-default',
             disabled && 'opacity-50 pointer-events-none'
           )}>
             <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-default">
@@ -131,15 +193,26 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
     }
 
     return (
-      <div ref={ref} id={id} className={cn('flex flex-col', className)}>
+      <div
+        ref={ref}
+        id={id}
+        className={cn('flex flex-col', className)}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className={cn(
           browseRowVariants({ size }),
-          hasContent
-            ? 'border-accent/30 bg-accent/5'
-            : 'border-border-default hover:border-border-strong',
+          dragOver
+            ? 'border-accent ring-1 ring-accent/30 bg-accent/5'
+            : hasContent
+              ? 'border-accent/30 bg-accent/5'
+              : 'border-border-default hover:border-border-strong',
           disabled && 'opacity-50 pointer-events-none'
         )}>
-          {hasContent ? (
+          {dragOver ? (
+            <Upload size={14} className="shrink-0 text-accent" />
+          ) : hasContent ? (
             <Shield size={14} className="shrink-0 text-accent" />
           ) : (
             <File size={14} className="shrink-0 text-text-muted" />
@@ -147,12 +220,14 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
 
           <span className={cn(
             'flex-1 truncate',
-            hasContent ? 'font-mono text-text-primary' : 'text-text-muted'
+            dragOver
+              ? 'text-accent font-medium'
+              : hasContent ? 'font-mono text-text-primary' : 'text-text-muted'
           )}>
-            {displayName ?? 'No file selected'}
+            {dragOver ? 'Drop file here' : displayName ?? 'No file selected'}
           </span>
 
-          {hasContent && (
+          {hasContent && !dragOver && (
             <>
               <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium text-accent bg-accent/10">
                 loaded
@@ -169,7 +244,7 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
             </>
           )}
 
-          {!hasContent && (
+          {!hasContent && !dragOver && (
             <button
               type="button"
               onClick={handleBrowse}

@@ -10,6 +10,7 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
     type: 'query',
     title: `Query ${tabCounter}`,
     connectionId,
+    database: null,
     schema,
     sql: '',
     results: null,
@@ -34,6 +35,7 @@ interface TabsState {
   updateTabSql: (id: string, sql: string) => void
   setTabDirty: (id: string, dirty: boolean) => void
   setTabConnection: (id: string, connectionId: string) => void
+  setTabDatabase: (id: string, database: string) => void
   setTabSchema: (id: string, schema: string) => void
   setTabExecuting: (id: string, executing: boolean) => void
   setTabResults: (id: string, results: QueryResult) => void
@@ -132,6 +134,12 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   setTabConnection: (id, connectionId) => {
     set((s) => ({
       tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, connectionId } : t)
+    }))
+  },
+
+  setTabDatabase: (id, database) => {
+    set((s) => ({
+      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, database } : t)
     }))
   },
 
@@ -265,6 +273,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     if (!tab || tab.type !== 'query') return null
     const newTab = createQueryTab(tab.connectionId, tab.schema)
     newTab.title = `${tab.title} (copy)`
+    newTab.database = tab.database
     newTab.sql = tab.sql
     set((s) => {
       const idx = s.tabs.findIndex(t => t.id === id)

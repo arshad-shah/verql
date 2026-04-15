@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { ConnectionProfile } from '@shared/types'
 import { useNotificationsStore } from './notifications'
+import { useToastStore } from './toast'
 
 interface ConnectionsState {
   connections: ConnectionProfile[]
@@ -45,34 +46,65 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     await state.loadConnections()
   },
   connect: async (id) => {
+    const conn = get().connections.find(c => c.id === id)
+    const name = conn?.name ?? id
+    const toast = useToastStore.getState()
+    const toastId = toast.addToast({
+      id: `connect-${id}`,
+      type: 'info',
+      title: `Connecting to ${name}...`,
+      message: 'Establishing connection',
+      persistent: true,
+    })
+
     const result = await window.electronAPI.invoke('db:connect', id)
     if (result.success) {
       get().addConnected(id)
       set({ activeConnectionId: id })
-      const conn = get().connections.find(c => c.id === id)
+      toast.updateToast(toastId, {
+        type: 'success',
+        title: `Connected to ${name}`,
+        message: undefined,
+        persistent: false,
+      })
       useNotificationsStore.getState().addNotification({
-        type: 'info',
-        message: `Connected to ${conn?.name ?? id}`,
-        source: { type: 'connection', id, label: conn?.name ?? id },
+        type: 'success',
+        title: 'Connection established',
+        message: `Connected to ${name}`,
+        source: { type: 'connection', id, label: name },
       })
     } else {
-      const conn = get().connections.find(c => c.id === id)
+      toast.updateToast(toastId, {
+        type: 'error',
+        title: `Connection failed`,
+        message: result.error ?? 'Unknown error',
+        persistent: false,
+      })
       useNotificationsStore.getState().addNotification({
         type: 'error',
-        message: `Connection failed: ${result.error ?? 'Unknown error'}`,
-        source: { type: 'connection', id, label: conn?.name ?? id },
+        title: 'Connection failed',
+        message: result.error ?? 'Unknown error',
+        source: { type: 'connection', id, label: name },
       })
     }
     return result
   },
   disconnect: async (id) => {
+    const conn = get().connections.find(c => c.id === id)
+    const name = conn?.name ?? id
+    const toast = useToastStore.getState()
+    toast.addToast({
+      id: `disconnect-${id}`,
+      type: 'info',
+      title: `Disconnected from ${name}`,
+    })
     await window.electronAPI.invoke('db:disconnect', id)
     get().removeConnected(id)
-    const conn = get().connections.find(c => c.id === id)
     useNotificationsStore.getState().addNotification({
       type: 'info',
-      message: `Disconnected from ${conn?.name ?? id}`,
-      source: { type: 'connection', id, label: conn?.name ?? id },
+      title: 'Disconnected',
+      message: `Disconnected from ${name}`,
+      source: { type: 'connection', id, label: name },
     })
     if (get().activeConnectionId === id) set({ activeConnectionId: null })
   }

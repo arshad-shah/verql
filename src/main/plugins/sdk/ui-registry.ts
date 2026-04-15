@@ -12,6 +12,7 @@ interface OwnedEntry<T> {
 export interface UIRegistry {
   registerPanel(id: string, widgets: Widget[]): Disposable
   registerStatusBar(id: string, widgets: Widget[]): Disposable
+  registerToolbar(id: string, widgets: Widget[]): Disposable
   registerTab(id: string, widgets: Widget[]): Disposable
   registerResolver(id: string, resolver: ResolverFn): Disposable
   invalidate(resolverId: string): void
@@ -20,6 +21,7 @@ export interface UIRegistry {
 export class UIRegistryImpl implements UIRegistry {
   private panels = new Map<string, OwnedEntry<Widget[]>>()
   private statusBars = new Map<string, OwnedEntry<Widget[]>>()
+  private toolbars = new Map<string, OwnedEntry<Widget[]>>()
   private tabs = new Map<string, OwnedEntry<Widget[]>>()
   private resolvers = new Map<string, OwnedEntry<ResolverFn>>()
   private listeners = new Set<ChangeListener>()
@@ -37,6 +39,12 @@ export class UIRegistryImpl implements UIRegistry {
     this.statusBars.set(id, { pluginName: this.currentPluginName, data: widgets })
     this.emit()
     return { dispose: () => { this.statusBars.delete(id); this.emit() } }
+  }
+
+  registerToolbar(id: string, widgets: Widget[]): Disposable {
+    this.toolbars.set(id, { pluginName: this.currentPluginName, data: widgets })
+    this.emit()
+    return { dispose: () => { this.toolbars.delete(id); this.emit() } }
   }
 
   registerTab(id: string, widgets: Widget[]): Disposable {
@@ -63,6 +71,7 @@ export class UIRegistryImpl implements UIRegistry {
 
   getPanel(id: string): Widget[] | undefined { return this.panels.get(id)?.data }
   getStatusBar(id: string): Widget[] | undefined { return this.statusBars.get(id)?.data }
+  getToolbar(id: string): Widget[] | undefined { return this.toolbars.get(id)?.data }
   getTab(id: string): Widget[] | undefined { return this.tabs.get(id)?.data }
 
   getAllPanels(): { id: string; pluginName: string; widgets: Widget[] }[] {
@@ -70,6 +79,9 @@ export class UIRegistryImpl implements UIRegistry {
   }
   getAllStatusBars(): { id: string; pluginName: string; widgets: Widget[] }[] {
     return [...this.statusBars.entries()].map(([id, entry]) => ({ id, pluginName: entry.pluginName, widgets: entry.data }))
+  }
+  getAllToolbars(): { id: string; pluginName: string; widgets: Widget[] }[] {
+    return [...this.toolbars.entries()].map(([id, entry]) => ({ id, pluginName: entry.pluginName, widgets: entry.data }))
   }
   getAllTabs(): { id: string; pluginName: string; widgets: Widget[] }[] {
     return [...this.tabs.entries()].map(([id, entry]) => ({ id, pluginName: entry.pluginName, widgets: entry.data }))
@@ -84,6 +96,7 @@ export class UIRegistryImpl implements UIRegistry {
   clear(): void {
     this.panels.clear()
     this.statusBars.clear()
+    this.toolbars.clear()
     this.tabs.clear()
     this.resolvers.clear()
     this.emit()

@@ -2,12 +2,12 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useNotificationsStore } from '@/stores/notifications'
-import { Zap, AlertTriangle, ArrowLeftRight, Minus } from 'lucide-react'
+import { ArrowLeftRight } from 'lucide-react'
 import { Flex, Spinner, Text } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 import { ConnectionCard } from './ConnectionCard'
 import { ConnectionSwitcher } from './ConnectionSwitcher'
-import { StatusBarMetric } from './StatusBarMetric'
+
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import type { QueryTab } from '@shared/types'
@@ -78,6 +78,7 @@ export function StatusBar() {
           pluginFailNotified.current = true
           addNotification({
             type: 'warning',
+            title: 'Plugin load failure',
             message: `${failedCount} plugin(s) failed to load`,
             source: { type: 'plugin', id: 'system', label: 'Plugin system' },
           })
@@ -145,36 +146,6 @@ export function StatusBar() {
           </Flex>
         )}
 
-        {/* Plugin-contributed status bar widgets (left zone) — only for active connection's driver */}
-        {isConnected && statusBarContributions
-          .filter((c) => (c.meta.zone === 'left' || !c.meta.zone)
-            && active?.type && c.pluginId.includes(active.type))
-          .map((c) => (
-            <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
-          ))}
-      </Flex>
-
-      {/* Center zone — contextual metrics */}
-      <Flex align="center" gap="xs">
-        {!isConnected ? (
-          <Minus size={12} className="text-text-disabled" />
-        ) : queryTab?.isExecuting ? (
-          <StatusBarMetric color="warning" label="Running..." animated />
-        ) : queryTab?.error ? (
-          <StatusBarMetric color="error" label="Query failed" icon={<AlertTriangle size={10} />} />
-        ) : queryTab?.results ? (
-          <>
-            <StatusBarMetric
-              color="success"
-              icon={<Zap size={10} />}
-              label={`${queryTab.results.duration}ms`}
-            />
-            <StatusBarMetric
-              color="info"
-              label={`${queryTab.results.rowCount} rows`}
-            />
-          </>
-        ) : null}
       </Flex>
 
       {/* Right zone — tools */}

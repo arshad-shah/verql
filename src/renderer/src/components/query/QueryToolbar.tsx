@@ -1,17 +1,24 @@
+import { useEffect } from 'react'
 import { Play, Square, FileSearch } from 'lucide-react'
-import { Flex, Button, Text, Spinner, Spacer } from '@/primitives'
+import { Flex, Button, Spinner, Spacer } from '@/primitives'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
+import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 
 interface Props {
   onExecute: () => void
   onCancel: () => void
   onExplain: () => void
   isExecuting: boolean
-  duration: number | null
-  rowCount: number | null
-  error: string | null
+  connectionType?: string
 }
 
-export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, duration, rowCount, error }: Props) {
+export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, connectionType }: Props) {
+  const toolbarContributions = usePluginUIStore(selectContributions('toolbar'))
+
+  useEffect(() => {
+    usePluginUIStore.getState().fetchContributions('toolbar')
+  }, [])
+
   return (
     <Flex direction="row" align="center" gap="sm" className="flex-1">
       {isExecuting ? (
@@ -21,6 +28,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, dura
           onClick={onCancel}
           className="flex items-center gap-1.5 bg-error/10 text-error hover:bg-error/20 border-0"
         >
+          <Spinner size="xs" />
           <Square size={12} /> Cancel
         </Button>
       ) : (
@@ -46,20 +54,12 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, dura
 
       <Spacer />
 
-      <Flex direction="row" align="center" gap="md" className="text-xs">
-        {isExecuting && (
-          <Flex direction="row" align="center" gap="xs">
-            <Spinner size="xs" />
-            <Text size="xs" color="muted">Executing...</Text>
-          </Flex>
-        )}
-        {!isExecuting && duration !== null && (
-          <Text size="xs" color="success">{rowCount} rows · {duration}ms</Text>
-        )}
-        {!isExecuting && error && (
-          <Text size="xs" color="error" truncate className="max-w-xs" title={error}>{error}</Text>
-        )}
-      </Flex>
+      {/* Plugin-contributed toolbar widgets (e.g. Snowflake Role/Warehouse selectors) */}
+      {connectionType && toolbarContributions
+        .filter((c) => c.pluginId.includes(connectionType))
+        .map((c) => (
+          <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
+        ))}
     </Flex>
   )
 }

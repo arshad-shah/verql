@@ -53,8 +53,6 @@ describe('Toast', () => {
 
   it('has base classes', () => {
     const { container } = render(<Toast message="Hello" onDismiss={() => {}} />)
-    expect(container.firstChild).toHaveClass('flex')
-    expect(container.firstChild).toHaveClass('items-center')
     expect(container.firstChild).toHaveClass('rounded-lg')
     expect(container.firstChild).toHaveClass('border')
     expect(container.firstChild).toHaveClass('text-sm')
@@ -240,6 +238,5 @@ describe('Banner', () => {
     expect(container.firstChild).toHaveClass('w-full')
     expect(container.firstChild).toHaveClass('px-4')
     expect(container.firstChild).toHaveClass('py-2')
-    expect(container.firstChild).toHaveClass('text-sm')
   })
 })

@@ -1,4 +1,4 @@
-import { X, AlertCircle, CheckCircle, Info } from 'lucide-react'
+import { X, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { Stack, Flex, Text, IconButton, Box, cn } from '@/primitives'
 
@@ -6,6 +6,12 @@ const icons = {
   error: AlertCircle,
   success: CheckCircle,
   info: Info
+}
+
+const persistentIcons = {
+  error: AlertCircle,
+  success: CheckCircle,
+  info: Loader2
 }
 
 const styles = {
@@ -28,7 +34,7 @@ export function ToastContainer() {
   return (
     <Stack gap="sm" className="fixed bottom-10 right-4 z-50 max-w-sm">
       {toasts.map((toast) => {
-        const Icon = icons[toast.type]
+        const Icon = toast.persistent ? persistentIcons[toast.type] : icons[toast.type]
         return (
           <Flex
             key={toast.id}
@@ -40,7 +46,14 @@ export function ToastContainer() {
             )}
             role="alert"
           >
-            <Icon size={16} className={cn('shrink-0 mt-0.5', iconStyles[toast.type])} />
+            <Icon
+              size={16}
+              className={cn(
+                'shrink-0 mt-0.5',
+                iconStyles[toast.type],
+                toast.persistent && toast.type === 'info' && 'animate-spin'
+              )}
+            />
             <Box className="flex-1 min-w-0">
               <Text size="sm" weight="medium" as="p">{toast.title}</Text>
               {toast.message && (

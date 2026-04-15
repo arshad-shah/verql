@@ -63,6 +63,7 @@ export interface QueryTab {
   type: 'query'
   title: string
   connectionId: string | null
+  database: string | null
   schema: string | null
   sql: string
   results: QueryResult | null

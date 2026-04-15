@@ -47,6 +47,7 @@ export function SelectorWidgetRenderer({ widget, pluginId }: Props) {
       options={options}
       size="xs"
       disabled={loading}
+      searchable={widget.searchable}
     />
   )
 }
