@@ -1,0 +1,79 @@
+# docker-compose.yml — Local test databases for dbstudio
+# Usage:
+#   docker compose up -d        # Start all databases
+#   docker compose down -v      # Stop and remove volumes
+#
+# Supported: PostgreSQL, MySQL, MongoDB, Redis
+# Not included: SQLite (file-based, no server needed), Snowflake (cloud-only)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dbstudio-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dbstudio
+      POSTGRES_PASSWORD: dbstudio
+      POSTGRES_DB: testdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbstudio"]
+      interval: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.0
+    container_name: dbstudio-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: dbstudio
+      MYSQL_PASSWORD: dbstudio
+      MYSQL_DATABASE: testdb
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./docker/seed/mysql.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dbstudio", "-pdbstudio"]
+      interval: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: dbstudio-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dbstudio
+      MONGO_INITDB_ROOT_PASSWORD: dbstudio
+      MONGO_INITDB_DATABASE: testdb
+    volumes:
+      - mongodata:/data/db
+      - ./docker/seed/mongo-init.js:/docker-entrypoint-initdb.d/seed.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "dbstudio", "-p", "dbstudio"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: dbstudio-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass dbstudio
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "dbstudio", "ping"]
+      interval: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  mysqldata:
+  mongodata:
+  redisdata:

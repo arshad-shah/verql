@@ -18,6 +18,7 @@ import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
+import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { safeCall } from './plugins/sdk/safe-call'
 import { KeyringService } from './keyring'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
@@ -476,12 +477,14 @@ export function registerIpcHandlers(): void {
   // ─── Plugins ─────────────────────────────────────────────────────────────────
 
   const uiRegistry = new UIRegistryImpl()
+  const completionRegistry = new CompletionRegistryImpl()
 
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry,
     commandRegistry,
     panelRegistry,
     uiRegistry,
+    completionRegistry,
     getAdapter: (id) => activeAdapters.get(id),
     getProfile: (id) => configStore.getConnection(id),
     keyring,
@@ -731,6 +734,19 @@ export function registerIpcHandlers(): void {
     await pluginCoordinator.safeCallWithBudget(pluginId, () =>
       commandRegistry.execute(commandId, undefined, payload)
     )
+  })
+
+  handle('plugins:completions', async (driverId, connectionId, context) => {
+    // Find which plugin owns this driver
+    const plugin = pluginCoordinator.getLoadedPlugins().find(
+      p => p.manifest.contributes.drivers?.some(d => d.id === driverId)
+    )
+    if (!plugin) return []
+    try {
+      return await completionRegistry.getCompletions(plugin.manifest.name, connectionId, context)
+    } catch {
+      return []
+    }
   })
 
   // Forward UIRegistry changes to renderer

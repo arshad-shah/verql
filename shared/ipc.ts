@@ -175,6 +175,10 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  'plugins:completions': {
+    args: [driverId: string, connectionId: string, context: import('./plugin-ui-types').CompletionContext]
+    return: import('./plugin-ui-types').CompletionItem[]
+  }
   'settings:get-all': {
     args: []
     return: AppSettings

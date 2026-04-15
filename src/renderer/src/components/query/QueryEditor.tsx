@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
-import { registerSqlCompletionProvider, updateTableNames } from '@/lib/monaco-sql'
+import { registerCompletionProvider, updateCompletionItems } from '@/lib/monaco-sql'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -16,7 +16,7 @@ interface Props {
   databaseType?: string
 }
 
-let completionRegistered = false
+const registeredLanguages = new Set<string>()
 
 function parseKeybinding(key: string, monaco: Monaco): number {
   const parts = key.split('+')
@@ -39,6 +39,7 @@ function parseKeybinding(key: string, monaco: Monaco): number {
 
 export function QueryEditor({ value, onChange, onExecute, connectionId, schema, databaseType }: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const monacoRef = useRef<Monaco | null>(null)
   const { connectedIds } = useConnectionsStore()
   const { theme } = useTheme()
   const editorSettings = useSettingsStore((s) => s.settings.editor)
@@ -48,12 +49,14 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
+    monacoRef.current = monaco
 
     defineAppThemes(monaco)
 
-    if (!completionRegistered && language === 'sql') {
-      registerSqlCompletionProvider(monaco)
-      completionRegistered = true
+    // Register completion provider per language (once per language)
+    if (!registeredLanguages.has(language)) {
+      registerCompletionProvider(monaco, language)
+      registeredLanguages.add(language)
     }
 
     const executeBinding = keybindings.find(k => k.id === 'execute-query')
@@ -71,15 +74,19 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
     editor.focus()
   }, [onExecute, language, keybindings])
 
+  // Fetch completions from plugin when connection/schema/databaseType changes
   useEffect(() => {
-    if (!connectionId || !connectedIds.has(connectionId) || language !== 'sql') {
-      updateTableNames([])
+    if (!connectionId || !connectedIds.has(connectionId) || !databaseType) {
+      updateCompletionItems([])
       return
     }
-    window.electronAPI.invoke('db:get-table-names', connectionId, schema ?? undefined)
-      .then(names => updateTableNames(names))
-      .catch(() => updateTableNames([]))
-  }, [connectionId, schema, connectedIds, language])
+    window.electronAPI.invoke('plugins:completions', databaseType, connectionId, {
+      connectionId,
+      schema: schema ?? undefined
+    })
+      .then(items => updateCompletionItems(items))
+      .catch(() => updateCompletionItems([]))
+  }, [connectionId, schema, connectedIds, databaseType])
 
   return (
     <Editor

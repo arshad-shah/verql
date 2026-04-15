@@ -11,6 +11,7 @@ import type { DriverRegistryImpl } from './sdk/driver-registry'
 import type { CommandRegistryImpl } from './sdk/command-registry'
 import type { PanelRegistryImpl } from './sdk/panel-registry'
 import type { UIRegistryImpl } from './sdk/ui-registry'
+import type { CompletionRegistryImpl } from './sdk/completion-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import type { DbAdapter } from '../db/adapter'
@@ -97,6 +98,7 @@ interface BootDeps {
   commandRegistry: CommandRegistryImpl
   panelRegistry: PanelRegistryImpl
   uiRegistry: UIRegistryImpl
+  completionRegistry: CompletionRegistryImpl
   getAdapter: (connectionId: string) => DbAdapter | undefined
   getProfile: (connectionId: string) => ConnectionProfile | undefined
   keyring: import('./sdk/types').KeyringAccess
@@ -253,8 +255,9 @@ export class PluginBootCoordinator {
 
     plugin.status = { state: 'activating' }
 
-    // Set the current plugin name so UIRegistry can track ownership
+    // Set the current plugin name so registries can track ownership
     this.deps.uiRegistry.currentPluginName = plugin.manifest.name
+    this.deps.completionRegistry.currentPluginName = plugin.manifest.name
 
     const context = createPluginContext({
       pluginName: plugin.manifest.name,
@@ -262,6 +265,7 @@ export class PluginBootCoordinator {
       commandRegistry: this.deps.commandRegistry,
       panelRegistry: this.deps.panelRegistry,
       uiRegistry: this.deps.uiRegistry,
+      completionRegistry: this.deps.completionRegistry,
       schemaAccess: new SchemaAccessImpl(this.deps.getAdapter),
       connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
       settingsStore: this.deps.settingsStore,

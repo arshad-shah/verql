@@ -135,3 +135,20 @@ export interface UIContribution {
 export interface ResolverContext {
   connectionId: string
 }
+
+// ─── Completion Types ──────────────────────────────────────────────────────
+
+export type CompletionItemKind = 'keyword' | 'table' | 'column' | 'function' | 'collection' | 'command' | 'field' | 'operator' | 'snippet'
+
+export interface CompletionItem {
+  label: string
+  kind: CompletionItemKind
+  detail?: string
+  insertText?: string
+  sortText?: string
+}
+
+export interface CompletionContext {
+  connectionId: string
+  schema?: string
+}

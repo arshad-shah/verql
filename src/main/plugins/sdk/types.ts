@@ -2,6 +2,7 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex } from '@shared/types'
 import type { DbAdapter } from '../../db/adapter'
 import type { UIRegistry } from './ui-registry'
+import type { CompletionRegistry } from './completion-registry'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export interface PluginContext {
   commands: CommandRegistry
   panels: PanelRegistry
   ui: UIRegistry
+  completions: CompletionRegistry
   schema: SchemaAccess
   connections: ConnectionAccess
   settings: PluginSettings

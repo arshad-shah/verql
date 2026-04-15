@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { ChevronDown, ChevronRight, FolderOpen, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
+import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
@@ -35,6 +36,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const fetchTables = useSchemaStore((s) => s.fetchTables)
   const clearCache = useSchemaStore((s) => s.clearCache)
 
+  const openErDiagram = useTabsStore((s) => s.openErDiagram)
   const addToast = useToastStore((s) => s.addToast)
 
   const allTables = tables.get(tableCacheKey) ?? []
@@ -80,6 +82,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   }
 
   const menuItems = [
+    { label: 'Open ER Diagram', onSelect: () => openErDiagram(connectionId, schemaName) },
     { label: 'Refresh', onSelect: handleRefresh },
     { label: 'Copy schema name', onSelect: handleCopySchemaName },
   ]
@@ -125,25 +128,36 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
             {schemaName}
           </span>
 
-          {/* Hover action: refresh */}
+          {/* Hover actions */}
           <span
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleRefresh()
-            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5"
           >
-            <Tooltip content="Refresh schema" side="top">
-              <IconButton
-                label="Refresh schema"
-                size="xs"
-                variant="ghost"
-                className="h-5 w-5"
-                tabIndex={-1}
-              >
-                <RefreshCw size={10} />
-              </IconButton>
-            </Tooltip>
+            <span onClick={(e) => { e.stopPropagation(); openErDiagram(connectionId, schemaName) }}>
+              <Tooltip content="ER Diagram" side="top">
+                <IconButton
+                  label="ER Diagram"
+                  size="xs"
+                  variant="ghost"
+                  className="h-5 w-5"
+                  tabIndex={-1}
+                >
+                  <GitFork size={10} />
+                </IconButton>
+              </Tooltip>
+            </span>
+            <span onClick={(e) => { e.stopPropagation(); handleRefresh() }}>
+              <Tooltip content="Refresh schema" side="top">
+                <IconButton
+                  label="Refresh schema"
+                  size="xs"
+                  variant="ghost"
+                  className="h-5 w-5"
+                  tabIndex={-1}
+                >
+                  <RefreshCw size={10} />
+                </IconButton>
+              </Tooltip>
+            </span>
           </span>
         </button>
 

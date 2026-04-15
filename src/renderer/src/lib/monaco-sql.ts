@@ -1,28 +1,27 @@
 import type { Monaco } from '@monaco-editor/react'
+import type { CompletionItem, CompletionItemKind } from '@shared/plugin-ui-types'
 
-const SQL_KEYWORDS = [
-  'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN',
-  'IS', 'NULL', 'AS', 'ON', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER',
-  'FULL', 'CROSS', 'GROUP', 'BY', 'ORDER', 'ASC', 'DESC', 'HAVING',
-  'LIMIT', 'OFFSET', 'UNION', 'ALL', 'DISTINCT', 'INSERT', 'INTO',
-  'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE', 'TABLE', 'ALTER',
-  'DROP', 'INDEX', 'VIEW', 'TRIGGER', 'FUNCTION', 'BEGIN', 'COMMIT',
-  'ROLLBACK', 'TRANSACTION', 'EXPLAIN', 'ANALYZE', 'WITH', 'CASE',
-  'WHEN', 'THEN', 'ELSE', 'END', 'EXISTS', 'COUNT', 'SUM', 'AVG',
-  'MIN', 'MAX', 'COALESCE', 'CAST', 'TRUNCATE', 'PRIMARY', 'KEY',
-  'FOREIGN', 'REFERENCES', 'CONSTRAINT', 'DEFAULT', 'CHECK', 'UNIQUE',
-  'NOT NULL', 'CASCADE', 'RESTRICT', 'RETURNING'
-]
+let cachedItems: CompletionItem[] = []
 
-let cachedTableNames: string[] = []
-
-export function updateTableNames(names: string[]): void {
-  cachedTableNames = names
+export function updateCompletionItems(items: CompletionItem[]): void {
+  cachedItems = items
 }
 
-export function registerSqlCompletionProvider(monaco: Monaco): void {
-  monaco.languages.registerCompletionItemProvider('sql', {
-    triggerCharacters: ['.', ' '],
+const kindMap: Record<CompletionItemKind, number> = {
+  keyword: 17,    // Monaco CompletionItemKind.Keyword
+  table: 6,       // Struct (was previously used for tables)
+  column: 4,      // Field
+  function: 1,    // Function
+  collection: 6,  // Struct
+  command: 17,    // Keyword
+  field: 4,       // Field
+  operator: 11,   // Operator
+  snippet: 27,    // Snippet
+}
+
+export function registerCompletionProvider(monaco: Monaco, language: string): void {
+  monaco.languages.registerCompletionItemProvider(language, {
+    triggerCharacters: ['.', ' ', '$', '"'],
     provideCompletionItems: (model, position) => {
       const word = model.getWordUntilPosition(position)
       const range = {
@@ -32,23 +31,14 @@ export function registerSqlCompletionProvider(monaco: Monaco): void {
         endColumn: word.endColumn
       }
 
-      const suggestions = [
-        ...SQL_KEYWORDS.map(kw => ({
-          label: kw,
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: kw,
-          range,
-          sortText: '1' + kw
-        })),
-        ...cachedTableNames.map(name => ({
-          label: name,
-          kind: monaco.languages.CompletionItemKind.Struct,
-          insertText: name,
-          detail: 'table',
-          range,
-          sortText: '0' + name
-        }))
-      ]
+      const suggestions = cachedItems.map(item => ({
+        label: item.label,
+        kind: kindMap[item.kind] ?? 17,
+        insertText: item.insertText ?? item.label,
+        detail: item.detail,
+        range,
+        sortText: item.sortText ?? item.label
+      }))
 
       return { suggestions }
     }

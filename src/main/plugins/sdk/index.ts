@@ -4,6 +4,7 @@ import { DriverRegistryImpl } from './driver-registry'
 import { CommandRegistryImpl } from './command-registry'
 import { PanelRegistryImpl } from './panel-registry'
 import { UIRegistryImpl } from './ui-registry'
+import { CompletionRegistryImpl } from './completion-registry'
 import { SchemaAccessImpl } from './schema-access'
 import { ConnectionAccessImpl } from './connection-access'
 import { PluginSettingsImpl } from './settings'
@@ -12,6 +13,7 @@ export { DriverRegistryImpl } from './driver-registry'
 export { CommandRegistryImpl } from './command-registry'
 export { PanelRegistryImpl } from './panel-registry'
 export { UIRegistryImpl } from './ui-registry'
+export { CompletionRegistryImpl } from './completion-registry'
 export { SchemaAccessImpl } from './schema-access'
 export { ConnectionAccessImpl } from './connection-access'
 export { PluginSettingsImpl } from './settings'
@@ -24,6 +26,7 @@ interface ContextDeps {
   commandRegistry: CommandRegistryImpl
   panelRegistry: PanelRegistryImpl
   uiRegistry: UIRegistryImpl
+  completionRegistry: CompletionRegistryImpl
   schemaAccess: SchemaAccessImpl
   connectionAccess: ConnectionAccessImpl
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
@@ -96,6 +99,14 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  const completions = {
+    register(provider: Parameters<CompletionRegistryImpl['register']>[0]) {
+      const disposable = deps.completionRegistry.register(provider)
+      subscriptions.push(disposable)
+      return disposable
+    }
+  }
+
   const settings = new PluginSettingsImpl(pluginName, deps.settingsStore)
 
   return {
@@ -103,6 +114,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     commands,
     panels,
     ui,
+    completions,
     schema: deps.schemaAccess,
     connections: deps.connectionAccess,
     settings,
