@@ -20,6 +20,10 @@ import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { safeCall } from './plugins/sdk/safe-call'
 import { KeyringService } from './keyring'
+import { AIToolRegistry } from './ai/tool-registry'
+import { AIProviderRegistry } from './ai/provider-registry'
+import { ConversationManager } from './ai/conversation-manager'
+import { PermissionManager } from './ai/permission-manager'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
 import * as mongoPlugin from './plugins/bundled/mongodb'
 import * as redisPlugin from './plugins/bundled/redis'
@@ -477,6 +481,16 @@ export function registerIpcHandlers(): void {
 
   const uiRegistry = new UIRegistryImpl()
 
+  const aiToolRegistry = new AIToolRegistry()
+  const aiProviderRegistry = new AIProviderRegistry()
+  const aiConversationManager = new ConversationManager({
+    providerRegistry: aiProviderRegistry,
+    toolRegistry: aiToolRegistry,
+    permissionManager: new PermissionManager(),
+    getSchemaContext: async () => '',
+    getConnectionId: () => null
+  })
+
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry,
     commandRegistry,
@@ -493,7 +507,10 @@ export function registerIpcHandlers(): void {
       set: (key, value) => {
         configStore.setSetting(`plugins.${key}`, value)
       }
-    }
+    },
+    aiToolRegistry,
+    aiProviderRegistry,
+    aiConversationManager
   })
 
   // Register bundled plugins

@@ -101,6 +101,9 @@ interface BootDeps {
   getProfile: (connectionId: string) => ConnectionProfile | undefined
   keyring: import('./sdk/types').KeyringAccess
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
+  aiToolRegistry: import('../ai/tool-registry').AIToolRegistry
+  aiProviderRegistry: import('../ai/provider-registry').AIProviderRegistry
+  aiConversationManager: import('../ai/conversation-manager').ConversationManager
 }
 
 export class PluginBootCoordinator {
@@ -265,7 +268,10 @@ export class PluginBootCoordinator {
       schemaAccess: new SchemaAccessImpl(this.deps.getAdapter),
       connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
       settingsStore: this.deps.settingsStore,
-      keyring: this.deps.keyring
+      keyring: this.deps.keyring,
+      aiToolRegistry: this.deps.aiToolRegistry,
+      aiProviderRegistry: this.deps.aiProviderRegistry,
+      aiConversationManager: this.deps.aiConversationManager
     })
     plugin.context = context
 
