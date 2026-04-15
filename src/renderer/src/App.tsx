@@ -18,6 +18,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import { PluginDetailView } from '@/components/plugins/PluginDetailView'
 import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
+import { ChatPanel } from '@/components/ai/ChatPanel'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
@@ -159,6 +160,7 @@ export function App() {
                 </Flex>
               </>
             )}
+            <ChatPanel />
           </>
         )}
       </Flex>
