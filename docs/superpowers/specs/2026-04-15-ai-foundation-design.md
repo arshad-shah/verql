@@ -73,6 +73,15 @@ interface AIChatRequest {
   signal?: AbortSignal;
 }
 
+interface AIChatMessage {
+  id: string;
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  toolCalls?: { id: string; name: string; arguments: unknown }[];
+  toolCallId?: string;   // For role: 'tool' — which call this responds to
+  timestamp: number;
+}
+
 interface AIChatChunk {
   type: 'text' | 'tool-call' | 'done' | 'error';
   content?: string;          // For text chunks
