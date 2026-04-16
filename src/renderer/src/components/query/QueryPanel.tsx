@@ -3,6 +3,7 @@ import { QueryEditor } from './QueryEditor'
 import { QueryToolbar } from './QueryToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
+import { NLInputBar } from '@/components/ai/NLInputBar'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -105,6 +106,13 @@ export function QueryPanel({ tab }: Props) {
         />
       </Flex>
 
+      {/* NL-to-SQL input bar */}
+      <NLInputBar
+        connectionId={tab.connectionId}
+        schema={tab.schema}
+        onSqlGenerated={(sql) => { updateTabSql(tab.id, sql); setTabDirty(tab.id, true) }}
+      />
+
       {/* Editor — top half */}
       <Box className="flex-1 min-h-30 border-b border-border">
         <QueryEditor
@@ -120,7 +128,7 @@ export function QueryPanel({ tab }: Props) {
       {/* Results — bottom half */}
       <Flex direction="column" className="flex-1 min-h-25">
         {tab.results ? (
-          <ResultsPanel results={tab.results} />
+          <ResultsPanel results={tab.results} sql={tab.sql} tabId={tab.id} aiExplanation={tab.aiExplanation} />
         ) : tab.error ? (
           <Flex align="center" justify="center" className="flex-1 p-4">
             <Alert variant="error" title="Query Error" className="max-w-lg">

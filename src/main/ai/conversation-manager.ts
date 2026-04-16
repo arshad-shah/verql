@@ -51,11 +51,22 @@ export class ConversationManager {
     this.contextProviders = this.contextProviders.filter(p => p.id !== id)
   }
 
-  async assembleSystemMessage(): Promise<string> {
+  async assembleSystemMessage(connectionMeta?: { type: string; driverName: string }): Promise<string> {
     const parts: string[] = [
-      'You are a helpful database assistant. You can query and inspect the connected database using the tools available to you.',
-      'Always explain what you are doing and why. When generating SQL, prefer safe read operations unless the user explicitly asks for modifications.'
+      `You are a concise database assistant inside a desktop database client. Help users with schemas, queries, analysis, and debugging.
+
+Rules:
+- Be brief. Short sentences, no filler, no greetings, no emoji.
+- Answer directly — do not list your capabilities or offer generic help.
+- Only help with database-related tasks. Decline everything else in one sentence.
+- Never write application code (no React, Python, JS, etc.).
+- Prefer safe read operations. Only run destructive operations if the user explicitly confirms.
+- Do not invent data — only reference the schema or query results.`
     ]
+
+    if (connectionMeta) {
+      parts.push(`The user is connected to a ${connectionMeta.driverName} database (type: ${connectionMeta.type}). Generate queries and commands appropriate for this database system.`)
+    }
 
     const connectionId = this.deps.getConnectionId()
     if (connectionId) {
@@ -83,7 +94,7 @@ export class ConversationManager {
     return parts.join('\n\n')
   }
 
-  async *chat(): AsyncIterable<AIStreamEvent> {
+  async *chat(connectionMeta?: { type: string; driverName: string }): AsyncIterable<AIStreamEvent> {
     const provider = this.deps.providerRegistry.getActive()
     if (!provider) throw new Error('No active AI provider')
 
@@ -91,7 +102,7 @@ export class ConversationManager {
     if (!modelId) throw new Error('No active AI model')
 
     this.abortController = new AbortController()
-    const systemMessage = await this.assembleSystemMessage()
+    const systemMessage = await this.assembleSystemMessage(connectionMeta)
 
     const allMessages: AIChatMessage[] = [
       { id: 'system', role: 'system', content: systemMessage, timestamp: 0 },
@@ -132,7 +143,19 @@ export class ConversationManager {
           continue
         }
 
-        const params = JSON.parse(chunk.toolCall.arguments) as Record<string, unknown>
+        let params: Record<string, unknown>
+        try {
+          params = JSON.parse(chunk.toolCall.arguments || '{}') as Record<string, unknown>
+        } catch {
+          yield { type: 'tool-result', result: {
+            toolCallId: chunk.toolCall.id,
+            toolName: chunk.toolCall.name,
+            success: false,
+            data: null,
+            display: 'Failed to parse tool arguments'
+          }}
+          continue
+        }
 
         if (this.deps.permissionManager.needsApproval(tool)) {
           const display = tool.description + ': ' + JSON.stringify(params)

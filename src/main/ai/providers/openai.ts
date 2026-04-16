@@ -1,13 +1,18 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 import type { AIToolCallRequest } from '@shared/ai-types'
 
-const MODELS: AIProviderModel[] = [
-  { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', contextWindow: 128000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'gpt-4.1', name: 'GPT-4.1', contextWindow: 1000000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', contextWindow: 1000000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', contextWindow: 1000000, capabilities: ['chat', 'tool-calling'] },
-]
+const CHAT_MODEL_PREFIXES = ['gpt-4o', 'gpt-4.1', 'o1', 'o3', 'o4']
+
+interface OpenAIModel {
+  id: string
+  object: string
+  created: number
+  owned_by: string
+}
+
+interface OpenAIModelsResponse {
+  data: OpenAIModel[]
+}
 
 const API_URL = 'https://api.openai.com/v1/chat/completions'
 
@@ -19,7 +24,29 @@ export class OpenAIProvider implements AIProvider {
   constructor(private readonly getApiKey: () => string | null) {}
 
   async models(): Promise<AIProviderModel[]> {
-    return MODELS
+    const apiKey = this.getApiKey()
+    if (!apiKey) return []
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      })
+
+      if (!response.ok) return []
+
+      const data = (await response.json()) as OpenAIModelsResponse
+      return data.data
+        .filter(m => CHAT_MODEL_PREFIXES.some(prefix => m.id.startsWith(prefix)))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map(m => ({
+          id: m.id,
+          name: m.id,
+          contextWindow: 128000,
+          capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
+        }))
+    } catch {
+      return []
+    }
   }
 
   async *chat(request: AIProviderChatRequest): AsyncIterable<AIProviderChunk> {
@@ -54,6 +81,18 @@ export class OpenAIProvider implements AIProvider {
       model: request.model,
       messages,
       stream: true,
+    }
+
+    if (request.temperature !== undefined) {
+      body.temperature = request.temperature
+    }
+
+    if (request.maxTokens !== undefined) {
+      body.max_tokens = request.maxTokens
+    }
+
+    if (request.stopSequences && request.stopSequences.length > 0) {
+      body.stop = request.stopSequences
     }
 
     if (request.tools && request.tools.length > 0) {

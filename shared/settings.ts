@@ -48,12 +48,28 @@ export interface KeyBinding {
   category: string
 }
 
+export interface AISettings {
+  openaiKey: string
+  anthropicKey: string
+  ollamaEndpoint: string
+  activeProvider: string
+  activeModel: string
+}
+
+export interface MCPSettings {
+  enabled: boolean
+  port: number
+  token: string
+}
+
 export interface AppSettings {
   general: GeneralSettings
   appearance: AppearanceSettings
   editor: EditorSettings
   connectionDefaults: ConnectionDefaultSettings
   dataDisplay: DataDisplaySettings
+  ai: AISettings
+  mcp: MCPSettings
   keybindings: KeyBinding[]
   plugins: Record<string, Record<string, unknown>>
 }
@@ -98,6 +114,18 @@ export const defaultSettings: AppSettings = {
     dateFormat: 'iso',
     numberFormat: 'raw',
     maxColumnWidth: 300,
+  },
+  ai: {
+    openaiKey: '',
+    anthropicKey: '',
+    ollamaEndpoint: 'http://localhost:11434',
+    activeProvider: 'ollama',
+    activeModel: '',
+  },
+  mcp: {
+    enabled: false,
+    port: 3100,
+    token: '',
   },
   keybindings: [
     { id: 'execute-query', label: 'Execute Query', keys: ['Ctrl+Enter', 'Cmd+Enter'], category: 'Query Execution' },

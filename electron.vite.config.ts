@@ -7,7 +7,7 @@ export default defineConfig({
   main: {
     build: {
       rollupOptions: {
-        external: ['better-sqlite3', 'pg', 'mysql2', 'csv-parse', 'csv-stringify']
+        external: ['better-sqlite3', 'pg', 'mysql2', 'csv-parse', 'csv-stringify', '@modelcontextprotocol/sdk', 'zod']
       }
     },
     resolve: {

@@ -5,7 +5,7 @@ import type { ConnectionAccess } from '../../../sdk/types'
 export function createQueryTools(connections: ConnectionAccess): AITool[] {
   return [
     {
-      id: 'query.explain',
+      id: 'query_explain',
       name: 'Explain Query',
       description: 'Run EXPLAIN on a SQL query to show the execution plan without executing it.',
       parameters: {
@@ -21,7 +21,7 @@ export function createQueryTools(connections: ConnectionAccess): AITool[] {
       }
     },
     {
-      id: 'query.execute',
+      id: 'query_execute',
       name: 'Execute Query',
       description: 'Execute a SQL query against the connected database.',
       parameters: {

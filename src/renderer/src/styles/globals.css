@@ -87,6 +87,11 @@ dialog[open] { display: flex; flex-direction: column; }
 }
 .toast-enter { animation: slide-in-right 0.2s ease-out; }
 
+@keyframes cursor-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
 /* UI Density scaling */
 [data-density="compact"] {
   --density-spacing: 1;

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { AppSettings } from '@shared/settings'
-import { defaultSettings } from '@shared/settings'
+import { defaultSettings, mergeWithDefaults } from '@shared/settings'
 
 interface SettingsState {
   settings: AppSettings
@@ -15,8 +15,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   loaded: false,
 
   hydrate: async () => {
-    const settings = await window.electronAPI.invoke('settings:get-all')
-    set({ settings, loaded: true })
+    const settings = await window.electronAPI.invoke('settings:get-all') as AppSettings
+    set({ settings: mergeWithDefaults(settings), loaded: true })
   },
 
   set: async (keyPath: string, value: unknown) => {

@@ -1,6 +1,6 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, DatabaseType } from './types'
 import type { AppSettings } from './settings'
-import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
+import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage, AIApprovalRequest } from './ai-types'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -237,6 +237,10 @@ export interface IpcChannelMap {
     args: []
     return: AIProviderInfo[]
   }
+  'ai:providers:list-configured': {
+    args: []
+    return: AIProviderInfo[]
+  }
   'ai:providers:set-active': {
     args: [providerId: string]
     return: void
@@ -268,5 +272,35 @@ export interface IpcChannelMap {
   'ai:tools:list': {
     args: []
     return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
+  }
+  // ─── AI Enhancements ────────────────────────────────────────────────────────
+  'ai:generate-sql': {
+    args: [request: { prompt: string; connectionId: string; schema?: string }]
+    return: { sql: string }
+  }
+  'ai:complete-sql': {
+    args: [request: { sql: string; cursorOffset: number; connectionId: string; schema?: string }]
+    return: { completion: string }
+  }
+  'ai:explain-results': {
+    args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
+    return: { explanation: string }
+  }
+  // ─── MCP Server ─────────────────────────────────────────────────────────────
+  'mcp:start': {
+    args: []
+    return: { port: number; token: string }
+  }
+  'mcp:stop': {
+    args: []
+    return: void
+  }
+  'mcp:status': {
+    args: []
+    return: { running: boolean; port: number; clients: number; token: string }
+  }
+  'mcp:approval-response': {
+    args: [requestId: string, approved: boolean]
+    return: void
   }
 }

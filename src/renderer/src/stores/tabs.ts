@@ -16,7 +16,8 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
     results: null,
     isExecuting: false,
     error: null,
-    isDirty: false
+    isDirty: false,
+    aiExplanation: null
   }
 }
 
@@ -40,6 +41,7 @@ interface TabsState {
   setTabExecuting: (id: string, executing: boolean) => void
   setTabResults: (id: string, results: QueryResult) => void
   setTabError: (id: string, error: string) => void
+  setTabAiExplanation: (id: string, explanation: string | null) => void
   openErDiagram: (connectionId: string, schema: string) => string
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
@@ -163,7 +165,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     set((s) => ({
       tabs: s.tabs.map(t =>
         t.id === id && t.type === 'query'
-          ? { ...t, results, isExecuting: false, error: null, isDirty: false }
+          ? { ...t, results, isExecuting: false, error: null, isDirty: false, aiExplanation: null }
           : t
       )
     }))
@@ -174,6 +176,16 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       tabs: s.tabs.map(t =>
         t.id === id && t.type === 'query'
           ? { ...t, error, isExecuting: false }
+          : t
+      )
+    }))
+  },
+
+  setTabAiExplanation: (id, explanation) => {
+    set((s) => ({
+      tabs: s.tabs.map(t =>
+        t.id === id && t.type === 'query'
+          ? { ...t, aiExplanation: explanation }
           : t
       )
     }))

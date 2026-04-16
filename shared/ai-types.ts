@@ -61,4 +61,5 @@ export interface AIProviderInfo {
 export interface AIChatStartRequest {
   message: string
   connectionId?: string
+  connectionMeta?: { type: string; driverName: string }
 }

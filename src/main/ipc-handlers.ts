@@ -22,6 +22,7 @@ import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { safeCall } from './plugins/sdk/safe-call'
 import { KeyringService } from './keyring'
 import { createAIModule } from './ai'
+import { createMCPServer } from './mcp/server'
 import { SchemaAccessImpl } from './plugins/sdk/schema-access'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
@@ -153,7 +154,10 @@ export function registerIpcHandlers(): void {
     try {
       let profile = configStore.getConnection(profileId)
       if (!profile) return { success: false, error: 'Connection profile not found — it may have been deleted' }
-      if (activeAdapters.has(profileId)) return { success: true }
+      if (activeAdapters.has(profileId)) {
+        connectionAccess.setActiveConnectionId(profileId)
+        return { success: true }
+      }
 
       // Run connection middleware chain
       for (const { middleware, pluginName } of driverRegistry.getMiddlewares()) {
@@ -165,6 +169,7 @@ export function registerIpcHandlers(): void {
       const adapter = createAdapter(profile)
       await adapter.connect()
       activeAdapters.set(profileId, adapter)
+      connectionAccess.setActiveConnectionId(profileId)
       return { success: true }
     } catch (err) {
       return { success: false, error: formatDbError(err) }
@@ -176,6 +181,9 @@ export function registerIpcHandlers(): void {
     if (adapter) {
       await adapter.disconnect()
       activeAdapters.delete(profileId)
+    }
+    if (connectionAccess.getActiveConnectionId() === profileId) {
+      connectionAccess.setActiveConnectionId(null)
     }
     // Run middleware disconnect (e.g. close SSH tunnels)
     for (const { middleware, pluginName } of driverRegistry.getMiddlewares()) {
@@ -491,11 +499,10 @@ export function registerIpcHandlers(): void {
 
   const settingsStore = {
     get: (key: string): unknown => {
-      const pluginSettings = configStore.getSettingsCategory('plugins')
-      return pluginSettings[key]
+      return configStore.getSetting(key)
     },
     set: (key: string, value: unknown): void => {
-      configStore.setSetting(`plugins.${key}`, value)
+      configStore.setSetting(key, value)
     }
   }
 
@@ -505,6 +512,64 @@ export function registerIpcHandlers(): void {
     connectionAccess,
     handle,
     settingsStore
+  })
+
+  // ─── MCP Server ──────────────────────────────────────────────────────────────
+  const mcpServer = createMCPServer({
+    toolContext: {
+      getAdapter: () => {
+        const activeId = connectionAccess.getActiveConnectionId()
+        return activeId ? activeAdapters.get(activeId) : undefined
+      },
+      getProfile: () => {
+        const activeId = connectionAccess.getActiveConnectionId()
+        return activeId ? configStore.getConnection(activeId) : undefined
+      },
+      requestApproval: async () => true // overridden by server internally
+    },
+    settingsStore
+  })
+
+  handle('mcp:start', async () => {
+    const port = (configStore.getSetting('mcp.port') as number) || 3100
+    const result = await mcpServer.start(port)
+    configStore.setSetting('mcp.enabled', true)
+    return result
+  })
+
+  handle('mcp:stop', async () => {
+    await mcpServer.stop()
+    configStore.setSetting('mcp.enabled', false)
+  })
+
+  handle('mcp:status', async () => {
+    return mcpServer.getStatus()
+  })
+
+  handle('mcp:approval-response', async (requestId, approved) => {
+    mcpServer.resolveApproval(requestId, approved)
+  })
+
+  // Auto-start MCP if it was enabled
+  const mcpEnabled = configStore.getSetting('mcp.enabled') as boolean
+  if (mcpEnabled) {
+    const mcpPort = (configStore.getSetting('mcp.port') as number) || 3100
+    mcpServer.start(mcpPort).catch(err => {
+      console.error('[mcp] Auto-start failed:', err)
+    })
+  }
+
+  // ─── AI Enhancements IPC ──────────────────────────────────────────────────
+  handle('ai:generate-sql', async (request) => {
+    return aiModule.enhancements.generateSql(request)
+  })
+
+  handle('ai:complete-sql', async (request) => {
+    return aiModule.enhancements.completeSql(request)
+  })
+
+  handle('ai:explain-results', async (request) => {
+    return aiModule.enhancements.explainResults(request)
   })
 
   const pluginCoordinator = new PluginBootCoordinator({

@@ -5,7 +5,7 @@ import type { SchemaAccess } from '../../../sdk/types'
 export function createSchemaTools(schema: SchemaAccess): AITool[] {
   return [
     {
-      id: 'schema.listTables',
+      id: 'schema_list_tables',
       name: 'List Tables',
       description: 'List all tables in the current database schema. Returns table names and types.',
       parameters: {
@@ -22,7 +22,7 @@ export function createSchemaTools(schema: SchemaAccess): AITool[] {
       }
     },
     {
-      id: 'schema.describeTable',
+      id: 'schema_describe_table',
       name: 'Describe Table',
       description: 'Get column definitions, types, primary keys, and foreign keys for a specific table.',
       parameters: {
@@ -46,7 +46,7 @@ export function createSchemaTools(schema: SchemaAccess): AITool[] {
       }
     },
     {
-      id: 'schema.getRelationships',
+      id: 'schema_get_relationships',
       name: 'Get Relationships',
       description: 'Get foreign key relationships for a table.',
       parameters: {
@@ -66,7 +66,7 @@ export function createSchemaTools(schema: SchemaAccess): AITool[] {
       }
     },
     {
-      id: 'connection.info',
+      id: 'connection_info',
       name: 'Connection Info',
       description: 'Get information about available schemas and databases.',
       parameters: { type: 'object', properties: {} },

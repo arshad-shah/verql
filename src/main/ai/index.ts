@@ -11,6 +11,7 @@ import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
 import type { KeyringAccess, SchemaAccess, ConnectionAccess } from '../plugins/sdk/types'
+import { createAIEnhancements } from './enhancements'
 
 export interface AIModuleDeps {
   keyring: KeyringAccess
@@ -28,6 +29,7 @@ export interface AIModule {
   toolRegistry: AIToolRegistry
   permissionManager: PermissionManager
   conversationManager: ConversationManager
+  enhancements: ReturnType<typeof createAIEnhancements>
 }
 
 export function createAIModule(deps: AIModuleDeps): AIModule {
@@ -52,37 +54,63 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
   providerRegistry.register(anthropic)
   providerRegistry.register(ollama)
 
-  // Restore active provider/model from settings
+  // Restore active provider/model from settings, or auto-detect from configured keys
   const savedProvider = deps.settingsStore.get('ai.activeProvider') as string | undefined
   const savedModel = deps.settingsStore.get('ai.activeModel') as string | undefined
   if (savedProvider && providerRegistry.get(savedProvider)) {
     providerRegistry.setActive(savedProvider)
+  } else {
+    // Auto-select first provider that has an API key configured
+    const anthropicKey = deps.settingsStore.get('ai.anthropicKey') as string | undefined
+    const openaiKey = deps.settingsStore.get('ai.openaiKey') as string | undefined
+    if (anthropicKey) {
+      providerRegistry.setActive('anthropic')
+      deps.settingsStore.set('ai.activeProvider', 'anthropic')
+    } else if (openaiKey) {
+      providerRegistry.setActive('openai')
+      deps.settingsStore.set('ai.activeProvider', 'openai')
+    }
   }
   if (savedModel) {
     providerRegistry.setActiveModel(savedModel)
+  } else if (providerRegistry.getActive()) {
+    // Auto-select first model from the active provider
+    providerRegistry.getActive()!.models().then(models => {
+      if (models.length > 0) {
+        providerRegistry.setActiveModel(models[0].id)
+        deps.settingsStore.set('ai.activeModel', models[0].id)
+      }
+    })
+  }
+
+  const getSchemaContext = async (connectionId: string): Promise<string> => {
+    try {
+      const summary = await deps.schemaAccess.getSchemaSummary(connectionId)
+      return summary.tables.map(t => {
+        const cols = t.columns.map(c => {
+          let desc = `${c.name} ${c.dataType}`
+          if (c.isPrimaryKey) desc += ' PK'
+          if (c.isForeignKey && c.references) desc += ` FK→${c.references.table}.${c.references.column}`
+          return desc
+        }).join(', ')
+        return `${t.name}(${cols})`
+      }).join('\n')
+    } catch {
+      return ''
+    }
   }
 
   const conversationManager = new ConversationManager({
     providerRegistry,
     toolRegistry,
     permissionManager,
-    getSchemaContext: async (connectionId) => {
-      try {
-        const summary = await deps.schemaAccess.getSchemaSummary(connectionId)
-        return summary.tables.map(t => {
-          const cols = t.columns.map(c => {
-            let desc = `${c.name} ${c.dataType}`
-            if (c.isPrimaryKey) desc += ' PK'
-            if (c.isForeignKey && c.references) desc += ` FK→${c.references.table}.${c.references.column}`
-            return desc
-          }).join(', ')
-          return `${t.name}(${cols})`
-        }).join('\n')
-      } catch {
-        return ''
-      }
-    },
+    getSchemaContext,
     getConnectionId: () => deps.connectionAccess.getActiveConnectionId()
+  })
+
+  const enhancements = createAIEnhancements({
+    providerRegistry,
+    getSchemaContext
   })
 
   // ─── Register IPC handlers ─────────────────────────────────────────────────
@@ -99,7 +127,7 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
     // Run streaming in background, broadcast events to renderer
     ;(async () => {
       try {
-        for await (const event of conversationManager.chat()) {
+        for await (const event of conversationManager.chat(request.connectionMeta)) {
           const win = BrowserWindow.getAllWindows()[0]
           if (win) win.webContents.send('ai:chat:event', streamId, event)
         }
@@ -132,6 +160,24 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
 
   deps.handle('ai:providers:list', async () => {
     return providerRegistry.list().map(p => ({ id: p.id, name: p.name }))
+  })
+
+  deps.handle('ai:providers:list-configured', async () => {
+    const configured: { id: string; name: string }[] = []
+    const anthropicKey = deps.settingsStore.get('ai.anthropicKey') as string | undefined
+    const openaiKey = deps.settingsStore.get('ai.openaiKey') as string | undefined
+
+    if (anthropicKey) configured.push({ id: 'anthropic', name: 'Anthropic' })
+    if (openaiKey) configured.push({ id: 'openai', name: 'OpenAI' })
+
+    // Check Ollama reachability
+    const ollamaEndpoint = (deps.settingsStore.get('ai.ollamaEndpoint') as string) || 'http://localhost:11434'
+    try {
+      const resp = await fetch(`${ollamaEndpoint}/api/tags`, { signal: AbortSignal.timeout(2000) })
+      if (resp.ok) configured.push({ id: 'ollama', name: 'Ollama' })
+    } catch { /* unreachable */ }
+
+    return configured
   })
 
   deps.handle('ai:providers:set-active', async (providerId) => {
@@ -176,5 +222,5 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
     }))
   })
 
-  return { providerRegistry, toolRegistry, permissionManager, conversationManager }
+  return { providerRegistry, toolRegistry, permissionManager, conversationManager, enhancements }
 }

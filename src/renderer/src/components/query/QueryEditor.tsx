@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { registerCompletionProvider, updateCompletionItems } from '@/lib/monaco-sql'
+import { registerAIInlineCompletionProvider, setAICompletionContext } from '@/lib/monaco-ai-completion'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -56,6 +57,9 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
     // Register completion provider per language (once per language)
     if (!registeredLanguages.has(language)) {
       registerCompletionProvider(monaco, language)
+      if (language === 'sql') {
+        registerAIInlineCompletionProvider(monaco, language)
+      }
       registeredLanguages.add(language)
     }
 
@@ -73,6 +77,11 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
 
     editor.focus()
   }, [onExecute, language, keybindings])
+
+  // Update AI completion context
+  useEffect(() => {
+    setAICompletionContext(connectionId && connectedIds.has(connectionId) ? connectionId : null)
+  }, [connectionId, connectedIds])
 
   // Fetch completions from plugin when connection/schema/databaseType changes
   useEffect(() => {

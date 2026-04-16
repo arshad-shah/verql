@@ -29,6 +29,9 @@ export class OllamaProvider implements AIProvider {
   async *chat(request: AIProviderChatRequest): AsyncIterable<AIProviderChunk> {
     const { model, messages, tools, signal } = request
 
+    const options: Record<string, unknown> = {}
+    if (request.temperature !== undefined) options.temperature = request.temperature
+
     const body: Record<string, unknown> = {
       model,
       messages: messages.map((m) => ({
@@ -38,6 +41,8 @@ export class OllamaProvider implements AIProvider {
         ...(m.toolCallId ? { tool_call_id: m.toolCallId } : {}),
       })),
       stream: true,
+      ...(Object.keys(options).length > 0 ? { options } : {}),
+      ...(request.stopSequences && request.stopSequences.length > 0 ? { stop: request.stopSequences } : {}),
     }
 
     if (tools && tools.length > 0) {

@@ -1,4 +1,44 @@
 import { useAIStore } from '@/stores/ai'
+import { Card } from '@/primitives/surfaces/Card'
+import { Text } from '@/primitives/typography/Text'
+import { Badge } from '@/primitives/data-display/Badge'
+import { Button } from '@/primitives/forms/Button'
+import type { AIApprovalRequest } from '@shared/ai-types'
+
+interface ApprovalCardContentProps {
+  approval: AIApprovalRequest
+  onRespond: (requestId: string, approved: boolean) => void
+}
+
+export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContentProps) {
+  return (
+    <Card padding="md" className="mx-2 mb-3 border-warning/30 bg-warning/5">
+      <div className="flex items-center gap-2 mb-2">
+        <Badge variant="warning" size="sm">Action Required</Badge>
+        <Text size="xs" weight="medium">{approval.toolName}</Text>
+      </div>
+      <Text size="xs" color="secondary" as="p" className="mb-3">
+        {approval.display}
+      </Text>
+      <div className="flex gap-2">
+        <Button
+          variant="solid"
+          size="xs"
+          onClick={() => onRespond(approval.requestId, true)}
+        >
+          Approve
+        </Button>
+        <Button
+          variant="danger"
+          size="xs"
+          onClick={() => onRespond(approval.requestId, false)}
+        >
+          Reject
+        </Button>
+      </div>
+    </Card>
+  )
+}
 
 export function ApprovalCard() {
   const pendingApproval = useAIStore(s => s.pendingApproval)
@@ -7,27 +47,9 @@ export function ApprovalCard() {
   if (!pendingApproval) return null
 
   return (
-    <div className="mx-2 mb-3 rounded-lg border border-yellow-700 bg-yellow-900/20 p-3">
-      <div className="text-sm font-medium text-yellow-300 mb-1">
-        Action requires approval
-      </div>
-      <div className="text-xs text-[var(--color-text-secondary)] mb-2">
-        {pendingApproval.toolName}: {pendingApproval.display}
-      </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => respondToApproval(pendingApproval.requestId, true)}
-          className="rounded px-3 py-1 text-xs bg-green-700 text-white hover:bg-green-600"
-        >
-          Approve
-        </button>
-        <button
-          onClick={() => respondToApproval(pendingApproval.requestId, false)}
-          className="rounded px-3 py-1 text-xs bg-red-700 text-white hover:bg-red-600"
-        >
-          Reject
-        </button>
-      </div>
-    </div>
+    <ApprovalCardContent
+      approval={pendingApproval}
+      onRespond={respondToApproval}
+    />
   )
 }

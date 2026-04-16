@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Database, PenSquare, BarChart3, Puzzle, Settings, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Database, PenSquare, BarChart3, Puzzle, Settings, Sparkles, Radio } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { useAIStore } from '@/stores/ai'
@@ -18,9 +18,25 @@ export function ActivityBar() {
   const activityBarContributions = usePluginUIStore(selectContributions('activityBar'))
   const toggleAIPanel = useAIStore(s => s.togglePanel)
   const aiPanelOpen = useAIStore(s => s.panelOpen)
+  const [mcpRunning, setMcpRunning] = useState(false)
+  const [mcpClients, setMcpClients] = useState(0)
 
   useEffect(() => {
     usePluginUIStore.getState().fetchContributions('activityBar')
+  }, [])
+
+  // Poll MCP server status
+  useEffect(() => {
+    const checkMcp = async () => {
+      try {
+        const status = await window.electronAPI.invoke('mcp:status') as { running: boolean; clients: number }
+        setMcpRunning(status.running)
+        setMcpClients(status.clients)
+      } catch { /* */ }
+    }
+    checkMcp()
+    const interval = setInterval(checkMcp, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const renderButton = (id: ActivityPanel, Icon: typeof Database, label: string) => {
@@ -76,6 +92,19 @@ export function ActivityBar() {
           <Sparkles size={20} />
         </IconButton>
       </Tooltip>
+      {mcpRunning && (
+        <Tooltip content={`MCP Server · ${mcpClients} client${mcpClients !== 1 ? 's' : ''}`} side="right">
+          <IconButton
+            label="MCP Server"
+            size="lg"
+            variant="ghost"
+            onClick={() => setActivePanel('settings')}
+            className="rounded-lg transition-colors text-green-400 hover:text-green-300 hover:bg-white/5"
+          >
+            <Radio size={18} />
+          </IconButton>
+        </Tooltip>
+      )}
       <NotificationBell />
       {renderButton('settings', Settings, 'Settings')}
     </Stack>

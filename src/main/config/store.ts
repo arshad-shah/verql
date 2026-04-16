@@ -77,6 +77,16 @@ export class ConfigStore {
     return this.data.settings[category]
   }
 
+  getSetting(keyPath: string): unknown {
+    const parts = keyPath.split('.')
+    let target: any = this.data.settings
+    for (const part of parts) {
+      if (target == null || typeof target !== 'object') return undefined
+      target = target[part]
+    }
+    return target
+  }
+
   setSetting(keyPath: string, value: unknown): void {
     const parts = keyPath.split('.')
     let target: any = this.data.settings

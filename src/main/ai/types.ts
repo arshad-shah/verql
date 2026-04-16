@@ -22,6 +22,9 @@ export interface AIProviderChatRequest {
   messages: AIChatMessage[]
   tools?: AIToolDefinition[]
   signal?: AbortSignal
+  temperature?: number
+  maxTokens?: number
+  stopSequences?: string[]
 }
 
 export interface AIToolDefinition {

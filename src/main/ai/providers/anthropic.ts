@@ -1,11 +1,18 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 import type { AIChatMessage } from '@shared/ai-types'
 
-const MODELS: AIProviderModel[] = [
-  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', contextWindow: 200000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextWindow: 200000, capabilities: ['chat', 'tool-calling'] },
-  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000, capabilities: ['chat', 'tool-calling'] },
-]
+interface AnthropicModel {
+  id: string
+  display_name: string
+  created_at: string
+  type: string
+}
+
+interface AnthropicModelsResponse {
+  data: AnthropicModel[]
+  has_more: boolean
+  last_id?: string
+}
 
 function toAnthropicRole(msg: AIChatMessage): 'user' | 'assistant' {
   if (msg.role === 'assistant') return 'assistant'
@@ -30,7 +37,48 @@ export class AnthropicProvider implements AIProvider {
   constructor(private readonly getApiKey: () => string | null) {}
 
   async models(): Promise<AIProviderModel[]> {
-    return MODELS
+    const apiKey = this.getApiKey()
+    if (!apiKey) return []
+
+    const allModels: AIProviderModel[] = []
+    let lastId: string | undefined
+
+    try {
+      do {
+        const url = new URL('https://api.anthropic.com/v1/models')
+        url.searchParams.set('limit', '100')
+        if (lastId) url.searchParams.set('after_id', lastId)
+
+        const response = await fetch(url.toString(), {
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+        })
+
+        if (!response.ok) return []
+
+        const data = (await response.json()) as AnthropicModelsResponse
+        for (const m of data.data) {
+          allModels.push({
+            id: m.id,
+            name: m.display_name,
+            contextWindow: 200000,
+            capabilities: ['chat', 'tool-calling'],
+          })
+        }
+
+        if (data.has_more && data.last_id) {
+          lastId = data.last_id
+        } else {
+          break
+        }
+      } while (true)
+    } catch {
+      return []
+    }
+
+    return allModels
   }
 
   async *chat(request: AIProviderChatRequest): AsyncIterable<AIProviderChunk> {
@@ -44,9 +92,17 @@ export class AnthropicProvider implements AIProvider {
 
     const body: Record<string, unknown> = {
       model: request.model,
-      max_tokens: 4096,
+      max_tokens: request.maxTokens ?? 4096,
       messages: anthropicMessages,
       stream: true,
+    }
+
+    if (request.temperature !== undefined) {
+      body.temperature = request.temperature
+    }
+
+    if (request.stopSequences && request.stopSequences.length > 0) {
+      body.stop_sequences = request.stopSequences
     }
 
     if (systemMessage) {

@@ -18,18 +18,21 @@ interface AIState {
   panelOpen: boolean
   pendingApproval: AIApprovalRequest | null
   currentStreamId: string | null
+  mcpPendingApproval: { requestId: string; sql: string } | null
 
   // Actions
   togglePanel: () => void
   openPanel: () => void
-  sendMessage: (message: string, connectionId?: string) => Promise<void>
+  sendMessage: (message: string, connectionId?: string, connectionMeta?: { type: string; driverName: string }) => Promise<void>
   clearMessages: () => Promise<void>
   abort: () => Promise<void>
   loadProviders: () => Promise<void>
-  loadModels: (providerId: string) => Promise<void>
-  setActiveProvider: (provider: AIProviderInfo | null) => void
-  setActiveModel: (model: string | null) => void
+  loadConfiguredProviders: () => Promise<void>
+  loadModels: () => Promise<void>
+  setActiveProvider: (provider: AIProviderInfo | null) => Promise<void>
+  setActiveModel: (model: string | null) => Promise<void>
   respondToApproval: (requestId: string, approved: boolean) => Promise<void>
+  respondToMCPApproval: (requestId: string, approved: boolean) => Promise<void>
   handleStreamEvent: (event: AIStreamEvent) => void
 }
 
@@ -44,12 +47,13 @@ export const useAIStore = create<AIState>((set, get) => ({
   panelOpen: false,
   pendingApproval: null,
   currentStreamId: null,
+  mcpPendingApproval: null,
 
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
 
   openPanel: () => set({ panelOpen: true }),
 
-  sendMessage: async (message, connectionId) => {
+  sendMessage: async (message, connectionId, connectionMeta) => {
     const userMsg: AIChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -60,7 +64,8 @@ export const useAIStore = create<AIState>((set, get) => ({
 
     const result = await window.electronAPI.invoke('ai:chat:start', {
       message,
-      ...(connectionId ? { connectionId } : {})
+      ...(connectionId ? { connectionId } : {}),
+      ...(connectionMeta ? { connectionMeta } : {}),
     }) as { streamId: string }
 
     set({ isStreaming: true, currentStreamId: result.streamId, streamingContent: '' })
@@ -84,18 +89,55 @@ export const useAIStore = create<AIState>((set, get) => ({
     set({ providers })
   },
 
-  loadModels: async (providerId) => {
-    const models = await window.electronAPI.invoke('ai:models:list', providerId) as AIModelInfo[]
+  loadConfiguredProviders: async () => {
+    const providers = await window.electronAPI.invoke('ai:providers:list-configured') as AIProviderInfo[]
+    set({ providers })
+
+    // Auto-select if only one configured
+    const { activeProvider } = get()
+    if (providers.length === 1 && activeProvider?.id !== providers[0].id) {
+      await get().setActiveProvider(providers[0])
+    } else if (providers.length > 0 && !activeProvider) {
+      // Restore active from the list
+      const active = await window.electronAPI.invoke('ai:providers:get-active') as AIProviderInfo | null
+      if (active && providers.some(p => p.id === active.id)) {
+        set({ activeProvider: active })
+      } else {
+        await get().setActiveProvider(providers[0])
+      }
+    }
+  },
+
+  loadModels: async () => {
+    const models = await window.electronAPI.invoke('ai:models:list') as AIModelInfo[]
     set({ models })
   },
 
-  setActiveProvider: (provider) => set({ activeProvider: provider }),
+  setActiveProvider: async (provider) => {
+    if (provider) {
+      await window.electronAPI.invoke('ai:providers:set-active', provider.id)
+    }
+    set({ activeProvider: provider })
+    // Reload models for the new provider
+    const models = await window.electronAPI.invoke('ai:models:list') as AIModelInfo[]
+    set({ models })
+  },
 
-  setActiveModel: (model) => set({ activeModel: model }),
+  setActiveModel: async (model) => {
+    if (model) {
+      await window.electronAPI.invoke('ai:models:set-active', model)
+    }
+    set({ activeModel: model })
+  },
 
   respondToApproval: async (requestId, approved) => {
-    await window.electronAPI.invoke('ai:approval:respond', { requestId, approved })
+    await window.electronAPI.invoke('ai:chat:approval-response', requestId, approved)
     set({ pendingApproval: null })
+  },
+
+  respondToMCPApproval: async (requestId, approved) => {
+    await window.electronAPI.invoke('mcp:approval-response', requestId, approved)
+    set({ mcpPendingApproval: null })
   },
 
   handleStreamEvent: (event) => {
@@ -168,12 +210,18 @@ export const useAIStore = create<AIState>((set, get) => ({
   }
 }))
 
-// Set up IPC listener for streaming events
+// Set up IPC listeners
 if (typeof window !== 'undefined' && window.electronAPI) {
   window.electronAPI.on('ai:chat:event', (streamId: unknown, event: unknown) => {
     const state = useAIStore.getState()
     if (streamId === state.currentStreamId) {
       state.handleStreamEvent(event as AIStreamEvent)
     }
+  })
+
+  // MCP approval requests
+  window.electronAPI.on('mcp:approval-request', (request: unknown) => {
+    const req = request as { requestId: string; sql: string }
+    useAIStore.setState({ mcpPendingApproval: req })
   })
 }

@@ -70,6 +70,7 @@ export interface QueryTab {
   isExecuting: boolean
   error: string | null
   isDirty: boolean
+  aiExplanation: string | null
 }
 
 export interface TableTab {

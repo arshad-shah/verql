@@ -1,53 +1,172 @@
-import { useState, useCallback, type KeyboardEvent } from 'react'
+import { useState, useCallback, useRef, type KeyboardEvent } from 'react'
+import { ArrowUp, Square, ChevronDown } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
+import { useConnectionsStore } from '@/stores/connections'
+import { IconButton } from '@/primitives/forms/Button'
+import { Card } from '@/primitives/surfaces/Card'
+import { Text } from '@/primitives/typography/Text'
+import { SchemaAutocomplete } from './SchemaAutocomplete'
+import { ModelPicker } from './ModelPicker'
 
 export function ChatInput() {
   const [input, setInput] = useState('')
   const sendMessage = useAIStore(s => s.sendMessage)
   const isStreaming = useAIStore(s => s.isStreaming)
   const abort = useAIStore(s => s.abort)
+  const activeModel = useAIStore(s => s.activeModel)
+  const models = useAIStore(s => s.models)
+  const providers = useAIStore(s => s.providers)
+  const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
+  const connections = useConnectionsStore(s => s.connections)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [showAutocomplete, setShowAutocomplete] = useState(false)
+  const [autocompleteFilter, setAutocompleteFilter] = useState('')
+  const [showModelPicker, setShowModelPicker] = useState(false)
+
+  const activeModelName = models.find(m => m.id === activeModel)?.name ?? activeModel ?? 'Select model'
 
   const handleSend = useCallback(() => {
     const trimmed = input.trim()
     if (!trimmed || isStreaming) return
-    sendMessage(trimmed)
+
+    const connection = activeConnectionId
+      ? connections.find(c => c.id === activeConnectionId)
+      : undefined
+    const connectionMeta = connection
+      ? { type: connection.type, driverName: connection.type }
+      : undefined
+
+    sendMessage(trimmed, activeConnectionId ?? undefined, connectionMeta)
     setInput('')
-  }, [input, isStreaming, sendMessage])
+    setShowAutocomplete(false)
+  }, [input, isStreaming, sendMessage, activeConnectionId, connections])
+
+  const handleChange = useCallback((value: string) => {
+    setInput(value)
+
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const cursorPos = textarea.selectionStart
+    const textBeforeCursor = value.slice(0, cursorPos)
+    const atIndex = textBeforeCursor.lastIndexOf('@')
+
+    if (atIndex >= 0) {
+      const textAfterAt = textBeforeCursor.slice(atIndex + 1)
+      const charBefore = atIndex > 0 ? value[atIndex - 1] : ' '
+      if ((charBefore === ' ' || charBefore === '\n' || atIndex === 0) && !textAfterAt.includes(' ')) {
+        setShowAutocomplete(true)
+        setAutocompleteFilter(textAfterAt)
+        return
+      }
+    }
+    setShowAutocomplete(false)
+  }, [])
+
+  const handleAutocompleteSelect = useCallback((item: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const cursorPos = textarea.selectionStart
+    const textBeforeCursor = input.slice(0, cursorPos)
+    const atIndex = textBeforeCursor.lastIndexOf('@')
+
+    if (atIndex >= 0) {
+      const newInput = input.slice(0, atIndex) + '@' + item + ' ' + input.slice(cursorPos)
+      setInput(newInput)
+    }
+
+    setShowAutocomplete(false)
+    textarea.focus()
+  }, [input])
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showAutocomplete) {
+      if (['ArrowDown', 'ArrowUp', 'Tab', 'Escape'].includes(e.key)) {
+        return
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
     }
-  }, [handleSend])
+  }, [handleSend, showAutocomplete])
+
+  const hasInput = input.trim().length > 0
 
   return (
-    <div className="flex gap-2 p-3 border-t border-[var(--color-border)]">
-      <textarea
-        className="flex-1 resize-none rounded-md border border-[var(--color-border)] bg-[var(--color-bg-input)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-        placeholder="Ask about your database..."
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        rows={2}
-        disabled={isStreaming}
-      />
-      {isStreaming ? (
-        <button
-          onClick={abort}
-          className="self-end rounded-md bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
-        >
-          Stop
-        </button>
-      ) : (
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          className="self-end rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
-        >
-          Send
-        </button>
+    <div className="relative p-3 border-t border-border-default">
+      {showAutocomplete && (
+        <SchemaAutocomplete
+          triggerText={autocompleteFilter}
+          onSelect={handleAutocompleteSelect}
+          onDismiss={() => setShowAutocomplete(false)}
+          anchorRef={textareaRef}
+        />
       )}
+      {showModelPicker && (
+        <ModelPicker
+          providers={providers}
+          models={models}
+          activeModel={activeModel}
+          onSelect={(modelId) => {
+            useAIStore.getState().setActiveModel(modelId)
+            setShowModelPicker(false)
+          }}
+          onSelectProvider={(provider) => {
+            useAIStore.getState().setActiveProvider(provider)
+            setShowModelPicker(false)
+          }}
+          onDismiss={() => setShowModelPicker(false)}
+        />
+      )}
+      <Card padding="none" className="overflow-hidden">
+        <textarea
+          ref={textareaRef}
+          className="w-full resize-none bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+          placeholder="Ask about your database... (@ to reference tables)"
+          value={input}
+          onChange={e => handleChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          rows={2}
+          disabled={isStreaming}
+        />
+        <div className="flex items-center justify-between px-2 pb-2">
+          <button
+            onClick={() => setShowModelPicker(!showModelPicker)}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover transition-colors"
+          >
+            <Text size="xs" color="accent">{activeModelName}</Text>
+            <ChevronDown className="h-3 w-3 text-text-muted" />
+          </button>
+          {isStreaming ? (
+            <IconButton
+              label="Stop generating"
+              variant="solid"
+              size="xs"
+              onClick={abort}
+              className="bg-error-emphasis hover:bg-error"
+            >
+              <Square className="h-3.5 w-3.5" />
+            </IconButton>
+          ) : (
+            <IconButton
+              label="Send message"
+              variant={hasInput ? 'solid' : 'ghost'}
+              size="xs"
+              onClick={handleSend}
+              disabled={!hasInput}
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </IconButton>
+          )}
+        </div>
+      </Card>
     </div>
   )
 }

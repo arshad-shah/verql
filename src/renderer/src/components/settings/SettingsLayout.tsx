@@ -7,6 +7,8 @@ import { ConnectionSettings } from './categories/ConnectionSettings'
 import { DataDisplaySettings } from './categories/DataDisplaySettings'
 import { KeybindingsSettings } from './categories/KeybindingsSettings'
 import { PluginSettings } from './categories/PluginSettings'
+import { AISettings } from './categories/AISettings'
+import { MCPSettings } from './categories/MCPSettings'
 
 const categories = [
   { id: 'general', label: 'General' },
@@ -15,6 +17,8 @@ const categories = [
   { id: 'connections', label: 'Connections' },
   { id: 'data-display', label: 'Data Display' },
   { id: 'keybindings', label: 'Keybindings' },
+  { id: 'ai', label: 'AI' },
+  { id: 'mcp', label: 'MCP Server' },
   { id: 'plugins', label: 'Plugins' },
 ] as const
 
@@ -27,6 +31,8 @@ const categoryComponents: Record<CategoryId, () => JSX.Element> = {
   connections: ConnectionSettings,
   'data-display': DataDisplaySettings,
   keybindings: KeybindingsSettings,
+  ai: AISettings,
+  mcp: MCPSettings,
   plugins: PluginSettings,
 }
 
