@@ -24,7 +24,7 @@ export const manifest: PluginManifest = {
     // for any plugin contributing a "panels" entry with location 'sidebar'. When
     // this plugin is deactivated the contribution is removed and the panel vanishes.
     panels: [
-      { id: 'ai-chat', title: 'AI Assistant', icon: 'sparkles', location: 'sidebar' }
+      { id: 'ai-chat', title: 'AI Assistant', icon: 'sparkles', location: 'secondary' }
     ],
     settings: [
       {

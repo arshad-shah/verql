@@ -24,11 +24,13 @@ export function SecondarySidebar() {
   }
 
   if (active.startsWith('plugin:')) {
-    const componentId = active.slice('plugin:'.length)
-    const contribution = contributions.find(c => c.contributionId === componentId)
+    const contributionId = active.slice('plugin:'.length)
+    const contribution = contributions.find(c => c.contributionId === contributionId)
+    const hostWidget = contribution?.widgets.find(w => w.type === 'host-component') as { type: 'host-component'; componentId: string } | undefined
+    const componentId = hostWidget?.componentId ?? contributionId
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
-        <PanelHeader title={(contribution?.meta?.title as string) ?? componentId} />
+        <PanelHeader title={(contribution?.meta?.title as string) ?? contributionId} />
         <Box className="flex-1 overflow-hidden">
           <PluginPanelMount surface="panels" componentId={componentId} />
         </Box>

@@ -8,6 +8,7 @@ import type {
 } from '@shared/ai-types'
 import { extractAIErrorMessage } from '@/lib/ai-errors'
 import { useToastStore } from '@/stores/toast'
+import { useUiStore } from './ui'
 
 interface SessionStats {
   totalInputTokens: number
@@ -61,9 +62,22 @@ export const useAIStore = create<AIState>((set, get) => ({
   mcpPendingApproval: null,
   sessionStats: { ...EMPTY_STATS },
 
-  togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
+  togglePanel: () => {
+    const ui = useUiStore.getState()
+    const target = 'plugin:ai-chat'
+    const isActive = ui.secondaryActivePanel === target && ui.secondarySidebarVisible
+    if (isActive) {
+      ui.toggleSecondarySidebar()
+    } else {
+      ui.setSecondaryActivePanel(target)
+    }
+    set({ panelOpen: !isActive })
+  },
 
-  openPanel: () => set({ panelOpen: true }),
+  openPanel: () => {
+    useUiStore.getState().setSecondaryActivePanel('plugin:ai-chat')
+    set({ panelOpen: true })
+  },
 
   sendMessage: async (message, connectionId, connectionMeta) => {
     const userMsg: AIChatMessage = {

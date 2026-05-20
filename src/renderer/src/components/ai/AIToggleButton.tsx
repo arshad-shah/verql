@@ -1,6 +1,7 @@
 import { Sparkles } from 'lucide-react'
 import { Tooltip, IconButton, cn } from '@/primitives'
 import { useAIStore } from '@/stores/ai'
+import { useUiStore } from '@/stores/ui'
 
 /**
  * The "open AI chat" button that lives at the bottom of the ActivityBar.
@@ -9,7 +10,9 @@ import { useAIStore } from '@/stores/ai'
  */
 export function AIToggleButton() {
   const toggle = useAIStore((s) => s.togglePanel)
-  const open = useAIStore((s) => s.panelOpen)
+  const open = useUiStore(
+    (s) => s.secondarySidebarVisible && s.secondaryActivePanel === 'plugin:ai-chat'
+  )
 
   return (
     <Tooltip content="AI Assistant" side="right">

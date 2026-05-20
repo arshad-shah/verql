@@ -64,7 +64,11 @@ export function BottomDock() {
       )
     }
     if (bottomActivePanel.startsWith('plugin:')) {
-      return <PluginPanelMount surface="panels" componentId={bottomActivePanel.slice('plugin:'.length)} />
+      const contributionId = bottomActivePanel.slice('plugin:'.length)
+      const contribution = panelContributions.find(c => c.contributionId === contributionId)
+      const hostWidget = contribution?.widgets.find(w => w.type === 'host-component') as { type: 'host-component'; componentId: string } | undefined
+      const componentId = hostWidget?.componentId ?? contributionId
+      return <PluginPanelMount surface="panels" componentId={componentId} />
     }
     return null
   }
