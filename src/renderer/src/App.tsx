@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BottomDock } from '@/components/shell/BottomDock'
+import { BottomDock, useHasBottomPanels } from '@/components/shell/BottomDock'
 import { ActivityBar } from '@/components/shell/ActivityBar'
 import { Sidebar } from '@/components/shell/Sidebar'
 import { TitleBar } from '@/components/shell/TitleBar'
@@ -22,6 +22,7 @@ import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
 import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
+import { NovaMark } from '@/components/brand/NovaMark'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
@@ -34,15 +35,14 @@ export function App() {
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
   const showStatusBar = useSettingsStore(s => s.settings.appearance.showStatusBar)
   const bottomDockHeight = useSettingsStore(s => s.settings.appearance.bottomDockHeight)
-  const showBottomDock = useSettingsStore(s => s.settings.appearance.showBottomDock)
   const bottomDockVisible = useUiStore(s => s.bottomDockVisible)
   const setBottomDockHeight = useUiStore(s => s.setBottomDockHeight)
   const secondarySidebarWidth = useSettingsStore(s => s.settings.appearance.secondarySidebarWidth)
-  const showSecondarySidebar = useSettingsStore(s => s.settings.appearance.showSecondarySidebar)
   const secondarySidebarVisible = useUiStore(s => s.secondarySidebarVisible)
   const setSecondarySidebarWidth = useUiStore(s => s.setSecondarySidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
+  const hasBottomPanels = useHasBottomPanels()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
 
@@ -86,20 +86,21 @@ export function App() {
     }
   }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
 
-  useEffect(() => {
-    useUiStore.setState({ bottomDockVisible: showBottomDock })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    useUiStore.setState({ secondarySidebarVisible: showSecondarySidebar })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
+  // Bottom dock resize — draft state prevents per-pixel settings writes during drag
+  const [draftBottomHeight, setDraftBottomHeight] = useState<number | null>(null)
+  const effectiveBottomHeight = draftBottomHeight ?? bottomDockHeight
   const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
+
   const handleBottomResize = (delta: number) => {
-    const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
-    setBottomDockHeight(current - delta)
+    const current = draftBottomHeight ?? useSettingsStore.getState().settings.appearance.bottomDockHeight
+    const next = Math.min(640, Math.max(120, current - delta))
+    setDraftBottomHeight(next)
+  }
+  const handleBottomResizeEnd = () => {
+    if (draftBottomHeight !== null) {
+      setBottomDockHeight(draftBottomHeight)
+      setDraftBottomHeight(null)
+    }
   }
   const handleBottomResizeDoubleClick = () => {
     const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
@@ -111,10 +112,21 @@ export function App() {
     }
   }
 
+  // Secondary sidebar resize — draft state prevents per-pixel settings writes during drag
+  const [draftSecondaryWidth, setDraftSecondaryWidth] = useState<number | null>(null)
+  const effectiveSecondaryWidth = draftSecondaryWidth ?? secondarySidebarWidth
   const [prevSecondaryWidth, setPrevSecondaryWidth] = useState(secondarySidebarWidth)
+
   const handleSecondaryResize = (delta: number) => {
-    const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-    setSecondarySidebarWidth(current - delta)
+    const current = draftSecondaryWidth ?? useSettingsStore.getState().settings.appearance.secondarySidebarWidth
+    const next = Math.min(640, Math.max(220, current - delta))
+    setDraftSecondaryWidth(next)
+  }
+  const handleSecondaryResizeEnd = () => {
+    if (draftSecondaryWidth !== null) {
+      setSecondarySidebarWidth(draftSecondaryWidth)
+      setDraftSecondaryWidth(null)
+    }
   }
   const handleSecondaryResizeDoubleClick = () => {
     const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
@@ -126,11 +138,21 @@ export function App() {
     }
   }
 
-  const handleSidebarResize = (delta: number) => {
-    const current = useSettingsStore.getState().settings.appearance.sidebarWidth
-    setSidebarWidth(current + delta)
-  }
+  // Left sidebar resize — draft state prevents per-pixel settings writes during drag
+  const [draftSidebarWidth, setDraftSidebarWidth] = useState<number | null>(null)
+  const effectiveSidebarWidth = draftSidebarWidth ?? sidebarWidth
 
+  const handleSidebarResize = (delta: number) => {
+    const current = draftSidebarWidth ?? useSettingsStore.getState().settings.appearance.sidebarWidth
+    const next = Math.min(480, Math.max(180, current + delta))
+    setDraftSidebarWidth(next)
+  }
+  const handleSidebarResizeEnd = () => {
+    if (draftSidebarWidth !== null) {
+      setSidebarWidth(draftSidebarWidth)
+      setDraftSidebarWidth(null)
+    }
+  }
   const handleSidebarResizeDoubleClick = () => {
     const current = useSettingsStore.getState().settings.appearance.sidebarWidth
     if (current > 180) {
@@ -148,7 +170,7 @@ export function App() {
         <ActivityBar />
         {sidebarVisible && sidebarPosition === 'left' && (
           <>
-            <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
+            <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
               <SectionErrorBoundary label="Sidebar">
                 <Sidebar />
               </SectionErrorBoundary>
@@ -156,6 +178,7 @@ export function App() {
             <ResizeHandle
               direction="horizontal"
               onResize={handleSidebarResize}
+              onResizeEnd={handleSidebarResizeEnd}
               onDoubleClick={handleSidebarResizeDoubleClick}
             />
           </>
@@ -195,21 +218,25 @@ export function App() {
               {!activeTab && (
                 <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
                   <Box className="text-center">
-                    <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
-                    <Text color="secondary" as="p">Connect to a database to get started</Text>
-                    <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
+                    <Flex align="center" justify="center" className="mb-3 text-accent">
+                      <NovaMark size={36} />
+                    </Flex>
+                    <Heading level={1} className="text-2xl mb-1 tracking-wide">Nova</Heading>
+                    <Text color="secondary" as="p">Spark your data.</Text>
+                    <Text color="muted" size="sm" as="p" className="mt-2">Connect a database to begin · ⌘⇧P for commands</Text>
                   </Box>
                 </Flex>
               )}
             </Box>
-            {bottomDockVisible && (
+            {bottomDockVisible && hasBottomPanels && (
               <>
                 <ResizeHandle
                   direction="vertical"
                   onResize={handleBottomResize}
+                  onResizeEnd={handleBottomResizeEnd}
                   onDoubleClick={handleBottomResizeDoubleClick}
                 />
-                <Box style={{ height: bottomDockHeight }} className="shrink-0">
+                <Box style={{ height: effectiveBottomHeight }} className="shrink-0">
                   <SectionErrorBoundary label="Bottom dock">
                     <BottomDock />
                   </SectionErrorBoundary>
@@ -223,9 +250,10 @@ export function App() {
             <ResizeHandle
               direction="horizontal"
               onResize={handleSidebarResize}
+              onResizeEnd={handleSidebarResizeEnd}
               onDoubleClick={handleSidebarResizeDoubleClick}
             />
-            <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
+            <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
               <SectionErrorBoundary label="Sidebar">
                 <Sidebar />
               </SectionErrorBoundary>
@@ -237,9 +265,10 @@ export function App() {
             <ResizeHandle
               direction="horizontal"
               onResize={handleSecondaryResize}
+              onResizeEnd={handleSecondaryResizeEnd}
               onDoubleClick={handleSecondaryResizeDoubleClick}
             />
-            <Flex direction="column" style={{ width: secondarySidebarWidth }} className="shrink-0 overflow-hidden">
+            <Flex direction="column" style={{ width: effectiveSecondaryWidth }} className="shrink-0 overflow-hidden">
               <SectionErrorBoundary label="Secondary sidebar">
                 <SecondarySidebar />
               </SectionErrorBoundary>
