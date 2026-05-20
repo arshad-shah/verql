@@ -95,25 +95,23 @@ export function App() {
       <TitleBar />
       <Flex className="flex-1 overflow-hidden">
         <ActivityBar />
-        {isSettingsOpen ? (
-          <Flex direction="column" className="flex-1 overflow-hidden">
-            <SettingsLayout />
-          </Flex>
-        ) : (
+        {sidebarVisible && sidebarPosition === 'left' && (
           <>
-            {sidebarVisible && sidebarPosition === 'left' && (
-              <>
-                <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
-                  <Sidebar />
-                </Flex>
-                <ResizeHandle
-                  direction="horizontal"
-                  onResize={handleSidebarResize}
-                  onDoubleClick={handleSidebarResizeDoubleClick}
-                />
-              </>
-            )}
-            <Flex direction="column" className="flex-1 overflow-hidden">
+            <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
+              <Sidebar />
+            </Flex>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={handleSidebarResize}
+              onDoubleClick={handleSidebarResizeDoubleClick}
+            />
+          </>
+        )}
+        <Flex direction="column" className="flex-1 overflow-hidden">
+          {isSettingsOpen ? (
+            <SettingsLayout />
+          ) : (
+            <>
               <TabBar />
               <Box className="flex-1 overflow-hidden">
                 {activeTab?.type === 'query' && (
@@ -149,22 +147,22 @@ export function App() {
                   </Flex>
                 )}
               </Box>
+            </>
+          )}
+        </Flex>
+        {sidebarVisible && sidebarPosition === 'right' && (
+          <>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={handleSidebarResize}
+              onDoubleClick={handleSidebarResizeDoubleClick}
+            />
+            <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
+              <Sidebar />
             </Flex>
-            {sidebarVisible && sidebarPosition === 'right' && (
-              <>
-                <ResizeHandle
-                  direction="horizontal"
-                  onResize={handleSidebarResize}
-                  onDoubleClick={handleSidebarResizeDoubleClick}
-                />
-                <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
-                  <Sidebar />
-                </Flex>
-              </>
-            )}
-            <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
           </>
         )}
+        <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
       </Flex>
       <StatusBar />
       <ToastContainer />
