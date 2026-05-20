@@ -1,112 +1,70 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn, expect, userEvent } from 'storybook/test'
-import { useState } from 'react'
-import { FormField } from '../forms/FormField'
-import { Input } from '../forms/Input'
-import { PasswordInput } from '../forms/PasswordInput'
-import { Select } from '../forms/Select'
-import { Button } from '../forms/Button'
-import { NumberInput } from '../forms/NumberInput'
+import { useEffect } from 'react'
+import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
+import { useConnectionsStore } from '@/stores/connections'
+import type { ConnectionProfile } from '@shared/types'
 
-const onTest = fn()
-const onConnect = fn()
-const onSqliteTest = fn()
-const onSqliteConnect = fn()
+/**
+ * The connection form is rendered as a tab in the app
+ * (`ConnectionFormView`). This story renders that real component so
+ * Storybook documents what users actually see — no replica markup
+ * assembled from primitives.
+ *
+ * Each story seeds the connections store via a decorator so the form has
+ * something to read from / save into; the component itself is exactly the
+ * one shipped.
+ */
+const EXISTING: ConnectionProfile = {
+  id: 'edit-fixture-1',
+  name: 'prod-orders',
+  type: 'postgresql',
+  host: 'db.prod.io',
+  port: 5432,
+  database: 'orders',
+  username: 'app_reader',
+  password: '',
+  color: '#7c6ff7',
+}
 
-const meta: Meta = {
+const meta: Meta<typeof ConnectionFormView> = {
   title: 'Patterns/ConnectionForm',
+  component: ConnectionFormView,
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="w-160 h-175 bg-bg-primary border border-border-default rounded-md overflow-auto">
+        <Story />
+      </div>
+    ),
+  ],
 }
 export default meta
+type Story = StoryObj<typeof ConnectionFormView>
 
-const dbTypeOptions = [
-  { value: 'postgresql', label: 'PostgreSQL' },
-  { value: 'mysql', label: 'MySQL' },
-  { value: 'sqlite', label: 'SQLite' },
-  { value: 'mongodb', label: 'MongoDB' },
-]
-
-export const Default: StoryObj = {
-  render: function Render() {
-    const [dbType, setDbType] = useState('postgresql')
-    return (
-      <div className="w-96 rounded-lg border border-border-default bg-bg-secondary p-6 shadow-card">
-        <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
-        <div className="flex flex-col gap-4">
-          <FormField label="Database Type">
-            <Select
-              options={dbTypeOptions}
-              value={dbType}
-              onChange={(val) => setDbType(val)}
-              aria-label="Database type"
-            />
-          </FormField>
-          <FormField label="Host">
-            <Input placeholder="localhost" defaultValue="localhost" />
-          </FormField>
-          <FormField label="Port">
-            <NumberInput defaultValue={5432} min={1} max={65535} />
-          </FormField>
-          <FormField label="Database">
-            <Input placeholder="mydb" />
-          </FormField>
-          <FormField label="Username">
-            <Input placeholder="postgres" />
-          </FormField>
-          <FormField label="Password">
-            <PasswordInput placeholder="Enter password" showStrength />
-          </FormField>
-          <div className="flex gap-2 mt-2">
-            <Button variant="outline" className="flex-1" onClick={onTest}>Test</Button>
-            <Button variant="solid" className="flex-1" onClick={onConnect}>Connect</Button>
-          </div>
-        </div>
-      </div>
-    )
-  },
-  play: async ({ canvas }) => {
-    const testBtn = canvas.getByRole('button', { name: 'Test' })
-    await userEvent.click(testBtn)
-    await expect(onTest).toHaveBeenCalledTimes(1)
-
-    const connectBtn = canvas.getByRole('button', { name: 'Connect' })
-    await userEvent.click(connectBtn)
-    await expect(onConnect).toHaveBeenCalledTimes(1)
-  },
+export const New: Story = {
+  args: { tabId: 'storybook-tab-new' },
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        useConnectionsStore.setState({ connections: [], connectedIds: new Set(), activeConnectionId: null })
+      }, [])
+      return <Story />
+    },
+  ],
 }
 
-export const States: StoryObj = {
-  render: function Render() {
-    return (
-      <div className="w-96 rounded-lg border border-border-default bg-bg-secondary p-6 shadow-card">
-        <h3 className="text-lg font-semibold text-text-primary mb-4">New Connection</h3>
-        <div className="flex flex-col gap-4">
-          <FormField label="Database Type">
-            <Select
-              options={dbTypeOptions}
-              value="sqlite"
-              onChange={() => {}}
-              aria-label="Database type"
-            />
-          </FormField>
-          <FormField label="Database File">
-            <Input placeholder="/path/to/database.sqlite" />
-          </FormField>
-          <div className="flex gap-2 mt-2">
-            <Button variant="outline" className="flex-1" onClick={onSqliteTest}>Test</Button>
-            <Button variant="solid" className="flex-1" onClick={onSqliteConnect}>Connect</Button>
-          </div>
-        </div>
-      </div>
-    )
-  },
-  play: async ({ canvas }) => {
-    const testBtn = canvas.getByRole('button', { name: 'Test' })
-    await userEvent.click(testBtn)
-    await expect(onSqliteTest).toHaveBeenCalledTimes(1)
-
-    const connectBtn = canvas.getByRole('button', { name: 'Connect' })
-    await userEvent.click(connectBtn)
-    await expect(onSqliteConnect).toHaveBeenCalledTimes(1)
-  },
+export const Edit: Story = {
+  args: { tabId: 'storybook-tab-edit', editingId: EXISTING.id },
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        useConnectionsStore.setState({
+          connections: [EXISTING],
+          connectedIds: new Set([EXISTING.id]),
+          activeConnectionId: EXISTING.id,
+        })
+      }, [])
+      return <Story />
+    },
+  ],
 }

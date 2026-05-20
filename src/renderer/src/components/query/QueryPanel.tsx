@@ -9,6 +9,7 @@ import { tabActions } from '@/stores/tab-actions'
 import { parseDbError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useTabsStore } from '@/stores/tabs'
+import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -189,7 +190,14 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, true)
     try {
       const result = await executeWithSchema(`EXPLAIN ANALYZE ${sql}`)
-      if (result) setTabResults(tab.id, result)
+      if (result) {
+        setTabResults(tab.id, result)
+        // The user asked for an EXPLAIN — route them to the plan view instead
+        // of leaving them on the raw-rows Results tab. The BottomDock only
+        // surfaces the "Query Plan" tab once the parser sees plan content,
+        // which matches the output we just produced.
+        useUiStore.getState().setBottomDockActivePanel('query-plan')
+      }
     } catch (err) {
       setTabError(tab.id, (err as Error).message)
     }

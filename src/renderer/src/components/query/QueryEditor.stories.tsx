@@ -1,129 +1,77 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
-import { useRef, useCallback, useState, useEffect } from 'react'
-import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-import type { editor } from 'monaco-editor'
-import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
+import { useState } from 'react'
+import { QueryEditor } from './QueryEditor'
 
-const onExecute = fn()
+/**
+ * Renders the real `QueryEditor`. The component is uncontrolled-ish
+ * (parent owns `value`), so we wrap each story in a tiny `useState` host
+ * that mirrors how `QueryPanel` drives the editor. Storybook ends up
+ * exercising the same Monaco mount path the app uses — themes, CodeLens,
+ * AI inline completion provider, the whole stack.
+ *
+ * No mock editor, no hand-rolled Monaco setup. The decorator below
+ * provides the parent state; everything else flows through the real
+ * exported component.
+ */
+interface HostProps {
+  initial?: string
+  connectionId?: string | null
+  schema?: string | null
+  databaseType?: string
+}
+function Host({ initial = '', connectionId = null, schema = null, databaseType = 'postgresql' }: HostProps) {
+  const [value, setValue] = useState(initial)
+  return (
+    <div className="h-100 w-200 border border-border-default rounded-md overflow-hidden bg-bg-primary">
+      <QueryEditor
+        tabId="storybook-tab"
+        value={value}
+        onChange={setValue}
+        onExecute={fn()}
+        connectionId={connectionId}
+        schema={schema}
+        databaseType={databaseType}
+      />
+    </div>
+  )
+}
 
-const meta: Meta = {
-  title: 'Components/QueryEditor',
+const meta: Meta<typeof Host> = {
+  title: 'Components/Query/QueryEditor',
+  component: Host,
   tags: ['autodocs'],
-  parameters: { layout: 'fullscreen' },
 }
 export default meta
+type Story = StoryObj<typeof Host>
 
-const SAMPLE_SQL = `-- Sample query: find active users with recent orders
-SELECT
-  u.id,
-  u.name,
-  u.email,
-  COUNT(o.id) AS order_count,
-  MAX(o.created_at) AS last_order
-FROM users u
-LEFT JOIN orders o ON o.user_id = u.id
-WHERE u.active = true
-  AND u.created_at >= '2026-01-01'
-GROUP BY u.id, u.name, u.email
-HAVING COUNT(o.id) > 0
-ORDER BY order_count DESC
-LIMIT 50;`
+export const Empty: Story = {
+  args: { initial: '' },
+}
 
-const SAMPLE_JSON = `{
-  "find": "users",
-  "filter": { "active": true },
-  "projection": { "name": 1, "email": 1 },
-  "sort": { "created_at": -1 },
-  "limit": 50
-}`
+export const WithQuery: Story = {
+  args: {
+    initial: 'SELECT id, email, created_at\nFROM users\nWHERE created_at > NOW() - INTERVAL \'7 days\'\nORDER BY created_at DESC\nLIMIT 100;',
+  },
+}
 
-export const Default: StoryObj = {
-  render: function Render() {
-    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
-    const [language, setLanguage] = useState<'sql' | 'json' | 'plaintext'>('sql')
+export const MultipleStatements: Story = {
+  args: {
+    initial: [
+      'SELECT count(*) FROM orders;',
+      '',
+      'SELECT status, count(*)',
+      'FROM orders',
+      'GROUP BY status;',
+      '',
+      'EXPLAIN ANALYZE SELECT * FROM orders WHERE total > 1000;',
+    ].join('\n'),
+  },
+}
 
-    const [theme, setTheme] = useState(
-      document.documentElement.getAttribute('data-theme') ?? 'dark'
-    )
-
-    useEffect(() => {
-      const observer = new MutationObserver(() => {
-        const t = document.documentElement.getAttribute('data-theme') ?? 'dark'
-        setTheme(t)
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-      return () => observer.disconnect()
-    }, [])
-
-    const handleMount: OnMount = useCallback((editor, monaco) => {
-      editorRef.current = editor
-      defineAppThemes(monaco)
-      monaco.editor.setTheme(getMonacoThemeName(theme))
-
-      editor.addAction({
-        id: 'execute-query',
-        label: 'Execute Query',
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-        run: () => onExecute(),
-      })
-
-      editor.focus()
-    }, [onExecute, theme])
-
-    useEffect(() => {
-      if (editorRef.current) {
-        const monaco = (window as any).monaco
-        if (monaco) monaco.editor.setTheme(getMonacoThemeName(theme))
-      }
-    }, [theme])
-
-    const content = language === 'json' ? SAMPLE_JSON : language === 'plaintext' ? 'PING' : SAMPLE_SQL
-
-    return (
-      <div className="flex flex-col h-[500px] bg-bg-primary">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-border-default bg-bg-secondary">
-          <span className="text-xs text-text-muted">Language:</span>
-          {(['sql', 'json', 'plaintext'] as const).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLanguage(lang)}
-              className={`px-2 py-0.5 text-xs rounded transition-colors ${
-                language === lang
-                  ? 'bg-accent text-white'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-hover'
-              }`}
-            >
-              {lang.toUpperCase()}
-            </button>
-          ))}
-          <span className="flex-1" />
-          <span className="text-[10px] text-text-muted">⌘+Enter to execute</span>
-        </div>
-        <div className="flex-1">
-          <Editor
-            language={language}
-            value={content}
-            theme={getMonacoThemeName(theme)}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              tabSize: 2,
-              wordWrap: 'on',
-              padding: { top: 8, bottom: 8 },
-              renderLineHighlight: 'line',
-              suggestOnTriggerCharacters: true,
-              quickSuggestions: true,
-              scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
-            }}
-            onMount={handleMount}
-          />
-        </div>
-      </div>
-    )
+export const Mongo: Story = {
+  args: {
+    databaseType: 'mongodb',
+    initial: '{ "find": "users", "filter": { "active": true }, "limit": 25 }',
   },
 }

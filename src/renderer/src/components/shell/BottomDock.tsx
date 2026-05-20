@@ -5,6 +5,9 @@ import { useTabsStore } from '@/stores/tabs'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { QueryErrorView } from '@/components/results/QueryErrorView'
+import { QueryPlanView } from '@/components/query-plan/QueryPlanView'
+import { ChartPanel } from '@/components/charts/ChartPanel'
+import { parsePlanFromResult } from '@/lib/plan-parser'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
@@ -31,12 +34,32 @@ export function BottomDock() {
 
   const showResults = activeTab?.type === 'query'
 
+  // Detect whether the current results parse as an execution plan. We only
+  // surface the "Query Plan" tab when there's something to show — otherwise
+  // every query run would leave a permanent dead tab next to Results. The
+  // parser already handles both Postgres JSON plans and plain-text plans
+  // and returns [] for non-plan rows, so this also doubles as the "do we
+  // even have a plan to render" check inside the tab body below.
+  const planNodes = showResults && (activeTab as QueryTab).results
+    ? parsePlanFromResult((activeTab as QueryTab).results!.rows)
+    : []
+  const hasPlan = planNodes.length > 0
+
+  // The Chart tab is meaningful any time results have at least two columns —
+  // ChartPanel needs an X and a Y axis. Single-column scalar results (e.g.
+  // `SELECT COUNT(*)`) can't be charted, so we hide the tab rather than
+  // surface a permanent empty-state.
+  const resultsForChart = showResults ? (activeTab as QueryTab).results : null
+  const hasChart = Boolean(resultsForChart && resultsForChart.fields.length >= 2 && resultsForChart.rows.length > 0)
+
   const bottomPluginPanels: BottomTab[] = panelContributions
     .filter(c => c.meta.location === 'bottom')
     .map(c => ({ id: `plugin:${c.contributionId}`, title: (c.meta.title as string) ?? c.contributionId }))
 
   const tabs: BottomTab[] = [
     ...(showResults ? [{ id: 'results', title: 'Results' }] : []),
+    ...(hasChart ? [{ id: 'chart', title: 'Chart' }] : []),
+    ...(hasPlan ? [{ id: 'query-plan', title: 'Query Plan' }] : []),
     ...bottomPluginPanels,
   ]
 
@@ -65,6 +88,12 @@ export function BottomDock() {
           <Text color="muted" size="sm">Run a query to see results</Text>
         </Flex>
       )
+    }
+    if (bottomActivePanel === 'query-plan' && hasPlan && activeTab) {
+      return <QueryPlanView results={(activeTab as QueryTab).results!} />
+    }
+    if (bottomActivePanel === 'chart' && hasChart && resultsForChart) {
+      return <ChartPanel results={resultsForChart} />
     }
     if (bottomActivePanel.startsWith('plugin:')) {
       const contributionId = bottomActivePanel.slice('plugin:'.length)

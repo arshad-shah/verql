@@ -1,6 +1,7 @@
 import { BarChart3 } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { useUiStore } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
 import { Stack, ScrollArea, Flex, Text, EmptyState, Box } from '@/primitives'
 
@@ -20,7 +21,7 @@ export function ChartsDashboard() {
           <EmptyState
             icon={<BarChart3 size={20} className="text-text-muted" />}
             title="No chart data yet"
-            description="Run a query, then switch to the Chart tab in results"
+            description="Run a query that returns at least two columns — the Chart tab appears in the results dock."
             className="py-8"
           />
         )}
@@ -29,7 +30,13 @@ export function ChartsDashboard() {
           <Box
             key={tab.id}
             className="px-2 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors mb-0.5"
-            onClick={() => useTabsStore.getState().setActiveTab(tab.id)}
+            onClick={() => {
+              // Bring the query tab forward AND switch the bottom dock to the
+              // Chart tab in one click — the dashboard becomes a real
+              // "jump to chart" surface instead of just a tab-switcher.
+              useTabsStore.getState().setActiveTab(tab.id)
+              useUiStore.getState().setBottomDockActivePanel('chart')
+            }}
           >
             <Flex direction="row" align="center" gap="sm">
               <BarChart3 size={12} className="text-accent shrink-0" />

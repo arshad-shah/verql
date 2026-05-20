@@ -4,7 +4,7 @@ import { useSettingsStore } from './settings'
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
 export type SecondaryPanelId = 'inspector' | 'notifications' | 'connections' | (string & {})
-export type BottomPanelId = 'results' | (string & {})
+export type BottomPanelId = 'results' | 'query-plan' | 'chart' | (string & {})
 
 export type SettingsCategoryId =
   | 'general' | 'appearance' | 'editor' | 'connections'

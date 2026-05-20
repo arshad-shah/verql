@@ -1,209 +1,114 @@
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn, expect, userEvent } from 'storybook/test'
-import { Flex, Text, Spinner } from '@/primitives'
-import { Bell, Zap, AlertTriangle, ArrowLeftRight, Minus } from 'lucide-react'
-import { StatusBarMetric } from './StatusBarMetric'
-import { ConnectionCard } from './ConnectionCard'
-import { cn } from '@/primitives/utils/cn'
-
-const onConnectionClick = fn()
+import { useEffect } from 'react'
+import { StatusBar } from './StatusBar'
+import { useConnectionsStore } from '@/stores/connections'
+import { useUiStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import type { ConnectionProfile } from '@shared/types'
 
 /**
- * The Command Dock sits at the bottom of the application window.
- * Three-zone layout: connection card (left), contextual metrics (center), tools (right).
- *
- * ## Zones
- *
- * | Zone   | Content                                    |
- * |--------|--------------------------------------------|
- * | Left   | Connection card with status orb, DB type, name, schema |
- * | Center | Contextual metrics (query time, rows, running state) |
- * | Right  | Plugin status, notification bell, DEV badge |
+ * Renders the real `StatusBar`. The previous version of this story file
+ * assembled fake dock/card/badge mocks; that drifted from the production
+ * status bar over time. Now we feed the real component the same store
+ * state the app would, and render the same code path.
  */
-
-function DockShell({ children }: { children: React.ReactNode }) {
-  return <div style={{ width: 1200 }}>{children}</div>
+const PROD: ConnectionProfile = {
+  id: 'sb-prod', name: 'prod-orders', type: 'postgresql',
+  host: 'db.prod.io', port: 5432, database: 'orders', username: 'reader',
+  password: '', color: '#7c6ff7',
 }
 
-function DockWrapper({
-  left,
-  center,
-  right,
-}: {
-  left: React.ReactNode
-  center?: React.ReactNode
-  right: React.ReactNode
-}) {
-  return (
-    <Flex
-      align="center"
-      className="relative h-9.5 shrink-0 select-none border-t border-border-default bg-bg-primary px-3"
-    >
-      <Flex align="center" gap="xs" className="mr-auto">
-        {left}
-      </Flex>
-      <Flex align="center" gap="xs">
-        {center}
-      </Flex>
-      <Flex align="center" gap="xs" className="ml-auto">
-        {right}
-      </Flex>
-    </Flex>
-  )
+function seed(opts: {
+  connections?: ConnectionProfile[]
+  connectedIds?: string[]
+  activeId?: string | null
+  schema?: string | null
+  unreadNotifications?: number
+} = {}) {
+  const {
+    connections = [PROD],
+    connectedIds = ['sb-prod'],
+    activeId = 'sb-prod',
+    schema = 'public',
+    unreadNotifications = 0,
+  } = opts
+  useConnectionsStore.setState({
+    connections,
+    connectedIds: new Set(connectedIds),
+    activeConnectionId: activeId,
+  })
+  useUiStore.setState({ activeSchema: schema } as Partial<ReturnType<typeof useUiStore.getState>>)
+  // Pre-seed a few notifications when the story asks for unread > 0 so the
+  // bell renders with the correct count badge.
+  const ns: ReturnType<typeof useNotificationsStore.getState> = useNotificationsStore.getState()
+  ns.clearAll?.()
+  for (let i = 0; i < unreadNotifications; i++) {
+    ns.addNotification({ type: 'error', title: `Sample ${i + 1}` })
+  }
 }
 
-function PluginCard({ active, total, loading }: { active: number; total: number; loading?: boolean }) {
-  return (
-    <div className="flex items-center gap-1 rounded-md border border-border-default bg-bg-tertiary px-2 py-1">
-      {loading ? (
-        <>
-          <Spinner size="xs" label="Loading plugins" />
-          <Text size="xs" color="secondary" className="text-[10px]">Loading...</Text>
-        </>
-      ) : (
-        <>
-          <div className={cn('h-1.5 w-1.5 rounded-full', active < total ? 'bg-warning' : 'bg-success')} />
-          <Text size="xs" color="secondary" className="text-[10px]">
-            {active < total ? `${active}/${total} plugins` : `${active} plugins`}
-          </Text>
-        </>
-      )}
-    </div>
-  )
-}
-
-function BellCard({ count }: { count: number }) {
-  return (
-    <div className="relative flex items-center rounded-md border border-border-default bg-bg-tertiary px-2 py-1">
-      <Bell size={12} className="text-text-secondary" />
-      {count > 0 && (
-        <div className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-error px-0.5 text-[7px] font-bold text-white">
-          {count}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function DevBadge() {
-  return <div className="rounded-md bg-accent px-1.5 py-1 text-[9px] font-semibold text-white">DEV</div>
-}
-
-const meta = {
-  title: 'Primitives/Shell/StatusBar',
+const meta: Meta<typeof StatusBar> = {
+  title: 'Components/Shell/StatusBar',
+  component: StatusBar,
   tags: ['autodocs'],
-  decorators: [(Story: React.ComponentType) => <DockShell><Story /></DockShell>],
-} satisfies Meta
-
+  parameters: { layout: 'fullscreen' },
+  decorators: [
+    (Story) => (
+      <div className="bg-bg-primary border-t border-border-default">
+        <Story />
+      </div>
+    ),
+  ],
+}
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof StatusBar>
 
-/** No active connection — disconnected state. */
-export const Default: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={onConnectionClick} />
-      }
-      center={<Minus size={12} className="text-text-disabled" />}
-      right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
-    />
-  ),
-  play: async ({ canvas }) => {
-    await expect(canvas.getByText('No connection')).toBeInTheDocument()
-    await expect(canvas.getByText('3 plugins')).toBeInTheDocument()
-    await expect(canvas.getByText('DEV')).toBeInTheDocument()
-    await userEvent.click(canvas.getByText('No connection'))
-    await expect(onConnectionClick).toHaveBeenCalled()
-  },
+export const Connected: Story = {
+  decorators: [(Story) => { useEffect(() => { seed() }, []); return <Story /> }],
 }
 
-/** Connected to PostgreSQL with query results. */
-export const ConnectedPostgres: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="my_app_db" schema="public" isOpen={false} onClick={onConnectionClick} />
-      }
-      center={
-        <>
-          <StatusBarMetric color="success" icon={<Zap size={10} />} label="142ms" />
-          <StatusBarMetric color="info" label="248 rows" />
-        </>
-      }
-      right={<><PluginCard active={5} total={5} /><BellCard count={2} /><DevBadge /></>}
-    />
-  ),
+export const Disconnected: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => { seed({ connectedIds: [], activeId: null }) }, [])
+      return <Story />
+    },
+  ],
 }
 
-/** Multiple active connections. */
+export const NoConnections: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => { seed({ connections: [], connectedIds: [], activeId: null }) }, [])
+      return <Story />
+    },
+  ],
+}
+
+export const WithNotifications: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => { seed({ unreadNotifications: 3 }) }, [])
+      return <Story />
+    },
+  ],
+}
+
 export const MultipleConnections: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <>
-          <ConnectionCard isConnected isError={false} dbType="mysql" dbName="staging_mysql" schema={null} isOpen={false} onClick={onConnectionClick} />
-          <div className="flex items-center gap-1 rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
-            <ArrowLeftRight size={10} className="text-accent" />
-            <Text size="xs" color="accent" className="text-[10px]">3</Text>
-          </div>
-        </>
-      }
-      center={<StatusBarMetric color="success" icon={<Zap size={10} />} label="89ms" />}
-      right={<><PluginCard active={4} total={4} /><BellCard count={0} /></>}
-    />
-  ),
-}
-
-/** Query currently running with elapsed time. */
-export const QueryRunning: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected isError={false} dbType="postgresql" dbName="analytics_db" schema="reporting" isOpen={false} onClick={onConnectionClick} />
-      }
-      center={<StatusBarMetric color="warning" label="Running..." animated />}
-      right={<><PluginCard active={3} total={3} /><BellCard count={0} /><DevBadge /></>}
-    />
-  ),
-}
-
-/** Connection error state. */
-export const ConnectionError: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected isError dbType="postgresql" dbName="prod_db" schema={null} isOpen={false} onClick={onConnectionClick} />
-      }
-      center={<StatusBarMetric color="error" icon={<AlertTriangle size={10} />} label="Reconnecting..." />}
-      right={<><PluginCard active={3} total={3} /><BellCard count={3} /><DevBadge /></>}
-    />
-  ),
-}
-
-/** Plugins still loading during boot. */
-export const PluginsLoading: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected={false} isError={false} dbType={null} dbName={null} schema={null} isOpen={false} onClick={onConnectionClick} />
-      }
-      center={<Minus size={12} className="text-text-disabled" />}
-      right={<><PluginCard active={0} total={0} loading /><BellCard count={0} /></>}
-    />
-  ),
-}
-
-/** Some plugins failed to load. */
-export const PluginsFailed: Story = {
-  render: () => (
-    <DockWrapper
-      left={
-        <ConnectionCard isConnected isError={false} dbType="sqlite" dbName="local.db" schema={null} isOpen={false} onClick={onConnectionClick} />
-      }
-      center={<StatusBarMetric color="success" icon={<Zap size={10} />} label="12ms" />}
-      right={<><PluginCard active={3} total={5} /><BellCard count={1} /><DevBadge /></>}
-    />
-  ),
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        seed({
+          connections: [
+            PROD,
+            { ...PROD, id: 'sb-staging', name: 'staging', color: '#f59e0b' },
+            { ...PROD, id: 'sb-legacy', name: 'legacy-users', type: 'mysql', color: '#ef4444' },
+          ],
+          connectedIds: ['sb-prod', 'sb-staging'],
+          activeId: 'sb-prod',
+        })
+      }, [])
+      return <Story />
+    },
+  ],
 }

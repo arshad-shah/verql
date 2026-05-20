@@ -61,7 +61,7 @@ export function ConnectionCard({
     >
       <div
         className={cn(
-          'h-[7px] w-[7px] shrink-0 rounded-full',
+          'h-1.75 w-1.75 shrink-0 rounded-full',
           isError && 'bg-error shadow-[0_0_4px_rgba(255,95,87,0.4)]',
           isConnected && !isError && 'bg-success shadow-[0_0_4px_rgba(40,200,64,0.4)]',
           isDisconnected && 'bg-text-tertiary'

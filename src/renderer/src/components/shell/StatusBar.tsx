@@ -115,7 +115,7 @@ export function StatusBar() {
   return (
     <Flex
       align="center"
-      className="relative h-9.5 shrink-0 select-none border-t border-border-default bg-bg-primary px-3"
+      className="relative h-8 shrink-0 select-none border-t border-border-default bg-bg-primary px-3"
     >
       {/* Left zone */}
       <Flex align="center" gap="xs" className="mr-auto">
