@@ -134,4 +134,10 @@ export interface InstallPluginTab {
   title: string
 }
 
-export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab
+export interface SettingsTab {
+  id: string
+  type: 'settings'
+  title: string
+}
+
+export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab | SettingsTab

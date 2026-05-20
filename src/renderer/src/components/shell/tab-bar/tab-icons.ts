@@ -1,4 +1,4 @@
-import { FileText, GitFork, Plug, Table2, Puzzle, Package, type LucideIcon } from 'lucide-react'
+import { FileText, GitFork, Plug, Table2, Puzzle, Package, Settings, type LucideIcon } from 'lucide-react'
 import type { Tab } from '@shared/types'
 
 interface TabIconConfig {
@@ -13,6 +13,7 @@ const tabIconMap: Record<Tab['type'], TabIconConfig> = {
   table: { icon: Table2, className: 'text-sky-400' },
   'plugin-detail': { icon: Puzzle, className: 'text-emerald-400' },
   'install-plugin': { icon: Package, className: 'text-orange-400' },
+  settings: { icon: Settings, className: 'text-text-tertiary' },
 }
 
 export function getTabIcon(type: Tab['type']): TabIconConfig {

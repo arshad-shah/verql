@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab } from '@shared/types'
+import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
 
 let tabCounter = 0
 
@@ -46,6 +46,7 @@ interface TabsState {
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
   openInstallPlugin: () => string
+  openSettings: () => string
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
@@ -268,6 +269,18 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       tabs: [...s.tabs, tab],
       activeTabId: id
     }))
+    return id
+  },
+
+  openSettings: () => {
+    const id = 'settings'
+    const existing = get().tabs.find((t) => t.id === id)
+    if (existing) {
+      set({ activeTabId: id })
+      return id
+    }
+    const tab: SettingsTab = { id, type: 'settings', title: 'Settings' }
+    set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
     return id
   },
 

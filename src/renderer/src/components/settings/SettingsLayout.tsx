@@ -1,6 +1,7 @@
 import { JSX } from 'react'
-import { Box, ScrollArea } from '@/primitives'
+import { Flex, Box, ScrollArea, Text, Divider } from '@/primitives'
 import { useUiStore, type SettingsCategoryId } from '@/stores/ui'
+import { SETTINGS_CATEGORIES, SettingsCategoryNav } from './SettingsCategoryNav'
 import { GeneralSettings } from './categories/GeneralSettings'
 import { AppearanceSettings } from './categories/AppearanceSettings'
 import { EditorSettings } from './categories/EditorSettings'
@@ -24,19 +25,40 @@ const categoryComponents: Record<SettingsCategoryId, () => JSX.Element> = {
 }
 
 /**
- * Settings content surface. The category nav lives in the regular sidebar
- * (see SettingsCategoryNav, mounted by Sidebar when activePanel === 'settings')
- * so the layout matches every other activity panel.
+ * Settings tab body — a self-contained preferences window with a left-hand
+ * category nav and a right-hand content pane. Lives inside the regular tab
+ * surface, so the activity sidebar stays focused on the user's data
+ * (explorer / saved queries / etc.) while they tweak settings.
  */
 export function SettingsLayout() {
   const activeCategory = useUiStore((s) => s.activeSettingsCategory)
   const ActiveComponent = categoryComponents[activeCategory] ?? GeneralSettings
+  const currentLabel = SETTINGS_CATEGORIES.find((c) => c.id === activeCategory)?.label ?? 'Settings'
 
   return (
-    <ScrollArea direction="vertical" className="flex-1">
-      <Box className="p-6 max-w-2xl">
-        <ActiveComponent />
+    <Flex direction="row" className="h-full">
+      <Box className="w-52 border-r border-border-default shrink-0 bg-bg-secondary">
+        <ScrollArea direction="vertical" className="h-full">
+          <Box paddingY="md">
+            <Text size="xs" color="muted" weight="bold" className="px-4 py-2 uppercase tracking-wider">
+              Settings
+            </Text>
+          </Box>
+          <Divider />
+          <SettingsCategoryNav />
+        </ScrollArea>
       </Box>
-    </ScrollArea>
+
+      <Flex direction="column" className="flex-1 overflow-hidden">
+        <Box className="px-6 py-3 border-b border-border-default">
+          <Text size="sm" weight="medium">{currentLabel}</Text>
+        </Box>
+        <ScrollArea direction="vertical" className="flex-1">
+          <Box className="p-6 max-w-3xl">
+            <ActiveComponent />
+          </Box>
+        </ScrollArea>
+      </Flex>
+    </Flex>
   )
 }

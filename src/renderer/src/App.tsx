@@ -7,7 +7,6 @@ import { TabBar } from '@/components/shell/tab-bar'
 import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
-import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { Flex, Box, Heading, Text, ResizeHandle } from '@/primitives'
@@ -21,17 +20,17 @@ import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
+import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
   const openConnectionForm = useTabsStore(s => s.openConnectionForm)
-  const { activePanel, sidebarVisible, setSidebarWidth } = useUiStore()
+  const { sidebarVisible, setSidebarWidth } = useUiStore()
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
-  const isSettingsOpen = activePanel === 'settings'
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
 
@@ -108,47 +107,44 @@ export function App() {
           </>
         )}
         <Flex direction="column" className="flex-1 overflow-hidden">
-          {isSettingsOpen ? (
-            <SettingsLayout />
-          ) : (
-            <>
-              <TabBar />
-              <Box className="flex-1 overflow-hidden">
-                {activeTab?.type === 'query' && (
-                  <QueryPanel tab={activeTab as QueryTab} />
-                )}
-                {activeTab?.type === 'er-diagram' && (
-                  <ERDiagram
-                    connectionId={(activeTab as ErDiagramTab).connectionId}
-                    schema={(activeTab as ErDiagramTab).schema}
-                  />
-                )}
-                {activeTab?.type === 'connection-form' && (
-                  <ConnectionFormView
-                    tabId={activeTab.id}
-                    editingId={(activeTab as ConnectionFormTab).editingId}
-                  />
-                )}
-                {activeTab?.type === 'plugin-detail' && (
-                  <PluginDetailView
-                    pluginName={(activeTab as PluginDetailTab).pluginName}
-                  />
-                )}
-                {activeTab?.type === 'install-plugin' && (
-                  <InstallPluginTab />
-                )}
-                {!activeTab && (
-                  <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-                    <Box className="text-center">
-                      <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
-                      <Text color="secondary" as="p">Connect to a database to get started</Text>
-                      <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
-                    </Box>
-                  </Flex>
-                )}
-              </Box>
-            </>
-          )}
+          <TabBar />
+          <Box className="flex-1 overflow-hidden">
+            {activeTab?.type === 'query' && (
+              <QueryPanel tab={activeTab as QueryTab} />
+            )}
+            {activeTab?.type === 'er-diagram' && (
+              <ERDiagram
+                connectionId={(activeTab as ErDiagramTab).connectionId}
+                schema={(activeTab as ErDiagramTab).schema}
+              />
+            )}
+            {activeTab?.type === 'connection-form' && (
+              <ConnectionFormView
+                tabId={activeTab.id}
+                editingId={(activeTab as ConnectionFormTab).editingId}
+              />
+            )}
+            {activeTab?.type === 'plugin-detail' && (
+              <PluginDetailView
+                pluginName={(activeTab as PluginDetailTab).pluginName}
+              />
+            )}
+            {activeTab?.type === 'install-plugin' && (
+              <InstallPluginTab />
+            )}
+            {activeTab?.type === 'settings' && (
+              <SettingsLayout />
+            )}
+            {!activeTab && (
+              <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
+                <Box className="text-center">
+                  <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
+                  <Text color="secondary" as="p">Connect to a database to get started</Text>
+                  <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
+                </Box>
+              </Flex>
+            )}
+          </Box>
         </Flex>
         {sidebarVisible && sidebarPosition === 'right' && (
           <>

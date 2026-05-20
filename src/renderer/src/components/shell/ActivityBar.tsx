@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Database, PenSquare, BarChart3, Puzzle, Settings, Sparkles, Radio } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
+import { useTabsStore } from '@/stores/tabs'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { useAIStore } from '@/stores/ai'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
@@ -15,6 +16,8 @@ const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = 
 
 export function ActivityBar() {
   const { activePanel, sidebarVisible, setActivePanel } = useUiStore()
+  const openSettings = useTabsStore((s) => s.openSettings)
+  const activeTabType = useTabsStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.type)
   const activityBarContributions = usePluginUIStore(selectContributions('activityBar'))
   const toggleAIPanel = useAIStore(s => s.togglePanel)
   const aiPanelOpen = useAIStore(s => s.panelOpen)
@@ -98,7 +101,7 @@ export function ActivityBar() {
             label="MCP Server"
             size="lg"
             variant="ghost"
-            onClick={() => setActivePanel('settings')}
+            onClick={openSettings}
             className="rounded-lg transition-colors text-green-400 hover:text-green-300 hover:bg-white/5"
           >
             <Radio size={18} />
@@ -106,7 +109,22 @@ export function ActivityBar() {
         </Tooltip>
       )}
       <NotificationBell />
-      {renderButton('settings', Settings, 'Settings')}
+      <Tooltip content="Settings" side="right">
+        <IconButton
+          label="Settings"
+          size="lg"
+          variant="ghost"
+          onClick={openSettings}
+          className={cn(
+            'rounded-lg transition-colors',
+            activeTabType === 'settings'
+              ? 'bg-accent/10 text-accent hover:bg-accent/10'
+              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
+          )}
+        >
+          <Settings size={20} />
+        </IconButton>
+      </Tooltip>
     </Stack>
   )
 }
