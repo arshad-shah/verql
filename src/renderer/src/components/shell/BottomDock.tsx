@@ -8,6 +8,16 @@ import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
 
+export function useHasBottomPanels(): boolean {
+  const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
+  const panelContributions = usePluginUIStore(selectContributions('panels'))
+  const fetchContributions = usePluginUIStore(s => s.fetchContributions)
+  useEffect(() => { fetchContributions('panels') }, [fetchContributions])
+  const showResults = activeTab?.type === 'query'
+  const hasBottomPlugins = panelContributions.some(c => c.meta.location === 'bottom')
+  return showResults || hasBottomPlugins
+}
+
 export function BottomDock() {
   const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
   const bottomActivePanel = useUiStore(s => s.bottomDockActivePanel)
@@ -37,11 +47,7 @@ export function BottomDock() {
   }, [tabs, bottomActivePanel, setBottomActivePanel])
 
   if (tabs.length === 0) {
-    return (
-      <Flex align="center" justify="center" className="h-full bg-bg-primary">
-        <Text color="muted" size="sm">No bottom panels for this tab</Text>
-      </Flex>
-    )
+    return null
   }
 
   const renderBody = () => {
