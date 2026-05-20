@@ -4,6 +4,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
 import { editorRegistry } from '@/stores/editor'
+import { tabActions } from '@/stores/tab-actions'
 import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 
@@ -79,8 +80,9 @@ export function CommandPalette({ open, onClose }: Props) {
         category: 'Editor',
         keybinding: 'Cmd+Enter',
         action: () => {
+          const reg = editorRegistry.get()
           const sql = editorRegistry.getSelectedSql()
-          if (sql) window.dispatchEvent(new CustomEvent('nova:run-statement', { detail: { sql } }))
+          if (reg && sql) tabActions.runStatement(reg.tabId, sql)
         }
       })
       cmds.push({
