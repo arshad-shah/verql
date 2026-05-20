@@ -130,7 +130,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
     <div
       ref={panelRef}
       className={cn(
-        'absolute bottom-full left-0 mb-1 w-[260px]',
+        'absolute bottom-full left-0 mb-1 w-65',
         'bg-bg-secondary border border-border-default',
         'rounded-t-lg shadow-[0_-4px_20px_rgba(0,0,0,0.5)]',
         'animate-in slide-in-from-bottom-2 duration-150'

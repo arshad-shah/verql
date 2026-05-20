@@ -128,9 +128,10 @@ export function App() {
   const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
 
   const handleBottomResize = (delta: number) => {
-    const current = draftBottomHeight ?? useSettingsStore.getState().settings.appearance.bottomDockHeight
-    const next = Math.min(640, Math.max(120, current - delta))
-    setDraftBottomHeight(next)
+    setDraftBottomHeight(prev => {
+      const current = prev ?? useSettingsStore.getState().settings.appearance.bottomDockHeight
+      return Math.min(640, Math.max(120, current - delta))
+    })
   }
   const handleBottomResizeEnd = () => {
     if (draftBottomHeight !== null) {
@@ -154,9 +155,10 @@ export function App() {
   const [prevSecondaryWidth, setPrevSecondaryWidth] = useState(secondarySidebarWidth)
 
   const handleSecondaryResize = (delta: number) => {
-    const current = draftSecondaryWidth ?? useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-    const next = Math.min(640, Math.max(220, current - delta))
-    setDraftSecondaryWidth(next)
+    setDraftSecondaryWidth(prev => {
+      const current = prev ?? useSettingsStore.getState().settings.appearance.secondarySidebarWidth
+      return Math.min(640, Math.max(220, current - delta))
+    })
   }
   const handleSecondaryResizeEnd = () => {
     if (draftSecondaryWidth !== null) {
@@ -179,9 +181,10 @@ export function App() {
   const effectiveSidebarWidth = draftSidebarWidth ?? sidebarWidth
 
   const handleSidebarResize = (delta: number) => {
-    const current = draftSidebarWidth ?? useSettingsStore.getState().settings.appearance.sidebarWidth
-    const next = Math.min(480, Math.max(180, current + delta))
-    setDraftSidebarWidth(next)
+    setDraftSidebarWidth(prev => {
+      const current = prev ?? useSettingsStore.getState().settings.appearance.sidebarWidth
+      return Math.min(480, Math.max(180, current + delta))
+    })
   }
   const handleSidebarResizeEnd = () => {
     if (draftSidebarWidth !== null) {

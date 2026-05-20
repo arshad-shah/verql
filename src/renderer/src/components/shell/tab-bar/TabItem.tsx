@@ -47,9 +47,9 @@ export function TabItem({
         onClick={onActivate}
         onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); onClose() } }}
         className={cn(
-          'group relative px-2.5 py-1 cursor-pointer shrink-0 select-none rounded-lg transition-all duration-[var(--transition-fast)]',
+          'group relative px-2.5 py-1 cursor-pointer shrink-0 select-none rounded-lg transition-all duration-(--transition-fast)',
           isActive
-            ? 'bg-bg-tertiary border border-border-subtle shadow-[var(--shadow-card)]'
+            ? 'bg-bg-tertiary border border-border-subtle shadow-card'
             : 'bg-transparent border border-transparent hover:bg-[rgba(255,255,255,0.04)] hover:border-border-subtle',
           isDragged && 'opacity-50',
           isDropTarget && 'before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-accent before:rounded-full',
@@ -73,7 +73,7 @@ export function TabItem({
           label={isDirty ? 'Close tab (unsaved changes)' : 'Close tab'}
           variant="tab-action"
           className={cn(
-            'ml-0.5 transition-opacity duration-[var(--transition-fast)]',
+            'ml-0.5 transition-opacity duration-(--transition-fast)',
             !isActive && !isDirty && 'opacity-0 group-hover:opacity-100',
           )}
           onClick={(e) => { e.stopPropagation(); onClose() }}
@@ -82,7 +82,7 @@ export function TabItem({
         >
           {isDirty && !closeHovered ? (
             <span
-              className="block h-[7px] w-[7px] rounded-full bg-warning"
+              className="block h-1.75 w-1.75 rounded-full bg-warning"
               aria-label="Unsaved changes"
             />
           ) : (
@@ -90,7 +90,7 @@ export function TabItem({
               size={10}
               strokeWidth={2.5}
               className={cn(
-                'transition-colors duration-[var(--transition-fast)]',
+                'transition-colors duration-(--transition-fast)',
                 isDirty && closeHovered
                   ? 'text-error'
                   : 'text-text-tertiary group-hover:text-text-secondary',

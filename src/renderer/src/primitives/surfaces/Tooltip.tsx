@@ -68,30 +68,36 @@ const beakGeometry: Record<string, { fill: string; stroke: string; w: number; h:
   },
 }
 
-function TooltipBeak({
-  side,
-  x,
-  y,
-}: {
+const TooltipBeak = React.forwardRef<SVGSVGElement, {
   side: string
   x?: number
   y?: number
-}) {
+}>(function TooltipBeak({ side, x, y }, ref) {
   const isVertical = side === 'top' || side === 'bottom'
   const staticSide = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[side]!
   const geo = beakGeometry[side] ?? beakGeometry.top
 
+  // When floating-ui's arrow middleware resolves a coordinate, it is the
+  // beak's leading edge inside the floating panel. Use it raw — no centering
+  // transform — so the beak stays anchored to the reference even when the
+  // panel has been `shift`ed away from a viewport edge. Fall back to 50%
+  // centering only before the first measurement.
   const style: React.CSSProperties = {
     position: 'absolute',
     [staticSide]: `-${BEAK_DEPTH}px`,
     ...(isVertical
-      ? { left: x != null ? `${x}px` : '50%', transform: 'translateX(-50%)' }
-      : { top: y != null ? `${y}px` : '50%', transform: 'translateY(-50%)' }),
+      ? x != null
+        ? { left: `${x}px` }
+        : { left: '50%', transform: 'translateX(-50%)' }
+      : y != null
+        ? { top: `${y}px` }
+        : { top: '50%', transform: 'translateY(-50%)' }),
     pointerEvents: 'none',
   }
 
   return (
     <svg
+      ref={ref}
       data-tooltip-beak=""
       style={style}
       width={geo.w}
@@ -103,7 +109,7 @@ function TooltipBeak({
       <path d={geo.stroke} className="stroke-border-default" strokeWidth="1" fill="none" />
     </svg>
   )
-}
+})
 
 export function Tooltip({
   content,
@@ -123,9 +129,11 @@ export function Tooltip({
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(8 + BEAK_DEPTH),
-      flip(),
+      flip({ padding: 8 }),
       shift({ padding: 8 }),
-      arrow({ element: arrowRef, padding: 8 }),
+      // padding here keeps the beak from overlapping the panel's rounded
+      // corners when the floating element gets shifted near a viewport edge.
+      arrow({ element: arrowRef, padding: 10 }),
     ],
   })
 
@@ -184,6 +192,7 @@ export function Tooltip({
             >
               {content}
               <TooltipBeak
+                ref={arrowRef}
                 side={resolvedSide}
                 x={arrowData?.x}
                 y={arrowData?.y}

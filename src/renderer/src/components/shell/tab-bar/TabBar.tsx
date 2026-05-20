@@ -58,19 +58,19 @@ export function TabBar() {
       className="h-10 shrink-0 bg-bg-secondary px-1.5 border-b border-border-subtle"
     >
       {/* Scroll left arrow */}
-      <IconButton
-        label="Scroll tabs left"
-        size="xs"
-        variant="ghost"
-        onClick={scrollLeft}
-        tabIndex={-1}
+      {canScrollLeft && (
+        <IconButton
+          label="Scroll tabs left"
+          size="xs"
+          variant="ghost"
+          onClick={scrollLeft}
+          tabIndex={-1}
         className={cn(
           'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
-          canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
       >
         <ChevronLeft size={14} />
-      </IconButton>
+      </IconButton>)}
 
       {/* Scrollable tab trough */}
       <Flex
@@ -78,7 +78,7 @@ export function TabBar() {
         onWheel={onWheel}
         align="center"
         gap="xs"
-        className="flex-1 h-full overflow-x-hidden py-1"
+        className="flex-1 h-full overflow-x-hidden"
       >
         {tabs.map((tab, index) => (
           <TabItem
@@ -99,19 +99,19 @@ export function TabBar() {
       </Flex>
 
       {/* Scroll right arrow */}
-      <IconButton
-        label="Scroll tabs right"
-        size="xs"
-        variant="ghost"
-        onClick={scrollRight}
-        tabIndex={-1}
+  { canScrollRight && (
+    <IconButton
+      label="Scroll tabs right"
+      size="xs"
+      variant="ghost"
+      onClick={scrollRight}
+      tabIndex={-1}
         className={cn(
           'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
-          canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
       >
         <ChevronRight size={14} />
-      </IconButton>
+      </IconButton>)}
 
       {/* New tab button */}
       <Tooltip content="New Query Tab" side="bottom">

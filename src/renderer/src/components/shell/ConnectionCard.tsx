@@ -1,4 +1,3 @@
-import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Button, Text } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 
@@ -50,7 +49,7 @@ export function ConnectionCard({
       variant="ghost"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] transition-colors h-auto',
+        'flex items-center gap-1.5 rounded-md border p-1 transition-colors',
         isError
           ? 'border-error/20 bg-error/8 hover:bg-error/12'
           : isOpen
@@ -83,10 +82,6 @@ export function ConnectionCard({
       ) : (
         <Text as="span" className="text-text-tertiary">No connection</Text>
       )}
-
-      <span className={cn('ml-0.5', isOpen ? 'text-accent' : 'text-text-disabled')}>
-        {isOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-      </span>
     </Button>
   )
 }
