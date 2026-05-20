@@ -2,7 +2,9 @@ import { useEffect } from 'react'
 import { ListTree, Puzzle } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
-import { Stack, Tooltip, IconButton, cn } from '@/primitives'
+import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
+import { PluginSlot } from '@/components/plugins/PluginSlot'
+import { NotificationBell } from './NotificationBell'
 
 export function SecondaryActivityBar() {
   const active = useUiStore(s => s.secondaryActivePanel)
@@ -44,9 +46,13 @@ export function SecondaryActivityBar() {
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
       {renderButton('inspector', ListTree, 'Inspector')}
+      <NotificationBell />
       {secondaryPlugins.map(c =>
         renderButton(`plugin:${c.contributionId}`, Puzzle, (c.meta.title as string) ?? c.contributionId)
       )}
+      <PluginSlot id="app.secondaryActivityBar.top" />
+      <Spacer />
+      <PluginSlot id="app.secondaryActivityBar.bottom" />
     </Stack>
   )
 }

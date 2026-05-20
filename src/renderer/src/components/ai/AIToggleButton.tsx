@@ -15,7 +15,7 @@ export function AIToggleButton() {
   )
 
   return (
-    <Tooltip content="AI Assistant" side="right">
+    <Tooltip content="AI Assistant" side="left">
       <IconButton
         label="AI Assistant"
         size="lg"

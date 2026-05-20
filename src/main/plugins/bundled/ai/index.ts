@@ -81,7 +81,7 @@ export function activate(ctx: PluginContext): void {
   // 4b. Plug into named slots in the host shell. The host doesn't know these
   //     widgets are AI — it just renders whatever's contributed. Disabling
   //     this plugin disposes the registrations and the slots empty out.
-  ctx.ui.registerSlot('app.activityBar.bottom', [
+  ctx.ui.registerSlot('app.secondaryActivityBar.bottom', [
     { id: 'ai-toggle', type: 'host-component', componentId: 'ai-toggle-button' }
   ])
   ctx.ui.registerSlot('query.editor.top', [

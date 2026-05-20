@@ -4,8 +4,6 @@ import { useUiStore, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
-import { NotificationBell } from './NotificationBell'
-import { PluginSlot } from '@/components/plugins/PluginSlot'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
   { id: 'explorer', icon: Database, label: 'Explorer' },
@@ -77,7 +75,6 @@ export function ActivityBar() {
           c.meta.title as string
         ))}
       <Spacer />
-      <PluginSlot id="app.activityBar.bottom" />
       {mcpRunning && (
         <Tooltip content={`MCP Server · ${mcpClients} client${mcpClients !== 1 ? 's' : ''}`} side="right">
           <IconButton
@@ -91,7 +88,6 @@ export function ActivityBar() {
           </IconButton>
         </Tooltip>
       )}
-      <NotificationBell />
       <Tooltip content="Settings" side="right">
         <IconButton
           label="Settings"
