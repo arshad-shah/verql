@@ -1,7 +1,5 @@
-import { useEffect } from 'react'
-import { ListTree, Puzzle } from 'lucide-react'
+import { ListTree } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
-import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
@@ -10,12 +8,6 @@ export function SecondaryActivityBar() {
   const active = useUiStore(s => s.secondaryActivePanel)
   const visible = useUiStore(s => s.secondarySidebarVisible)
   const setActive = useUiStore(s => s.setSecondaryActivePanel)
-  const panelContributions = usePluginUIStore(selectContributions('panels'))
-  const fetchContributions = usePluginUIStore(s => s.fetchContributions)
-
-  useEffect(() => { fetchContributions('panels') }, [fetchContributions])
-
-  const secondaryPlugins = panelContributions.filter(c => c.meta.location === 'secondary')
 
   const renderButton = (id: string, Icon: typeof ListTree, label: string) => {
     const isActive = active === id && visible
@@ -47,9 +39,6 @@ export function SecondaryActivityBar() {
     >
       {renderButton('inspector', ListTree, 'Inspector')}
       <NotificationBell />
-      {secondaryPlugins.map(c =>
-        renderButton(`plugin:${c.contributionId}`, Puzzle, (c.meta.title as string) ?? c.contributionId)
-      )}
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />
       <PluginSlot id="app.secondaryActivityBar.bottom" />
