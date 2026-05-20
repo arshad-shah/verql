@@ -177,7 +177,10 @@ export function QueryPanel({ tab }: Props) {
   useEffect(() => {
     tabActions.register(tab.id, {
       onSave: handleSave,
-      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
+      isDirty: () => {
+        const t = useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')
+        return Boolean(t && (t as { isDirty?: boolean }).isDirty)
+      },
       label: tab.title,
     })
     return () => tabActions.unregister(tab.id)
@@ -274,7 +277,7 @@ export function QueryPanel({ tab }: Props) {
             <Button type="button" variant="ghost" size="sm" onClick={() => setSaveDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={!saveDialogName.trim()}>
+            <Button type="submit" variant="solid" size="sm" disabled={!saveDialogName.trim()}>
               Save
             </Button>
           </div>

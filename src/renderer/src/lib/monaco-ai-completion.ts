@@ -1,4 +1,5 @@
 import type { Monaco } from '@monaco-editor/react'
+import type { editor, Position, CancellationToken, languages } from 'monaco-editor'
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let currentConnectionId: string | null = null
@@ -9,7 +10,12 @@ export function setAICompletionContext(connectionId: string | null): void {
 
 export function registerAIInlineCompletionProvider(monaco: Monaco, language: string): void {
   monaco.languages.registerInlineCompletionsProvider(language, {
-    provideInlineCompletions: async (model, position, _context, token) => {
+    provideInlineCompletions: async (
+      model: editor.ITextModel,
+      position: Position,
+      _context: languages.InlineCompletionContext,
+      token: CancellationToken
+    ) => {
       // Don't trigger if no connection
       if (!currentConnectionId) return { items: [] }
 

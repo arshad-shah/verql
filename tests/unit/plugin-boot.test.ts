@@ -8,6 +8,7 @@ import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-re
 import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
 
 const noopKeyring = {
   store: async () => {},
@@ -40,7 +41,8 @@ describe('PluginBootCoordinator', () => {
       settingsStore: { get: () => undefined, set: () => {} },
       services: new ServiceRegistryImpl(),
       exporterRegistry: new ExporterRegistryImpl(),
-      importerRegistry: new ImporterRegistryImpl()
+      importerRegistry: new ImporterRegistryImpl(),
+      typeMapperRegistry: new TypeMapperRegistryImpl()
     })
   })
 

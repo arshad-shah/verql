@@ -5,7 +5,11 @@ const NODE_WIDTH = 220
 const NODE_HEIGHT_BASE = 40
 const NODE_HEIGHT_PER_COLUMN = 22
 
-export interface TableNodeData {
+// XYFlow's `Node<T>` constraint requires `T extends Record<string, unknown>`,
+// so we declare an index signature to satisfy the structural type. Concrete
+// callers still access `tableName`, `columns`, `color` by name and get the
+// proper types — TS narrows through the named properties first.
+export interface TableNodeData extends Record<string, unknown> {
   tableName: string
   columns: { name: string; dataType: string; isPrimaryKey: boolean; isForeignKey: boolean }[]
   color: string
@@ -31,13 +35,13 @@ export function layoutErDiagram(
   dagre.layout(g)
 
   const isHorizontal = direction === 'LR'
-  const layoutedNodes = nodes.map((node) => {
+  const layoutedNodes: Node<TableNodeData>[] = nodes.map((node) => {
     const pos = g.node(node.id)
     const height = NODE_HEIGHT_BASE + (node.data.columns.length * NODE_HEIGHT_PER_COLUMN)
     return {
       ...node,
-      targetPosition: isHorizontal ? ('left' as const) : ('top' as const),
-      sourcePosition: isHorizontal ? ('right' as const) : ('bottom' as const),
+      targetPosition: (isHorizontal ? 'left' : 'top') as Node['targetPosition'],
+      sourcePosition: (isHorizontal ? 'right' : 'bottom') as Node['sourcePosition'],
       position: {
         x: pos.x - NODE_WIDTH / 2,
         y: pos.y - height / 2

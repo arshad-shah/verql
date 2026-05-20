@@ -4,6 +4,7 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { MysqlAdapter } from './mysql-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { PG_TO_MYSQL, pgToMysqlFallback } from './type-maps'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-mysql',
@@ -116,10 +117,13 @@ const MYSQL_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.typeMappers.register('postgresql', 'mysql', PG_TO_MYSQL, pgToMysqlFallback)
 
   ctx.drivers.register('mysql', {
     createAdapter: (config) => new MysqlAdapter(config),
     sqlDialect: 'mysql',
+    editorLanguage: 'sql',
+    defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 3306 },

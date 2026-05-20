@@ -4,6 +4,11 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { SqliteAdapter } from './sqlite-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import {
+  PG_TO_SQLITE, pgToSqliteFallback,
+  MYSQL_TO_SQLITE, mysqlToSqliteFallback,
+  sqliteToMysqlFallback
+} from './type-maps'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-sqlite',
@@ -114,10 +119,15 @@ const SQLITE_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.typeMappers.register('postgresql', 'sqlite', PG_TO_SQLITE, pgToSqliteFallback)
+  ctx.typeMappers.register('mysql', 'sqlite', MYSQL_TO_SQLITE, mysqlToSqliteFallback)
+  ctx.typeMappers.register('sqlite', 'mysql', {}, sqliteToMysqlFallback)
 
   ctx.drivers.register('sqlite', {
     createAdapter: (config) => new SqliteAdapter(config),
     sqlDialect: 'sqlite',
+    editorLanguage: 'sql',
+    defaultSchemaCandidates: ['main'],
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },
     ],

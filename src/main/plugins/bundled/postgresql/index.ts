@@ -4,6 +4,7 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { MYSQL_TO_PG, mysqlToPgFallback, sqliteToPgFallback } from './type-maps'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-postgresql',
@@ -102,10 +103,14 @@ const PG_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.typeMappers.register('mysql', 'postgresql', MYSQL_TO_PG, mysqlToPgFallback)
+  ctx.typeMappers.register('sqlite', 'postgresql', {}, sqliteToPgFallback)
 
   ctx.drivers.register('postgresql', {
     createAdapter: (config) => new PostgresAdapter(config),
     sqlDialect: 'postgresql',
+    editorLanguage: 'sql',
+    defaultSchemaCandidates: ['public'],
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 5432 },

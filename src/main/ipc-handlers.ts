@@ -11,6 +11,7 @@ import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
@@ -58,6 +59,7 @@ export function registerIpcHandlers(): void {
   const services = new ServiceRegistryImpl()
   const exporterRegistry = new ExporterRegistryImpl()
   const importerRegistry = new ImporterRegistryImpl()
+  const typeMapperRegistry = new TypeMapperRegistryImpl()
 
   const connectionAccess = new ConnectionAccessImpl(
     (id) => ctx.activeAdapters.get(id),
@@ -74,8 +76,10 @@ export function registerIpcHandlers(): void {
   registerKeyringHandlers(ctx, handle)
   registerDbHandlers(ctx, handle, connectionAccess)
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
+  // The migration IPC handler resolves type mappings through the registry,
+  // so it needs visibility into what each driver plugin contributed.
   registerDialogHandlers(handle)
-  registerMigrationHandlers(handle)
+  registerMigrationHandlers(handle, typeMapperRegistry)
   registerAppHandlers(handle)
 
   registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
@@ -92,7 +96,8 @@ export function registerIpcHandlers(): void {
     settingsStore,
     services,
     exporterRegistry,
-    importerRegistry
+    importerRegistry,
+    typeMapperRegistry
   })
 
   // The AI plugin is registered first so its `ai` service is available

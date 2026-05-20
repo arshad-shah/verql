@@ -47,6 +47,7 @@ export interface PluginContext {
   services: import('./service-registry').ServiceRegistry
   exporters: PluginExporterAccess
   importers: PluginImporterAccess
+  typeMappers: PluginTypeMapperAccess
   /** Bundled/trusted plugins occasionally need raw access to top-level app
    *  settings (e.g. `ai.activeProvider`) rather than their own namespaced
    *  scope under `plugins.<name>.*`. */
@@ -65,6 +66,15 @@ export interface PluginImporterAccess {
   register(
     id: string,
     importer: import('./importer-registry').RegisteredImporter
+  ): Disposable
+}
+
+export interface PluginTypeMapperAccess {
+  register(
+    from: string,
+    to: string,
+    table: Record<string, import('./type-mapper-registry').TypeMappingEntry>,
+    fallback?: import('./type-mapper-registry').TypeMappingFallback
   ): Disposable
 }
 
@@ -96,6 +106,16 @@ export interface DriverFactory {
    *  placeholder syntax without the orchestrator hardcoding a type→dialect
    *  table. Non-SQL drivers (mongo, redis) leave this undefined. */
   sqlDialect?: 'postgresql' | 'mysql' | 'sqlite' | 'snowflake'
+  /** Monaco editor language used for queries against this driver. Defaults to
+   *  'sql' when omitted. The renderer never branches on connection type. */
+  editorLanguage?: string
+  /** When true, prefer the connection's `database` field as the default
+   *  schema in the renderer (MySQL semantics: schemas == databases). */
+  defaultSchemaUseConnectionDatabase?: boolean
+  /** Ordered list of schema names the renderer should try when picking a
+   *  default. First match in the live schema list wins. Examples:
+   *  postgres ⇒ ['public']; sqlite ⇒ ['main']; snowflake ⇒ ['PUBLIC', 'public']. */
+  defaultSchemaCandidates?: string[]
   /** Returns a sample/preview query for a table. Used by the explorer "Open in tab" action. */
   sampleQuery?(table: string, schema?: string): string
   /** Reads every row of a table/collection for export. The driver decides how
@@ -106,6 +126,18 @@ export interface DriverFactory {
     rows: Record<string, unknown>[]
     columns: SchemaColumn[]
   }>
+}
+
+/** Serialisable subset of DriverFactory that the renderer can consume over
+ *  IPC. Functions are stripped — the renderer only needs the data-driven
+ *  capability flags to make UI decisions. */
+export interface DriverCapabilities {
+  sqlDialect?: DriverFactory['sqlDialect']
+  editorLanguage?: string
+  defaultSchemaUseConnectionDatabase?: boolean
+  defaultSchemaCandidates?: string[]
+  hasSampleQuery: boolean
+  hasGetTableData: boolean
 }
 
 export interface ConnectionField {

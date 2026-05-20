@@ -131,7 +131,7 @@ export class SnowflakeAdapter implements DbAdapter {
           if (err) reject(err)
           else resolve({
             rows: (rows ?? []) as Record<string, unknown>[],
-            columns: stmt.getColumns(),
+            columns: stmt.getColumns() ?? [],
             statementId: stmt.getStatementId(),
           })
         },

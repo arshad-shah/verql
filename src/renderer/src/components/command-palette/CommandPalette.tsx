@@ -3,7 +3,10 @@ import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { useSchemaStore } from '@/stores/schema'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
+import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 
@@ -120,8 +123,22 @@ export function CommandPalette({ open, onClose }: Props) {
       }
     }
     if (isConnected && conn) {
-      const schema = conn.type === 'sqlite' ? 'main' : conn.type === 'mysql' ? conn.database : 'public'
-      cmds.push({ id: 'er-diagram', title: 'Open ER Diagram', category: 'Schema', action: () => openErDiagram(activeConnectionId!, schema) })
+      cmds.push({
+        id: 'er-diagram',
+        title: 'Open ER Diagram',
+        category: 'Schema',
+        action: async () => {
+          // Resolve the default schema generically: fetch the live schema
+          // list, ask the driver's capability spec which name to prefer, fall
+          // back to the first schema if nothing matches. Zero hardcoded
+          // db-type branches in this code path.
+          const schemas = await useSchemaStore.getState()
+            .fetchSchemas(conn.id, conn.database)
+          const caps = await useDriverCapabilitiesStore.getState().fetch(conn.type)
+          const schema = pickDefaultSchema(caps ?? {}, schemas, conn.database) ?? ''
+          openErDiagram(conn.id, schema)
+        }
+      })
     }
     for (const pc of pluginCommands) {
       cmds.push({

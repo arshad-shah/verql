@@ -4,6 +4,9 @@ import path from 'path'
 
 const IPC_FILE = path.join(__dirname, '../../src/main/ipc/export-import.ts')
 const DB_FILE = path.join(__dirname, '../../src/main/ipc/db.ts')
+const CMD_PALETTE = path.join(__dirname, '../../src/renderer/src/components/command-palette/CommandPalette.tsx')
+const CONN_SELECTOR = path.join(__dirname, '../../src/renderer/src/components/query/ConnectionSelector.tsx')
+const QUERY_EDITOR = path.join(__dirname, '../../src/renderer/src/components/query/QueryEditor.tsx')
 
 /**
  * Architectural guard: the orchestrator (IPC layer) must NOT contain a
@@ -31,4 +34,21 @@ describe('Orchestrator has no hardcoded relational table', () => {
     // Sanity: it must consult the driver.
     expect(src).toMatch(/driver\?\.sqlDialect/)
   })
+
+  for (const file of [CMD_PALETTE, CONN_SELECTOR, QUERY_EDITOR]) {
+    it(`renderer ${path.basename(file)} has no hardcoded db-type branch`, () => {
+      const src = fs.readFileSync(file, 'utf-8')
+      // The renderer must NOT make decisions based on connection type
+      // string equality. Driver-specific behaviour goes through the
+      // driver-capabilities store + pickDefaultSchema helper.
+      for (const t of ['sqlite', 'mysql', 'postgresql', 'postgres', 'mongodb', 'redis', 'snowflake']) {
+        expect(src, `${path.basename(file)} branches on '${t}'`)
+          .not.toMatch(new RegExp(`\\b\\w+\\.type\\s*===\\s*['"]${t}['"]`))
+        expect(src, `${path.basename(file)} branches on databaseType === '${t}'`)
+          .not.toMatch(new RegExp(`databaseType\\s*===\\s*['"]${t}['"]`))
+        expect(src, `${path.basename(file)} branches on dbType === '${t}'`)
+          .not.toMatch(new RegExp(`dbType\\s*===\\s*['"]${t}['"]`))
+      }
+    })
+  }
 })

@@ -8,7 +8,11 @@ interface ConnectionsState {
   activeConnectionId: string | null
   connectedIds: Set<string>
   loading: boolean
+  setConnections: (connections: ConnectionProfile[]) => void
   setActiveConnection: (id: string | null) => void
+  addConnected: (id: string) => void
+  removeConnected: (id: string) => void
+  setLoading: (loading: boolean) => void
   loadConnections: () => Promise<void>
   saveConnection: (profile: ConnectionProfile) => Promise<void>
   deleteConnection: (id: string) => Promise<void>

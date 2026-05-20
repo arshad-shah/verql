@@ -45,11 +45,6 @@ jobs:
     name: TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # TODO: there are pre-existing TS errors in the renderer (ER diagram /
-    # XYFlow node typing, ConnectionFormView casts) and a couple of native
-    # driver adapters. The job is reported but does not gate merges until
-    # they're cleaned up. See CONTRIBUTING/TODO for the running list.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 

@@ -106,6 +106,7 @@ interface BootDeps {
   services: import('./sdk/service-registry').ServiceRegistry
   exporterRegistry: import('./sdk/exporter-registry').ExporterRegistry
   importerRegistry: import('./sdk/importer-registry').ImporterRegistry
+  typeMapperRegistry: import('./sdk/type-mapper-registry').TypeMapperRegistry
 }
 
 export class PluginBootCoordinator {
@@ -275,7 +276,8 @@ export class PluginBootCoordinator {
       keyring: this.deps.keyring,
       services: this.deps.services,
       exporterRegistry: this.deps.exporterRegistry,
-      importerRegistry: this.deps.importerRegistry
+      importerRegistry: this.deps.importerRegistry,
+      typeMapperRegistry: this.deps.typeMapperRegistry
     })
     plugin.context = context
 

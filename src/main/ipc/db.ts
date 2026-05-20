@@ -160,6 +160,19 @@ export function registerDbHandlers(
     if (adapter?.cancelQuery) adapter.cancelQuery()
   })
 
+  handle('db:driver-capabilities', async (type: string) => {
+    const driver = ctx.driverRegistry.get(type)
+    if (!driver) return null
+    return {
+      sqlDialect: driver.sqlDialect,
+      editorLanguage: driver.editorLanguage,
+      defaultSchemaUseConnectionDatabase: driver.defaultSchemaUseConnectionDatabase,
+      defaultSchemaCandidates: driver.defaultSchemaCandidates,
+      hasSampleQuery: typeof driver.sampleQuery === 'function',
+      hasGetTableData: typeof driver.getTableData === 'function'
+    }
+  })
+
   handle('db:sample-query', async (profileId, table, schema) => {
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) throw new Error('Unknown connection')

@@ -39,7 +39,7 @@ export function PlanNodeView({ node, maxCost, depth = 0 }: Props) {
           {node.type}
         </Text>
 
-        {node.table && <Text size="xs" color="info">{node.table}</Text>}
+        {node.table && <Text size="xs" color="accent">{node.table}</Text>}
 
         <Box className="flex-1 mx-2 h-2 bg-bg-tertiary rounded-full overflow-hidden">
           <Box className="h-full rounded-full transition-all" style={{ width: `${Math.max(costRatio * 100, 2)}%`, backgroundColor: color }} />

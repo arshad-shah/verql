@@ -97,7 +97,7 @@ export function MCPSettings() {
           : 'Server is stopped'
       }>
         <Button
-          variant={status.running ? 'outline' : 'primary'}
+          variant={status.running ? 'outline' : 'solid'}
           size="sm"
           onClick={handleToggle}
           disabled={loading}

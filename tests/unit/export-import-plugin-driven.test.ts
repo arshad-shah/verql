@@ -8,6 +8,7 @@ import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-re
 import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
 
 import * as coreFormatsPlugin from '../../src/main/plugins/bundled/core-formats/index'
 import * as aiPlugin from '../../src/main/plugins/bundled/ai/index'
@@ -29,6 +30,7 @@ async function bootCoordinator() {
   const driverRegistry = new DriverRegistryImpl()
   const exporterRegistry = new ExporterRegistryImpl()
   const importerRegistry = new ImporterRegistryImpl()
+  const typeMapperRegistry = new TypeMapperRegistryImpl()
   const coordinator = new PluginBootCoordinator({
     driverRegistry,
     commandRegistry: new CommandRegistryImpl(),
@@ -41,7 +43,8 @@ async function bootCoordinator() {
     settingsStore: { get: () => undefined, set: () => {} },
     services: new ServiceRegistryImpl(),
     exporterRegistry,
-    importerRegistry
+    importerRegistry,
+    typeMapperRegistry
   })
   coordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
   coordinator.registerBundledPlugin(coreFormatsPlugin.manifest, coreFormatsPlugin)
@@ -65,19 +68,21 @@ async function bootCoordinator() {
     const p = coordinator.getPlugin(name)!
     await coordinator.activatePlugin(p)
   }
-  return { coordinator, exporterRegistry, importerRegistry, driverRegistry }
+  return { coordinator, exporterRegistry, importerRegistry, driverRegistry, typeMapperRegistry }
 }
 
 describe('Plugin-driven export/import architecture', () => {
   let exporterRegistry: ExporterRegistryImpl
   let importerRegistry: ImporterRegistryImpl
   let driverRegistry: DriverRegistryImpl
+  let typeMapperRegistry: TypeMapperRegistryImpl
 
   beforeEach(async () => {
     const r = await bootCoordinator()
     exporterRegistry = r.exporterRegistry
     importerRegistry = r.importerRegistry
     driverRegistry = r.driverRegistry
+    typeMapperRegistry = r.typeMapperRegistry
   })
 
   it('core-formats plugin registers CSV and JSON exporters', () => {
@@ -191,5 +196,34 @@ describe('Plugin-driven export/import architecture', () => {
     expect(JSON.parse(out as string)).toEqual([
       { key: 'user:1', type: 'string', value: 'Alice' }
     ])
+  })
+
+  it('type mappings for every relational pair are contributed by plugins', () => {
+    const directions: [string, string, string, string][] = [
+      // [from, to, sample, expected target]
+      ['postgresql', 'mysql',      'jsonb',     'JSON'],
+      ['postgresql', 'sqlite',     'jsonb',     'TEXT'],
+      ['mysql',      'postgresql', 'tinyint(1)', 'boolean'],
+      ['mysql',      'sqlite',     'datetime',   'TEXT'],
+      ['sqlite',     'postgresql', 'INTEGER',    'integer'],
+      ['sqlite',     'mysql',      'BLOB',       'BLOB'],
+    ]
+    for (const [from, to, sample, expected] of directions) {
+      const m = typeMapperRegistry.resolve(from, to, sample)
+      expect(m, `${from} → ${to} for "${sample}"`).toBeDefined()
+      expect(m!.target).toBe(expected)
+    }
+  })
+
+  it('migration/type-map.ts contains no driver-specific branches', () => {
+    const src = require('fs').readFileSync(
+      require('path').join(__dirname, '../../src/main/migration/type-map.ts'),
+      'utf-8'
+    )
+    expect(src).not.toMatch(/PG_TO_MYSQL\b/)
+    expect(src).not.toMatch(/MYSQL_TO_PG\b/)
+    expect(src).not.toMatch(/PG_TO_SQLITE\b/)
+    expect(src).not.toMatch(/from\s*===\s*['"]postgresql['"]/)
+    expect(src).not.toMatch(/from\s*===\s*['"]mysql['"]/)
   })
 })

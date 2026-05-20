@@ -12,7 +12,7 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
   const setFilterText = useSchemaStore((s) => s.setFilterText)
   const activeConnectionId = useConnectionsStore((s) => s.activeConnectionId)
   const inputRef = useRef<HTMLInputElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [localValue, setLocalValue] = useState(filterText)
 
   useEffect(() => {

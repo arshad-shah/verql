@@ -87,6 +87,17 @@ export interface IpcChannelMap {
     args: [profileId: string, table: string, schema?: string]
     return: string
   }
+  'db:driver-capabilities': {
+    args: [type: string]
+    return: {
+      sqlDialect?: 'postgresql' | 'mysql' | 'sqlite' | 'snowflake'
+      editorLanguage?: string
+      defaultSchemaUseConnectionDatabase?: boolean
+      defaultSchemaCandidates?: string[]
+      hasSampleQuery: boolean
+      hasGetTableData: boolean
+    } | null
+  }
   'export:table': {
     args: [profileId: string, tableName: string, format: 'sql' | 'csv' | 'json', options?: { schema?: string; includeSchema?: boolean }]
     return: { filePath: string } | { cancelled: true }

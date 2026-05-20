@@ -157,6 +157,8 @@ export function activate(ctx: PluginContext): void {
   ctx.drivers.register('snowflake', {
     createAdapter: (config) => new SnowflakeAdapter(config),
     sqlDialect: 'snowflake',
+    editorLanguage: 'sql',
+    defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
       { key: 'account', label: 'Account Identifier', type: 'text', required: true },
       { key: 'host', label: 'Host Override', type: 'text' },

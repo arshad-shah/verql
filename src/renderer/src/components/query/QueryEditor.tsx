@@ -8,6 +8,7 @@ import { registerSqlCodeLens, installSqlCodeLensCommandHandlers } from '@/lib/mo
 import { editorRegistry } from '@/stores/editor'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { Flex, Text, useTheme } from '@/primitives'
 
 interface Props {
@@ -74,7 +75,16 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
   const editorSettings = useSettingsStore((s) => s.settings.editor)
   const keybindings = useSettingsStore((s) => s.settings.keybindings)
 
-  const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
+  // The Monaco language is contributed by the driver plugin (`editorLanguage`
+  // in its DriverFactory). The renderer doesn't branch on db type.
+  const cachedCaps = useDriverCapabilitiesStore((s) => databaseType ? s.byType[databaseType] : undefined)
+  const fetchCaps = useDriverCapabilitiesStore((s) => s.fetch)
+  useEffect(() => {
+    if (databaseType && cachedCaps === undefined) {
+      fetchCaps(databaseType).catch(() => {})
+    }
+  }, [databaseType, cachedCaps, fetchCaps])
+  const language = cachedCaps?.editorLanguage ?? 'sql'
 
   // Define themes BEFORE the editor mounts. Monaco's <Editor> applies its
   // `theme` prop synchronously during construction; if the named theme
