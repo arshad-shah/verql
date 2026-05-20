@@ -1,4 +1,5 @@
-import type { Statement } from '@/lib/statement-registry'
+import { tabActions } from '@/stores/tab-actions'
+import type { Statement, StatementContribution } from '@/lib/statement-registry'
 
 export function splitRedisStatements(source: string): Statement[] {
   const out: Statement[] = []
@@ -18,4 +19,11 @@ export function splitRedisStatements(source: string): Statement[] {
     })
   }
   return out
+}
+
+export const redisStatementContribution: StatementContribution = {
+  splitStatements: splitRedisStatements,
+  lensActions: [
+    { id: 'run', title: '▶ Run', handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
+  ],
 }

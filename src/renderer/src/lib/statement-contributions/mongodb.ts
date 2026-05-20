@@ -1,4 +1,5 @@
-import type { Statement } from '@/lib/statement-registry'
+import { tabActions } from '@/stores/tab-actions'
+import type { Statement, StatementContribution } from '@/lib/statement-registry'
 
 /**
  * Splits a Mongo shell buffer into one statement per top-level brace-balanced
@@ -55,4 +56,11 @@ export function splitMongoStatements(source: string): Statement[] {
     }
   }
   return out
+}
+
+export const mongoStatementContribution: StatementContribution = {
+  splitStatements: splitMongoStatements,
+  lensActions: [
+    { id: 'run', title: '▶ Run', handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
+  ],
 }
