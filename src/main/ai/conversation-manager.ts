@@ -1,6 +1,6 @@
 // src/main/ai/conversation-manager.ts
 import { randomUUID } from 'crypto'
-import type { AIChatMessage, AIStreamEvent } from '@shared/ai-types'
+import type { AIChatMessage, AIStreamEvent, AIToolCallRequest } from '@shared/ai-types'
 import type { AIContextProvider } from './types'
 import type { AIProviderRegistry } from './provider-registry'
 import type { AIToolRegistry } from './tool-registry'
@@ -49,6 +49,21 @@ export class ConversationManager {
 
   unregisterContextProvider(id: string): void {
     this.contextProviders = this.contextProviders.filter(p => p.id !== id)
+  }
+
+  async getContextForConnection(connectionId: string): Promise<string> {
+    const parts: string[] = []
+    for (const cp of this.contextProviders) {
+      if (cp.appliesTo(connectionId)) {
+        try {
+          const ctx = await cp.getContext(connectionId)
+          if (ctx) parts.push(ctx)
+        } catch {
+          // Context provider failed
+        }
+      }
+    }
+    return parts.join('\n\n')
   }
 
   async assembleSystemMessage(connectionMeta?: { type: string; driverName: string }): Promise<string> {
@@ -104,124 +119,169 @@ Rules:
     this.abortController = new AbortController()
     const systemMessage = await this.assembleSystemMessage(connectionMeta)
 
-    const allMessages: AIChatMessage[] = [
-      { id: 'system', role: 'system', content: systemMessage, timestamp: 0 },
-      ...this.messages
-    ]
-
     const tools = provider.supportsToolCalling
       ? this.deps.toolRegistry.getToolDefinitions()
       : undefined
 
-    const stream = provider.chat({
-      model: modelId,
-      messages: allMessages,
-      tools: tools?.length ? tools : undefined,
-      signal: this.abortController.signal
-    })
+    const MAX_TOOL_ROUNDS = 10
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
 
-    let assistantContent = ''
-
-    for await (const chunk of stream) {
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       if (this.abortController.signal.aborted) break
 
-      if (chunk.type === 'text' && chunk.content) {
-        assistantContent += chunk.content
-        yield { type: 'chunk', content: chunk.content }
-      } else if (chunk.type === 'tool-call' && chunk.toolCall) {
-        yield { type: 'tool-call', toolCall: chunk.toolCall }
+      const allMessages: AIChatMessage[] = [
+        { id: 'system', role: 'system', content: systemMessage, timestamp: 0 },
+        ...this.messages
+      ]
 
-        const tool = this.deps.toolRegistry.get(chunk.toolCall.name)
-        if (!tool) {
-          yield { type: 'tool-result', result: {
-            toolCallId: chunk.toolCall.id,
-            toolName: chunk.toolCall.name,
-            success: false,
-            data: null,
-            display: `Unknown tool: ${chunk.toolCall.name}`
-          }}
-          continue
-        }
+      const stream = provider.chat({
+        model: modelId,
+        messages: allMessages,
+        tools: tools?.length ? tools : undefined,
+        signal: this.abortController.signal
+      })
 
-        let params: Record<string, unknown>
-        try {
-          params = JSON.parse(chunk.toolCall.arguments || '{}') as Record<string, unknown>
-        } catch {
-          yield { type: 'tool-result', result: {
-            toolCallId: chunk.toolCall.id,
-            toolName: chunk.toolCall.name,
-            success: false,
-            data: null,
-            display: 'Failed to parse tool arguments'
-          }}
-          continue
-        }
+      let assistantContent = ''
+      const toolCalls: { call: AIToolCallRequest; resultContent: string }[] = []
 
-        if (this.deps.permissionManager.needsApproval(tool)) {
-          const display = tool.description + ': ' + JSON.stringify(params)
-          const requestId = this.deps.permissionManager.createApprovalRequest(
-            tool.id, params, display
-          )
-          yield { type: 'approval-request', request: {
-            requestId,
-            toolName: tool.name,
-            toolDescription: tool.description,
-            parameters: params,
-            display
-          }}
+      for await (const chunk of stream) {
+        if (this.abortController.signal.aborted) break
 
-          const approved = await this.deps.permissionManager.waitForApproval(requestId)
-          if (!approved) {
+        if (chunk.type === 'text' && chunk.content) {
+          assistantContent += chunk.content
+          yield { type: 'chunk', content: chunk.content }
+        } else if (chunk.type === 'tool-call' && chunk.toolCall) {
+          yield { type: 'tool-call', toolCall: chunk.toolCall }
+
+          const tool = this.deps.toolRegistry.get(chunk.toolCall.name)
+          if (!tool) {
+            const resultContent = JSON.stringify({ error: `Unknown tool: ${chunk.toolCall.name}` })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
             yield { type: 'tool-result', result: {
               toolCallId: chunk.toolCall.id,
               toolName: chunk.toolCall.name,
               success: false,
               data: null,
-              display: 'User rejected this action'
+              display: `Unknown tool: ${chunk.toolCall.name}`
             }}
             continue
           }
-        }
 
-        try {
-          const result = await this.deps.toolRegistry.execute(
-            tool.id,
-            params,
-            { connectionId: this.deps.getConnectionId(), abortSignal: this.abortController.signal }
-          )
-          yield { type: 'tool-result', result: {
-            toolCallId: chunk.toolCall.id,
-            toolName: tool.name,
-            success: result.success,
-            data: result.data,
-            display: result.display
-          }}
-        } catch (err) {
-          yield { type: 'tool-result', result: {
-            toolCallId: chunk.toolCall.id,
-            toolName: tool.name,
-            success: false,
-            data: null,
-            display: err instanceof Error ? err.message : String(err)
-          }}
+          let params: Record<string, unknown>
+          try {
+            params = JSON.parse(chunk.toolCall.arguments || '{}') as Record<string, unknown>
+          } catch {
+            const resultContent = JSON.stringify({ error: 'Failed to parse tool arguments' })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
+            yield { type: 'tool-result', result: {
+              toolCallId: chunk.toolCall.id,
+              toolName: chunk.toolCall.name,
+              success: false,
+              data: null,
+              display: 'Failed to parse tool arguments'
+            }}
+            continue
+          }
+
+          if (this.deps.permissionManager.needsApproval(tool)) {
+            const display = tool.description + ': ' + JSON.stringify(params)
+            const requestId = this.deps.permissionManager.createApprovalRequest(
+              tool.id, params, display
+            )
+            yield { type: 'approval-request', request: {
+              requestId,
+              toolName: tool.name,
+              toolDescription: tool.description,
+              parameters: params,
+              display
+            }}
+
+            const approved = await this.deps.permissionManager.waitForApproval(requestId)
+            if (!approved) {
+              const resultContent = JSON.stringify({ error: 'User rejected this action' })
+              toolCalls.push({ call: chunk.toolCall, resultContent })
+              yield { type: 'tool-result', result: {
+                toolCallId: chunk.toolCall.id,
+                toolName: chunk.toolCall.name,
+                success: false,
+                data: null,
+                display: 'User rejected this action'
+              }}
+              continue
+            }
+          }
+
+          try {
+            const result = await this.deps.toolRegistry.execute(
+              tool.id,
+              params,
+              { connectionId: this.deps.getConnectionId(), abortSignal: this.abortController.signal }
+            )
+            const resultContent = JSON.stringify({ success: result.success, data: result.data })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
+            yield { type: 'tool-result', result: {
+              toolCallId: chunk.toolCall.id,
+              toolName: tool.name,
+              success: result.success,
+              data: result.data,
+              display: result.display
+            }}
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err)
+            const resultContent = JSON.stringify({ error: errMsg })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
+            yield { type: 'tool-result', result: {
+              toolCallId: chunk.toolCall.id,
+              toolName: chunk.toolCall.name,
+              success: false,
+              data: null,
+              display: errMsg
+            }}
+          }
+        } else if (chunk.type === 'error') {
+          yield { type: 'error', error: chunk.error ?? 'Unknown error' }
+        } else if (chunk.type === 'done') {
+          if (chunk.usage) {
+            totalInputTokens += chunk.usage.inputTokens
+            totalOutputTokens += chunk.usage.outputTokens
+          }
+          break
         }
-      } else if (chunk.type === 'error') {
-        yield { type: 'error', error: chunk.error ?? 'Unknown error' }
-      } else if (chunk.type === 'done') {
-        break
       }
+
+      // Save assistant message (with any tool calls) to history
+      if (assistantContent || toolCalls.length > 0) {
+        this.messages.push({
+          id: randomUUID(),
+          role: 'assistant',
+          content: assistantContent,
+          toolCalls: toolCalls.length > 0 ? toolCalls.map(tc => tc.call) : undefined,
+          timestamp: Date.now()
+        })
+      }
+
+      // Save tool result messages to history
+      for (const tc of toolCalls) {
+        this.messages.push({
+          id: randomUUID(),
+          role: 'tool',
+          content: tc.resultContent,
+          toolCallId: tc.call.id,
+          timestamp: Date.now()
+        })
+      }
+
+      // If no tool calls were made, the model is done — stop looping
+      if (toolCalls.length === 0) break
+
+      // Otherwise loop back so the provider can process tool results
     }
 
-    if (assistantContent) {
-      this.messages.push({
-        id: randomUUID(),
-        role: 'assistant',
-        content: assistantContent,
-        timestamp: Date.now()
-      })
-    }
-
-    yield { type: 'done' }
+    const usage = (totalInputTokens > 0 || totalOutputTokens > 0)
+      ? { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }
+      : undefined
+    yield { type: 'done', usage }
   }
 
   abort(): void {

@@ -7,6 +7,12 @@ import type {
   AIStreamEvent
 } from '@shared/ai-types'
 
+interface SessionStats {
+  totalInputTokens: number
+  totalOutputTokens: number
+  toolCallCount: number
+}
+
 interface AIState {
   messages: AIChatMessage[]
   isStreaming: boolean
@@ -19,6 +25,7 @@ interface AIState {
   pendingApproval: AIApprovalRequest | null
   currentStreamId: string | null
   mcpPendingApproval: { requestId: string; sql: string } | null
+  sessionStats: SessionStats
 
   // Actions
   togglePanel: () => void
@@ -36,6 +43,8 @@ interface AIState {
   handleStreamEvent: (event: AIStreamEvent) => void
 }
 
+const EMPTY_STATS: SessionStats = { totalInputTokens: 0, totalOutputTokens: 0, toolCallCount: 0 }
+
 export const useAIStore = create<AIState>((set, get) => ({
   messages: [],
   isStreaming: false,
@@ -48,6 +57,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   pendingApproval: null,
   currentStreamId: null,
   mcpPendingApproval: null,
+  sessionStats: { ...EMPTY_STATS },
 
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
 
@@ -73,7 +83,7 @@ export const useAIStore = create<AIState>((set, get) => ({
 
   clearMessages: async () => {
     await window.electronAPI.invoke('ai:messages:clear')
-    set({ messages: [] })
+    set({ messages: [], sessionStats: { ...EMPTY_STATS } })
   },
 
   abort: async () => {
@@ -147,6 +157,17 @@ export const useAIStore = create<AIState>((set, get) => ({
         break
 
       case 'tool-call': {
+        // Flush any accumulated text before the tool call
+        const { streamingContent: pending } = get()
+        const newMessages: AIChatMessage[] = []
+        if (pending) {
+          newMessages.push({
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: pending,
+            timestamp: Date.now()
+          })
+        }
         const toolMsg: AIChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -154,7 +175,15 @@ export const useAIStore = create<AIState>((set, get) => ({
           toolCalls: [event.toolCall],
           timestamp: Date.now()
         }
-        set((s) => ({ messages: [...s.messages, toolMsg] }))
+        newMessages.push(toolMsg)
+        set((s) => ({
+          messages: [...s.messages, ...newMessages],
+          streamingContent: '',
+          sessionStats: {
+            ...s.sessionStats,
+            toolCallCount: s.sessionStats.toolCallCount + 1
+          }
+        }))
         break
       }
 
@@ -175,19 +204,30 @@ export const useAIStore = create<AIState>((set, get) => ({
         break
 
       case 'done': {
-        const { streamingContent } = get()
-        const assistantMsg: AIChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: streamingContent,
-          timestamp: Date.now()
+        const { streamingContent, sessionStats } = get()
+        const updatedStats = { ...sessionStats }
+        if (event.usage) {
+          updatedStats.totalInputTokens += event.usage.inputTokens
+          updatedStats.totalOutputTokens += event.usage.outputTokens
         }
-        set((s) => ({
-          messages: [...s.messages, assistantMsg],
-          isStreaming: false,
-          streamingContent: '',
-          currentStreamId: null
-        }))
+
+        if (streamingContent) {
+          const assistantMsg: AIChatMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: streamingContent,
+            timestamp: Date.now()
+          }
+          set((s) => ({
+            messages: [...s.messages, assistantMsg],
+            isStreaming: false,
+            streamingContent: '',
+            currentStreamId: null,
+            sessionStats: updatedStats
+          }))
+        } else {
+          set({ isStreaming: false, streamingContent: '', currentStreamId: null, sessionStats: updatedStats })
+        }
         break
       }
 

@@ -131,8 +131,30 @@ const REDIS_COMMANDS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  // ── AI context provider ────────────────────────────────────────────────────
+  ctx.ai.registerContextProvider({
+    id: 'redis-query-format',
+    appliesTo(connectionId: string) {
+      const profile = ctx.connections.getProfile(connectionId)
+      return profile?.type === 'redis'
+    },
+    async getContext() {
+      return `Query format for this database:
+The query_execute tool expects Redis commands as plain text, one command per line.
+Examples:
+- GET mykey
+- SET mykey "hello"
+- HGETALL user:1
+- KEYS user:*
+- LPUSH mylist "item1"
+Multiple commands can be sent on separate lines and will be executed sequentially.
+Do not use SQL syntax. Use standard Redis commands.`
+    }
+  })
+
   ctx.drivers.register('redis', {
     createAdapter: (config) => new RedisAdapter(config),
+    sampleQuery: (key: string) => `GET ${key}`,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 6379 },

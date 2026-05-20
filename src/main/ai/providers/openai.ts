@@ -81,6 +81,7 @@ export class OpenAIProvider implements AIProvider {
       model: request.model,
       messages,
       stream: true,
+      stream_options: { include_usage: true },
     }
 
     if (request.temperature !== undefined) {
@@ -134,6 +135,7 @@ export class OpenAIProvider implements AIProvider {
       number,
       { id: string; name: string; arguments: string }
     >()
+    let usageData: { inputTokens: number; outputTokens: number } | undefined
 
     try {
       while (true) {
@@ -159,7 +161,7 @@ export class OpenAIProvider implements AIProvider {
               }
             }
             toolCallAccumulator.clear()
-            yield { type: 'done' }
+            yield { type: 'done', usage: usageData }
             return
           }
 
@@ -168,6 +170,15 @@ export class OpenAIProvider implements AIProvider {
             parsed = JSON.parse(data)
           } catch {
             continue
+          }
+
+          // Extract usage from the final chunk (choices may be empty)
+          const usage = parsed.usage as Record<string, number> | undefined
+          if (usage) {
+            usageData = {
+              inputTokens: usage.prompt_tokens ?? 0,
+              outputTokens: usage.completion_tokens ?? 0,
+            }
           }
 
           const choices = parsed.choices as Array<Record<string, unknown>> | undefined

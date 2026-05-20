@@ -5,6 +5,7 @@ import { Text } from '@/primitives/typography/Text'
 import { IconButton } from '@/primitives/forms/Button'
 import { MessageThread } from './MessageThread'
 import { ChatInput } from './ChatInput'
+import { SessionInfo } from './SessionInfo'
 
 export function ChatPanel() {
   const panelOpen = useAIStore(s => s.panelOpen)
@@ -34,6 +35,7 @@ export function ChatPanel() {
         </IconButton>
       </div>
 
+      <SessionInfo />
       <MessageThread />
       <ChatInput />
     </div>

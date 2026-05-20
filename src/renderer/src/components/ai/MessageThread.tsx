@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useAIStore } from '@/stores/ai'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
 import { Spinner } from '@/primitives/feedback/Spinner'
@@ -8,6 +8,7 @@ import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
 import { ApprovalCard } from './ApprovalCard'
 import { MarkdownContent } from './MarkdownContent'
+import type { AIChatMessage } from '@shared/ai-types'
 
 export function MessageThread() {
   const messages = useAIStore(s => s.messages)
@@ -19,6 +20,19 @@ export function MessageThread() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingContent])
 
+  // Build a map of toolCallId → result message, and a set of result message IDs to skip
+  const { resultMap, resultIds } = useMemo(() => {
+    const rMap = new Map<string, AIChatMessage>()
+    const rIds = new Set<string>()
+    for (const msg of messages) {
+      if (msg.role === 'tool' && msg.toolCallId) {
+        rMap.set(msg.toolCallId, msg)
+        rIds.add(msg.id)
+      }
+    }
+    return { resultMap: rMap, resultIds: rIds }
+  }, [messages])
+
   return (
     <ScrollArea direction="vertical" className="flex-1 p-3">
       {messages.length === 0 && !isStreaming && (
@@ -26,19 +40,18 @@ export function MessageThread() {
           <Text size="sm" color="secondary">Ask me anything about your database</Text>
         </div>
       )}
-      {messages.map(msg =>
-        msg.toolCalls?.length ? (
-          <ToolCallCard key={msg.id} message={msg} />
-        ) : msg.role === 'tool' ? (
-          <div key={msg.id} className="mb-3 mx-2">
-            <Card padding="sm" className="bg-bg-tertiary">
-              <Text size="xs" color="secondary">{msg.content}</Text>
-            </Card>
-          </div>
-        ) : (
-          <MessageBubble key={msg.id} message={msg} />
-        )
-      )}
+      {messages.map(msg => {
+        // Skip standalone tool-result messages — they're shown inside ToolCallCard
+        if (resultIds.has(msg.id)) return null
+
+        if (msg.toolCalls?.length) {
+          const toolCallId = msg.toolCalls[0].id
+          const result = resultMap.get(toolCallId)
+          return <ToolCallCard key={msg.id} message={msg} result={result} />
+        }
+
+        return <MessageBubble key={msg.id} message={msg} />
+      })}
       {isStreaming && !streamingContent && (
         <div className="flex justify-start mb-3">
           <div className="flex items-center gap-2 px-3 py-2">

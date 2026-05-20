@@ -38,12 +38,17 @@ export interface AIToolCallResult {
   display?: string
 }
 
+export interface AITokenUsage {
+  inputTokens: number
+  outputTokens: number
+}
+
 export type AIStreamEvent =
   | { type: 'chunk'; content: string }
   | { type: 'tool-call'; toolCall: AIToolCallRequest }
   | { type: 'tool-result'; result: AIToolCallResult }
   | { type: 'approval-request'; request: AIApprovalRequest }
-  | { type: 'done' }
+  | { type: 'done'; usage?: AITokenUsage }
   | { type: 'error'; error: string }
 
 export interface AIModelInfo {

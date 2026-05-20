@@ -38,6 +38,7 @@ export interface AIProviderChunk {
   content?: string
   toolCall?: AIToolCallRequest
   error?: string
+  usage?: { inputTokens: number; outputTokens: number }
 }
 
 // ─── Tool ────────────────────────────────────────────────────────────────────

@@ -1,7 +1,5 @@
 import { useAIStore } from '@/stores/ai'
-import { Card } from '@/primitives/surfaces/Card'
 import { Text } from '@/primitives/typography/Text'
-import { Badge } from '@/primitives/data-display/Badge'
 import { Button } from '@/primitives/forms/Button'
 import type { AIApprovalRequest } from '@shared/ai-types'
 
@@ -12,31 +10,32 @@ interface ApprovalCardContentProps {
 
 export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContentProps) {
   return (
-    <Card padding="md" className="mx-2 mb-3 border-warning/30 bg-warning/5">
-      <div className="flex items-center gap-2 mb-2">
-        <Badge variant="warning" size="sm">Action Required</Badge>
-        <Text size="xs" weight="medium">{approval.toolName}</Text>
-      </div>
-      <Text size="xs" color="secondary" as="p" className="mb-3">
-        {approval.display}
+    <div className="mx-2 mb-3 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0 text-warning">
+        <path d="M8 1L1 14h14L8 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M8 6v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
+      </svg>
+      <Text size="xs" color="secondary" className="flex-1">
+        Allow this action?
       </Text>
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 shrink-0">
         <Button
           variant="solid"
           size="xs"
           onClick={() => onRespond(approval.requestId, true)}
         >
-          Approve
+          Run
         </Button>
         <Button
-          variant="danger"
+          variant="ghost"
           size="xs"
           onClick={() => onRespond(approval.requestId, false)}
         >
-          Reject
+          Decline
         </Button>
       </div>
-    </Card>
+    </div>
   )
 }
 

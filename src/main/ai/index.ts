@@ -110,7 +110,8 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
 
   const enhancements = createAIEnhancements({
     providerRegistry,
-    getSchemaContext
+    getSchemaContext,
+    conversationManager
   })
 
   // ─── Register IPC handlers ─────────────────────────────────────────────────

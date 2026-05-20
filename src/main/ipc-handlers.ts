@@ -368,6 +368,17 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  handle('db:sample-query', async (profileId: string, table: string, schema?: string) => {
+    const profile = configStore.getConnection(profileId)
+    if (!profile) throw new Error('Unknown connection')
+    const driver = driverRegistry.get(profile.type)
+    if (driver?.sampleQuery) {
+      return driver.sampleQuery(table, schema)
+    }
+    // Default SQL fallback for drivers that don't provide sampleQuery
+    return `SELECT * FROM ${table} LIMIT 100;`
+  })
+
   // ─── Export ──────────────────────────────────────────────────────────────────
 
   handle('export:table', async (profileId, tableName, format, options) => {

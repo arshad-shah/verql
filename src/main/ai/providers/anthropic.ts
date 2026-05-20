@@ -14,19 +14,57 @@ interface AnthropicModelsResponse {
   last_id?: string
 }
 
-function toAnthropicRole(msg: AIChatMessage): 'user' | 'assistant' {
-  if (msg.role === 'assistant') return 'assistant'
-  // tool results and user messages both map to 'user'
-  return 'user'
+type AnthropicContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: unknown }
+  | { type: 'tool_result'; tool_use_id: string; content: string }
+
+interface AnthropicMessage {
+  role: 'user' | 'assistant'
+  content: string | AnthropicContentBlock[]
 }
 
-function toAnthropicMessages(messages: AIChatMessage[]): Array<{ role: 'user' | 'assistant'; content: string }> {
-  return messages
-    .filter(m => m.role !== 'system')
-    .map(m => ({
-      role: toAnthropicRole(m),
-      content: m.content,
-    }))
+function toAnthropicMessages(messages: AIChatMessage[]): AnthropicMessage[] {
+  const result: AnthropicMessage[] = []
+
+  for (const msg of messages) {
+    if (msg.role === 'system') continue
+
+    if (msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0) {
+      const content: AnthropicContentBlock[] = []
+      if (msg.content) {
+        content.push({ type: 'text', text: msg.content })
+      }
+      for (const tc of msg.toolCalls) {
+        let input: unknown = {}
+        try { input = JSON.parse(tc.arguments || '{}') } catch { /* use empty */ }
+        content.push({ type: 'tool_use', id: tc.id, name: tc.name, input })
+      }
+      result.push({ role: 'assistant', content })
+    } else if (msg.role === 'tool') {
+      // Anthropic expects tool results as user messages with tool_result content blocks.
+      // Merge consecutive tool results into a single user message.
+      const last = result[result.length - 1]
+      const block: AnthropicContentBlock = {
+        type: 'tool_result',
+        tool_use_id: msg.toolCallId ?? '',
+        content: msg.content
+      }
+      if (last && last.role === 'user' && Array.isArray(last.content) &&
+          last.content.length > 0 && last.content[0].type === 'tool_result') {
+        last.content.push(block)
+      } else {
+        result.push({ role: 'user', content: [block] })
+      }
+    } else {
+      result.push({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      })
+    }
+  }
+
+  return result
 }
 
 export class AnthropicProvider implements AIProvider {
@@ -146,6 +184,8 @@ export class AnthropicProvider implements AIProvider {
     let currentToolName: string | null = null
     let currentToolId: string | null = null
     let partialJson = ''
+    let inputTokens = 0
+    let outputTokens = 0
 
     try {
       while (true) {
@@ -207,8 +247,20 @@ export class AnthropicProvider implements AIProvider {
             } else {
               currentBlockType = null
             }
+          } else if (type === 'message_start') {
+            const message = event.message as Record<string, unknown> | undefined
+            const usage = message?.usage as Record<string, number> | undefined
+            if (usage) {
+              inputTokens += usage.input_tokens ?? 0
+              outputTokens += usage.output_tokens ?? 0
+            }
+          } else if (type === 'message_delta') {
+            const usage = event.usage as Record<string, number> | undefined
+            if (usage) {
+              outputTokens += usage.output_tokens ?? 0
+            }
           } else if (type === 'message_stop') {
-            yield { type: 'done' }
+            yield { type: 'done', usage: { inputTokens, outputTokens } }
           } else if (type === 'error') {
             const error = event.error as Record<string, unknown>
             yield { type: 'error', error: (error.message as string) ?? 'Unknown Anthropic error' }

@@ -67,10 +67,18 @@ export function TableNode({
     toggleTreeNode(nodeKey)
   }
 
-  function openInQueryTab() {
-    const sql = `SELECT * FROM ${tableName} LIMIT 100;`
+  async function getSampleQuery(): Promise<string> {
+    try {
+      return await window.electronAPI.invoke('db:sample-query', connectionId, tableName, schema) as string
+    } catch {
+      return `SELECT * FROM ${tableName} LIMIT 100;`
+    }
+  }
+
+  async function openInQueryTab() {
+    const query = await getSampleQuery()
     const tabId = addQueryTab(connectionId, schema)
-    updateTabSql(tabId, sql)
+    updateTabSql(tabId, query)
   }
 
   function copyTableName() {
@@ -79,10 +87,10 @@ export function TableNode({
     })
   }
 
-  function copySelectStar() {
-    const sql = `SELECT * FROM ${tableName} LIMIT 100;`
-    navigator.clipboard.writeText(sql).then(() => {
-      addToast({ type: 'success', title: 'Copied SELECT *' })
+  async function copySampleQuery() {
+    const query = await getSampleQuery()
+    navigator.clipboard.writeText(query).then(() => {
+      addToast({ type: 'success', title: 'Copied sample query' })
     })
   }
 
@@ -96,8 +104,8 @@ export function TableNode({
       onSelect: copyTableName,
     },
     {
-      label: 'Copy SELECT *',
-      onSelect: copySelectStar,
+      label: 'Copy sample query',
+      onSelect: copySampleQuery,
     },
     ...(onExportTable
       ? [
@@ -168,13 +176,13 @@ export function TableNode({
                 <ExternalLink size={10} />
               </IconButton>
             </Tooltip>
-            <Tooltip content="Copy SELECT *" side="top">
+            <Tooltip content="Copy sample query" side="top">
               <IconButton
-                label="Copy SELECT *"
+                label="Copy sample query"
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
-                onClick={copySelectStar}
+                onClick={copySampleQuery}
               >
                 <Play size={10} />
               </IconButton>

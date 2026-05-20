@@ -141,6 +141,29 @@ const STATIC_COMPLETIONS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  // ── AI context provider ────────────────────────────────────────────────────
+  // Tells the AI assistant how to format queries for MongoDB connections.
+  ctx.ai.registerContextProvider({
+    id: 'mongodb-query-format',
+    appliesTo(connectionId: string) {
+      const profile = ctx.connections.getProfile(connectionId)
+      return profile?.type === 'mongodb'
+    },
+    async getContext() {
+      return `Query format for this database:
+The query_execute tool expects a JSON object string (not MongoDB shell syntax like db.collection.find()).
+Required fields: "collection" (string), "operation" (string).
+Allowed operations: find, findOne, aggregate, count, distinct, insertOne, insertMany, updateOne, updateMany, deleteOne, deleteMany.
+Optional fields: "filter" (object), "pipeline" (array), "sort" (object), "limit" (number), "projection" (object), "update" (object), "document" (object), "documents" (array), "field" (string).
+
+Examples:
+- Count: {"collection":"events","operation":"count","filter":{}}
+- Find with filter: {"collection":"users","operation":"find","filter":{"age":{"$gt":25}},"limit":10}
+- Aggregate: {"collection":"orders","operation":"aggregate","pipeline":[{"$group":{"_id":"$status","total":{"$sum":1}}}]}
+- Insert: {"collection":"users","operation":"insertOne","document":{"name":"Alice","age":30}}`
+    }
+  })
+
   ctx.drivers.register('mongodb', {
     createAdapter: (config) => {
       const host = config.host as string || 'localhost'
@@ -165,6 +188,8 @@ export function activate(ctx: PluginContext): void {
       const uri = `${protocol}://${auth}${hostPort}/${database}${query ? '?' + query : ''}`
       return new MongoAdapter(uri, database)
     },
+    sampleQuery: (collection: string) =>
+      JSON.stringify({ collection, operation: 'find', filter: {}, limit: 100 }),
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 27017 },

@@ -55,6 +55,8 @@ export interface DriverRegistry {
 export interface DriverFactory {
   createAdapter(config: Record<string, unknown>): DbAdapter
   connectionFields: ConnectionField[]
+  /** Returns a sample/preview query for a table. Used by the explorer "Open in tab" action. */
+  sampleQuery?(table: string, schema?: string): string
 }
 
 export interface ConnectionField {

@@ -7,7 +7,7 @@ export function createQueryTools(connections: ConnectionAccess): AITool[] {
     {
       id: 'query_explain',
       name: 'Explain Query',
-      description: 'Run EXPLAIN on a SQL query to show the execution plan without executing it.',
+      description: 'Run EXPLAIN on a query to show the execution plan without executing it. Only works with databases that support EXPLAIN.',
       parameters: {
         type: 'object',
         properties: { sql: { type: 'string', description: 'The SQL query to explain' } },
@@ -23,16 +23,17 @@ export function createQueryTools(connections: ConnectionAccess): AITool[] {
     {
       id: 'query_execute',
       name: 'Execute Query',
-      description: 'Execute a SQL query against the connected database.',
+      description: 'Execute a query against the connected database. The query format depends on the database type — refer to the system context for the expected format.',
       parameters: {
         type: 'object',
-        properties: { sql: { type: 'string', description: 'The SQL query to execute' } },
-        required: ['sql']
+        properties: { query: { type: 'string', description: 'The query string in the format expected by the connected database' } },
+        required: ['query']
       },
       permission: 'write',
       async execute(params: Record<string, unknown>, ctx: AIToolContext): Promise<AIToolExecutionResult> {
         if (!ctx.connectionId) return { success: false, data: null, display: 'No active connection' }
-        const result = await connections.query(ctx.connectionId, params.sql as string)
+        const query = (params.query ?? params.sql) as string
+        const result = await connections.query(ctx.connectionId, query)
         return { success: true, data: { rows: result.rows, fields: result.fields, rowCount: result.rowCount }, display: `Query returned ${result.rowCount} row(s)` }
       }
     }

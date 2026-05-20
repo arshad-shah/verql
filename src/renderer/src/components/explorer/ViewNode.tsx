@@ -28,7 +28,13 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
   const isExpanded = expandedTreeNodes.has(nodeKey)
   const cols = columns.get(colCacheKey) ?? []
 
-  const selectSql = `SELECT * FROM "${viewName}" LIMIT 100;`
+  async function getSampleQuery(): Promise<string> {
+    try {
+      return await window.electronAPI.invoke('db:sample-query', connectionId, viewName, schema) as string
+    } catch {
+      return `SELECT * FROM "${viewName}" LIMIT 100;`
+    }
+  }
 
   function handleToggle() {
     toggleTreeNode(nodeKey)
@@ -37,9 +43,10 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
     }
   }
 
-  function handleOpenInTab() {
+  async function handleOpenInTab() {
+    const query = await getSampleQuery()
     const tabId = addQueryTab(connectionId, schema)
-    updateTabSql(tabId, selectSql)
+    updateTabSql(tabId, query)
   }
 
   const menuItems = [
@@ -56,10 +63,11 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
       },
     },
     {
-      label: 'Copy SELECT *',
-      onSelect: () => {
-        navigator.clipboard.writeText(selectSql).then(() => {
-          addToast({ type: 'success', title: 'Copied SELECT query' })
+      label: 'Copy sample query',
+      onSelect: async () => {
+        const query = await getSampleQuery()
+        navigator.clipboard.writeText(query).then(() => {
+          addToast({ type: 'success', title: 'Copied sample query' })
         })
       },
     },
