@@ -44,6 +44,11 @@ export interface PluginContext {
   ai: AIAccess
   ipc: PluginIpc
   broadcast: BroadcastFn
+  services: import('./service-registry').ServiceRegistry
+  /** Bundled/trusted plugins occasionally need raw access to top-level app
+   *  settings (e.g. `ai.activeProvider`) rather than their own namespaced
+   *  scope under `plugins.<name>.*`. */
+  rootSettings: { get(key: string): unknown; set(key: string, value: unknown): void }
   subscriptions: Disposable[]
 }
 
@@ -159,6 +164,11 @@ export interface KeyringAccess {
   store(profileId: string, key: string, value: string): Promise<void>
   retrieve(profileId: string, key: string): Promise<string | null>
   delete(profileId: string, key: string): Promise<void>
+  /** Sync read used on hot paths (e.g. API key on each request). The single
+   *  source of truth is the in-memory cache loaded at startup. */
+  retrieveSync(profileId: string, key: string): string | null
+  storeSync(profileId: string, key: string, value: string): void
+  has(profileId: string, key: string): boolean
 }
 
 // ─── Boot Report ─────────────────────────────────────────────────────────────

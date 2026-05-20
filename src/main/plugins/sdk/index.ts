@@ -9,7 +9,8 @@ import { CompletionRegistryImpl } from './completion-registry'
 import { SchemaAccessImpl } from './schema-access'
 import { ConnectionAccessImpl } from './connection-access'
 import { PluginSettingsImpl } from './settings'
-import { AIAccessImpl } from './ai-access'
+import { ServiceRegistryImpl, type ServiceRegistry } from './service-registry'
+import { createAIAccess } from './ai-access'
 
 export { DriverRegistryImpl } from './driver-registry'
 export { CommandRegistryImpl } from './command-registry'
@@ -19,6 +20,7 @@ export { CompletionRegistryImpl } from './completion-registry'
 export { SchemaAccessImpl } from './schema-access'
 export { ConnectionAccessImpl } from './connection-access'
 export { PluginSettingsImpl } from './settings'
+export { ServiceRegistryImpl } from './service-registry'
 export { safeCall, ErrorBudget, PluginError } from './safe-call'
 export type * from './types'
 
@@ -33,16 +35,13 @@ interface ContextDeps {
   connectionAccess: ConnectionAccessImpl
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   keyring: import('./types').KeyringAccess
-  aiToolRegistry: import('../bundled/ai/internal/tool-registry').AIToolRegistry
-  aiProviderRegistry: import('../bundled/ai/internal/provider-registry').AIProviderRegistry
-  aiConversationManager: import('../bundled/ai/internal/conversation-manager').ConversationManager
+  services: ServiceRegistry
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
   const subscriptions: Disposable[] = []
   const { pluginName } = deps
 
-  // Create scoped wrappers that auto-track subscriptions
   const drivers = {
     register(id: string, factory: Parameters<DriverRegistryImpl['register']>[1]) {
       const disposable = deps.driverRegistry.register(id, factory)
@@ -114,27 +113,24 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
 
   const settings = new PluginSettingsImpl(pluginName, deps.settingsStore)
 
-  const aiAccessImpl = new AIAccessImpl(
-    deps.aiToolRegistry,
-    deps.aiProviderRegistry,
-    deps.aiConversationManager
-  )
-
+  // Service-registry-backed AI proxy. Tracks its own disposables under the
+  // plugin's subscriptions so they're cleaned up on deactivation.
+  const aiAccess = createAIAccess(deps.services)
   const ai = {
-    registerTool(tool: Parameters<AIAccessImpl['registerTool']>[0]) {
-      const disposable = aiAccessImpl.registerTool(tool)
-      subscriptions.push(disposable)
-      return disposable
+    registerTool(tool: Parameters<typeof aiAccess.registerTool>[0]) {
+      const d = aiAccess.registerTool(tool)
+      subscriptions.push(d)
+      return d
     },
-    registerProvider(provider: Parameters<AIAccessImpl['registerProvider']>[0]) {
-      const disposable = aiAccessImpl.registerProvider(provider)
-      subscriptions.push(disposable)
-      return disposable
+    registerProvider(provider: Parameters<typeof aiAccess.registerProvider>[0]) {
+      const d = aiAccess.registerProvider(provider)
+      subscriptions.push(d)
+      return d
     },
-    registerContextProvider(provider: Parameters<AIAccessImpl['registerContextProvider']>[0]) {
-      const disposable = aiAccessImpl.registerContextProvider(provider)
-      subscriptions.push(disposable)
-      return disposable
+    registerContextProvider(provider: Parameters<typeof aiAccess.registerContextProvider>[0]) {
+      const d = aiAccess.registerContextProvider(provider)
+      subscriptions.push(d)
+      return d
     }
   }
 
@@ -155,6 +151,24 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  // The plugin's `services` is a *scoped* view of the global registry — provides
+  // are tracked as plugin subscriptions so disposing the context unprovisions them.
+  const services = {
+    provide<T>(serviceId: string, impl: T) {
+      const d = deps.services.provide(serviceId, impl)
+      subscriptions.push(d)
+      return d
+    },
+    consume<T>(serviceId: string) {
+      return deps.services.consume<T>(serviceId)
+    },
+    onAvailable<T>(serviceId: string, cb: (impl: T) => void) {
+      const d = deps.services.onAvailable(serviceId, cb)
+      subscriptions.push(d)
+      return d
+    }
+  }
+
   return {
     drivers,
     commands,
@@ -168,12 +182,13 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     ai,
     ipc,
     broadcast,
+    services,
+    rootSettings: deps.settingsStore,
     subscriptions
   }
 }
 
 export function disposePluginContext(context: PluginContext): void {
-  // Dispose in reverse order
   const subs = [...context.subscriptions].reverse()
   for (const sub of subs) {
     try {

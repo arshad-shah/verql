@@ -1,6 +1,8 @@
 // src/main/plugins/bundled/ai/index.ts
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
+import { AI_SERVICE_ID } from '../../sdk/ai-access'
+import { startAIModule, type AIModule } from './internal'
 import { createSchemaTools } from './tools/schema-tools'
 import { createQueryTools } from './tools/query-tools'
 
@@ -18,9 +20,13 @@ export const manifest: PluginManifest = {
       { id: 'explain-query', title: 'AI: Explain Query' },
       { id: 'optimize-query', title: 'AI: Optimize Query' }
     ],
+    // The chat surface is rendered by the renderer's <PluginPanel> infrastructure
+    // for any plugin contributing a "panels" entry with location 'sidebar'. When
+    // this plugin is deactivated the contribution is removed and the panel vanishes.
+    panels: [
+      { id: 'ai-chat', title: 'AI Assistant', icon: 'sparkles', location: 'sidebar' }
+    ],
     settings: [
-      { key: 'provider', title: 'AI Provider', type: 'text', default: '' },
-      { key: 'model', title: 'AI Model', type: 'text', default: '' },
       {
         key: 'autoIncludeSchema',
         title: 'Auto-include schema context',
@@ -37,33 +43,44 @@ export const manifest: PluginManifest = {
   }
 }
 
+let ai: AIModule | null = null
+
 export function activate(ctx: PluginContext): void {
-  // Register schema tools
-  const schemaTools = createSchemaTools(ctx.schema)
-  for (const tool of schemaTools) {
-    ctx.ai.registerTool(tool)
-  }
-
-  // Register query tools
-  const queryTools = createQueryTools(ctx.connections)
-  for (const tool of queryTools) {
-    ctx.ai.registerTool(tool)
-  }
-
-  // Register commands
-  ctx.commands.register('explain-table', async (_payload) => {
-    // Command handler — renderer will open chat with context
+  // 1. Spin up the AI core (registries + providers + IPC channels + streaming).
+  ai = startAIModule({
+    keyring: ctx.keyring,
+    schemaAccess: ctx.schema,
+    connectionAccess: ctx.connections,
+    settingsStore: ctx.rootSettings,
+    ipc: ctx.ipc,
+    broadcast: ctx.broadcast
   })
 
-  ctx.commands.register('suggest-queries', async (_payload) => {
-    // Command handler
-  })
+  // 2. Expose the AI service so other plugins' `ctx.ai.registerTool` calls land.
+  //    Buffered registrations from plugins that activated earlier are flushed
+  //    automatically by the ServiceRegistry.onAvailable mechanism.
+  ctx.services.provide(AI_SERVICE_ID, ai.service)
 
-  ctx.commands.register('explain-query', async (_payload) => {
-    // Command handler
-  })
+  // 3. Register first-party tools.
+  for (const tool of createSchemaTools(ctx.schema)) ctx.ai.registerTool(tool)
+  for (const tool of createQueryTools(ctx.connections)) ctx.ai.registerTool(tool)
 
-  ctx.commands.register('optimize-query', async (_payload) => {
-    // Command handler
-  })
+  // 4. Declare the chat sidebar panel. The renderer mounts <ChatPanel/> when it
+  //    sees the contribution; removing the plugin removes the contribution.
+  ctx.ui.registerPanel('ai-chat', [
+    { id: 'ai-chat-root', type: 'host-component', componentId: 'ai-chat-panel' }
+  ])
+
+  // 5. Commands that future renderer surfaces invoke via the command palette.
+  ctx.commands.register('explain-table', async () => { /* renderer opens chat with context */ })
+  ctx.commands.register('suggest-queries', async () => { /* renderer opens chat */ })
+  ctx.commands.register('explain-query', async () => { /* renderer opens chat */ })
+  ctx.commands.register('optimize-query', async () => { /* renderer opens chat */ })
+
+  // 6. Tear-down on plugin deactivation: abort streams, remove IPC handlers.
+  ctx.subscriptions.push(ai.dispose)
+}
+
+export function deactivate(): void {
+  ai = null
 }

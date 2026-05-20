@@ -66,6 +66,20 @@ export interface SeparatorWidget extends WidgetBase {
   type: 'separator'
 }
 
+/**
+ * Escape hatch for plugins that need to render a full React component the host
+ * already knows about (e.g. AI chat, ER diagram). The host maps `componentId`
+ * to a concrete component in its renderer bundle. The contribution disappears
+ * when the plugin is deactivated, so the host should treat presence of this
+ * widget as the gate for mounting.
+ */
+export interface HostComponentWidget extends WidgetBase {
+  type: 'host-component'
+  componentId: string
+  /** Free-form props forwarded to the host component. */
+  props?: Record<string, unknown>
+}
+
 export type Widget =
   | SelectorWidget
   | ActionButtonWidget
@@ -75,6 +89,7 @@ export type Widget =
   | ListWidget
   | SectionWidget
   | SeparatorWidget
+  | HostComponentWidget
 
 // ─── Contribution Surfaces ──────────────────────────────────────────────────
 

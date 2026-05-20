@@ -18,8 +18,9 @@ import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import { PluginDetailView } from '@/components/plugins/PluginDetailView'
 import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
-import { ChatPanel } from '@/components/ai/ChatPanel'
 import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
+import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
+import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
@@ -161,7 +162,7 @@ export function App() {
                 </Flex>
               </>
             )}
-            <ChatPanel />
+            <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
           </>
         )}
       </Flex>
@@ -169,6 +170,7 @@ export function App() {
       <ToastContainer />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <MCPApprovalDialog />
+      <PluginRestartBanner />
     </Flex>
   )
 }

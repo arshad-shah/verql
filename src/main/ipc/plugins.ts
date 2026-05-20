@@ -46,6 +46,15 @@ export function registerPluginHandlers(
     }))
   })
 
+  const broadcastLifecycle = (
+    name: string,
+    event: 'activated' | 'deactivated' | 'installed' | 'uninstalled'
+  ) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('plugins:lifecycle', { name, event })
+    }
+  }
+
   handle('plugins:activate', async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
     if (!plugin) return { success: false, error: 'Plugin not found' }
@@ -53,16 +62,28 @@ export function registerPluginHandlers(
     if (result.status.state === 'error') {
       return { success: false, error: result.status.error }
     }
+    broadcastLifecycle(name, 'activated')
     return { success: true }
   })
 
   handle('plugins:deactivate', async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
-    if (plugin) await pluginCoordinator.deactivatePlugin(plugin)
+    if (plugin) {
+      await pluginCoordinator.deactivatePlugin(plugin)
+      broadcastLifecycle(name, 'deactivated')
+    }
   })
 
-  handle('plugins:install-from-path', async (pluginPath) => pluginCoordinator.installFromPath(pluginPath))
-  handle('plugins:install-from-zip', async (zipPath) => pluginCoordinator.installFromZip(zipPath))
+  handle('plugins:install-from-path', async (pluginPath) => {
+    const result = await pluginCoordinator.installFromPath(pluginPath)
+    if (result?.success && result.name) broadcastLifecycle(result.name, 'installed')
+    return result
+  })
+  handle('plugins:install-from-zip', async (zipPath) => {
+    const result = await pluginCoordinator.installFromZip(zipPath)
+    if (result?.success && result.name) broadcastLifecycle(result.name, 'installed')
+    return result
+  })
 
   handle('plugins:open-install-dialog', async () => {
     const result = await dialog.showOpenDialog({
@@ -74,7 +95,10 @@ export function registerPluginHandlers(
     return result.filePaths[0]
   })
 
-  handle('plugins:uninstall', async (name) => { pluginCoordinator.uninstall(name) })
+  handle('plugins:uninstall', async (name) => {
+    pluginCoordinator.uninstall(name)
+    broadcastLifecycle(name, 'uninstalled')
+  })
   handle('plugins:errors', async (name) => pluginCoordinator.getErrorBudget().getErrors(name))
 
   handle('plugins:get-settings', async (name) => {

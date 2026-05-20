@@ -8,9 +8,8 @@ import { CommandRegistryImpl } from './plugins/sdk/command-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
+import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { KeyringService } from './keyring'
-import { createAIModule } from './plugins/bundled/ai/internal'
-import { SchemaAccessImpl } from './plugins/sdk/schema-access'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
 import * as sshPlugin from './plugins/bundled/ssh-tunnel'
@@ -33,6 +32,7 @@ import { registerDialogHandlers } from './ipc/dialog'
 import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
 import { registerPluginHandlers } from './ipc/plugins'
+import { registerAppHandlers } from './ipc/app'
 
 export function registerIpcHandlers(): void {
   const configPath = path.join(app.getPath('userData'), 'config.json')
@@ -49,8 +49,8 @@ export function registerIpcHandlers(): void {
   const panelRegistry = new PanelRegistryImpl()
   const uiRegistry = new UIRegistryImpl()
   const completionRegistry = new CompletionRegistryImpl()
+  const services = new ServiceRegistryImpl()
 
-  const schemaAccess = new SchemaAccessImpl((id) => ctx.activeAdapters.get(id))
   const connectionAccess = new ConnectionAccessImpl(
     (id) => ctx.activeAdapters.get(id),
     (id) => ctx.configStore.getConnection(id)
@@ -68,18 +68,7 @@ export function registerIpcHandlers(): void {
   registerExportImportHandlers(ctx, handle)
   registerDialogHandlers(handle)
   registerMigrationHandlers(handle)
-
-  const aiModule = createAIModule({
-    keyring: ctx.keyring,
-    schemaAccess,
-    connectionAccess,
-    handle,
-    settingsStore
-  })
-
-  handle('ai:generate-sql', async (request) => aiModule.enhancements.generateSql(request))
-  handle('ai:complete-sql', async (request) => aiModule.enhancements.completeSql(request))
-  handle('ai:explain-results', async (request) => aiModule.enhancements.explainResults(request))
+  registerAppHandlers(handle)
 
   registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
 
@@ -93,11 +82,12 @@ export function registerIpcHandlers(): void {
     getProfile: (id) => ctx.configStore.getConnection(id),
     keyring: ctx.keyring,
     settingsStore,
-    aiToolRegistry: aiModule.toolRegistry,
-    aiProviderRegistry: aiModule.providerRegistry,
-    aiConversationManager: aiModule.conversationManager
+    services
   })
 
+  // The AI plugin is registered first so its `ai` service is available
+  // synchronously when other plugins (mongo, redis) register their AI tools.
+  pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
   pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
   pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
   pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
@@ -105,7 +95,6 @@ export function registerIpcHandlers(): void {
   pluginCoordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
   pluginCoordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
   pluginCoordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
-  pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
 
   pluginCoordinator.boot().catch(err => console.error('[plugins] Boot failed:', err))
 

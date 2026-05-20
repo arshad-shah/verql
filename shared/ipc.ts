@@ -289,6 +289,12 @@ export interface IpcChannelMap {
     args: [provider: 'openai' | 'anthropic', value: string]
     return: void
   }
+  /** Triggers a soft relaunch of the app. Renderer prompts the user via the
+   *  plugin-lifecycle banner; only the user's confirmation calls this. */
+  'app:restart': {
+    args: []
+    return: void
+  }
   // ─── AI Enhancements ────────────────────────────────────────────────────────
   'ai:generate-sql': {
     args: [request: { prompt: string; connectionId: string; schema?: string }]
