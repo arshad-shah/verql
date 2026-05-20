@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { BottomDock } from '@/components/shell/BottomDock'
 import { ActivityBar } from '@/components/shell/ActivityBar'
 import { Sidebar } from '@/components/shell/Sidebar'
 import { TitleBar } from '@/components/shell/TitleBar'
@@ -31,6 +32,10 @@ export function App() {
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
   const showStatusBar = useSettingsStore(s => s.settings.appearance.showStatusBar)
+  const bottomDockHeight = useSettingsStore(s => s.settings.appearance.bottomDockHeight)
+  const showBottomDock = useSettingsStore(s => s.settings.appearance.showBottomDock)
+  const bottomDockVisible = useUiStore(s => s.bottomDockVisible)
+  const setBottomDockHeight = useUiStore(s => s.setBottomDockHeight)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -76,6 +81,26 @@ export function App() {
     }
   }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
 
+  useEffect(() => {
+    useUiStore.setState({ bottomDockVisible: showBottomDock })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
+  const handleBottomResize = (delta: number) => {
+    const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
+    setBottomDockHeight(current - delta)
+  }
+  const handleBottomResizeDoubleClick = () => {
+    const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
+    if (current > 120) {
+      setPrevBottomDockHeight(current)
+      setBottomDockHeight(120)
+    } else {
+      setBottomDockHeight(prevBottomDockHeight > 120 ? prevBottomDockHeight : 240)
+    }
+  }
+
   const handleSidebarResize = (delta: number) => {
     const current = useSettingsStore.getState().settings.appearance.sidebarWidth
     setSidebarWidth(current + delta)
@@ -112,45 +137,61 @@ export function App() {
         )}
         <Flex direction="column" className="flex-1 overflow-hidden">
           <TabBar />
-          <Box className="flex-1 overflow-hidden">
-            <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
-              {activeTab?.type === 'query' && (
-                <QueryPanel tab={activeTab as QueryTab} />
+          <Flex direction="column" className="flex-1 overflow-hidden">
+            <Box className="flex-1 overflow-hidden">
+              <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
+                {activeTab?.type === 'query' && (
+                  <QueryPanel tab={activeTab as QueryTab} />
+                )}
+                {activeTab?.type === 'er-diagram' && (
+                  <ERDiagram
+                    connectionId={(activeTab as ErDiagramTab).connectionId}
+                    schema={(activeTab as ErDiagramTab).schema}
+                  />
+                )}
+                {activeTab?.type === 'connection-form' && (
+                  <ConnectionFormView
+                    tabId={activeTab.id}
+                    editingId={(activeTab as ConnectionFormTab).editingId}
+                  />
+                )}
+                {activeTab?.type === 'plugin-detail' && (
+                  <PluginDetailView
+                    pluginName={(activeTab as PluginDetailTab).pluginName}
+                  />
+                )}
+                {activeTab?.type === 'install-plugin' && (
+                  <InstallPluginTab />
+                )}
+                {activeTab?.type === 'settings' && (
+                  <SettingsLayout />
+                )}
+              </SectionErrorBoundary>
+              {!activeTab && (
+                <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
+                  <Box className="text-center">
+                    <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
+                    <Text color="secondary" as="p">Connect to a database to get started</Text>
+                    <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
+                  </Box>
+                </Flex>
               )}
-              {activeTab?.type === 'er-diagram' && (
-                <ERDiagram
-                  connectionId={(activeTab as ErDiagramTab).connectionId}
-                  schema={(activeTab as ErDiagramTab).schema}
+            </Box>
+            {bottomDockVisible && (
+              <>
+                <ResizeHandle
+                  direction="vertical"
+                  onResize={handleBottomResize}
+                  onDoubleClick={handleBottomResizeDoubleClick}
                 />
-              )}
-              {activeTab?.type === 'connection-form' && (
-                <ConnectionFormView
-                  tabId={activeTab.id}
-                  editingId={(activeTab as ConnectionFormTab).editingId}
-                />
-              )}
-              {activeTab?.type === 'plugin-detail' && (
-                <PluginDetailView
-                  pluginName={(activeTab as PluginDetailTab).pluginName}
-                />
-              )}
-              {activeTab?.type === 'install-plugin' && (
-                <InstallPluginTab />
-              )}
-              {activeTab?.type === 'settings' && (
-                <SettingsLayout />
-              )}
-            </SectionErrorBoundary>
-            {!activeTab && (
-              <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-                <Box className="text-center">
-                  <Heading level={1} className="text-2xl mb-2">dbstudio</Heading>
-                  <Text color="secondary" as="p">Connect to a database to get started</Text>
-                  <Text color="muted" size="sm" as="p" className="mt-1">Cmd+Shift+P to open command palette</Text>
+                <Box style={{ height: bottomDockHeight }} className="shrink-0">
+                  <SectionErrorBoundary label="Bottom dock">
+                    <BottomDock />
+                  </SectionErrorBoundary>
                 </Box>
-              </Flex>
+              </>
             )}
-          </Box>
+          </Flex>
         </Flex>
         {sidebarVisible && sidebarPosition === 'right' && (
           <>
