@@ -32,7 +32,8 @@ export const manifest: PluginManifest = {
         title: 'Auto-include schema context',
         description: 'Send a summary of the active connection’s schema with every message so the model can answer in context.',
         type: 'boolean',
-        default: true
+        default: true,
+        category: 'ai'
       },
       {
         key: 'maxContextMessages',
@@ -42,7 +43,8 @@ export const manifest: PluginManifest = {
         default: 20,
         min: 1,
         max: 200,
-        step: 1
+        step: 1,
+        category: 'ai'
       }
     ]
   }

@@ -2,6 +2,7 @@ import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
 import { Input, Select, NumberInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function DataDisplaySettings() {
   const display = useSettingsStore((s) => s.settings.dataDisplay)
@@ -51,6 +52,8 @@ export function DataDisplaySettings() {
       <SettingRow label="Max Column Width" description="Maximum width in pixels for result columns">
         <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" className="w-24" />
       </SettingRow>
+
+      <PluginContributedSettings category="data-display" />
 
       <Divider />
 

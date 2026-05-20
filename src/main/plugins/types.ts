@@ -76,6 +76,16 @@ export interface PanelContributionManifest {
   location: 'sidebar' | 'bottom'
 }
 
+/**
+ * Top-level Settings categories the host knows about. A plugin can target one
+ * (or 'plugin' for its own detail panel only). When set, the setting renders
+ * both in the plugin's own panel and in the matching core category — when the
+ * plugin is disabled or uninstalled, it disappears from both places.
+ */
+export type SettingCategoryTarget =
+  | 'general' | 'appearance' | 'editor' | 'connections'
+  | 'data-display' | 'keybindings' | 'ai' | 'mcp' | 'plugin'
+
 export interface SettingContribution {
   key: string
   title: string
@@ -89,6 +99,12 @@ export interface SettingContribution {
   step?: number
   /** For `type: 'select'` only. */
   options?: { value: string; label: string }[]
+  /**
+   * Where this setting should appear. Defaults to 'plugin' (only inside the
+   * plugin's own detail panel). Set to a core category id to also surface it
+   * in that category.
+   */
+  category?: SettingCategoryTarget
 }
 
 export interface LoadedPlugin {

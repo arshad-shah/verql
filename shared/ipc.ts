@@ -295,6 +295,30 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  /**
+   * Returns settings contributed by active plugins, filtered to a single
+   * core category. Used to render plugin-contributed rows alongside core
+   * settings in their target category. Disabled plugins are excluded.
+   */
+  'plugins:get-categorized-settings': {
+    args: [category: string]
+    return: {
+      pluginName: string
+      pluginDisplayName: string
+      schema: {
+        key: string
+        title: string
+        type: 'text' | 'password' | 'number' | 'boolean' | 'select'
+        default?: string | number | boolean
+        description?: string
+        min?: number
+        max?: number
+        step?: number
+        options?: { value: string; label: string }[]
+      }[]
+      values: Record<string, unknown>
+    }[]
+  }
   // ─── AI Enhancements ────────────────────────────────────────────────────────
   'ai:generate-sql': {
     args: [request: { prompt: string; connectionId: string; schema?: string }]

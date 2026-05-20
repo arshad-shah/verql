@@ -118,6 +118,36 @@ export function registerPluginHandlers(
     ctx.configStore.setSetting(`plugins.${name}.${key}`, value)
   })
 
+  handle('plugins:get-categorized-settings', async (category) => {
+    const result: Array<{
+      pluginName: string
+      pluginDisplayName: string
+      schema: NonNullable<import('../plugins/types').PluginManifest['contributes']['settings']>
+      values: Record<string, unknown>
+    }> = []
+    for (const plugin of pluginCoordinator.getLoadedPlugins()) {
+      // Only surface contributions from plugins the user has running. A
+      // disabled/errored plugin's settings vanish from every core category.
+      if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
+      const schema = (plugin.manifest.contributes.settings ?? []).filter(
+        (s) => s.category === category
+      )
+      if (schema.length === 0) continue
+      const stored = (ctx.configStore.getSettingsCategory('plugins') as Record<string, unknown>)?.[plugin.manifest.name] as Record<string, unknown> | undefined
+      const values: Record<string, unknown> = {}
+      for (const s of schema) {
+        values[s.key] = stored?.[s.key] ?? s.default
+      }
+      result.push({
+        pluginName: plugin.manifest.name,
+        pluginDisplayName: plugin.manifest.displayName,
+        schema,
+        values
+      })
+    }
+    return result
+  })
+
   handle('plugins:connection-fields', async () => {
     return ctx.driverRegistry.getDriverIds().map(id => {
       const factory = ctx.driverRegistry.get(id)!

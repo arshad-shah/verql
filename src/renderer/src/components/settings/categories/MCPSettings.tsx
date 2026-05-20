@@ -3,6 +3,7 @@ import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 import { Copy, Check, RefreshCw } from 'lucide-react'
 
 export function MCPSettings() {
@@ -164,6 +165,8 @@ export function MCPSettings() {
 }, null, 2)}
         </pre>
       </div>
+
+      <PluginContributedSettings category="mcp" />
     </Stack>
   )
 }

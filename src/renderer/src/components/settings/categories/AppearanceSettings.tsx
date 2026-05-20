@@ -4,6 +4,7 @@ import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 import type { Theme } from '@shared/settings'
 import { SettingLabel } from '@/components/settings/SettingLabel'
 
@@ -119,6 +120,8 @@ export function AppearanceSettings() {
           onChange={(e) => setSetting('appearance.animations', e.target.checked)}
         />
       </SettingRow>
+
+      <PluginContributedSettings category="appearance" />
 
       <Divider />
 

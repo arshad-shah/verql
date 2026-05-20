@@ -3,6 +3,7 @@ import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 
 type Provider = 'openai' | 'anthropic'
 
@@ -100,6 +101,8 @@ export function AISettings() {
           aria-label="Ollama endpoint"
         />
       </SettingRow>
+
+      <PluginContributedSettings category="ai" />
 
       <Divider />
 

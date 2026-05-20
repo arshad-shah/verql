@@ -2,6 +2,7 @@ import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
 import { NumberInput, Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function EditorSettings() {
   const editor = useSettingsStore((s) => s.settings.editor)
@@ -118,6 +119,8 @@ export function EditorSettings() {
           onChange={(e) => setSetting('editor.scrollPastEnd', e.target.checked)}
         />
       </SettingRow>
+
+      <PluginContributedSettings category="editor" />
 
       <Divider />
 

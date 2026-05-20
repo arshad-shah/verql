@@ -2,6 +2,7 @@ import { Stack, Divider, Flex, Button, Heading, Text, Switch } from '@/primitive
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
+import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function GeneralSettings() {
   const general = useSettingsStore((s) => s.settings.general)
@@ -88,6 +89,8 @@ export function GeneralSettings() {
           onChange={(e) => setSetting('general.restoreTabsOnStartup', e.target.checked)}
         />
       </SettingRow>
+
+      <PluginContributedSettings category="general" />
 
       <Divider />
 

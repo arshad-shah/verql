@@ -49,7 +49,6 @@ export interface EditorSettings {
 export interface ConnectionDefaultSettings {
   autoReconnect: boolean
   defaultSslMode: 'disable' | 'prefer' | 'require'
-  defaultPorts: Record<string, number>
 }
 
 export interface DataDisplaySettings {
@@ -133,12 +132,6 @@ export const defaultSettings: AppSettings = {
   connectionDefaults: {
     autoReconnect: false,
     defaultSslMode: 'prefer',
-    defaultPorts: {
-      postgresql: 5432,
-      mysql: 3306,
-      mongodb: 27017,
-      redis: 6379,
-    },
   },
   dataDisplay: {
     nullDisplay: 'NULL',
