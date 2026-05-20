@@ -51,6 +51,27 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  /* Themed defaults at the body level so portal-mounted UI (dropdowns, popovers,
+     menus, dialogs) inherit the right colors even though they render outside
+     the React app tree. Without this, floating elements pick up the UA default
+     which follows the OS color-scheme rather than our in-app theme. */
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+}
+
+/* Match the UA's color-scheme to the active theme so native form controls,
+   scrollbars, and focus rings render in the right palette. */
+:root,
+[data-theme="dark"],
+[data-theme="midnight"],
+[data-theme="dracula"],
+[data-theme="nord"],
+[data-theme="catppuccin"],
+[data-theme="solarized"] {
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* Pointer cursor for all interactive elements */
