@@ -93,4 +93,32 @@ describe('useUiStore', () => {
     useUiStore.getState().setSecondaryActivePanel('inspector')
     expect(useUiStore.getState().secondarySidebarVisible).toBe(false)
   })
+
+  // ── bottom dock ──────────────────────────────────────────────────────────
+
+  it('bottomDockVisible defaults to true', () => {
+    useUiStore.setState({ bottomDockVisible: true, bottomDockActivePanel: 'results' })
+    expect(useUiStore.getState().bottomDockVisible).toBe(true)
+  })
+
+  it('toggleBottomDock flips visibility', () => {
+    useUiStore.setState({ bottomDockVisible: true, bottomDockActivePanel: 'results' })
+    useUiStore.getState().toggleBottomDock()
+    expect(useUiStore.getState().bottomDockVisible).toBe(false)
+    useUiStore.getState().toggleBottomDock()
+    expect(useUiStore.getState().bottomDockVisible).toBe(true)
+  })
+
+  it('setBottomDockActivePanel shows dock when selecting a new panel', () => {
+    useUiStore.setState({ bottomDockVisible: false, bottomDockActivePanel: 'results' })
+    useUiStore.getState().setBottomDockActivePanel('plugin:query-history')
+    expect(useUiStore.getState().bottomDockActivePanel).toBe('plugin:query-history')
+    expect(useUiStore.getState().bottomDockVisible).toBe(true)
+  })
+
+  it('setBottomDockActivePanel hides dock when clicking the active panel again', () => {
+    useUiStore.setState({ bottomDockVisible: true, bottomDockActivePanel: 'results' })
+    useUiStore.getState().setBottomDockActivePanel('results')
+    expect(useUiStore.getState().bottomDockVisible).toBe(false)
+  })
 })

@@ -4,6 +4,7 @@ import { useSettingsStore } from './settings'
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
 export type SecondaryPanelId = 'inspector' | (string & {})
+export type BottomPanelId = 'results' | (string & {})
 
 export type SettingsCategoryId =
   | 'general' | 'appearance' | 'editor' | 'connections'
@@ -29,6 +30,12 @@ interface UiState {
   setSecondaryActivePanel: (panel: SecondaryPanelId) => void
   toggleSecondarySidebar: () => void
   setSecondarySidebarWidth: (width: number) => void
+  // Bottom dock
+  bottomDockVisible: boolean
+  bottomDockActivePanel: BottomPanelId
+  setBottomDockActivePanel: (panel: BottomPanelId) => void
+  toggleBottomDock: () => void
+  setBottomDockHeight: (height: number) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -82,5 +89,19 @@ export const useUiStore = create<UiState>((set) => ({
   setSecondarySidebarWidth: (width) => {
     const clamped = Math.min(640, Math.max(220, width))
     useSettingsStore.getState().set('appearance.secondarySidebarWidth', clamped)
+  },
+  bottomDockVisible: true,
+  bottomDockActivePanel: 'results',
+  setBottomDockActivePanel: (panel) =>
+    set((state) => ({
+      bottomDockActivePanel: panel,
+      bottomDockVisible:
+        state.bottomDockActivePanel === panel ? !state.bottomDockVisible : true,
+    })),
+  toggleBottomDock: () =>
+    set((state) => ({ bottomDockVisible: !state.bottomDockVisible })),
+  setBottomDockHeight: (height) => {
+    const clamped = Math.min(640, Math.max(120, height))
+    useSettingsStore.getState().set('appearance.bottomDockHeight', clamped)
   },
 }))
