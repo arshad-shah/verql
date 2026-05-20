@@ -38,10 +38,10 @@ export function SecondaryActivityBar() {
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
       {renderButton('inspector', ListTree, 'Inspector')}
-      <NotificationBell />
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />
       <PluginSlot id="app.secondaryActivityBar.bottom" />
+      <NotificationBell />
     </Stack>
   )
 }
