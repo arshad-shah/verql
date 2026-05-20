@@ -170,21 +170,6 @@ export function QueryPanel({ tab }: Props) {
     setSaveDialogOpen(false)
   }, [saveDialogName, dbType, markTabSaved, tab.id])
 
-  // Publish this tab's save + dirty handlers to the registry. The global
-  // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
-  // so save works no matter what type of tab is in front — and the close
-  // button can ask `tabActions.isDirty(id)` to decide whether to confirm.
-  useEffect(() => {
-    tabActions.register(tab.id, {
-      onSave: handleSave,
-      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
-      label: tab.title,
-      runStatement: (sql) => { void runSql(sql) },
-      explainStatement: (sql) => { void explainSql(sql) },
-    })
-    return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave, runSql, explainSql])
-
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
     const sql = (sqlOverride?.trim() || editorRegistry.getSelectedSql() || tab.sql).trim()
@@ -206,6 +191,21 @@ export function QueryPanel({ tab }: Props) {
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
+
+  // Publish this tab's save + dirty + lens handlers to the registry. The global
+  // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
+  // and the CodeLens dispatcher routes run/explain through tabActions so the
+  // editor library stays decoupled from React.
+  useEffect(() => {
+    tabActions.register(tab.id, {
+      onSave: handleSave,
+      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
+      label: tab.title,
+      runStatement: (sql) => { void runSql(sql) },
+      explainStatement: (sql) => { void explainSql(sql) },
+    })
+    return () => tabActions.unregister(tab.id)
+  }, [tab.id, tab.title, handleSave, runSql, explainSql])
 
   return (
     <Flex direction="column" className="h-full">
