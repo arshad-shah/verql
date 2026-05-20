@@ -28,8 +28,18 @@ export class KeyringService {
     const compositeKey = `${profileId}:${key}`
     const encoded = this.cache[compositeKey]
     if (!encoded) return null
-    const buffer = Buffer.from(encoded, 'base64')
-    return safeStorage.decryptString(buffer)
+    try {
+      const buffer = Buffer.from(encoded, 'base64')
+      return safeStorage.decryptString(buffer)
+    } catch {
+      // safeStorage's underlying OS key changed (keychain reset, OS reinstall,
+      // OAuth token lost). The stored ciphertext is unrecoverable — drop it so
+      // we don't keep throwing on every read and surface a clean "missing key"
+      // state to callers, who can then prompt the user to re-enter it.
+      delete this.cache[compositeKey]
+      this.save()
+      return null
+    }
   }
 
   has(profileId: string, key: string): boolean {
