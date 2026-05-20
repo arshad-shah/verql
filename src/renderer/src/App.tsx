@@ -19,10 +19,11 @@ import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import { PluginDetailView } from '@/components/plugins/PluginDetailView'
 import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
-import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
 import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
+import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
+import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
 export function App() {
@@ -36,6 +37,10 @@ export function App() {
   const showBottomDock = useSettingsStore(s => s.settings.appearance.showBottomDock)
   const bottomDockVisible = useUiStore(s => s.bottomDockVisible)
   const setBottomDockHeight = useUiStore(s => s.setBottomDockHeight)
+  const secondarySidebarWidth = useSettingsStore(s => s.settings.appearance.secondarySidebarWidth)
+  const showSecondarySidebar = useSettingsStore(s => s.settings.appearance.showSecondarySidebar)
+  const secondarySidebarVisible = useUiStore(s => s.secondarySidebarVisible)
+  const setSecondarySidebarWidth = useUiStore(s => s.setSecondarySidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -86,6 +91,11 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    useUiStore.setState({ secondarySidebarVisible: showSecondarySidebar })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
   const handleBottomResize = (delta: number) => {
     const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
@@ -98,6 +108,21 @@ export function App() {
       setBottomDockHeight(120)
     } else {
       setBottomDockHeight(prevBottomDockHeight > 120 ? prevBottomDockHeight : 240)
+    }
+  }
+
+  const [prevSecondaryWidth, setPrevSecondaryWidth] = useState(secondarySidebarWidth)
+  const handleSecondaryResize = (delta: number) => {
+    const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
+    setSecondarySidebarWidth(current - delta)
+  }
+  const handleSecondaryResizeDoubleClick = () => {
+    const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
+    if (current > 220) {
+      setPrevSecondaryWidth(current)
+      setSecondarySidebarWidth(220)
+    } else {
+      setSecondarySidebarWidth(prevSecondaryWidth > 220 ? prevSecondaryWidth : 320)
     }
   }
 
@@ -207,9 +232,21 @@ export function App() {
             </Flex>
           </>
         )}
-        <SectionErrorBoundary label="AI Assistant">
-          <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
-        </SectionErrorBoundary>
+        {secondarySidebarVisible && (
+          <>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={handleSecondaryResize}
+              onDoubleClick={handleSecondaryResizeDoubleClick}
+            />
+            <Flex direction="column" style={{ width: secondarySidebarWidth }} className="shrink-0 overflow-hidden">
+              <SectionErrorBoundary label="Secondary sidebar">
+                <SecondarySidebar />
+              </SectionErrorBoundary>
+            </Flex>
+          </>
+        )}
+        <SecondaryActivityBar />
       </Flex>
       {showStatusBar && (
         <SectionErrorBoundary label="Status bar">
