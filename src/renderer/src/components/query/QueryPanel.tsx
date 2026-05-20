@@ -2,15 +2,16 @@ import { useCallback } from 'react'
 import { QueryEditor } from './QueryEditor'
 import { QueryToolbar } from './QueryToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
-import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
+import { saveQuery } from '@/components/saved-queries/SavedQueriesPanel'
 import { useTabsStore } from '@/stores/tabs'
+import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useSettingsStore } from '@/stores/settings'
 import { useSchemaStore } from '@/stores/schema'
 import type { QueryTab } from '@shared/types'
-import { Flex, Divider, Text, Box, Alert } from '@/primitives'
+import { Flex, Divider, Box } from '@/primitives'
 
 interface Props {
   tab: QueryTab
@@ -110,6 +111,16 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, false)
   }, [tab.id, tab.connectionId, setTabExecuting])
 
+  const handleSave = useCallback(() => {
+    const sql = tab.sql.trim()
+    if (!sql) return
+    const suggested = tab.title && tab.title !== 'New Query' ? tab.title : `Query ${new Date().toLocaleString()}`
+    const name = window.prompt('Save query as:', suggested)
+    if (!name) return
+    saveQuery(name, sql, dbType)
+    useToastStore.getState().addToast({ type: 'success', title: 'Query saved', message: name })
+  }, [tab.sql, tab.title, dbType])
+
   const handleExplain = useCallback(async () => {
     if (!tab.connectionId || !tab.sql.trim()) return
     setTabExecuting(tab.id, true)
@@ -147,38 +158,18 @@ export function QueryPanel({ tab }: Props) {
         }}
       />
 
-      {/* Editor — top half */}
-      <Box className="flex-1 min-h-30 border-b border-border">
+      {/* Editor */}
+      <Box className="flex-1 min-h-30">
         <QueryEditor
           value={tab.sql}
           onChange={(sql) => { updateTabSql(tab.id, sql); setTabDirty(tab.id, true) }}
           onExecute={handleExecute}
+          onSave={handleSave}
           connectionId={tab.connectionId}
           schema={tab.schema}
           databaseType={dbType}
         />
       </Box>
-
-      {/* Results — bottom half */}
-      <Flex direction="column" className="flex-1 min-h-25">
-        {tab.results ? (
-          <ResultsPanel results={tab.results} sql={tab.sql} tabId={tab.id} aiExplanation={tab.aiExplanation} />
-        ) : tab.error ? (
-          <Flex align="center" justify="center" className="flex-1 p-4">
-            <Alert variant="error" title="Query Error" className="max-w-lg">
-              <Text size="xs" color="secondary" as="p" className="font-mono whitespace-pre-wrap">{tab.error}</Text>
-            </Alert>
-          </Flex>
-        ) : (
-          <Flex align="center" justify="center" className="flex-1">
-            <Text size="sm" color="muted">
-              {!tab.connectionId
-                ? 'Select a connection above to start querying'
-                : 'Run a query to see results (Cmd+Enter)'}
-            </Text>
-          </Flex>
-        )}
-      </Flex>
     </Flex>
   )
 }
