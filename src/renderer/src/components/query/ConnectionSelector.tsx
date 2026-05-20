@@ -3,6 +3,8 @@ import { Database, ChevronDown, Layers, HardDrive } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
+import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
 
 interface Props {
@@ -12,20 +14,11 @@ interface Props {
   schema: string | null
 }
 
-function resolveDefaultSchema(dbType: string | undefined, schemaList: string[], connDatabase?: string): string | undefined {
-  if (schemaList.length === 0) return undefined
-  if (dbType === 'sqlite') return schemaList.includes('main') ? 'main' : schemaList[0]
-  if (dbType === 'mysql') return connDatabase && schemaList.includes(connDatabase) ? connDatabase : schemaList[0]
-  // Snowflake uses uppercase PUBLIC, PostgreSQL uses lowercase public
-  if (schemaList.includes('PUBLIC')) return 'PUBLIC'
-  if (schemaList.includes('public')) return 'public'
-  return schemaList[0]
-}
-
 export function ConnectionSelector({ tabId, connectionId, database, schema }: Props) {
   const { connections, connectedIds, connect } = useConnectionsStore()
   const { fetchSchemas, fetchDatabases, switchDatabase } = useSchemaStore()
   const { setTabConnection, setTabDatabase, setTabSchema } = useTabsStore()
+  const fetchCaps = useDriverCapabilitiesStore((s) => s.fetch)
   const [showConnDropdown, setShowConnDropdown] = useState(false)
   const [showDbDropdown, setShowDbDropdown] = useState(false)
   const [showSchemaDropdown, setShowSchemaDropdown] = useState(false)
@@ -61,12 +54,14 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
       return
     }
 
-    fetchSchemas(connectionId, database ?? undefined).then(s => {
+    fetchSchemas(connectionId, database ?? undefined).then(async (s) => {
       setSchemaList(s)
-      // Auto-set default schema if none selected
+      // Auto-set default schema if none selected. The driver decides which
+      // schema to prefer via its capability spec — the renderer is generic.
       if (!schema && s.length > 0) {
         const conn = connections.find(c => c.id === connectionId)
-        const defaultSchema = resolveDefaultSchema(conn?.type, s, conn?.database)
+        const caps = conn ? await fetchCaps(conn.type) : null
+        const defaultSchema = pickDefaultSchema(caps ?? {}, s, conn?.database)
         if (defaultSchema) setTabSchema(tabId, defaultSchema)
       }
     })

@@ -1,0 +1,17 @@
+# Default owner — every PR notifies the maintainer for review.
+* @arshad-shah
+
+# Anything touching IPC or the plugin SDK is a contract change.
+/shared/ipc.ts                @arshad-shah
+/src/main/plugins/sdk/        @arshad-shah
+/src/main/ipc-handlers.ts     @arshad-shah
+/src/main/ipc/                @arshad-shah
+
+# Release pipeline must be reviewed.
+/.github/workflows/release.yml @arshad-shah
+/electron-builder.yml          @arshad-shah
+
+# Security-relevant code.
+/src/main/db/identifier.ts    @arshad-shah
+/src/main/keyring.ts          @arshad-shah
+/SECURITY.md                  @arshad-shah

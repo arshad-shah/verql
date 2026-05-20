@@ -8,7 +8,7 @@ import type { ConnectionProfile } from '@shared/types'
 const activeTunnels = new Map<string, Client>()
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-ssh',
+  name: 'nova-plugin-ssh',
   version: '1.0.0',
   displayName: 'SSH Tunnels',
   description: 'SSH tunnel support for database connections',
@@ -27,11 +27,11 @@ export const manifest: PluginManifest = {
 
 export const sshMiddleware: ConnectionMiddleware = {
   shouldApply(profile: ConnectionProfile): boolean {
-    return !!(profile as Record<string, unknown>).sshHost
+    return !!(profile as unknown as Record<string, unknown>).sshHost
   },
 
   async beforeConnect(profile: ConnectionProfile): Promise<ConnectionProfile> {
-    const p = profile as Record<string, unknown>
+    const p = profile as unknown as Record<string, unknown>
     const sshHost = p.sshHost as string
     const sshPort = (p.sshPort as number) || 22
     const sshUser = (p.sshUser as string) || 'root'

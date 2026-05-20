@@ -5,10 +5,17 @@ import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
 import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-registry'
-import { AIToolRegistry } from '../../src/main/ai/tool-registry'
-import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
-import { ConversationManager } from '../../src/main/ai/conversation-manager'
-import { PermissionManager } from '../../src/main/ai/permission-manager'
+import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
+import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
+import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
+
+const noopKeyring = {
+  store: async () => {},
+  retrieve: async () => null,
+  delete: async () => {},
+  listKeys: async () => []
+}
 
 describe('PluginBootCoordinator', () => {
   let coordinator: PluginBootCoordinator
@@ -30,16 +37,12 @@ describe('PluginBootCoordinator', () => {
       completionRegistry,
       getAdapter: () => undefined,
       getProfile: () => undefined,
+      keyring: noopKeyring,
       settingsStore: { get: () => undefined, set: () => {} },
-      aiToolRegistry: new AIToolRegistry(),
-      aiProviderRegistry: new AIProviderRegistry(),
-      aiConversationManager: new ConversationManager({
-        providerRegistry: new AIProviderRegistry(),
-        toolRegistry: new AIToolRegistry(),
-        permissionManager: new PermissionManager(),
-        getSchemaContext: async () => '',
-        getConnectionId: () => null
-      })
+      services: new ServiceRegistryImpl(),
+      exporterRegistry: new ExporterRegistryImpl(),
+      importerRegistry: new ImporterRegistryImpl(),
+      typeMapperRegistry: new TypeMapperRegistryImpl()
     })
   })
 
@@ -147,6 +150,44 @@ describe('PluginBootCoordinator', () => {
     expect(result.status.state).toBe('active')
     expect(fakeModule.activate).toHaveBeenCalledOnce()
     expect(driverRegistry.has('testdb')).toBe(true)
+  })
+
+  it('rejects bundled plugins with invalid manifests', () => {
+    const badManifest = {
+      name: '', version: '1.0.0', displayName: 'Broken',
+      description: 'No name', main: 'index.js', contributes: {}
+    }
+    expect(() => coordinator.registerBundledPlugin(badManifest, { activate: () => {} }))
+      .toThrow(/Invalid bundled plugin manifest/)
+  })
+
+  it('rejects bundled plugins with malformed semver', () => {
+    const badManifest = {
+      name: 'bad-semver', version: 'not-a-version', displayName: 'Broken',
+      description: 'Bad semver', main: 'index.js', contributes: {}
+    }
+    expect(() => coordinator.registerBundledPlugin(badManifest, { activate: () => {} }))
+      .toThrow(/Invalid bundled plugin manifest/)
+  })
+
+  it('rejects double-registration of the same bundled plugin name', () => {
+    const manifest = {
+      name: 'dup-plugin', version: '1.0.0', displayName: 'Dup',
+      description: 'Desc', main: 'index.js', contributes: {}
+    }
+    coordinator.registerBundledPlugin(manifest, { activate: () => {} })
+    expect(() => coordinator.registerBundledPlugin(manifest, { activate: () => {} }))
+      .toThrow(/already registered/)
+  })
+
+  it('refuses to uninstall a bundled plugin', () => {
+    const manifest = {
+      name: 'cannot-remove', version: '1.0.0', displayName: 'Bundled',
+      description: 'Desc', main: 'index.js', contributes: {}
+    }
+    coordinator.registerBundledPlugin(manifest, { activate: () => {} })
+    expect(() => coordinator.uninstall('cannot-remove'))
+      .toThrow(/Cannot uninstall bundled plugin/)
   })
 
   it('deactivates a plugin and disposes subscriptions', async () => {

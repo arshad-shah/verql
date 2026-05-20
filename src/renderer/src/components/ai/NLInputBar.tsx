@@ -1,6 +1,7 @@
 import { useState, useCallback, type KeyboardEvent } from 'react'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { notifyError } from '@/lib/notify-error'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   connectionId: string | null
@@ -16,7 +17,7 @@ export function NLInputBar({ connectionId, schema, onSqlGenerated }: Props) {
     if (!prompt.trim() || !connectionId || loading) return
     setLoading(true)
     try {
-      const result = await window.electronAPI.invoke('ai:generate-sql', {
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_GENERATE_SQL, {
         prompt: prompt.trim(),
         connectionId,
         schema: schema ?? undefined

@@ -16,5 +16,9 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["src/renderer/src/**/*", "src/preload/index.d.ts", "shared/**/*"]
+  "include": ["src/renderer/src/**/*", "src/preload/index.d.ts", "shared/**/*"],
+  "exclude": [
+    "src/renderer/src/**/*.stories.tsx",
+    "src/renderer/src/**/*.stories.ts"
+  ]
 }

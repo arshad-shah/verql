@@ -2,6 +2,7 @@ import React, { forwardRef, useState, useCallback } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { File, X, Upload, HardDrive } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 const rowVariants = cva(
   'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)]',
@@ -71,7 +72,7 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
       const filters = accept
         ? [{ name: 'Files', extensions: accept.split(',').map(e => e.trim().replace(/^\./, '')) }]
         : undefined
-      const result = await window.electronAPI.invoke('dialog:open-file-path', { filters })
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE_PATH, { filters })
       if ('cancelled' in result) return
       setValue(result.filePath)
     }

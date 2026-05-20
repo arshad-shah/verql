@@ -4,6 +4,7 @@ import { createAdapter } from '../db/factory'
 import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import { getSecretFieldKeys, mergeIncomingProfile } from './secrets'
+import { quoteIdentifier } from '../db/identifier'
 import type { IpcContext, Handle } from './context'
 
 export function registerDbHandlers(
@@ -159,11 +160,36 @@ export function registerDbHandlers(
     if (adapter?.cancelQuery) adapter.cancelQuery()
   })
 
+  handle('db:driver-capabilities', async (type: string) => {
+    const driver = ctx.driverRegistry.get(type)
+    if (!driver) return null
+    return {
+      sqlDialect: driver.sqlDialect,
+      editorLanguage: driver.editorLanguage,
+      defaultSchemaUseConnectionDatabase: driver.defaultSchemaUseConnectionDatabase,
+      defaultSchemaCandidates: driver.defaultSchemaCandidates,
+      hasSampleQuery: typeof driver.sampleQuery === 'function',
+      hasGetTableData: typeof driver.getTableData === 'function'
+    }
+  })
+
   handle('db:sample-query', async (profileId, table, schema) => {
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) throw new Error('Unknown connection')
     const driver = ctx.driverRegistry.get(profile.type)
     if (driver?.sampleQuery) return driver.sampleQuery(table, schema)
-    return `SELECT * FROM ${table} LIMIT 100;`
+    // SQL-dialect-aware fallback: only available for drivers that declare a
+    // dialect. Non-SQL drivers MUST provide their own sampleQuery — the
+    // orchestrator refuses to guess what a "sample" looks like in that case.
+    if (!driver?.sqlDialect) {
+      throw new Error(
+        `Driver '${profile.type}' does not provide a sampleQuery() and is not ` +
+        `a SQL dialect. Add a sampleQuery contribution to the driver plugin.`
+      )
+    }
+    const qualified = schema
+      ? quoteIdentifier([schema, table], driver.sqlDialect)
+      : quoteIdentifier(table, driver.sqlDialect)
+    return `SELECT * FROM ${qualified} LIMIT 100;`
   })
 }

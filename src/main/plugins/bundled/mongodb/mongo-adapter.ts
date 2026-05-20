@@ -179,7 +179,7 @@ export class MongoAdapter implements DbAdapter {
         break
       }
       case 'aggregate': {
-        data = await coll.aggregate(q.pipeline ?? []).toArray()
+        data = await coll.aggregate((q.pipeline ?? []) as Document[]).toArray()
         break
       }
       case 'count': {

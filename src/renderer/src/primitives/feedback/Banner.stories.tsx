@@ -21,7 +21,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     variant: 'info',
-    children: 'A new version of dbstudio is available. Restart to update.',
+    children: 'A new version of nova is available. Restart to update.',
     style: { width: 480 },
   },
 }
@@ -49,7 +49,7 @@ export const Dismissible: Story = {
 export const WithAction: Story = {
   args: {
     variant: 'info',
-    children: 'A new version of dbstudio is available.',
+    children: 'A new version of nova is available.',
     action: <Button variant="ghost" size="xs">Update now</Button>,
     style: { width: 480 },
   },

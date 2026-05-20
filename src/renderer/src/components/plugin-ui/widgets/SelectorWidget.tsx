@@ -41,7 +41,7 @@ export function SelectorWidgetRenderer({ widget, pluginId }: Props) {
 
   return (
     <Select
-      label={widget.label}
+      aria-label={widget.label}
       value={value}
       onChange={handleChange}
       options={options}

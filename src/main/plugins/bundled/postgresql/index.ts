@@ -2,15 +2,20 @@ import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
+import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { MYSQL_TO_PG, mysqlToPgFallback, sqliteToPgFallback } from './type-maps'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-postgresql',
+  name: 'nova-plugin-postgresql',
   version: '1.0.0',
   displayName: 'PostgreSQL',
   description: 'PostgreSQL database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'postgresql', name: 'PostgreSQL' }]
+    drivers: [{ id: 'postgresql', name: 'PostgreSQL' }],
+    exporters: [{ id: 'sql', name: 'SQL (PostgreSQL)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (PostgreSQL)', extensions: ['sql'] }]
   }
 }
 
@@ -96,8 +101,16 @@ const PG_FUNCTIONS: { label: string; detail: string }[] = [
 // ─── activate ────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+  ctx.typeMappers.register('mysql', 'postgresql', MYSQL_TO_PG, mysqlToPgFallback)
+  ctx.typeMappers.register('sqlite', 'postgresql', {}, sqliteToPgFallback)
+
   ctx.drivers.register('postgresql', {
     createAdapter: (config) => new PostgresAdapter(config),
+    sqlDialect: 'postgresql',
+    editorLanguage: 'sql',
+    defaultSchemaCandidates: ['public'],
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 5432 },
@@ -105,7 +118,8 @@ export function activate(ctx: PluginContext): void {
       { key: 'username', label: 'Username', type: 'text' },
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
-    ]
+    ],
+    getTableData: createRelationalGetTableData('postgresql')
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

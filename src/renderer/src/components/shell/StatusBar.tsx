@@ -11,6 +11,7 @@ import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import type { QueryTab } from '@shared/types'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface PluginStatus {
   total: number
@@ -50,7 +51,7 @@ export function StatusBar() {
   useEffect(() => {
     const check = async () => {
       try {
-        const list = await window.electronAPI.invoke('plugins:list')
+        const list = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_LIST)
         const activating = list.some(
           (p: { status: { state: string } }) =>
             p.status.state === 'activating' ||

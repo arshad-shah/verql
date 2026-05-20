@@ -4,6 +4,7 @@ import type { QueryResult } from '@shared/types'
 import { useTabsStore } from '@/stores/tabs'
 import { notifyError } from '@/lib/notify-error'
 import { parseAppError } from '@/lib/db-error'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tabId: string
@@ -24,7 +25,7 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
     try {
       const sampleRows = results.rows.slice(0, 5)
       const columns = results.fields.map(f => f.name)
-      const result = await window.electronAPI.invoke('ai:explain-results', {
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_EXPLAIN_RESULTS, {
         sql,
         columns,
         rowCount: results.rowCount,

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
-import type { AIProvider } from '../../src/main/ai/types'
+import { AIProviderRegistry } from '../../src/main/plugins/bundled/ai/internal/provider-registry'
+import type { AIProvider } from '../../src/main/plugins/bundled/ai/internal/types'
 
 function createMockProvider(id: string, name: string): AIProvider {
   return {

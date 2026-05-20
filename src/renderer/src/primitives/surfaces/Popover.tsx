@@ -12,12 +12,10 @@ export function Popover({ trigger, content, className }: PopoverProps) {
 
   return (
     <div>
-      {/* @ts-expect-error popoverTarget is not in React types yet */}
-      <div popoverTarget={id}>{trigger}</div>
-      {/* @ts-expect-error popover is not in React types yet */}
+      <div {...({ popoverTarget: id } as Record<string, unknown>)}>{trigger}</div>
       <div
         id={id}
-        popover="auto"
+        {...({ popover: 'auto' } as Record<string, unknown>)}
         className={cn(
           'bg-bg-elevated border border-border-default rounded-lg p-2 m-0 shadow-[var(--shadow-dropdown)]',
           className

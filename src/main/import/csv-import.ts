@@ -1,12 +1,16 @@
 import { parse } from 'csv-parse/sync'
 import type { DbAdapter } from '../db/adapter'
-import type { SchemaColumn } from '@shared/types'
+import { quoteIdentifier, type SqlDialect } from '../db/identifier'
 
 export interface CsvImportOptions {
   tableName: string
   columnMapping: Record<string, string> // csvColumn -> dbColumn
   onConflict: 'skip' | 'update' | 'error'
   delimiter?: string
+  /** SQL dialect to target. Defaults to `postgresql` (the only dialect that
+   *  used to be supported); callers that know their connection type SHOULD
+   *  pass it explicitly so identifiers/placeholders use the right escaping. */
+  dialect?: SqlDialect
 }
 
 export function parseCsvFile(content: string, delimiter = ','): { headers: string[]; rows: Record<string, string>[] } {
@@ -21,12 +25,17 @@ export function parseCsvFile(content: string, delimiter = ','): { headers: strin
   return { headers, rows: records }
 }
 
+function placeholder(dialect: SqlDialect, index: number): string {
+  return dialect === 'postgresql' ? `$${index}` : '?'
+}
+
 export async function importCsvToTable(
   adapter: DbAdapter,
   csvRows: Record<string, string>[],
   options: CsvImportOptions
 ): Promise<{ inserted: number; skipped: number; errors: string[] }> {
   const { tableName, columnMapping, onConflict } = options
+  const dialect: SqlDialect = options.dialect ?? 'postgresql'
   const dbColumns = Object.values(columnMapping)
   const csvColumns = Object.keys(columnMapping)
 
@@ -34,13 +43,14 @@ export async function importCsvToTable(
   let skipped = 0
   const errors: string[] = []
 
+  const colList = dbColumns.map(c => quoteIdentifier(c, dialect)).join(', ')
+  const qTable = quoteIdentifier(tableName, dialect)
+  const placeholders = dbColumns.map((_, idx) => placeholder(dialect, idx + 1)).join(', ')
+  const sql = `INSERT INTO ${qTable} (${colList}) VALUES (${placeholders})`
+
   for (let i = 0; i < csvRows.length; i++) {
     const row = csvRows[i]
     const values = csvColumns.map(csvCol => row[csvCol] ?? null)
-    const placeholders = dbColumns.map((_, idx) => `$${idx + 1}`).join(', ')
-    const colList = dbColumns.map(c => `"${c}"`).join(', ')
-    const sql = `INSERT INTO "${tableName}" (${colList}) VALUES (${placeholders})`
-
     try {
       await adapter.query(sql, values)
       inserted++

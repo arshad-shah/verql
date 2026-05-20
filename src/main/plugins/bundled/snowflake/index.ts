@@ -2,15 +2,19 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
 import { SnowflakeAdapter } from './snowflake-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
+import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-snowflake',
+  name: 'nova-plugin-snowflake',
   version: '1.0.0',
   displayName: 'Snowflake',
   description: 'Snowflake data warehouse driver',
   main: 'index.js',
   contributes: {
     drivers: [{ id: 'snowflake', name: 'Snowflake' }],
+    exporters: [{ id: 'sql', name: 'SQL (Snowflake)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (Snowflake)', extensions: ['sql'] }],
     toolbar: [
       { id: 'snowflake-context', zone: 'right' }
     ]
@@ -147,8 +151,14 @@ const STATIC_COMPLETIONS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+
   ctx.drivers.register('snowflake', {
     createAdapter: (config) => new SnowflakeAdapter(config),
+    sqlDialect: 'snowflake',
+    editorLanguage: 'sql',
+    defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
       { key: 'account', label: 'Account Identifier', type: 'text', required: true },
       { key: 'host', label: 'Host Override', type: 'text' },
@@ -170,14 +180,15 @@ export function activate(ctx: PluginContext): void {
       { key: 'warehouse', label: 'Warehouse', type: 'select', fetchable: true, step: 1 },
       { key: 'database', label: 'Database', type: 'select', fetchable: true, step: 2 },
       { key: 'schema', label: 'Schema', type: 'select', fetchable: true, step: 2, default: 'PUBLIC' },
-    ]
+    ],
+    getTableData: createRelationalGetTableData('snowflake')
   })
 
   // ── Declarative UI: Toolbar selectors (Snowsight-style Role + Warehouse) ──
 
   ctx.ui.registerToolbar('snowflake-context', [
-    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'dbstudio-plugin-snowflake:use-role', searchable: true },
-    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'dbstudio-plugin-snowflake:use-warehouse', searchable: true },
+    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'nova-plugin-snowflake:use-role', searchable: true },
+    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'nova-plugin-snowflake:use-warehouse', searchable: true },
   ])
 
   // ── Dynamic resolvers ─────────────────────────────────────────────────────

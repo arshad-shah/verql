@@ -5,10 +5,10 @@ import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
 import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-registry'
-import { AIToolRegistry } from '../../src/main/ai/tool-registry'
-import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
-import { ConversationManager } from '../../src/main/ai/conversation-manager'
-import { PermissionManager } from '../../src/main/ai/permission-manager'
+import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
+import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
+import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
 
 import * as sshPlugin from '../../src/main/plugins/bundled/ssh-tunnel/index'
 import * as mongoPlugin from '../../src/main/plugins/bundled/mongodb/index'
@@ -17,18 +17,20 @@ import * as snowflakePlugin from '../../src/main/plugins/bundled/snowflake/index
 import * as postgresqlPlugin from '../../src/main/plugins/bundled/postgresql/index'
 import * as mysqlPlugin from '../../src/main/plugins/bundled/mysql/index'
 import * as sqlitePlugin from '../../src/main/plugins/bundled/sqlite/index'
+import * as aiPlugin from '../../src/main/plugins/bundled/ai/index'
 
 const noopKeyring = {
   store: async () => {},
   retrieve: async () => null,
-  delete: async () => {}
+  delete: async () => {},
+  listKeys: async () => []
 }
 
 describe('Bundled Plugins', () => {
   let coordinator: PluginBootCoordinator
   let driverRegistry: DriverRegistryImpl
 
-  beforeEach(() => {
+  beforeEach(async () => {
     driverRegistry = new DriverRegistryImpl()
     const commandRegistry = new CommandRegistryImpl()
     const panelRegistry = new PanelRegistryImpl()
@@ -44,21 +46,21 @@ describe('Bundled Plugins', () => {
       getProfile: () => undefined,
       keyring: noopKeyring,
       settingsStore: { get: () => undefined, set: () => {} },
-      aiToolRegistry: new AIToolRegistry(),
-      aiProviderRegistry: new AIProviderRegistry(),
-      aiConversationManager: new ConversationManager({
-        providerRegistry: new AIProviderRegistry(),
-        toolRegistry: new AIToolRegistry(),
-        permissionManager: new PermissionManager(),
-        getSchemaContext: async () => '',
-        getConnectionId: () => null
-      })
+      services: new ServiceRegistryImpl(),
+      exporterRegistry: new ExporterRegistryImpl(),
+      importerRegistry: new ImporterRegistryImpl(),
+      typeMapperRegistry: new TypeMapperRegistryImpl()
     })
+    // The AI plugin provides the `ai` service that mongo/redis plugins consume
+    // at activation. Register and activate it first to mirror production boot.
+    coordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
+    const ai = coordinator.getPlugin('nova-plugin-ai')!
+    await coordinator.activatePlugin(ai)
   })
 
   it('SSH plugin registers middleware', async () => {
     coordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-ssh')!
+    const plugin = coordinator.getPlugin('nova-plugin-ssh')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.hasMiddleware('ssh-tunnel')).toBe(true)
@@ -66,7 +68,7 @@ describe('Bundled Plugins', () => {
 
   it('MongoDB plugin registers driver', async () => {
     coordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-mongodb')!
+    const plugin = coordinator.getPlugin('nova-plugin-mongodb')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('mongodb')).toBe(true)
@@ -74,7 +76,7 @@ describe('Bundled Plugins', () => {
 
   it('Redis plugin registers driver', async () => {
     coordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-redis')!
+    const plugin = coordinator.getPlugin('nova-plugin-redis')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('redis')).toBe(true)
@@ -82,7 +84,7 @@ describe('Bundled Plugins', () => {
 
   it('Snowflake plugin registers driver', async () => {
     coordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-snowflake')!
+    const plugin = coordinator.getPlugin('nova-plugin-snowflake')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('snowflake')).toBe(true)
@@ -90,7 +92,7 @@ describe('Bundled Plugins', () => {
 
   it('PostgreSQL plugin registers driver', async () => {
     coordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-postgresql')!
+    const plugin = coordinator.getPlugin('nova-plugin-postgresql')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('postgresql')).toBe(true)
@@ -98,7 +100,7 @@ describe('Bundled Plugins', () => {
 
   it('MySQL plugin registers driver', async () => {
     coordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-mysql')!
+    const plugin = coordinator.getPlugin('nova-plugin-mysql')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('mysql')).toBe(true)
@@ -106,7 +108,7 @@ describe('Bundled Plugins', () => {
 
   it('SQLite plugin registers driver', async () => {
     coordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
-    const plugin = coordinator.getPlugin('dbstudio-plugin-sqlite')!
+    const plugin = coordinator.getPlugin('nova-plugin-sqlite')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('sqlite')).toBe(true)
@@ -122,9 +124,9 @@ describe('Bundled Plugins', () => {
     coordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
 
     for (const name of [
-      'dbstudio-plugin-ssh', 'dbstudio-plugin-mongodb', 'dbstudio-plugin-redis',
-      'dbstudio-plugin-snowflake', 'dbstudio-plugin-postgresql', 'dbstudio-plugin-mysql',
-      'dbstudio-plugin-sqlite'
+      'nova-plugin-ssh', 'nova-plugin-mongodb', 'nova-plugin-redis',
+      'nova-plugin-snowflake', 'nova-plugin-postgresql', 'nova-plugin-mysql',
+      'nova-plugin-sqlite'
     ]) {
       const plugin = coordinator.getPlugin(name)!
       await coordinator.activatePlugin(plugin)

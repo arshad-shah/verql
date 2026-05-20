@@ -1,9 +1,10 @@
 import React, { ComponentPropsWithRef, forwardRef } from 'react'
 import { cn } from '../utils/cn'
 
-type SpacingToken = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+type SpacingToken = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 const gapMap: Record<SpacingToken, string> = {
+  none: 'gap-0',
   xs: 'gap-1',
   sm: 'gap-2',
   md: 'gap-3',

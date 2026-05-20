@@ -16,6 +16,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useSchemaStore } from '@/stores/schema'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tab: QueryTab
@@ -54,7 +55,7 @@ export function QueryPanel({ tab }: Props) {
     // Set database context before executing if selected
     if (tab.database) {
       try {
-        await window.electronAPI.invoke('db:switch-database', tab.connectionId, tab.database)
+        await window.electronAPI.invoke(IPC_CHANNELS.DB_SWITCH_DATABASE, tab.connectionId, tab.database)
       } catch {
         // ignore — some adapters don't support switchDatabase
       }
@@ -62,12 +63,12 @@ export function QueryPanel({ tab }: Props) {
     // Set search_path/USE before executing if schema is selected
     if (tab.schema) {
       try {
-        await window.electronAPI.invoke('db:set-schema', tab.connectionId, tab.schema)
+        await window.electronAPI.invoke(IPC_CHANNELS.DB_SET_SCHEMA, tab.connectionId, tab.schema)
       } catch {
         // ignore — some adapters don't support setSchema
       }
     }
-    return window.electronAPI.invoke('db:query', tab.connectionId, sql)
+    return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql)
   }, [tab.connectionId, tab.database, tab.schema])
 
   /**
@@ -112,7 +113,7 @@ export function QueryPanel({ tab }: Props) {
       // Cancel the running query on timeout (use the parsed code, not the
       // raw text, so driver locale/wording changes don't break this).
       if (parsed.code === 'TIMEOUT' && tab.connectionId) {
-        window.electronAPI.invoke('db:cancel-query', tab.connectionId).catch(() => {})
+        window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError])
@@ -122,7 +123,7 @@ export function QueryPanel({ tab }: Props) {
   const handleCancel = useCallback(async () => {
     if (!tab.connectionId) return
     try {
-      await window.electronAPI.invoke('db:cancel-query', tab.connectionId)
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId)
     } catch {
       // ignore cancel errors
     }
@@ -177,7 +178,10 @@ export function QueryPanel({ tab }: Props) {
   useEffect(() => {
     tabActions.register(tab.id, {
       onSave: handleSave,
-      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
+      isDirty: () => {
+        const t = useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')
+        return Boolean(t && (t as { isDirty?: boolean }).isDirty)
+      },
       label: tab.title,
     })
     return () => tabActions.unregister(tab.id)
@@ -274,7 +278,7 @@ export function QueryPanel({ tab }: Props) {
             <Button type="button" variant="ghost" size="sm" onClick={() => setSaveDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={!saveDialogName.trim()}>
+            <Button type="submit" variant="solid" size="sm" disabled={!saveDialogName.trim()}>
               Save
             </Button>
           </div>

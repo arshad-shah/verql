@@ -1,4 +1,4 @@
-# docker-compose.yml — Local test databases for dbstudio
+# docker-compose.yml — Local test databases for nova
 # Usage:
 #   docker compose up -d        # Start all databases
 #   docker compose down -v      # Stop and remove volumes
@@ -9,66 +9,66 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: dbstudio-postgres
+    container_name: nova-postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: dbstudio
-      POSTGRES_PASSWORD: dbstudio
+      POSTGRES_USER: nova
+      POSTGRES_PASSWORD: nova
       POSTGRES_DB: testdb
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dbstudio"]
+      test: ["CMD-SHELL", "pg_isready -U nova"]
       interval: 5s
       retries: 5
 
   mysql:
     image: mysql:8.0
-    container_name: dbstudio-mysql
+    container_name: nova-mysql
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: dbstudio
-      MYSQL_PASSWORD: dbstudio
+      MYSQL_USER: nova
+      MYSQL_PASSWORD: nova
       MYSQL_DATABASE: testdb
     volumes:
       - mysqldata:/var/lib/mysql
       - ./docker/seed/mysql.sql:/docker-entrypoint-initdb.d/seed.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dbstudio", "-pdbstudio"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "nova", "-pnova"]
       interval: 5s
       retries: 5
 
   mongodb:
     image: mongo:7
-    container_name: dbstudio-mongodb
+    container_name: nova-mongodb
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: dbstudio
-      MONGO_INITDB_ROOT_PASSWORD: dbstudio
+      MONGO_INITDB_ROOT_USERNAME: nova
+      MONGO_INITDB_ROOT_PASSWORD: nova
       MONGO_INITDB_DATABASE: testdb
     volumes:
       - mongodata:/data/db
       - ./docker/seed/mongo-init.js:/docker-entrypoint-initdb.d/seed.js:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "dbstudio", "-p", "dbstudio"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "nova", "-p", "nova"]
       interval: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: dbstudio-redis
+    container_name: nova-redis
     ports:
       - "6379:6379"
-    command: redis-server --requirepass dbstudio
+    command: redis-server --requirepass nova
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "dbstudio", "ping"]
+      test: ["CMD", "redis-cli", "-a", "nova", "ping"]
       interval: 5s
       retries: 5
 

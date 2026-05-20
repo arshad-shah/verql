@@ -7,7 +7,7 @@ interface ThemeDef {
 }
 
 const themes: Record<string, ThemeDef> = {
-  'dbterm-dark': {
+  'nova-dark': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#0d0d1a',
@@ -31,7 +31,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#abb2bf' },
     ],
   },
-  'dbterm-light': {
+  'nova-light': {
     base: 'vs',
     colors: {
       'editor.background': '#ffffff',
@@ -55,7 +55,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#383a42' },
     ],
   },
-  'dbterm-midnight': {
+  'nova-midnight': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#0a0a12',
@@ -79,7 +79,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#a0a0c0' },
     ],
   },
-  'dbterm-dracula': {
+  'nova-dracula': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#282a36',
@@ -103,7 +103,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#f8f8f2' },
     ],
   },
-  'dbterm-nord': {
+  'nova-nord': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#2e3440',
@@ -127,7 +127,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#eceff4' },
     ],
   },
-  'dbterm-solarized': {
+  'nova-solarized': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#002b36',
@@ -151,7 +151,7 @@ const themes: Record<string, ThemeDef> = {
       { token: 'delimiter', foreground: '#93a1a1' },
     ],
   },
-  'dbterm-catppuccin': {
+  'nova-catppuccin': {
     base: 'vs-dark',
     colors: {
       'editor.background': '#1e1e2e',
@@ -178,13 +178,13 @@ const themes: Record<string, ThemeDef> = {
 }
 
 const APP_TO_MONACO: Record<string, string> = {
-  dark: 'dbterm-dark',
-  light: 'dbterm-light',
-  midnight: 'dbterm-midnight',
-  dracula: 'dbterm-dracula',
-  nord: 'dbterm-nord',
-  solarized: 'dbterm-solarized',
-  catppuccin: 'dbterm-catppuccin',
+  dark: 'nova-dark',
+  light: 'nova-light',
+  midnight: 'nova-midnight',
+  dracula: 'nova-dracula',
+  nord: 'nova-nord',
+  solarized: 'nova-solarized',
+  catppuccin: 'nova-catppuccin',
 }
 
 let defined = false
@@ -203,5 +203,5 @@ export function defineAppThemes(monaco: Monaco): void {
 }
 
 export function getMonacoThemeName(appTheme: string): string {
-  return APP_TO_MONACO[appTheme] ?? 'dbterm-dark'
+  return APP_TO_MONACO[appTheme] ?? 'nova-dark'
 }

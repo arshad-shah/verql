@@ -10,6 +10,7 @@ import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface TableNodeProps {
   tableName: string
@@ -72,7 +73,7 @@ export function TableNode({
 
   async function getSampleQuery(): Promise<string> {
     try {
-      return await window.electronAPI.invoke('db:sample-query', connectionId, tableName, schema) as string
+      return await window.electronAPI.invoke(IPC_CHANNELS.DB_SAMPLE_QUERY, connectionId, tableName, schema) as string
     } catch {
       return `SELECT * FROM ${tableName} LIMIT 100;`
     }
