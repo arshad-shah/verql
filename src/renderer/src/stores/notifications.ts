@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 
+export type NotificationSource = { type: 'tab' | 'connection' | 'plugin'; id: string; label: string }
+
 export interface Notification {
   id: string
   type: 'error' | 'warning' | 'info' | 'success'
   title: string
   message?: string
-  source?: { type: 'tab' | 'connection' | 'plugin'; id: string; label: string }
+  source?: NotificationSource
   timestamp: number
   read: boolean
 }

@@ -1,8 +1,8 @@
 {
-  "name": "dbstudio",
+  "name": "nova",
   "version": "0.1.0",
   "private": true,
-  "description": "A fast, extensible desktop database client",
+  "description": "Nova — a fast, extensible desktop database client.",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -14,6 +14,7 @@
     "build:mac": "npm run build && electron-builder --mac",
     "build:win": "npm run build && electron-builder --win",
     "build:linux": "npm run build && electron-builder --linux",
+    "build:icons": "rsvg-convert -w 1024 -h 1024 build/icon.svg -o build/icon.png && rsvg-convert -w 1024 -h 1024 build/icon-light.svg -o build/icon-light.png && electron-icon-builder --input=build/icon.png --output=build --flatten && cp build/icons/icon.icns build/icon.icns && cp build/icons/icon.ico build/icon.ico",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

@@ -154,7 +154,21 @@ export interface IpcChannelMap {
   }
   'plugins:get-settings': {
     args: [name: string]
-    return: { schema: { key: string; title: string; type: string; default?: string | number | boolean }[]; values: Record<string, unknown> }
+    return: {
+      schema: {
+        key: string
+        title: string
+        type: 'text' | 'password' | 'number' | 'boolean' | 'select'
+        default?: string | number | boolean
+        description?: string
+        min?: number
+        max?: number
+        step?: number
+        options?: { value: string; label: string }[]
+        category?: string
+      }[]
+      values: Record<string, unknown>
+    }
   }
   'plugins:set-setting': {
     args: [name: string, key: string, value: unknown]
@@ -183,6 +197,16 @@ export interface IpcChannelMap {
   'plugins:ui:contributions-changed': {
     args: []
     return: void
+  }
+  'plugins:get-commands': {
+    args: []
+    return: {
+      pluginId: string
+      pluginDisplayName: string
+      commandId: string
+      title: string
+      keybinding?: string
+    }[]
   }
   'plugins:completions': {
     args: [driverId: string, connectionId: string, context: import('./plugin-ui-types').CompletionContext]

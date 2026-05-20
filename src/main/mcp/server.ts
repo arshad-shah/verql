@@ -75,7 +75,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
     const ctx = deps.toolContext
 
     mcpServer = new McpServer(
-      { name: 'dbstudio', version: '0.1.0' },
+      { name: 'nova', version: '0.1.0' },
       { capabilities: { tools: {} } }
     )
 
@@ -87,11 +87,11 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       { sql: z.string().describe('The SQL query to execute') },
       async ({ sql }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
 
         if (isWriteQuery(sql)) {
           const approved = await requestApproval(sql)
-          if (!approved) return { content: [{ type: 'text', text: 'Query rejected by user in dbstudio' }], isError: true }
+          if (!approved) return { content: [{ type: 'text', text: 'Query rejected by user in Nova' }], isError: true }
         }
 
         try {
@@ -116,7 +116,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       { sql: z.string().describe('The SQL query to explain') },
       async ({ sql }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
         try {
           const result = await adapter.query(`EXPLAIN ${sql}`)
           return { content: [{ type: 'text', text: JSON.stringify(result.rows, null, 2) }] }
@@ -132,7 +132,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       { schema: z.string().optional().describe('Schema name (optional, uses default if omitted)') },
       async ({ schema }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
         try {
           const tables = await adapter.getTables(schema)
           const text = JSON.stringify(tables.map(t => ({ name: t.name, type: t.type, rowCount: t.rowCount })), null, 2)
@@ -152,7 +152,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       },
       async ({ table, schema }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
         try {
           const [columns, indexes] = await Promise.all([
             adapter.getColumns(table, schema),
@@ -171,7 +171,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       {},
       async () => {
         const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
         try {
           let schemas: string[] = []
           try { schemas = await adapter.getSchemas() } catch { /* */ }
@@ -190,7 +190,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       {},
       async () => {
         const profile = ctx.getProfile()
-        if (!profile) return { content: [{ type: 'text', text: 'Error: No active database connection in dbstudio' }], isError: true }
+        if (!profile) return { content: [{ type: 'text', text: 'Error: No active database connection in Nova' }], isError: true }
         const text = JSON.stringify({
           type: profile.type,
           host: profile.host,
@@ -257,7 +257,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
 
       if (url.pathname === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ status: 'ok', name: 'dbstudio-mcp' }))
+        res.end(JSON.stringify({ status: 'ok', name: 'nova-mcp' }))
         return
       }
 

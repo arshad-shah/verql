@@ -43,7 +43,6 @@ export function CodeBlock({ code, language, showInsert = true, alwaysShowInsert 
   const [copied, setCopied] = useState(false)
 
   const updateTabSql = useTabsStore(s => s.updateTabSql)
-  const setTabDirty = useTabsStore(s => s.setTabDirty)
   const addQueryTab = useTabsStore(s => s.addQueryTab)
   const tabs = useTabsStore(s => s.tabs)
   const activeTabId = useTabsStore(s => s.activeTabId)
@@ -66,13 +65,11 @@ export function CodeBlock({ code, language, showInsert = true, alwaysShowInsert 
     const activeTab = tabs.find(t => t.id === activeTabId && t.type === 'query')
     if (activeTab) {
       updateTabSql(activeTab.id, code)
-      setTabDirty(activeTab.id, true)
     } else {
       const newId = addQueryTab(connectionId)
       updateTabSql(newId, code)
-      setTabDirty(newId, true)
     }
-  }, [code, tabs, activeTabId, connectionId, updateTabSql, setTabDirty, addQueryTab])
+  }, [code, tabs, activeTabId, connectionId, updateTabSql, addQueryTab])
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {

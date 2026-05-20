@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 import { Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
 import { useTabsStore } from '@/stores/tabs'
-import { useToastStore } from '@/stores/toast'
-import { extractAIErrorMessage } from '@/lib/ai-errors'
+import { notifyError } from '@/lib/notify-error'
+import { parseAppError } from '@/lib/db-error'
 
 interface Props {
   tabId: string
@@ -32,9 +32,12 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
       }) as { explanation: string }
       setTabAiExplanation(tabId, result.explanation)
     } catch (err) {
-      const message = extractAIErrorMessage(err)
-      setTabAiExplanation(tabId, `Failed to explain: ${message}`)
-      useToastStore.getState().addToast({ type: 'error', title: 'AI: Explain failed', message })
+      // Embed the friendly message in the inline panel and surface a toast +
+      // notification with the same parsed text, so users get one consistent
+      // explanation regardless of where they're looking.
+      const parsed = parseAppError(err)
+      setTabAiExplanation(tabId, `Failed to explain: ${parsed.message}`)
+      notifyError(err, { titlePrefix: 'AI: Explain failed' })
     } finally {
       setLoading(false)
     }

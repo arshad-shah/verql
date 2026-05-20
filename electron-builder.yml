@@ -1,5 +1,5 @@
-appId: com.dbstudio.app
-productName: dbstudio
+appId: com.nova.app
+productName: Nova
 directories:
   buildResources: build
   output: dist

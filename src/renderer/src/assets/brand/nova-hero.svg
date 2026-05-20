@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true">
+  <!-- Nova hero — decorative variant for the empty welcome screen. Inherits
+       `currentColor`; opacity layers do the light/dark contrast lifting. -->
+  <circle cx="100" cy="100" r="86" stroke-width="1" opacity="0.12"/>
+  <circle cx="100" cy="100" r="58" stroke-width="1" opacity="0.22"/>
+
+  <g stroke-width="2.2" stroke-linecap="round">
+    <line x1="100" y1="10"  x2="100" y2="46"/>
+    <line x1="100" y1="154" x2="100" y2="190"/>
+    <line x1="10"  y1="100" x2="46"  y2="100"/>
+    <line x1="154" y1="100" x2="190" y2="100"/>
+  </g>
+
+  <g stroke-width="1.6" stroke-linecap="round" opacity="0.6">
+    <line x1="38"  y1="38"  x2="62"  y2="62"/>
+    <line x1="162" y1="38"  x2="138" y2="62"/>
+    <line x1="38"  y1="162" x2="62"  y2="138"/>
+    <line x1="162" y1="162" x2="138" y2="138"/>
+  </g>
+
+  <g stroke-width="1.2" stroke-linecap="round" opacity="0.35">
+    <line x1="70"  y1="22"  x2="76"  y2="44"/>
+    <line x1="130" y1="22"  x2="124" y2="44"/>
+    <line x1="70"  y1="178" x2="76"  y2="156"/>
+    <line x1="130" y1="178" x2="124" y2="156"/>
+    <line x1="22"  y1="70"  x2="44"  y2="76"/>
+    <line x1="178" y1="70"  x2="156" y2="76"/>
+    <line x1="22"  y1="130" x2="44"  y2="124"/>
+    <line x1="178" y1="130" x2="156" y2="124"/>
+  </g>
+
+  <circle cx="100" cy="100" r="22" fill="currentColor" opacity="0.12" stroke="none"/>
+  <circle cx="100" cy="100" r="14" fill="currentColor" opacity="0.35" stroke="none"/>
+  <circle cx="100" cy="100" r="7"  fill="currentColor" stroke="none"/>
+</svg>

@@ -1,38 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
   <!--
-    Nova app icon.
-    Geometry mirrors the in-app NovaMark glyph but scaled for the 1024-px
-    canvas used by macOS/Win/Linux icon templates:
-      - rounded background using Apple's 22% radius rule
-      - radial glow centred on the core so the mark reads at 16px
-      - four cardinal arms (full opacity) and four diagonal arms (half)
-      - bright filled core dot
+    Nova app icon — LIGHT variant.
+    Mirrors build/icon.svg but inverts the background palette so the mark
+    reads on a pale canvas (light-mode dock, white documentation, paper
+    print). The starburst itself stays in the brand-purple range so the
+    two variants share an unmistakable identity.
+
+    Always edit both files together — keep geometry identical, only swap
+    the background/contrast layers.
   -->
   <defs>
     <radialGradient id="bg" cx="50%" cy="42%" r="65%">
-      <stop offset="0%" stop-color="#1a1330"/>
-      <stop offset="55%" stop-color="#0c0918"/>
-      <stop offset="100%" stop-color="#05030c"/>
+      <stop offset="0%" stop-color="#f5f3ff"/>
+      <stop offset="55%" stop-color="#ece7ff"/>
+      <stop offset="100%" stop-color="#d6ccff"/>
     </radialGradient>
     <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#9d8bff" stop-opacity="0.55"/>
-      <stop offset="60%" stop-color="#5548b0" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#7c6ff7" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#7c6ff7" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="arm" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#c8bcff"/>
-      <stop offset="100%" stop-color="#7c6ff7"/>
+      <stop offset="0%" stop-color="#5548b0"/>
+      <stop offset="100%" stop-color="#3b2d92"/>
     </linearGradient>
     <radialGradient id="core" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="60%" stop-color="#c8bcff"/>
-      <stop offset="100%" stop-color="#7c6ff7"/>
+      <stop offset="60%" stop-color="#9d8bff"/>
+      <stop offset="100%" stop-color="#5548b0"/>
     </radialGradient>
   </defs>
 
   <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
   <circle cx="512" cy="512" r="380" fill="url(#glow)"/>
 
-  <!-- Diagonal accent arms -->
   <g stroke="url(#arm)" stroke-width="36" stroke-linecap="round" opacity="0.55">
     <line x1="232" y1="232" x2="396" y2="396"/>
     <line x1="792" y1="232" x2="628" y2="396"/>
@@ -40,13 +40,11 @@
     <line x1="792" y1="792" x2="628" y2="628"/>
   </g>
 
-  <!-- Cardinal arms -->
   <g stroke="url(#arm)" stroke-width="56" stroke-linecap="round">
     <line x1="512" y1="128" x2="512" y2="896"/>
     <line x1="128" y1="512" x2="896" y2="512"/>
   </g>
 
-  <!-- Bright core -->
   <circle cx="512" cy="512" r="92" fill="url(#core)"/>
-  <circle cx="512" cy="512" r="36" fill="#ffffff" opacity="0.95"/>
+  <circle cx="512" cy="512" r="36" fill="#3b2d92" opacity="0.95"/>
 </svg>

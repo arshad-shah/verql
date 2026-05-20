@@ -4,14 +4,18 @@ import type { editor } from 'monaco-editor'
 import { registerCompletionProvider, updateCompletionItems } from '@/lib/monaco-sql'
 import { registerAIInlineCompletionProvider, setAICompletionContext } from '@/lib/monaco-ai-completion'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
+import { registerSqlCodeLens, installSqlCodeLensCommandHandlers } from '@/lib/monaco-codelens'
+import { editorRegistry } from '@/stores/editor'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
 import { Flex, Text, useTheme } from '@/primitives'
 
 interface Props {
+  tabId: string
   value: string
   onChange: (value: string) => void
   onExecute: () => void
+  onSave?: () => void
   connectionId: string | null
   schema: string | null
   databaseType?: string
@@ -60,7 +64,7 @@ function parseKeybinding(key: string, monaco: Monaco): number {
   return keyCode ? mods | keyCode : 0
 }
 
-export function QueryEditor({ value, onChange, onExecute, connectionId, schema, databaseType }: Props) {
+export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connectionId, schema, databaseType }: Props) {
   // Tracked in state (not refs) so the keybindings effect re-runs once Monaco
   // is ready, instead of silently missing the initial registration.
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null)
@@ -86,8 +90,28 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
       registeredLanguages.add(language)
     }
 
+    // CodeLens (inline "▶ Run / Explain" buttons) lives outside the language
+    // gate above because the gate set persists across HMR reloads — so adding
+    // the lens later would never register it on existing dev sessions. The
+    // installers themselves are idempotent (own internal flags), so it's
+    // safe to call on every mount.
+    if (language === 'sql') {
+      installSqlCodeLensCommandHandlers(monaco)
+      registerSqlCodeLens(monaco, language)
+    }
+
+    // Publish ourselves to the editor registry so the command palette,
+    // run-selection action, and any plugin can introspect or drive the editor.
+    editorRegistry.register({ editor: ed, monaco, tabId })
+
     ed.focus()
-  }, [language])
+  }, [language, tabId])
+
+  // Keep the registry pointed at *this* editor while the tab is mounted, and
+  // tear it down on unmount so the palette doesn't reference a dead instance.
+  useEffect(() => {
+    return () => editorRegistry.unregister(tabId)
+  }, [tabId])
 
   // Register editor actions (keybindings) live. Re-runs whenever the user
   // rebinds an action in Settings or when the editor itself remounts, with
@@ -95,20 +119,31 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
   useEffect(() => {
     if (!editorInstance || !monacoInstance) return
 
-    const actions: { id: string; label: string; bindingId: string; run: () => void }[] = [
-      { id: 'execute-query', label: 'Execute Query', bindingId: 'execute-query', run: () => onExecute() },
+    const actions: { id: string; label: string; bindingId: string; fallback: number; run: () => void }[] = [
+      {
+        id: 'execute-query', label: 'Execute Query', bindingId: 'execute-query',
+        fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
+        run: () => onExecute()
+      },
     ]
+    if (onSave) {
+      actions.push({
+        id: 'save-query', label: 'Save Query', bindingId: 'save-query',
+        fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
+        run: () => onSave()
+      })
+    }
 
     const disposables = actions.map((a) => {
       const binding = keybindings.find((k) => k.id === a.bindingId)
       const keys = binding
         ? binding.keys.map((k) => parseKeybinding(k, monacoInstance)).filter((c) => c > 0)
-        : [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter]
+        : [a.fallback]
       return editorInstance.addAction({ id: a.id, label: a.label, keybindings: keys, run: a.run })
     })
 
     return () => { for (const d of disposables) d.dispose() }
-  }, [editorInstance, monacoInstance, keybindings, onExecute])
+  }, [editorInstance, monacoInstance, keybindings, onExecute, onSave])
 
   useEffect(() => {
     setAICompletionContext(connectionId && connectedIds.has(connectionId) ? connectionId : null)
@@ -148,6 +183,10 @@ export function QueryEditor({ value, onChange, onExecute, connectionId, schema, 
     padding: { top: 8, bottom: 8 },
     suggestOnTriggerCharacters: true,
     quickSuggestions: true,
+    // Explicit: SQL editors render "▶ Run / Explain" CodeLens above each
+    // statement. The default is true, but we set it so a user who customises
+    // editor options later can't accidentally hide the inline run buttons.
+    codeLens: true,
     scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
   }), [editorSettings])
 

@@ -26,13 +26,13 @@ export function registerMCPTools(ctx: MCPToolContext) {
       },
       handler: async (params: { sql: string }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) throw new Error('No active database connection in dbstudio')
+        if (!adapter) throw new Error('No active database connection in Nova')
 
         if (isWriteQuery(params.sql)) {
           const approved = await ctx.requestApproval(params.sql)
           if (!approved) {
             return {
-              content: [{ type: 'text' as const, text: 'Query rejected by user in dbstudio' }],
+              content: [{ type: 'text' as const, text: 'Query rejected by user in Nova' }],
               isError: true
             }
           }
@@ -61,7 +61,7 @@ export function registerMCPTools(ctx: MCPToolContext) {
       },
       handler: async (params: { sql: string }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) throw new Error('No active database connection in dbstudio')
+        if (!adapter) throw new Error('No active database connection in Nova')
         const result = await adapter.query(`EXPLAIN ${params.sql}`)
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(result.rows, null, 2) }]
@@ -79,7 +79,7 @@ export function registerMCPTools(ctx: MCPToolContext) {
       },
       handler: async (params: { schema?: string }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) throw new Error('No active database connection in dbstudio')
+        if (!adapter) throw new Error('No active database connection in Nova')
         const tables = await adapter.getTables(params.schema)
         const text = JSON.stringify(tables.map(t => ({
           name: t.name,
@@ -102,7 +102,7 @@ export function registerMCPTools(ctx: MCPToolContext) {
       },
       handler: async (params: { table: string; schema?: string }) => {
         const adapter = ctx.getAdapter()
-        if (!adapter) throw new Error('No active database connection in dbstudio')
+        if (!adapter) throw new Error('No active database connection in Nova')
         const [columns, indexes] = await Promise.all([
           adapter.getColumns(params.table, params.schema),
           adapter.getIndexes(params.table, params.schema)
@@ -117,7 +117,7 @@ export function registerMCPTools(ctx: MCPToolContext) {
       inputSchema: { type: 'object' as const, properties: {} },
       handler: async () => {
         const adapter = ctx.getAdapter()
-        if (!adapter) throw new Error('No active database connection in dbstudio')
+        if (!adapter) throw new Error('No active database connection in Nova')
         let schemas: string[] = []
         try { schemas = await adapter.getSchemas() } catch { /* */ }
         let databases: string[] = []
@@ -132,7 +132,7 @@ export function registerMCPTools(ctx: MCPToolContext) {
       inputSchema: { type: 'object' as const, properties: {} },
       handler: async () => {
         const profile = ctx.getProfile()
-        if (!profile) throw new Error('No active database connection in dbstudio')
+        if (!profile) throw new Error('No active database connection in Nova')
         const text = JSON.stringify({
           type: profile.type,
           host: profile.host,

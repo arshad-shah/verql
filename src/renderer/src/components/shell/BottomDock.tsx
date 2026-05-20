@@ -4,6 +4,7 @@ import { useUiStore, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
+import { QueryErrorView } from '@/components/results/QueryErrorView'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
@@ -57,11 +58,7 @@ export function BottomDock() {
         return <ResultsPanel results={t.results} sql={t.sql} tabId={t.id} aiExplanation={t.aiExplanation} />
       }
       if (t.error) {
-        return (
-          <Flex align="center" justify="center" className="h-full p-4">
-            <Text color="error" size="sm" className="font-mono whitespace-pre-wrap">{t.error}</Text>
-          </Flex>
-        )
+        return <QueryErrorView error={t.error} />
       }
       return (
         <Flex align="center" justify="center" className="h-full">

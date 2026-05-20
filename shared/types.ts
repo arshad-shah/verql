@@ -95,6 +95,10 @@ export interface QueryTab {
   error: string | null
   isDirty: boolean
   aiExplanation: string | null
+  /** When set, Cmd+S overwrites this saved-query record instead of prompting. */
+  savedQueryId?: string
+  /** Last saved SQL content. `isDirty` is true iff sql !== savedSnapshot. */
+  savedSnapshot?: string
 }
 
 export interface TableTab {

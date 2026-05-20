@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**dbstudio** — a desktop database client built with Electron + React. Supports PostgreSQL, MySQL, SQLite natively, plus MongoDB, Redis, and Snowflake via bundled plugins.
+**Nova** — a desktop database client built with Electron + React. Supports PostgreSQL, MySQL, SQLite natively, plus MongoDB, Redis, and Snowflake via bundled plugins. Brand assets live in `build/icon.svg` (source of truth) and the in-app `<NovaMark>` SVG at `src/renderer/src/components/brand/NovaMark.tsx`. Regenerate platform icons with `pnpm build:icons`.
 
 ## Commands
 

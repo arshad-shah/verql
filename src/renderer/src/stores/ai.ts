@@ -6,8 +6,8 @@ import type {
   AIApprovalRequest,
   AIStreamEvent
 } from '@shared/ai-types'
-import { extractAIErrorMessage } from '@/lib/ai-errors'
-import { useToastStore } from '@/stores/toast'
+import { parseAppError } from '@/lib/db-error'
+import { notifyError } from '@/lib/notify-error'
 import { useUiStore } from './ui'
 
 interface SessionStats {
@@ -248,7 +248,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       }
 
       case 'error': {
-        const friendly = extractAIErrorMessage(event.error)
+        const friendly = parseAppError(event.error).message
         const errorMsg: AIChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -261,7 +261,10 @@ export const useAIStore = create<AIState>((set, get) => ({
           streamingContent: '',
           currentStreamId: null
         }))
-        useToastStore.getState().addToast({ type: 'error', title: 'AI chat error', message: friendly })
+        // Toast + persistent notification routed through the shared classifier
+        // so the title matches the error code ("Couldn't unlock saved credentials"
+        // / "AI rate limit hit" / …) instead of the generic "AI chat error".
+        notifyError(event.error, { titlePrefix: 'AI chat' })
         break
       }
     }

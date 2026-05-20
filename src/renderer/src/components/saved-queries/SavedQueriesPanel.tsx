@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Search, Play, Trash2, Clock } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
@@ -9,15 +9,41 @@ interface SavedQuery {
   name: string
   sql: string
   createdAt: string
+  updatedAt: string
   connectionType?: string
 }
 
-// In-memory store for now — will be persisted to config in a future iteration
-let savedQueries: SavedQuery[] = []
+const STORAGE_KEY = 'dbstudio:saved-queries'
+const listeners = new Set<() => void>()
+
+function load(): SavedQuery[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as SavedQuery[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+let savedQueries: SavedQuery[] = load()
+
+function persist() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(savedQueries)) } catch { /* quota */ }
+  for (const l of listeners) l()
+}
+
+function subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn) } }
+function snapshot() { return savedQueries }
+
+export function useSavedQueries(): SavedQuery[] {
+  return useSyncExternalStore(subscribe, snapshot, snapshot)
+}
 
 export function SavedQueriesPanel() {
   const [search, setSearch] = useState('')
-  const [queries, setQueries] = useState<SavedQuery[]>(savedQueries)
+  const queries = useSavedQueries()
   const { addQueryTab } = useTabsStore()
   const { activeConnectionId } = useConnectionsStore()
 
@@ -27,7 +53,6 @@ export function SavedQueriesPanel() {
 
   const handleOpenQuery = (query: SavedQuery) => {
     const tabId = addQueryTab(activeConnectionId)
-    // Set the SQL in the new tab
     useTabsStore.setState((s) => ({
       tabs: s.tabs.map(t => t.id === tabId ? { ...t, sql: query.sql, title: query.name } : t)
     }))
@@ -35,12 +60,11 @@ export function SavedQueriesPanel() {
 
   const handleDelete = (id: string) => {
     savedQueries = savedQueries.filter(q => q.id !== id)
-    setQueries([...savedQueries])
+    persist()
   }
 
   return (
     <Stack className="h-full">
-      {/* Search */}
       <Box className="px-2 py-1.5">
         <Flex align="center" gap="xs" className="bg-bg-tertiary border border-border rounded-md px-2 py-1">
           <Search size={12} className="text-text-muted shrink-0" />
@@ -54,7 +78,6 @@ export function SavedQueriesPanel() {
         </Flex>
       </Box>
 
-      {/* Query list */}
       <ScrollArea direction="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
           <EmptyState
@@ -102,13 +125,35 @@ export function SavedQueriesPanel() {
   )
 }
 
-// Public API to save a query from the editor
-export function saveQuery(name: string, sql: string, connectionType?: string): void {
-  savedQueries.push({
-    id: `sq-${Date.now()}`,
-    name,
-    sql,
-    createdAt: new Date().toISOString(),
-    connectionType
-  })
+/**
+ * Upsert a saved query. If `id` matches an existing record we overwrite it
+ * (IDE-style save). Otherwise a new record is created. Returns the saved id.
+ */
+export function saveQuery(opts: {
+  id?: string
+  name: string
+  sql: string
+  connectionType?: string
+}): string {
+  const now = new Date().toISOString()
+  const existingIdx = opts.id ? savedQueries.findIndex(q => q.id === opts.id) : -1
+  if (existingIdx >= 0) {
+    const prev = savedQueries[existingIdx]
+    savedQueries = [
+      ...savedQueries.slice(0, existingIdx),
+      { ...prev, name: opts.name, sql: opts.sql, connectionType: opts.connectionType ?? prev.connectionType, updatedAt: now },
+      ...savedQueries.slice(existingIdx + 1)
+    ]
+    persist()
+    return prev.id
+  }
+  const id = `sq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  savedQueries = [...savedQueries, { id, name: opts.name, sql: opts.sql, createdAt: now, updatedAt: now, connectionType: opts.connectionType }]
+  persist()
+  return id
 }
+
+export function findSavedQueryByName(name: string): SavedQuery | undefined {
+  return savedQueries.find(q => q.name === name)
+}
+
