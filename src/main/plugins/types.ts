@@ -73,7 +73,7 @@ export interface PanelContributionManifest {
   id: string
   title: string
   icon: string
-  location: 'sidebar' | 'bottom'
+  location: 'sidebar' | 'secondary' | 'bottom'
 }
 
 /**

@@ -113,7 +113,7 @@ export interface PanelRegistry {
 export interface PanelContribution {
   title: string
   icon: string
-  location: 'sidebar' | 'bottom'
+  location: 'sidebar' | 'secondary' | 'bottom'
   render(): string
 }
 
