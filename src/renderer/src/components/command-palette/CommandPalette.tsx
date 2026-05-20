@@ -3,7 +3,9 @@ import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { editorRegistry } from '@/stores/editor'
 import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
+import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 
 interface Command {
   id: string
@@ -11,6 +13,14 @@ interface Command {
   category?: string
   keybinding?: string
   action: () => void
+}
+
+interface PluginCommand {
+  pluginId: string
+  pluginDisplayName: string
+  commandId: string
+  title: string
+  keybinding?: string
 }
 
 interface Props {
@@ -22,13 +32,34 @@ export function CommandPalette({ open, onClose }: Props) {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [pluginCommands, setPluginCommands] = useState<PluginCommand[]>([])
+  // Snapshot of Monaco editor actions exposed at the moment the palette opens.
+  // Recomputed each open so an extension-registered action shows up without a
+  // page reload, but stable while the user types so filtering doesn't churn.
+  const [editorActions, setEditorActions] = useState<{ id: string; label: string }[]>([])
 
   const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
   const { addQueryTab, openErDiagram } = useTabsStore()
   const { setActivePanel } = useUiStore()
+  const toggleSecondary = useUiStore(s => s.toggleSecondarySidebar)
+  const toggleBottom = useUiStore(s => s.toggleBottomDock)
+  const setSecondaryActive = useUiStore(s => s.setSecondaryActivePanel)
+  const panelContribs = usePluginUIStore(selectContributions('panels'))
 
   const conn = connections.find(c => c.id === activeConnectionId)
   const isConnected = activeConnectionId && connectedIds.has(activeConnectionId)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = () => {
+      window.electronAPI.invoke('plugins:get-commands').then((list) => {
+        if (!cancelled) setPluginCommands(list)
+      }).catch(() => { if (!cancelled) setPluginCommands([]) })
+    }
+    load()
+    const offLifecycle = window.electronAPI.on('plugins:lifecycle', load)
+    return () => { cancelled = true; offLifecycle?.() }
+  }, [])
 
   const commands = useMemo<Command[]>(() => {
     const cmds: Command[] = [
@@ -37,12 +68,74 @@ export function CommandPalette({ open, onClose }: Props) {
       { id: 'show-schema', title: 'Show Schema', category: 'View', action: () => setActivePanel('schema') },
       { id: 'show-extensions', title: 'Show Extensions', category: 'View', action: () => setActivePanel('extensions') },
     ]
+    // Editor-aware run commands. Only meaningful when there's a live editor
+    // (i.e. the active tab is a query). The palette is the authoritative place
+    // to drive the editor, including from plugins that haven't bothered to
+    // contribute their own UI.
+    if (editorRegistry.get()) {
+      cmds.push({
+        id: 'editor.runSelection',
+        title: 'Run Selected Query',
+        category: 'Editor',
+        keybinding: 'Cmd+Enter',
+        action: () => {
+          const sql = editorRegistry.getSelectedSql()
+          if (sql) window.dispatchEvent(new CustomEvent('nova:run-statement', { detail: { sql } }))
+        }
+      })
+      cmds.push({
+        id: 'editor.runAll',
+        title: 'Run Entire Buffer',
+        category: 'Editor',
+        action: () => editorRegistry.runAction('execute-query')
+      })
+      // Pull Monaco's full action list verbatim. Anything Monaco itself or a
+      // future plugin registers (format, fold, find, multi-cursor, …) appears
+      // here for free — no per-action wiring.
+      for (const a of editorActions) {
+        // Skip the few we already surface above to avoid duplicates.
+        if (a.id === 'execute-query' || a.id === 'save-query') continue
+        cmds.push({
+          id: `editor:${a.id}`,
+          title: a.label,
+          category: 'Editor',
+          action: () => editorRegistry.runAction(a.id)
+        })
+      }
+    }
+    cmds.push(
+      { id: 'toggle-secondary-sidebar', title: 'View: Toggle Secondary Sidebar', category: 'View', keybinding: 'Cmd+Alt+B', action: toggleSecondary },
+      { id: 'toggle-bottom-dock', title: 'View: Toggle Bottom Dock', category: 'View', keybinding: 'Cmd+J', action: toggleBottom },
+      { id: 'show-inspector', title: 'View: Show Inspector', category: 'View', action: () => setSecondaryActive('inspector') },
+      { id: 'show-notifications', title: 'View: Show Notifications', category: 'View', action: () => setSecondaryActive('notifications') },
+    )
+    for (const c of panelContribs) {
+      if (c.meta.location === 'secondary') {
+        cmds.push({
+          id: `show-secondary-${c.contributionId}`,
+          title: `View: Show ${c.meta.title ?? c.contributionId}`,
+          category: 'View',
+          action: () => setSecondaryActive(`plugin:${c.contributionId}`),
+        })
+      }
+    }
     if (isConnected && conn) {
       const schema = conn.type === 'sqlite' ? 'main' : conn.type === 'mysql' ? conn.database : 'public'
       cmds.push({ id: 'er-diagram', title: 'Open ER Diagram', category: 'Schema', action: () => openErDiagram(activeConnectionId!, schema) })
     }
+    for (const pc of pluginCommands) {
+      cmds.push({
+        id: `${pc.pluginId}:${pc.commandId}`,
+        title: pc.title,
+        category: pc.pluginDisplayName,
+        keybinding: pc.keybinding,
+        action: () => {
+          window.electronAPI.invoke('plugins:ui:action', pc.pluginId, pc.commandId, {}).catch(() => {})
+        }
+      })
+    }
     return cmds
-  }, [activeConnectionId, isConnected, conn])
+  }, [activeConnectionId, isConnected, conn, pluginCommands, editorActions, panelContribs, toggleSecondary, toggleBottom, setSecondaryActive])
 
   const filtered = useMemo(() => {
     if (!query.trim()) return commands
@@ -55,6 +148,7 @@ export function CommandPalette({ open, onClose }: Props) {
 
   useEffect(() => {
     if (open) {
+      setEditorActions(editorRegistry.listActions())
       setQuery('')
       setSelectedIndex(0)
       setTimeout(() => inputRef.current?.focus(), 50)
