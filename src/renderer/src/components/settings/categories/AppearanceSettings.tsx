@@ -113,6 +113,22 @@ export function AppearanceSettings() {
         />
       </SettingRow>
 
+      <SettingRow label="Show secondary sidebar" description="Show the right (secondary) sidebar by default">
+        <Switch
+          label="Show secondary sidebar"
+          checked={appearance.showSecondarySidebar}
+          onChange={(e) => setSetting('appearance.showSecondarySidebar', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow label="Show bottom dock" description="Show the bottom dock by default when there's content to display">
+        <Switch
+          label="Show bottom dock"
+          checked={appearance.showBottomDock}
+          onChange={(e) => setSetting('appearance.showBottomDock', e.target.checked)}
+        />
+      </SettingRow>
+
       <SettingRow label="Animations" description="Animate menus, dropdowns, and transitions">
         <Switch
           label="Animations"
