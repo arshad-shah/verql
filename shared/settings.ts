@@ -24,6 +24,14 @@ export interface AppearanceSettings {
   showStatusBar: boolean
   /** Use animated transitions for menus, dropdowns, banners. */
   animations: boolean
+  /** Show the secondary (right) sidebar. Persisted across sessions. */
+  showSecondarySidebar: boolean
+  /** Width of the secondary (right) sidebar in pixels. Clamped 220..640. */
+  secondarySidebarWidth: number
+  /** Show the bottom dock. Persisted across sessions. */
+  showBottomDock: boolean
+  /** Height of the bottom dock in pixels. Clamped 120..640. */
+  bottomDockHeight: number
 }
 
 export interface EditorSettings {
@@ -113,6 +121,10 @@ export const defaultSettings: AppSettings = {
     splitRatio: 50,
     showStatusBar: true,
     animations: true,
+    showSecondarySidebar: false,
+    secondarySidebarWidth: 320,
+    showBottomDock: true,
+    bottomDockHeight: 240,
   },
   editor: {
     fontSize: 14,
