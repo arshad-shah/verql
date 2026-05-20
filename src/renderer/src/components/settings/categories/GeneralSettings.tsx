@@ -1,4 +1,4 @@
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Heading, Text, Switch } from '@/primitives'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -51,6 +51,41 @@ export function GeneralSettings() {
             { value: '500', label: '500' },
             { value: '1000', label: '1000' },
           ]}
+        />
+      </SettingRow>
+
+      <Divider />
+
+      <SettingRow
+        label="Confirm destructive queries"
+        description="Show a confirmation dialog before running DELETE, DROP, TRUNCATE, or UPDATE without WHERE"
+      >
+        <Switch
+          label="Confirm destructive queries"
+          checked={general.confirmDestructiveQueries}
+          onChange={(e) => setSetting('general.confirmDestructiveQueries', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow
+        label="Confirm on unsaved close"
+        description="Ask before closing a tab that has unsaved changes"
+      >
+        <Switch
+          label="Confirm on unsaved close"
+          checked={general.confirmOnUnsavedClose}
+          onChange={(e) => setSetting('general.confirmOnUnsavedClose', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow
+        label="Restore tabs on startup"
+        description="Re-open the tabs that were active when the app last quit"
+      >
+        <Switch
+          label="Restore tabs on startup"
+          checked={general.restoreTabsOnStartup}
+          onChange={(e) => setSetting('general.restoreTabsOnStartup', e.target.checked)}
         />
       </SettingRow>
 

@@ -5,6 +5,12 @@ export interface GeneralSettings {
   queryTimeout: number
   maxHistoryItems: number
   defaultPageSize: number
+  /** Ask before closing a tab with unsaved changes. */
+  confirmOnUnsavedClose: boolean
+  /** Re-open the tabs that were active when the app last quit. */
+  restoreTabsOnStartup: boolean
+  /** Show a confirmation dialog before running DELETE/DROP/TRUNCATE/UPDATE without WHERE. */
+  confirmDestructiveQueries: boolean
 }
 
 export interface AppearanceSettings {
@@ -14,6 +20,10 @@ export interface AppearanceSettings {
   accentColor: string
   sidebarWidth: number
   splitRatio: number
+  /** Show the status bar at the bottom of the window. */
+  showStatusBar: boolean
+  /** Use animated transitions for menus, dropdowns, banners. */
+  animations: boolean
 }
 
 export interface EditorSettings {
@@ -26,6 +36,14 @@ export interface EditorSettings {
   bracketMatching: boolean
   cursorStyle: 'line' | 'block' | 'underline'
   ligatures: boolean
+  /** Allow the cursor to move past the end of the file. */
+  scrollPastEnd: boolean
+  /** Render the cursor with subtle smoothing animation. */
+  smoothCursor: boolean
+  /** Auto-close brackets/quotes when typing the opening character. */
+  autoClosingBrackets: boolean
+  /** Highlight the current line. */
+  highlightActiveLine: boolean
 }
 
 export interface ConnectionDefaultSettings {
@@ -39,6 +57,10 @@ export interface DataDisplaySettings {
   dateFormat: 'iso' | 'locale' | 'custom'
   numberFormat: 'raw' | 'locale'
   maxColumnWidth: number
+  /** How to render booleans in result grids. */
+  booleanDisplay: 'true_false' | 'one_zero' | 'yes_no' | 'checkmark'
+  /** Truncate text cells to this many characters; full value in tooltip. */
+  truncateTextAt: number
 }
 
 export interface KeyBinding {
@@ -79,6 +101,9 @@ export const defaultSettings: AppSettings = {
     queryTimeout: 30,
     maxHistoryItems: 200,
     defaultPageSize: 100,
+    confirmOnUnsavedClose: true,
+    restoreTabsOnStartup: true,
+    confirmDestructiveQueries: true,
   },
   appearance: {
     theme: 'dark',
@@ -87,6 +112,8 @@ export const defaultSettings: AppSettings = {
     accentColor: '#7c6ff7',
     sidebarWidth: 240,
     splitRatio: 50,
+    showStatusBar: true,
+    animations: true,
   },
   editor: {
     fontSize: 14,
@@ -98,6 +125,10 @@ export const defaultSettings: AppSettings = {
     bracketMatching: true,
     cursorStyle: 'line',
     ligatures: true,
+    scrollPastEnd: false,
+    smoothCursor: false,
+    autoClosingBrackets: true,
+    highlightActiveLine: true,
   },
   connectionDefaults: {
     autoReconnect: false,
@@ -114,6 +145,8 @@ export const defaultSettings: AppSettings = {
     dateFormat: 'iso',
     numberFormat: 'raw',
     maxColumnWidth: 300,
+    booleanDisplay: 'true_false',
+    truncateTextAt: 200,
   },
   ai: {
     openaiKey: '',

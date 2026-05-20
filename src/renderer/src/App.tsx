@@ -20,6 +20,7 @@ import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
+import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 
@@ -29,6 +30,7 @@ export function App() {
   const { sidebarVisible, setSidebarWidth } = useUiStore()
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
+  const showStatusBar = useSettingsStore(s => s.settings.appearance.showStatusBar)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const activeTab = tabs.find(t => t.id === activeTabId)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -97,7 +99,9 @@ export function App() {
         {sidebarVisible && sidebarPosition === 'left' && (
           <>
             <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
-              <Sidebar />
+              <SectionErrorBoundary label="Sidebar">
+                <Sidebar />
+              </SectionErrorBoundary>
             </Flex>
             <ResizeHandle
               direction="horizontal"
@@ -109,32 +113,34 @@ export function App() {
         <Flex direction="column" className="flex-1 overflow-hidden">
           <TabBar />
           <Box className="flex-1 overflow-hidden">
-            {activeTab?.type === 'query' && (
-              <QueryPanel tab={activeTab as QueryTab} />
-            )}
-            {activeTab?.type === 'er-diagram' && (
-              <ERDiagram
-                connectionId={(activeTab as ErDiagramTab).connectionId}
-                schema={(activeTab as ErDiagramTab).schema}
-              />
-            )}
-            {activeTab?.type === 'connection-form' && (
-              <ConnectionFormView
-                tabId={activeTab.id}
-                editingId={(activeTab as ConnectionFormTab).editingId}
-              />
-            )}
-            {activeTab?.type === 'plugin-detail' && (
-              <PluginDetailView
-                pluginName={(activeTab as PluginDetailTab).pluginName}
-              />
-            )}
-            {activeTab?.type === 'install-plugin' && (
-              <InstallPluginTab />
-            )}
-            {activeTab?.type === 'settings' && (
-              <SettingsLayout />
-            )}
+            <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
+              {activeTab?.type === 'query' && (
+                <QueryPanel tab={activeTab as QueryTab} />
+              )}
+              {activeTab?.type === 'er-diagram' && (
+                <ERDiagram
+                  connectionId={(activeTab as ErDiagramTab).connectionId}
+                  schema={(activeTab as ErDiagramTab).schema}
+                />
+              )}
+              {activeTab?.type === 'connection-form' && (
+                <ConnectionFormView
+                  tabId={activeTab.id}
+                  editingId={(activeTab as ConnectionFormTab).editingId}
+                />
+              )}
+              {activeTab?.type === 'plugin-detail' && (
+                <PluginDetailView
+                  pluginName={(activeTab as PluginDetailTab).pluginName}
+                />
+              )}
+              {activeTab?.type === 'install-plugin' && (
+                <InstallPluginTab />
+              )}
+              {activeTab?.type === 'settings' && (
+                <SettingsLayout />
+              )}
+            </SectionErrorBoundary>
             {!activeTab && (
               <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
                 <Box className="text-center">
@@ -154,13 +160,21 @@ export function App() {
               onDoubleClick={handleSidebarResizeDoubleClick}
             />
             <Flex direction="column" style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
-              <Sidebar />
+              <SectionErrorBoundary label="Sidebar">
+                <Sidebar />
+              </SectionErrorBoundary>
             </Flex>
           </>
         )}
-        <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
+        <SectionErrorBoundary label="AI Assistant">
+          <PluginPanelMount surface="panels" componentId="ai-chat-panel" />
+        </SectionErrorBoundary>
       </Flex>
-      <StatusBar />
+      {showStatusBar && (
+        <SectionErrorBoundary label="Status bar">
+          <StatusBar />
+        </SectionErrorBoundary>
+      )}
       <ToastContainer />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <MCPApprovalDialog />

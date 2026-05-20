@@ -1,6 +1,7 @@
 import { JSX } from 'react'
 import { Flex, Box, ScrollArea, Text, Divider } from '@/primitives'
 import { useUiStore, type SettingsCategoryId } from '@/stores/ui'
+import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SETTINGS_CATEGORIES, SettingsCategoryNav } from './SettingsCategoryNav'
 import { GeneralSettings } from './categories/GeneralSettings'
 import { AppearanceSettings } from './categories/AppearanceSettings'
@@ -55,7 +56,9 @@ export function SettingsLayout() {
         </Box>
         <ScrollArea direction="vertical" className="flex-1">
           <Box className="p-6 max-w-3xl">
-            <ActiveComponent />
+            <SectionErrorBoundary label={`${currentLabel} settings`} resetKey={activeCategory}>
+              <ActiveComponent />
+            </SectionErrorBoundary>
           </Box>
         </ScrollArea>
       </Flex>

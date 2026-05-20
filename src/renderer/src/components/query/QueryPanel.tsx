@@ -17,6 +17,8 @@ interface Props {
 }
 
 const DDL_PATTERN = /(^|;)\s*(CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT|GRANT|REVOKE)\b/i
+const DESTRUCTIVE_PATTERN = /(^|;)\s*(DELETE|DROP|TRUNCATE)\b/i
+const UPDATE_NO_WHERE_PATTERN = /(^|;)\s*UPDATE\b(?![\s\S]*\bWHERE\b)/i
 
 function stripSqlNoise(sql: string): string {
   return sql
@@ -28,11 +30,19 @@ function isSchemaMutatingSql(sql: string): boolean {
   return DDL_PATTERN.test(stripSqlNoise(sql))
 }
 
+function destructiveReason(sql: string): string | null {
+  const clean = stripSqlNoise(sql)
+  if (DESTRUCTIVE_PATTERN.test(clean)) return 'This query contains DELETE, DROP, or TRUNCATE.'
+  if (UPDATE_NO_WHERE_PATTERN.test(clean)) return 'This UPDATE has no WHERE clause — every row will be affected.'
+  return null
+}
+
 export function QueryPanel({ tab }: Props) {
   const { updateTabSql, setTabDirty, setTabExecuting, setTabResults, setTabError } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
   const addNotification = useNotificationsStore(s => s.addNotification)
   const queryTimeout = useSettingsStore(s => s.settings.general.queryTimeout)
+  const confirmDestructive = useSettingsStore(s => s.settings.general.confirmDestructiveQueries)
   const dbType = tab.connectionId ? connections.find(c => c.id === tab.connectionId)?.type : undefined
 
   const executeWithSchema = useCallback(async (sql: string) => {
@@ -58,6 +68,10 @@ export function QueryPanel({ tab }: Props) {
 
   const handleExecute = useCallback(async () => {
     if (!tab.connectionId || !tab.sql.trim()) return
+    if (confirmDestructive) {
+      const reason = destructiveReason(tab.sql)
+      if (reason && !window.confirm(`${reason}\n\nRun anyway?`)) return
+    }
     setTabExecuting(tab.id, true)
     try {
       const timeoutMs = queryTimeout * 1000
@@ -84,7 +98,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke('db:cancel-query', tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, queryTimeout, executeWithSchema, setTabExecuting, setTabResults, setTabError, addNotification])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, addNotification])
 
   const handleCancel = useCallback(async () => {
     if (!tab.connectionId) return

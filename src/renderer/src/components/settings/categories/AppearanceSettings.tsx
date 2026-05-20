@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Button, Heading, Text, Box } from '@/primitives'
+import { Stack, Grid, Divider, Flex, Button, Heading, Text, Box, Switch } from '@/primitives'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
@@ -99,6 +99,24 @@ export function AppearanceSettings() {
           value={appearance.accentColor}
           onChange={(v) => setSetting('appearance.accentColor', v)}
           size="sm"
+        />
+      </SettingRow>
+
+      <Divider />
+
+      <SettingRow label="Show status bar" description="Display the status bar at the bottom of the window">
+        <Switch
+          label="Show status bar"
+          checked={appearance.showStatusBar}
+          onChange={(e) => setSetting('appearance.showStatusBar', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow label="Animations" description="Animate menus, dropdowns, and transitions">
+        <Switch
+          label="Animations"
+          checked={appearance.animations}
+          onChange={(e) => setSetting('appearance.animations', e.target.checked)}
         />
       </SettingRow>
 

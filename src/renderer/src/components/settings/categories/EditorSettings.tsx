@@ -87,6 +87,38 @@ export function EditorSettings() {
         <Switch label="Ligatures" checked={editor.ligatures} onChange={(e) => setSetting('editor.ligatures', e.target.checked)} />
       </SettingRow>
 
+      <SettingRow label="Highlight active line" description="Tint the row the cursor is on">
+        <Switch
+          label="Highlight active line"
+          checked={editor.highlightActiveLine}
+          onChange={(e) => setSetting('editor.highlightActiveLine', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow label="Auto-close brackets" description="Automatically insert the matching bracket or quote">
+        <Switch
+          label="Auto-close brackets"
+          checked={editor.autoClosingBrackets}
+          onChange={(e) => setSetting('editor.autoClosingBrackets', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow label="Smooth cursor" description="Animate cursor movement">
+        <Switch
+          label="Smooth cursor"
+          checked={editor.smoothCursor}
+          onChange={(e) => setSetting('editor.smoothCursor', e.target.checked)}
+        />
+      </SettingRow>
+
+      <SettingRow label="Scroll past end" description="Allow scrolling beyond the last line">
+        <Switch
+          label="Scroll past end"
+          checked={editor.scrollPastEnd}
+          onChange={(e) => setSetting('editor.scrollPastEnd', e.target.checked)}
+        />
+      </SettingRow>
+
       <Divider />
 
       <Flex justify="end">
