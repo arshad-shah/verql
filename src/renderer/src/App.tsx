@@ -10,7 +10,7 @@ import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
-import { Flex, Box, Heading, Text, ResizeHandle } from '@/primitives'
+import { Flex, Box, ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -22,7 +22,7 @@ import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
 import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
-import { NovaMark } from '@/components/brand/NovaMark'
+import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
@@ -223,18 +223,7 @@ export function App() {
                   <SettingsLayout />
                 )}
               </SectionErrorBoundary>
-              {!activeTab && (
-                <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-                  <Box className="text-center">
-                    <Flex align="center" justify="center" className="mb-3 text-accent">
-                      <NovaMark size={36} />
-                    </Flex>
-                    <Heading level={1} className="text-2xl mb-1 tracking-wide">Nova</Heading>
-                    <Text color="secondary" as="p">Spark your data.</Text>
-                    <Text color="muted" size="sm" as="p" className="mt-2">Connect a database to begin · ⌘⇧P for commands</Text>
-                  </Box>
-                </Flex>
-              )}
+              {!activeTab && <WelcomeScreen />}
             </Box>
             {bottomDockVisible && hasBottomPanels && (
               <>

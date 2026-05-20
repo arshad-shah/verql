@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { Flex, cn } from '@/primitives'
 
 export interface BottomTab {
@@ -35,9 +36,9 @@ export function BottomDockTabs({ tabs, activeId, onSelect, onClose }: Props) {
         type="button"
         aria-label="Hide bottom dock"
         onClick={onClose}
-        className="h-7 w-7 text-text-muted hover:text-text-primary hover:bg-white/5 rounded-sm"
+        className="h-7 w-7 inline-flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 rounded-sm"
       >
-        ×
+        <X size={14} />
       </button>
     </Flex>
   )
