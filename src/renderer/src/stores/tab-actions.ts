@@ -24,6 +24,10 @@ export interface TabActions {
   isDirty?: () => boolean
   /** Optional human description for confirm dialogs ("Query 1", "Settings", …). */
   label?: string
+  /** Run a single SQL statement (CodeLens "▶ Run"). */
+  runStatement?: (sql: string) => void
+  /** Show EXPLAIN ANALYZE plan for a single statement (CodeLens "Explain"). */
+  explainStatement?: (sql: string) => void
 }
 
 const handlers = new Map<string, TabActions>()
@@ -48,6 +52,13 @@ export const tabActions = {
   async save(tabId: string): Promise<void> {
     const a = handlers.get(tabId)
     if (a?.onSave) await a.onSave()
+  },
+
+  runStatement(tabId: string, sql: string): void {
+    handlers.get(tabId)?.runStatement?.(sql)
+  },
+  explainStatement(tabId: string, sql: string): void {
+    handlers.get(tabId)?.explainStatement?.(sql)
   }
 }
 

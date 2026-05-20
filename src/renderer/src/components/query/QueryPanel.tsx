@@ -179,9 +179,11 @@ export function QueryPanel({ tab }: Props) {
       onSave: handleSave,
       isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
       label: tab.title,
+      runStatement: (sql) => { void runSql(sql) },
+      explainStatement: (sql) => { void explainSql(sql) },
     })
     return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave])
+  }, [tab.id, tab.title, handleSave, runSql, explainSql])
 
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
@@ -204,25 +206,6 @@ export function QueryPanel({ tab }: Props) {
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
-
-  // CodeLens "▶ Run" / "Explain" buttons above each statement dispatch window
-  // events. We listen here so the lens layer stays React-free.
-  useEffect(() => {
-    const onRun = (e: Event) => {
-      const detail = (e as CustomEvent<{ sql: string }>).detail
-      if (detail?.sql) void runSql(detail.sql)
-    }
-    const onExplain = (e: Event) => {
-      const detail = (e as CustomEvent<{ sql: string }>).detail
-      if (detail?.sql) void explainSql(detail.sql)
-    }
-    window.addEventListener('nova:run-statement', onRun)
-    window.addEventListener('nova:explain-statement', onExplain)
-    return () => {
-      window.removeEventListener('nova:run-statement', onRun)
-      window.removeEventListener('nova:explain-statement', onExplain)
-    }
-  }, [runSql, explainSql])
 
   return (
     <Flex direction="column" className="h-full">
