@@ -8,6 +8,7 @@ import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
 import { ExtensionsPanel } from '@/components/plugins/ExtensionsPanel'
 import { NotificationsSidebar } from './NotificationsSidebar'
+import { SettingsCategoryNav } from '@/components/settings/SettingsCategoryNav'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
@@ -32,7 +33,7 @@ export function Sidebar() {
     charts: 'Charts',
     extensions: 'Extensions',
     notifications: 'Notifications',
-    settings: 'Settings'
+    settings: 'Settings',
   }
   const pluginTitles = Object.fromEntries(
     panelContributions.map((c) => [`plugin:${c.contributionId}`, c.pluginName])
@@ -79,6 +80,7 @@ export function Sidebar() {
         )}
         {activePanel === 'extensions' && <ExtensionsPanel />}
         {activePanel === 'notifications' && <NotificationsSidebar />}
+        {activePanel === 'settings' && <SettingsCategoryNav />}
         {/* Plugin-contributed panels */}
         {panelContributions
           .filter((c) => activePanel === `plugin:${c.contributionId}`)

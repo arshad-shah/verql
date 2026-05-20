@@ -1,5 +1,6 @@
-import { JSX, useState } from 'react'
-import { Flex, Box, ScrollArea, Text, Button, Divider } from '@/primitives'
+import { JSX } from 'react'
+import { Box, ScrollArea } from '@/primitives'
+import { useUiStore, type SettingsCategoryId } from '@/stores/ui'
 import { GeneralSettings } from './categories/GeneralSettings'
 import { AppearanceSettings } from './categories/AppearanceSettings'
 import { EditorSettings } from './categories/EditorSettings'
@@ -10,21 +11,7 @@ import { PluginSettings } from './categories/PluginSettings'
 import { AISettings } from './categories/AISettings'
 import { MCPSettings } from './categories/MCPSettings'
 
-const categories = [
-  { id: 'general', label: 'General' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'editor', label: 'Editor' },
-  { id: 'connections', label: 'Connections' },
-  { id: 'data-display', label: 'Data Display' },
-  { id: 'keybindings', label: 'Keybindings' },
-  { id: 'ai', label: 'AI' },
-  { id: 'mcp', label: 'MCP Server' },
-  { id: 'plugins', label: 'Plugins' },
-] as const
-
-type CategoryId = (typeof categories)[number]['id']
-
-const categoryComponents: Record<CategoryId, () => JSX.Element> = {
+const categoryComponents: Record<SettingsCategoryId, () => JSX.Element> = {
   general: GeneralSettings,
   appearance: AppearanceSettings,
   editor: EditorSettings,
@@ -36,46 +23,20 @@ const categoryComponents: Record<CategoryId, () => JSX.Element> = {
   plugins: PluginSettings,
 }
 
+/**
+ * Settings content surface. The category nav lives in the regular sidebar
+ * (see SettingsCategoryNav, mounted by Sidebar when activePanel === 'settings')
+ * so the layout matches every other activity panel.
+ */
 export function SettingsLayout() {
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('general')
-  const ActiveComponent = categoryComponents[activeCategory]
+  const activeCategory = useUiStore((s) => s.activeSettingsCategory)
+  const ActiveComponent = categoryComponents[activeCategory] ?? GeneralSettings
 
   return (
-    <Flex direction="row" className="h-full">
-      <Box className="w-48 border-r border-border-default shrink-0">
-        <ScrollArea direction="vertical" className="h-full">
-          <Box paddingY='sm'>
-            <Box paddingY='md'>
-              <Text size="sm" color="muted" weight={'bold'} className="px-4 py-2 uppercase tracking-wider">
-                Settings
-              </Text>
-            </Box>
-
-            <Divider />
-            {categories.map((cat) => (
-              <Button
-                key={cat.id}
-                variant="ghost"
-                size="md"
-                onClick={() => setActiveCategory(cat.id)}
-                className={`w-full justify-start rounded-none px-4 ${
-                  activeCategory === cat.id
-                    ? 'bg-hover border-l-2 border-l-accent text-text-primary'
-                    : 'border-l-2 border-l-transparent text-text-secondary'
-                }`}
-              >
-                {cat.label}
-              </Button>
-            ))}
-          </Box>
-        </ScrollArea>
+    <ScrollArea direction="vertical" className="flex-1">
+      <Box className="p-6 max-w-2xl">
+        <ActiveComponent />
       </Box>
-
-      <ScrollArea direction="vertical" className="flex-1">
-        <Box className="p-6 max-w-2xl">
-          <ActiveComponent />
-        </Box>
-      </ScrollArea>
-    </Flex>
+    </ScrollArea>
   )
 }

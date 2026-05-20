@@ -3,11 +3,18 @@ import { useSettingsStore } from './settings'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
+export type SettingsCategoryId =
+  | 'general' | 'appearance' | 'editor' | 'connections'
+  | 'data-display' | 'keybindings' | 'ai' | 'mcp' | 'plugins'
+
 interface UiState {
   activePanel: ActivityPanel
   sidebarVisible: boolean
   expandedTreeNodes: Set<string>
+  /** Which settings category is shown in the editor area when activePanel === 'settings'. */
+  activeSettingsCategory: SettingsCategoryId
   setActivePanel: (panel: ActivityPanel) => void
+  setActiveSettingsCategory: (category: SettingsCategoryId) => void
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
   setSplitRatio: (ratio: number) => void
@@ -20,11 +27,13 @@ export const useUiStore = create<UiState>((set) => ({
   activePanel: 'explorer',
   sidebarVisible: true,
   expandedTreeNodes: new Set<string>(),
+  activeSettingsCategory: 'general',
   setActivePanel: (panel) =>
     set((state) => ({
       activePanel: panel,
       sidebarVisible: state.activePanel === panel ? !state.sidebarVisible : true,
     })),
+  setActiveSettingsCategory: (category) => set({ activeSettingsCategory: category }),
   toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
   setSidebarWidth: (width) => {
     const clamped = Math.min(480, Math.max(180, width))
