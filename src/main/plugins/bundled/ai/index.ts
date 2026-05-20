@@ -78,6 +78,19 @@ export function activate(ctx: PluginContext): void {
     { id: 'ai-chat-root', type: 'host-component', componentId: 'ai-chat-panel' }
   ])
 
+  // 4b. Plug into named slots in the host shell. The host doesn't know these
+  //     widgets are AI — it just renders whatever's contributed. Disabling
+  //     this plugin disposes the registrations and the slots empty out.
+  ctx.ui.registerSlot('app.activityBar.bottom', [
+    { id: 'ai-toggle', type: 'host-component', componentId: 'ai-toggle-button' }
+  ])
+  ctx.ui.registerSlot('query.editor.top', [
+    { id: 'ai-nl', type: 'host-component', componentId: 'ai-nl-input' }
+  ])
+  ctx.ui.registerSlot('results.actions', [
+    { id: 'ai-explain', type: 'host-component', componentId: 'ai-explain' }
+  ])
+
   // 5. Commands that future renderer surfaces invoke via the command palette.
   ctx.commands.register('explain-table', async () => { /* renderer opens chat with context */ })
   ctx.commands.register('suggest-queries', async () => { /* renderer opens chat */ })

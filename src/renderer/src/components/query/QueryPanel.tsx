@@ -3,7 +3,7 @@ import { QueryEditor } from './QueryEditor'
 import { QueryToolbar } from './QueryToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
-import { NLInputBar } from '@/components/ai/NLInputBar'
+import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -136,11 +136,15 @@ export function QueryPanel({ tab }: Props) {
         />
       </Flex>
 
-      {/* NL-to-SQL input bar */}
-      <NLInputBar
-        connectionId={tab.connectionId}
-        schema={tab.schema}
-        onSqlGenerated={(sql) => { updateTabSql(tab.id, sql); setTabDirty(tab.id, true) }}
+      {/* Plugin-contributed surfaces (e.g. AI NL-to-SQL bar). Nothing renders
+          when no extension contributes here. */}
+      <PluginSlot
+        id="query.editor.top"
+        context={{
+          connectionId: tab.connectionId,
+          schema: tab.schema,
+          onSqlGenerated: (sql: string) => { updateTabSql(tab.id, sql); setTabDirty(tab.id, true) }
+        }}
       />
 
       {/* Editor — top half */}

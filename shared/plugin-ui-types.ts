@@ -136,7 +136,7 @@ export interface SelectorContribution {
 
 // ─── IPC Payloads ───────────────────────────────────────────────────────────
 
-export type ContributionSurface = 'activityBar' | 'statusBar' | 'toolbar' | 'contextMenu' | 'tabs' | 'panels'
+export type ContributionSurface = 'activityBar' | 'statusBar' | 'toolbar' | 'contextMenu' | 'tabs' | 'panels' | 'slot'
 
 export interface UIContribution {
   pluginId: string
@@ -145,6 +145,8 @@ export interface UIContribution {
   contributionId: string
   widgets: Widget[]
   meta: Record<string, unknown>
+  /** Present when surface === 'slot' — identifies the host slot the widgets target. */
+  slotId?: string
 }
 
 export interface ResolverContext {

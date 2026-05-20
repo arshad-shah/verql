@@ -79,6 +79,7 @@ if (typeof window !== 'undefined' && window.electronAPI) {
         store.fetchContributions('activityBar'),
         store.fetchContributions('panels'),
         store.fetchContributions('contextMenu'),
+        store.fetchContributions('slot'),
       ])
     }, 300)
   })

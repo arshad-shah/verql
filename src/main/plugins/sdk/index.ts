@@ -93,6 +93,11 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
       subscriptions.push(disposable)
       return disposable
     },
+    registerSlot(slotId: string, widgets: Parameters<UIRegistryImpl['registerSlot']>[1]) {
+      const disposable = deps.uiRegistry.registerSlot(slotId, widgets)
+      subscriptions.push(disposable)
+      return disposable
+    },
     registerResolver(id: string, resolver: Parameters<UIRegistryImpl['registerResolver']>[1]) {
       const disposable = deps.uiRegistry.registerResolver(id, resolver)
       subscriptions.push(disposable)

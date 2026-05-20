@@ -225,6 +225,20 @@ export function registerPluginHandlers(
       }
     }
 
+    if (surface === 'slot') {
+      for (const entry of uiRegistry.getAllSlots()) {
+        contributions.push({
+          pluginId: entry.pluginName,
+          pluginName: getDisplayName(entry.pluginName),
+          surface: 'slot',
+          contributionId: entry.contributionId,
+          slotId: entry.slotId,
+          widgets: entry.widgets,
+          meta: {}
+        })
+      }
+    }
+
     for (const plugin of pluginCoordinator.getLoadedPlugins()) {
       if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
 

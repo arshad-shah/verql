@@ -14,6 +14,13 @@ export interface UIRegistry {
   registerStatusBar(id: string, widgets: Widget[]): Disposable
   registerToolbar(id: string, widgets: Widget[]): Disposable
   registerTab(id: string, widgets: Widget[]): Disposable
+  /**
+   * Mount widgets into a host-defined slot. The host renders one
+   * `<PluginSlot id="..." />` per extension point; this is how an extension
+   * places UI in arbitrary parts of the app (e.g. above the editor, alongside
+   * results actions) without the host knowing what plugin owns what.
+   */
+  registerSlot(id: string, widgets: Widget[]): Disposable
   registerResolver(id: string, resolver: ResolverFn): Disposable
   invalidate(resolverId: string): void
 }
@@ -23,6 +30,9 @@ export class UIRegistryImpl implements UIRegistry {
   private statusBars = new Map<string, OwnedEntry<Widget[]>>()
   private toolbars = new Map<string, OwnedEntry<Widget[]>>()
   private tabs = new Map<string, OwnedEntry<Widget[]>>()
+  /** Multiple plugins can contribute to the same slot; entries are keyed by
+   *  `${slotId}::${contributionId}` so two plugins don't collide. */
+  private slots = new Map<string, OwnedEntry<{ slotId: string; widgets: Widget[] }>>()
   private resolvers = new Map<string, OwnedEntry<ResolverFn>>()
   private listeners = new Set<ChangeListener>()
 
@@ -51,6 +61,17 @@ export class UIRegistryImpl implements UIRegistry {
     this.tabs.set(id, { pluginName: this.currentPluginName, data: widgets })
     this.emit()
     return { dispose: () => { this.tabs.delete(id); this.emit() } }
+  }
+
+  registerSlot(slotId: string, widgets: Widget[]): Disposable {
+    const contributionId = `c-${Math.random().toString(36).slice(2, 10)}`
+    const key = `${slotId}::${contributionId}`
+    this.slots.set(key, {
+      pluginName: this.currentPluginName,
+      data: { slotId, widgets }
+    })
+    this.emit()
+    return { dispose: () => { this.slots.delete(key); this.emit() } }
   }
 
   registerResolver(id: string, resolver: ResolverFn): Disposable {
@@ -86,6 +107,14 @@ export class UIRegistryImpl implements UIRegistry {
   getAllTabs(): { id: string; pluginName: string; widgets: Widget[] }[] {
     return [...this.tabs.entries()].map(([id, entry]) => ({ id, pluginName: entry.pluginName, widgets: entry.data }))
   }
+  getAllSlots(): { slotId: string; contributionId: string; pluginName: string; widgets: Widget[] }[] {
+    return [...this.slots.entries()].map(([key, entry]) => ({
+      slotId: entry.data.slotId,
+      contributionId: key.split('::').pop() ?? key,
+      pluginName: entry.pluginName,
+      widgets: entry.data.widgets
+    }))
+  }
   hasResolver(id: string): boolean { return this.resolvers.has(id) }
 
   onChange(listener: ChangeListener): Disposable {
@@ -98,6 +127,7 @@ export class UIRegistryImpl implements UIRegistry {
     this.statusBars.clear()
     this.toolbars.clear()
     this.tabs.clear()
+    this.slots.clear()
     this.resolvers.clear()
     this.emit()
   }
