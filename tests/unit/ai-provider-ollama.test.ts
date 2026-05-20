@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { OllamaProvider } from '../../src/main/ai/providers/ollama'
+import { OllamaProvider } from '../../src/main/plugins/bundled/ai/internal/providers/ollama'
 
 describe('OllamaProvider', () => {
   it('has correct metadata', () => {

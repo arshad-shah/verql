@@ -2,6 +2,7 @@ import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { MysqlAdapter } from './mysql-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-mysql',
@@ -10,7 +11,9 @@ export const manifest: PluginManifest = {
   description: 'MySQL database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'mysql', name: 'MySQL' }]
+    drivers: [{ id: 'mysql', name: 'MySQL' }],
+    exporters: [{ id: 'sql', name: 'SQL (MySQL)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (MySQL)', extensions: ['sql'] }]
   }
 }
 
@@ -110,6 +113,9 @@ const MYSQL_FUNCTIONS: { label: string; detail: string }[] = [
 // ─── activate ────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+
   ctx.drivers.register('mysql', {
     createAdapter: (config) => new MysqlAdapter(config),
     connectionFields: [

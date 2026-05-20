@@ -11,6 +11,8 @@ import { ConnectionAccessImpl } from './connection-access'
 import { PluginSettingsImpl } from './settings'
 import { ServiceRegistryImpl, type ServiceRegistry } from './service-registry'
 import { createAIAccess } from './ai-access'
+import { ExporterRegistryImpl, type ExporterRegistry } from './exporter-registry'
+import { ImporterRegistryImpl, type ImporterRegistry } from './importer-registry'
 
 export { DriverRegistryImpl } from './driver-registry'
 export { CommandRegistryImpl } from './command-registry'
@@ -21,8 +23,12 @@ export { SchemaAccessImpl } from './schema-access'
 export { ConnectionAccessImpl } from './connection-access'
 export { PluginSettingsImpl } from './settings'
 export { ServiceRegistryImpl } from './service-registry'
+export { ExporterRegistryImpl } from './exporter-registry'
+export { ImporterRegistryImpl } from './importer-registry'
 export { safeCall, ErrorBudget, PluginError } from './safe-call'
 export type * from './types'
+export type { RegisteredExporter, ExporterFn, ExporterOptions } from './exporter-registry'
+export type { RegisteredImporter, ImporterParseFn, ImporterOptions, ImporterResult } from './importer-registry'
 
 interface ContextDeps {
   pluginName: string
@@ -36,6 +42,8 @@ interface ContextDeps {
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   keyring: import('./types').KeyringAccess
   services: ServiceRegistry
+  exporterRegistry: ExporterRegistry
+  importerRegistry: ImporterRegistry
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
@@ -174,6 +182,22 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  const exporters = {
+    register(id: string, exporter: Parameters<ExporterRegistry['register']>[1]) {
+      const d = deps.exporterRegistry.register(`${pluginName}:${id}`, exporter)
+      subscriptions.push(d)
+      return d
+    }
+  }
+
+  const importers = {
+    register(id: string, importer: Parameters<ImporterRegistry['register']>[1]) {
+      const d = deps.importerRegistry.register(`${pluginName}:${id}`, importer)
+      subscriptions.push(d)
+      return d
+    }
+  }
+
   return {
     drivers,
     commands,
@@ -188,6 +212,8 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     ipc,
     broadcast,
     services,
+    exporters,
+    importers,
     rootSettings: deps.settingsStore,
     subscriptions
   }

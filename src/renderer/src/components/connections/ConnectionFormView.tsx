@@ -108,7 +108,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       const fieldKeys = fetchableFields.map(f => f.key)
       const options = await window.electronAPI.invoke(
         'db:connection-options',
-        profile as ConnectionProfile,
+        profile as unknown as ConnectionProfile,
         fieldKeys
       )
       setFetchableOptions(options)
@@ -125,7 +125,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await saveConnection(profile as ConnectionProfile)
+    await saveConnection(profile as unknown as ConnectionProfile)
     closeTab(tabId)
   }
 
@@ -436,7 +436,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             )}
 
             {/* Test Connection */}
-            <ConnectionTestButton profile={profile as ConnectionProfile} />
+            <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
           </Stack>
         </form>
       </Container>

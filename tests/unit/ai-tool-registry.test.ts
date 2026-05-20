@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { AIToolRegistry } from '../../src/main/ai/tool-registry'
-import type { AITool } from '../../src/main/ai/types'
+import { AIToolRegistry } from '../../src/main/plugins/bundled/ai/internal/tool-registry'
+import type { AITool } from '../../src/main/plugins/bundled/ai/internal/types'
 
 function createMockTool(id: string, permission: 'read' | 'write' = 'read'): AITool {
   return {

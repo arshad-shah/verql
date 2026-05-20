@@ -2,6 +2,7 @@ import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { SqliteAdapter } from './sqlite-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-sqlite',
@@ -10,7 +11,9 @@ export const manifest: PluginManifest = {
   description: 'SQLite database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'sqlite', name: 'SQLite' }]
+    drivers: [{ id: 'sqlite', name: 'SQLite' }],
+    exporters: [{ id: 'sql', name: 'SQL (SQLite)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (SQLite)', extensions: ['sql'] }]
   }
 }
 
@@ -108,6 +111,9 @@ const SQLITE_FUNCTIONS: { label: string; detail: string }[] = [
 // ─── activate ────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+
   ctx.drivers.register('sqlite', {
     createAdapter: (config) => new SqliteAdapter(config),
     connectionFields: [

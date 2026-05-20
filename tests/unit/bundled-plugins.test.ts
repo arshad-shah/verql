@@ -5,10 +5,9 @@ import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry
 import { PanelRegistryImpl } from '../../src/main/plugins/sdk/panel-registry'
 import { UIRegistryImpl } from '../../src/main/plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-registry'
-import { AIToolRegistry } from '../../src/main/ai/tool-registry'
-import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
-import { ConversationManager } from '../../src/main/ai/conversation-manager'
-import { PermissionManager } from '../../src/main/ai/permission-manager'
+import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
+import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
+import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
 
 import * as sshPlugin from '../../src/main/plugins/bundled/ssh-tunnel/index'
 import * as mongoPlugin from '../../src/main/plugins/bundled/mongodb/index'
@@ -17,18 +16,20 @@ import * as snowflakePlugin from '../../src/main/plugins/bundled/snowflake/index
 import * as postgresqlPlugin from '../../src/main/plugins/bundled/postgresql/index'
 import * as mysqlPlugin from '../../src/main/plugins/bundled/mysql/index'
 import * as sqlitePlugin from '../../src/main/plugins/bundled/sqlite/index'
+import * as aiPlugin from '../../src/main/plugins/bundled/ai/index'
 
 const noopKeyring = {
   store: async () => {},
   retrieve: async () => null,
-  delete: async () => {}
+  delete: async () => {},
+  listKeys: async () => []
 }
 
 describe('Bundled Plugins', () => {
   let coordinator: PluginBootCoordinator
   let driverRegistry: DriverRegistryImpl
 
-  beforeEach(() => {
+  beforeEach(async () => {
     driverRegistry = new DriverRegistryImpl()
     const commandRegistry = new CommandRegistryImpl()
     const panelRegistry = new PanelRegistryImpl()
@@ -44,16 +45,15 @@ describe('Bundled Plugins', () => {
       getProfile: () => undefined,
       keyring: noopKeyring,
       settingsStore: { get: () => undefined, set: () => {} },
-      aiToolRegistry: new AIToolRegistry(),
-      aiProviderRegistry: new AIProviderRegistry(),
-      aiConversationManager: new ConversationManager({
-        providerRegistry: new AIProviderRegistry(),
-        toolRegistry: new AIToolRegistry(),
-        permissionManager: new PermissionManager(),
-        getSchemaContext: async () => '',
-        getConnectionId: () => null
-      })
+      services: new ServiceRegistryImpl(),
+      exporterRegistry: new ExporterRegistryImpl(),
+      importerRegistry: new ImporterRegistryImpl()
     })
+    // The AI plugin provides the `ai` service that mongo/redis plugins consume
+    // at activation. Register and activate it first to mirror production boot.
+    coordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
+    const ai = coordinator.getPlugin('dbstudio-plugin-ai')!
+    await coordinator.activatePlugin(ai)
   })
 
   it('SSH plugin registers middleware', async () => {

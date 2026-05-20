@@ -43,13 +43,13 @@ function buildAppMenu(): void {
         {
           label: 'New Query Tab',
           accelerator: 'CmdOrCtrl+N',
-          click: (_, win) => win?.webContents.send('menu:new-query-tab'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-query-tab'),
         },
         { type: 'separator' },
         {
           label: 'New Connection',
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: (_, win) => win?.webContents.send('menu:new-connection'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-connection'),
         },
         { type: 'separator' },
         process.platform === 'darwin'
@@ -75,7 +75,7 @@ function buildAppMenu(): void {
         {
           label: 'Command Palette',
           accelerator: 'CmdOrCtrl+Shift+P',
-          click: (_, win) => win?.webContents.send('menu:toggle-command-palette'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:toggle-command-palette'),
         },
         { type: 'separator' },
         { role: 'togglefullscreen' },

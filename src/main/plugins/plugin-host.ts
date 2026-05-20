@@ -104,6 +104,8 @@ interface BootDeps {
   keyring: import('./sdk/types').KeyringAccess
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   services: import('./sdk/service-registry').ServiceRegistry
+  exporterRegistry: import('./sdk/exporter-registry').ExporterRegistry
+  importerRegistry: import('./sdk/importer-registry').ImporterRegistry
 }
 
 export class PluginBootCoordinator {
@@ -271,7 +273,9 @@ export class PluginBootCoordinator {
       connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
       settingsStore: this.deps.settingsStore,
       keyring: this.deps.keyring,
-      services: this.deps.services
+      services: this.deps.services,
+      exporterRegistry: this.deps.exporterRegistry,
+      importerRegistry: this.deps.importerRegistry
     })
     plugin.context = context
 
@@ -478,6 +482,16 @@ export class PluginBootCoordinator {
     manifest: PluginManifest,
     module: { activate: (ctx: any) => void | Promise<void>; deactivate?: () => void | Promise<void> }
   ): void {
+    // Even trusted/bundled plugins are run through manifest validation so a
+    // typo in the manifest (missing name, malformed semver, etc.) is caught
+    // at registration time rather than silently activating a broken plugin.
+    const validation = validateManifest(manifest)
+    if (!validation.valid) {
+      throw new Error(`Invalid bundled plugin manifest '${manifest.name}': ${validation.error}`)
+    }
+    if (this.plugins.has(manifest.name)) {
+      throw new Error(`Plugin '${manifest.name}' is already registered`)
+    }
     this.plugins.set(manifest.name, {
       manifest,
       path: '<bundled>',
@@ -543,6 +557,9 @@ export class PluginBootCoordinator {
   uninstall(name: string): void {
     const plugin = this.plugins.get(name)
     if (!plugin) return
+    if (plugin.path === '<bundled>') {
+      throw new Error(`Cannot uninstall bundled plugin '${name}'`)
+    }
     this.deactivatePlugin(plugin)
     fs.rmSync(plugin.path, { recursive: true, force: true })
     this.plugins.delete(name)

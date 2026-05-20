@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { PermissionManager } from '../../src/main/ai/permission-manager'
-import type { AITool } from '../../src/main/ai/types'
+import { PermissionManager } from '../../src/main/plugins/bundled/ai/internal/permission-manager'
+import type { AITool } from '../../src/main/plugins/bundled/ai/internal/types'
 
 function makeTool(id: string, permission: 'read' | 'write'): AITool {
   return {

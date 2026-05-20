@@ -4,7 +4,15 @@ import { createAdapter } from '../db/factory'
 import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import { getSecretFieldKeys, mergeIncomingProfile } from './secrets'
+import { quoteIdentifier, type SqlDialect } from '../db/identifier'
 import type { IpcContext, Handle } from './context'
+
+const FALLBACK_DIALECT_BY_TYPE: Record<string, SqlDialect> = {
+  postgresql: 'postgresql',
+  postgres: 'postgresql',
+  mysql: 'mysql',
+  sqlite: 'sqlite'
+}
 
 export function registerDbHandlers(
   ctx: IpcContext,
@@ -164,6 +172,14 @@ export function registerDbHandlers(
     if (!profile) throw new Error('Unknown connection')
     const driver = ctx.driverRegistry.get(profile.type)
     if (driver?.sampleQuery) return driver.sampleQuery(table, schema)
-    return `SELECT * FROM ${table} LIMIT 100;`
+    // Drivers without a sampleQuery contribution fall back to a generic SELECT.
+    // Identifiers go through quoteIdentifier so an attacker-controlled table
+    // name (e.g. from an introspected schema on a malicious server) cannot
+    // break out of the statement.
+    const dialect = FALLBACK_DIALECT_BY_TYPE[profile.type] ?? 'postgresql'
+    const qualified = schema
+      ? quoteIdentifier([schema, table], dialect)
+      : quoteIdentifier(table, dialect)
+    return `SELECT * FROM ${qualified} LIMIT 100;`
   })
 }

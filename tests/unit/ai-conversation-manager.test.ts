@@ -1,10 +1,10 @@
 // tests/unit/ai-conversation-manager.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ConversationManager } from '../../src/main/ai/conversation-manager'
-import type { AIProvider } from '../../src/main/ai/types'
-import { AIProviderRegistry } from '../../src/main/ai/provider-registry'
-import { AIToolRegistry } from '../../src/main/ai/tool-registry'
-import { PermissionManager } from '../../src/main/ai/permission-manager'
+import { ConversationManager } from '../../src/main/plugins/bundled/ai/internal/conversation-manager'
+import type { AIProvider } from '../../src/main/plugins/bundled/ai/internal/types'
+import { AIProviderRegistry } from '../../src/main/plugins/bundled/ai/internal/provider-registry'
+import { AIToolRegistry } from '../../src/main/plugins/bundled/ai/internal/tool-registry'
+import { PermissionManager } from '../../src/main/plugins/bundled/ai/internal/permission-manager'
 import type { AIChatMessage, AIStreamEvent } from '@shared/ai-types'
 
 function createMockProvider(chunks: Array<{ type: string; content?: string }>): AIProvider {

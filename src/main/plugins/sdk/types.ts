@@ -45,11 +45,27 @@ export interface PluginContext {
   ipc: PluginIpc
   broadcast: BroadcastFn
   services: import('./service-registry').ServiceRegistry
+  exporters: PluginExporterAccess
+  importers: PluginImporterAccess
   /** Bundled/trusted plugins occasionally need raw access to top-level app
    *  settings (e.g. `ai.activeProvider`) rather than their own namespaced
    *  scope under `plugins.<name>.*`. */
   rootSettings: { get(key: string): unknown; set(key: string, value: unknown): void }
   subscriptions: Disposable[]
+}
+
+export interface PluginExporterAccess {
+  register(
+    id: string,
+    exporter: import('./exporter-registry').RegisteredExporter
+  ): Disposable
+}
+
+export interface PluginImporterAccess {
+  register(
+    id: string,
+    importer: import('./importer-registry').RegisteredImporter
+  ): Disposable
 }
 
 /** Lets a plugin own typed IPC channels in main → renderer direction. */

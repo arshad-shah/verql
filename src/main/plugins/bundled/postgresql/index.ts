@@ -2,6 +2,7 @@ import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-postgresql',
@@ -10,7 +11,9 @@ export const manifest: PluginManifest = {
   description: 'PostgreSQL database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'postgresql', name: 'PostgreSQL' }]
+    drivers: [{ id: 'postgresql', name: 'PostgreSQL' }],
+    exporters: [{ id: 'sql', name: 'SQL (PostgreSQL)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (PostgreSQL)', extensions: ['sql'] }]
   }
 }
 
@@ -96,6 +99,9 @@ const PG_FUNCTIONS: { label: string; detail: string }[] = [
 // ─── activate ────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+
   ctx.drivers.register('postgresql', {
     createAdapter: (config) => new PostgresAdapter(config),
     connectionFields: [
