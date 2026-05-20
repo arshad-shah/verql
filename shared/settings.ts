@@ -173,6 +173,8 @@ export const defaultSettings: AppSettings = {
     { id: 'command-palette', label: 'Command Palette', keys: ['Ctrl+Shift+P', 'Cmd+Shift+P'], category: 'Navigation' },
     { id: 'focus-editor', label: 'Focus Editor', keys: ['Ctrl+1', 'Cmd+1'], category: 'Editor' },
     { id: 'save-query', label: 'Save Query', keys: ['Ctrl+S', 'Cmd+S'], category: 'Query Execution' },
+    { id: 'toggle-secondary-sidebar', label: 'Toggle Secondary Sidebar', keys: ['Ctrl+Alt+B', 'Cmd+Alt+B'], category: 'Panels' },
+    { id: 'toggle-bottom-dock', label: 'Toggle Bottom Dock', keys: ['Ctrl+J', 'Cmd+J'], category: 'Panels' },
   ],
   plugins: {},
 }

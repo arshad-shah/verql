@@ -66,6 +66,14 @@ export function App() {
         e.preventDefault()
         reopenTab()
       }
+      if (mod && e.altKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        useUiStore.getState().toggleSecondarySidebar()
+      }
+      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'j') {
+        e.preventDefault()
+        useUiStore.getState().toggleBottomDock()
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
 
