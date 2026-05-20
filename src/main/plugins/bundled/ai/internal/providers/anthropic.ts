@@ -1,6 +1,20 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 import type { AIChatMessage } from '@shared/ai-types'
 
+/**
+ * Returns true if the given Anthropic model still accepts the `temperature`
+ * parameter. Claude 4.x and newer deprecated it — sending it produces a hard
+ * 400 from the API. Matches both `claude-opus-4`, `claude-4-opus`, and the
+ * dated variants like `claude-opus-4-7`.
+ */
+function supportsTemperature(modelId: string): boolean {
+  const id = modelId.toLowerCase()
+  // Claude 4.x (any tier, any date suffix)
+  if (/claude-(opus|sonnet|haiku)-([4-9]|\d{2,})\b/.test(id)) return false
+  if (/claude-([4-9]|\d{2,})-(opus|sonnet|haiku)\b/.test(id)) return false
+  return true
+}
+
 interface AnthropicModel {
   id: string
   display_name: string
@@ -135,7 +149,10 @@ export class AnthropicProvider implements AIProvider {
       stream: true,
     }
 
-    if (request.temperature !== undefined) {
+    // Anthropic deprecated `temperature` for the Claude 4.x family (Opus 4,
+    // Sonnet 4, Haiku 4, …). Sending it returns HTTP 400, so we drop it for
+    // those model IDs and only forward it on older Claude 3.x models.
+    if (request.temperature !== undefined && supportsTemperature(request.model)) {
       body.temperature = request.temperature
     }
 
