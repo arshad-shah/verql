@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { usePluginUIStore } from '@/stores/plugin-ui'
+import { selectContributions, usePluginUIStore } from '@/stores/plugin-ui'
 import { ChatPanel } from '@/components/ai/ChatPanel'
 
 /**
@@ -10,7 +10,12 @@ import { ChatPanel } from '@/components/ai/ChatPanel'
  * Disabling/uninstalling the plugin removes the contribution and this
  * component renders nothing — the UI disappears with no extra wiring.
  *
- * To add a new host-component, add a case to `RENDERERS` below.
+ * Contribution refresh on plugin lifecycle changes is owned by the plugin-ui
+ * store (it subscribes to `plugins:ui:contributions-changed` once at module
+ * load and debounces refetches). This component only triggers the initial
+ * fetch on mount.
+ *
+ * To add a new host-component, add an entry to `RENDERERS` below.
  */
 const RENDERERS: Record<string, React.ComponentType> = {
   'ai-chat-panel': ChatPanel
@@ -24,25 +29,19 @@ interface Props {
 }
 
 export function PluginPanelMount({ surface, componentId }: Props) {
-  const contributions = usePluginUIStore((s) => s.contributions[surface] ?? [])
+  // Stable selector — returns the SAME EMPTY array reference when no data,
+  // so zustand's Object.is check doesn't spuriously re-render us.
+  const contributions = usePluginUIStore(selectContributions(surface))
   const fetchContributions = usePluginUIStore((s) => s.fetchContributions)
 
   useEffect(() => {
     fetchContributions(surface)
-    const off = window.electronAPI.on('plugins:ui:contributions-changed', () => {
-      fetchContributions(surface)
-    })
-    const offLifecycle = window.electronAPI.on('plugins:lifecycle', () => {
-      fetchContributions(surface)
-    })
-    return () => {
-      off?.()
-      offLifecycle?.()
-    }
   }, [surface, fetchContributions])
 
   const present = contributions.some((c) =>
-    c.widgets.some((w) => w.type === 'host-component' && (w as { componentId: string }).componentId === componentId)
+    c.widgets.some(
+      (w) => w.type === 'host-component' && (w as { componentId: string }).componentId === componentId
+    )
   )
 
   if (!present) return null

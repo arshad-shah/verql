@@ -24,12 +24,19 @@ export const usePluginLifecycleStore = create<PluginLifecycleState>((set) => ({
   dismiss: () => set({ pending: null })
 }))
 
-// Subscribe to main-process lifecycle broadcasts.
-if (typeof window !== 'undefined' && window.electronAPI) {
+// Subscribe to main-process lifecycle broadcasts. The flag guards against
+// HMR / test imports double-registering the listener.
+declare global {
+  // eslint-disable-next-line no-var
+  var __pluginLifecycleListenerInstalled: boolean | undefined
+}
+if (typeof window !== 'undefined' && window.electronAPI && !globalThis.__pluginLifecycleListenerInstalled) {
+  globalThis.__pluginLifecycleListenerInstalled = true
   window.electronAPI.on('plugins:lifecycle', (payload: unknown) => {
     const p = payload as PendingChange | undefined
-    if (p?.name && p.event) {
-      usePluginLifecycleStore.setState({ pending: p })
-    }
+    if (!p?.name || !p.event) return
+    const current = usePluginLifecycleStore.getState().pending
+    if (current && current.name === p.name && current.event === p.event) return
+    usePluginLifecycleStore.setState({ pending: p })
   })
 }

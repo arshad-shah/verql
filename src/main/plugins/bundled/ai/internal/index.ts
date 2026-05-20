@@ -125,12 +125,14 @@ export function startAIModule(deps: AIDeps): AIModule {
   })
 
   // ── IPC handlers via PluginContext.ipc ──────────────────────────────────────
+  // ctx.ipc.handle already tracks each registration on ctx.subscriptions, so we
+  // don't store the disposables here — the plugin host removes the handlers on
+  // deactivation. We only need to abort in-flight streams ourselves.
   const activeStreams = new Map<string, AbortController>()
-  const ipcDisposables: Disposable[] = []
   const h = <A extends unknown[], R>(
     channel: Parameters<PluginIpc['handle']>[0],
     fn: (...args: A) => R | Promise<R>
-  ) => { ipcDisposables.push(deps.ipc.handle(channel, fn as never)) }
+  ) => { deps.ipc.handle(channel, fn as never) }
 
   h('ai:chat:start', async (request: { message: string; connectionMeta?: { type: string; driverName: string } }) => {
     const streamId = randomUUID()
@@ -240,9 +242,6 @@ export function startAIModule(deps: AIDeps): AIModule {
         try { ctrl.abort() } catch { /* ignore */ }
       }
       activeStreams.clear()
-      for (const d of ipcDisposables) {
-        try { d.dispose() } catch { /* ignore */ }
-      }
     }
   }
 
