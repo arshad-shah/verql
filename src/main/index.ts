@@ -17,48 +17,6 @@ const STORAGE_NAME = 'dbstudio'
 
 app.setName(STORAGE_NAME)
 
-/**
- * One-time migration: if a previous build was started under a different
- * `setName` value (e.g. 'Nova' or 'nova'), Electron created a sibling
- * userData directory. Copy any state that landed there back into the
- * canonical STORAGE_NAME directory so the user doesn't lose connections /
- * settings written during the misconfigured window. We skip `credentials.enc`
- * because it was encrypted with the sibling's keychain key and can't be
- * decrypted under STORAGE_NAME — better to fall back to "API key missing"
- * than to overwrite the working ciphertext.
- */
-function migrateSiblingUserData(): void {
-  try {
-    const userDataDir = app.getPath('userData')
-    const parent = path.dirname(userDataDir)
-    const candidates = ['Nova', 'nova']
-    const SKIP = new Set(['credentials.enc'])
-    for (const name of candidates) {
-      if (name === path.basename(userDataDir)) continue
-      const sibling = path.join(parent, name)
-      if (!fs.existsSync(sibling)) continue
-      for (const entry of fs.readdirSync(sibling)) {
-        if (SKIP.has(entry)) continue
-        const src = path.join(sibling, entry)
-        const dst = path.join(userDataDir, entry)
-        // Prefer the newer copy. If both exist and the sibling is newer,
-        // keep the canonical one as a `.bak` so nothing is silently lost.
-        try {
-          const srcStat = fs.statSync(src)
-          if (!srcStat.isFile()) continue
-          if (fs.existsSync(dst)) {
-            const dstStat = fs.statSync(dst)
-            if (srcStat.mtimeMs <= dstStat.mtimeMs) continue
-            fs.copyFileSync(dst, `${dst}.preMigrate.bak`)
-          }
-          fs.copyFileSync(src, dst)
-        } catch { /* per-file failures are non-fatal */ }
-      }
-    }
-  } catch { /* migration is best-effort */ }
-}
-migrateSiblingUserData()
-
 function buildAppMenu(): void {
   const template: MenuItemConstructorOptions[] = [
     ...(process.platform === 'darwin'
