@@ -30,14 +30,19 @@ export const manifest: PluginManifest = {
       {
         key: 'autoIncludeSchema',
         title: 'Auto-include schema context',
+        description: 'Send a summary of the active connection’s schema with every message so the model can answer in context.',
         type: 'boolean',
         default: true
       },
       {
         key: 'maxContextMessages',
         title: 'Max context messages',
+        description: 'How many of the most recent chat messages to keep in the model’s working context. Lower values reduce token cost.',
         type: 'number',
-        default: 20
+        default: 20,
+        min: 1,
+        max: 200,
+        step: 1
       }
     ]
   }

@@ -329,9 +329,12 @@ export class PluginBootCoordinator {
     }
 
     if (c.panels) {
+      const uiPanelIds = new Set(this.deps.uiRegistry.getAllPanels().map((p) => p.id))
       for (const p of c.panels) {
         declared.push(`panel:${p.id}`)
-        if (this.deps.panelRegistry.has(p.id)) {
+        // Panels can register via either the new UIRegistry (ctx.ui.registerPanel)
+        // or the legacy PanelRegistry (ctx.panels.register); accept both.
+        if (uiPanelIds.has(p.id) || this.deps.panelRegistry.has(p.id)) {
           registered.push(`panel:${p.id}`)
         } else {
           missing.push(`panel:${p.id}`)

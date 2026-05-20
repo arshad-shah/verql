@@ -79,8 +79,16 @@ export interface PanelContributionManifest {
 export interface SettingContribution {
   key: string
   title: string
-  type: 'text' | 'password' | 'number' | 'boolean'
+  type: 'text' | 'password' | 'number' | 'boolean' | 'select'
   default?: string | number | boolean
+  /** Plain-English helper text rendered below the title. */
+  description?: string
+  /** For `type: 'number'` only. */
+  min?: number
+  max?: number
+  step?: number
+  /** For `type: 'select'` only. */
+  options?: { value: string; label: string }[]
 }
 
 export interface LoadedPlugin {

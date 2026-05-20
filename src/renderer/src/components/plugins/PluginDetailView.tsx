@@ -4,7 +4,8 @@ import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { PluginIcon } from './ExtensionsPanel'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
-import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput } from '@/primitives'
+import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput, NumberInput, Select } from '@/primitives'
+import { SettingRow } from '@/components/settings/SettingRow'
 
 interface PluginInfo {
   name: string
@@ -28,6 +29,11 @@ interface SettingSchema {
   title: string
   type: string
   default?: string | number | boolean
+  description?: string
+  min?: number
+  max?: number
+  step?: number
+  options?: { value: string; label: string }[]
 }
 
 interface Props {
@@ -340,41 +346,84 @@ function SettingsTab({ schema, values, onChange }: {
 
   return (
     <Card padding="md">
-      <Stack gap="md">
-        {schema.map(setting => (
-          <Box key={setting.key}>
-            <Text size="sm" weight="medium" className="mb-1 block">{setting.title}</Text>
-            {setting.type === 'boolean' ? (
-              <Switch
-                label={setting.title}
-                checked={Boolean(values[setting.key])}
-                onChange={e => onChange(setting.key, e.target.checked)}
-              />
-            ) : setting.type === 'password' ? (
-              <PasswordInput
-                size="sm"
-                value={String(values[setting.key] ?? '')}
-                onChange={e => onChange(setting.key, e.target.value)}
-              />
-            ) : setting.type === 'number' ? (
-              <Input
-                type="number"
-                size="sm"
-                value={String(values[setting.key] ?? '')}
-                onChange={e => onChange(setting.key, Number(e.target.value))}
-              />
-            ) : (
-              <Input
-                size="sm"
-                value={String(values[setting.key] ?? '')}
-                onChange={e => onChange(setting.key, e.target.value)}
-              />
-            )}
-          </Box>
+      <Stack gap="xs">
+        {schema.map((setting) => (
+          <SettingRow
+            key={setting.key}
+            label={setting.title}
+            description={setting.description ?? ''}
+          >
+            <PluginSettingControl
+              setting={setting}
+              value={values[setting.key]}
+              onChange={(v) => onChange(setting.key, v)}
+            />
+          </SettingRow>
         ))}
       </Stack>
     </Card>
   )
+}
+
+function PluginSettingControl({
+  setting,
+  value,
+  onChange
+}: {
+  setting: SettingSchema
+  value: unknown
+  onChange: (value: unknown) => void
+}) {
+  switch (setting.type) {
+    case 'boolean':
+      return (
+        <Switch
+          label={setting.title}
+          checked={Boolean(value)}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      )
+    case 'password':
+      return (
+        <PasswordInput
+          size="sm"
+          className="w-64"
+          value={String(value ?? '')}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )
+    case 'number':
+      return (
+        <NumberInput
+          size="sm"
+          className="w-28"
+          value={Number(value ?? setting.default ?? 0)}
+          min={setting.min}
+          max={setting.max}
+          step={setting.step ?? 1}
+          onChange={(v) => onChange(v)}
+        />
+      )
+    case 'select':
+      return (
+        <Select
+          size="sm"
+          className="w-48"
+          value={String(value ?? setting.default ?? '')}
+          options={setting.options ?? []}
+          onChange={(v) => onChange(v)}
+        />
+      )
+    default:
+      return (
+        <Input
+          size="sm"
+          className="w-64"
+          value={String(value ?? '')}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )
+  }
 }
 
 function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
