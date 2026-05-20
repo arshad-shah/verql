@@ -148,6 +148,23 @@ export function registerPluginHandlers(
     return result
   })
 
+  handle('plugins:get-commands', async () => {
+    const result: { pluginId: string; pluginDisplayName: string; commandId: string; title: string; keybinding?: string }[] = []
+    for (const plugin of pluginCoordinator.getLoadedPlugins()) {
+      if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
+      for (const cmd of plugin.manifest.contributes.commands ?? []) {
+        result.push({
+          pluginId: plugin.manifest.name,
+          pluginDisplayName: plugin.manifest.displayName,
+          commandId: cmd.id,
+          title: cmd.title,
+          keybinding: cmd.keybinding
+        })
+      }
+    }
+    return result
+  })
+
   handle('plugins:connection-fields', async () => {
     return ctx.driverRegistry.getDriverIds().map(id => {
       const factory = ctx.driverRegistry.get(id)!
@@ -201,13 +218,14 @@ export function registerPluginHandlers(
 
     if (surface === 'panels') {
       for (const entry of uiRegistry.getAllPanels()) {
+        const manifest = pluginCoordinator.getPlugin(entry.pluginName)?.manifest.contributes.panels?.find(p => p.id === entry.id)
         contributions.push({
           pluginId: entry.pluginName,
           pluginName: getDisplayName(entry.pluginName),
           surface: 'panels',
           contributionId: entry.id,
           widgets: entry.widgets,
-          meta: {}
+          meta: (manifest ?? {}) as Record<string, unknown>
         })
       }
     }
