@@ -12,7 +12,7 @@ export function registerConnectionHandlers(ctx: IpcContext, handle: Handle): voi
     const secretKeys = getSecretFieldKeys(ctx.driverRegistry)
     const existing = ctx.configStore.getConnection(profile.id)
     const merged = mergeIncomingProfile(profile, existing, secretKeys)
-    const saved = ctx.configStore.saveConnection(merged)
+    const saved = ctx.configStore.saveConnection(merged, secretKeys)
     return redactConnection(saved, secretKeys)
   })
 

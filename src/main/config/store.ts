@@ -3,6 +3,20 @@ import path from 'path'
 import type { ConnectionProfile } from '@shared/types'
 import type { AppSettings } from '@shared/settings'
 import { defaultSettings, mergeWithDefaults } from '@shared/settings'
+import {
+  extractAndPersistSecrets,
+  injectSecretsFromKeyring,
+  deleteProfileSecrets,
+  type KeyringLike,
+} from '../ipc/profile-secrets'
+
+/** No-op keyring used in environments where safeStorage is unavailable (tests). */
+const noOpKeyring: KeyringLike = {
+  listKeys: () => [],
+  storeSync: () => undefined,
+  retrieveSync: () => null,
+  delete: async () => undefined,
+}
 
 interface ConfigData {
   connections: ConnectionProfile[]
@@ -15,10 +29,17 @@ export class ConfigStore {
   private filePath: string
   private data: ConfigData
   private listeners: SettingsListener[] = []
+  private keyring: KeyringLike
 
-  constructor(filePath: string) {
+  constructor(filePath: string, keyring?: KeyringLike) {
     this.filePath = filePath
+    this.keyring = keyring ?? noOpKeyring
     this.data = this.load()
+    // Inject secrets from keyring into the in-memory profiles so all callers
+    // (adapters, plugins) always see the full plaintext connection profile.
+    this.data.connections = this.data.connections.map(p =>
+      injectSecretsFromKeyring(p, this.keyring)
+    )
   }
 
   private load(): ConfigData {
@@ -52,18 +73,81 @@ export class ConfigStore {
     return this.data.connections.find(c => c.id === id)
   }
 
-  saveConnection(profile: ConnectionProfile): ConnectionProfile {
+  /**
+   * Persist a connection profile.
+   *
+   * When `secretKeys` is provided, secret fields are extracted into the keyring
+   * and the on-disk record is written with those fields blanked. The returned
+   * profile and the in-memory state always contain plaintext secrets so that
+   * existing callers (adapters, plugins) continue to work without changes.
+   *
+   * When `secretKeys` is omitted the profile is written as-is (legacy / test path).
+   */
+  saveConnection(profile: ConnectionProfile, secretKeys?: Iterable<string>): ConnectionProfile {
+    let onDisk: ConnectionProfile
+    let inMemory: ConnectionProfile
+
+    if (secretKeys) {
+      // Strip secrets → keyring, blank on disk
+      onDisk = extractAndPersistSecrets(profile, secretKeys, this.keyring)
+      // Re-inject from keyring so in-memory copy is always complete
+      inMemory = injectSecretsFromKeyring(onDisk, this.keyring)
+    } else {
+      onDisk = profile
+      inMemory = profile
+    }
+
+    // Update in-memory store (plaintext)
     const idx = this.data.connections.findIndex(c => c.id === profile.id)
     if (idx >= 0) {
-      this.data.connections[idx] = profile
+      this.data.connections[idx] = inMemory
     } else {
-      this.data.connections.push(profile)
+      this.data.connections.push(inMemory)
     }
-    this.save()
-    return profile
+
+    // Persist to disk with secrets blanked
+    this._persist(onDisk)
+    return inMemory
+  }
+
+  /**
+   * Write a single profile to disk (secrets should already be stripped before
+   * calling this). Updates the on-disk JSON without touching the in-memory state.
+   */
+  private _persist(profile: ConnectionProfile): void {
+    // Build the list we'll write: replace the matching entry (or append) with
+    // the stripped/on-disk version, leaving all other profiles untouched on disk.
+    // We need to read what's currently on disk to avoid writing plaintext for
+    // other profiles that may still be in-memory only.
+    let diskConnections: ConnectionProfile[]
+    try {
+      if (fs.existsSync(this.filePath)) {
+        const raw = fs.readFileSync(this.filePath, 'utf-8')
+        diskConnections = (JSON.parse(raw) as { connections?: ConnectionProfile[] }).connections ?? []
+      } else {
+        diskConnections = []
+      }
+    } catch {
+      diskConnections = []
+    }
+    const diskIdx = diskConnections.findIndex(c => c.id === profile.id)
+    if (diskIdx >= 0) {
+      diskConnections[diskIdx] = profile
+    } else {
+      diskConnections.push(profile)
+    }
+    // Write full config with updated connections list
+    const dir = path.dirname(this.filePath)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    const diskData = {
+      connections: diskConnections,
+      settings: this.data.settings,
+    }
+    fs.writeFileSync(this.filePath, JSON.stringify(diskData, null, 2), 'utf-8')
   }
 
   deleteConnection(id: string): void {
+    deleteProfileSecrets(id, this.keyring)
     this.data.connections = this.data.connections.filter(c => c.id !== id)
     this.save()
   }

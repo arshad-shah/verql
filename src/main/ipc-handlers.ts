@@ -33,12 +33,15 @@ import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
 import { registerPluginHandlers } from './ipc/plugins'
 import { registerAppHandlers } from './ipc/app'
+import { getSecretFieldKeys, SECRET_PLACEHOLDER } from './ipc/secrets'
 
 export function registerIpcHandlers(): void {
   const configPath = path.join(app.getPath('userData'), 'config.json')
+  // KeyringService must be created before ConfigStore so it can be passed in.
+  const keyring = new KeyringService()
   const ctx: IpcContext = {
-    configStore: new ConfigStore(configPath),
-    keyring: new KeyringService(),
+    configStore: new ConfigStore(configPath, keyring),
+    keyring,
     driverRegistry: new DriverRegistryImpl(),
     activeAdapters: new Map<string, DbAdapter>()
   }
@@ -96,7 +99,25 @@ export function registerIpcHandlers(): void {
   pluginCoordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
   pluginCoordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
 
-  pluginCoordinator.boot().catch(err => console.error('[plugins] Boot failed:', err))
+  pluginCoordinator.boot()
+    .then(() => {
+      // One-time inline-secrets migration: pre-encryption builds wrote passwords
+      // directly into config.json. Sweep them into the keyring so config.json
+      // no longer holds any secrets. This is safe to run on every startup —
+      // if the value is already in the keyring and blanked on disk, the profile
+      // loaded into memory via injectSecretsFromKeyring will have an empty string
+      // for the field (already migrated), so `hasInline` will be false and we skip.
+      const secretKeys = getSecretFieldKeys(ctx.driverRegistry)
+      for (const profile of ctx.configStore.listConnections()) {
+        const hasInline = [...secretKeys].some(k => {
+          const v = (profile as unknown as Record<string, unknown>)[k]
+          return typeof v === 'string' && v.length > 0 && v !== SECRET_PLACEHOLDER
+        })
+        if (!hasInline) continue
+        ctx.configStore.saveConnection(profile, secretKeys)
+      }
+    })
+    .catch(err => console.error('[plugins] Boot failed:', err))
 
   registerPluginHandlers(ctx, handle, {
     uiRegistry,
