@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { Flex, Box, Text, Button, Spinner } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 type InstallState = 'idle' | 'drag-over' | 'installing' | 'error'
 
@@ -15,8 +16,8 @@ export function InstallPluginTab() {
     setErrorMessage(null)
     try {
       const result = filePath.endsWith('.zip')
-        ? await window.electronAPI.invoke('plugins:install-from-zip', filePath)
-        : await window.electronAPI.invoke('plugins:install-from-path', filePath)
+        ? await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_ZIP, filePath)
+        : await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_PATH, filePath)
       if (result.success) {
         addToast({ type: 'success', title: 'Plugin installed', message: result.name ?? undefined })
       } else {
@@ -61,7 +62,7 @@ export function InstallPluginTab() {
 
   const handleBrowse = useCallback(async () => {
     if (state === 'installing') return
-    const filePath = await window.electronAPI.invoke('plugins:open-install-dialog')
+    const filePath = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_OPEN_INSTALL_DIALOG)
     if (!filePath) return
     installFromPath(filePath)
   }, [state, installFromPath])

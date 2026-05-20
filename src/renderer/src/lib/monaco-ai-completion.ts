@@ -1,5 +1,6 @@
 import type { Monaco } from '@monaco-editor/react'
 import type { editor, Position, CancellationToken, languages } from 'monaco-editor'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let currentConnectionId: string | null = null
@@ -39,7 +40,7 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
           }
 
           try {
-            const result = await window.electronAPI.invoke('ai:complete-sql', {
+            const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_COMPLETE_SQL, {
               sql: fullText,
               cursorOffset: offset,
               connectionId: currentConnectionId!

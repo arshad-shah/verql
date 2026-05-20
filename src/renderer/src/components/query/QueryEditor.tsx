@@ -10,6 +10,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { Flex, Text, useTheme } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tabId: string
@@ -175,7 +176,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
       updateCompletionItems([])
       return
     }
-    window.electronAPI.invoke('plugins:completions', databaseType, connectionId, {
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_COMPLETIONS, databaseType, connectionId, {
       connectionId,
       schema: schema ?? undefined
     })

@@ -4,6 +4,7 @@ import { File, Shield, X, ChevronDown, ClipboardPaste, Upload } from 'lucide-rea
 import { cn } from '../utils/cn'
 import { DropdownMenu } from '../surfaces/DropdownMenu'
 import { Textarea } from './Textarea'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 const browseRowVariants = cva(
   'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)]',
@@ -88,7 +89,7 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
       const filters = accept
         ? [{ name: 'Files', extensions: accept.split(',').map(e => e.trim().replace(/^\./, '')) }]
         : undefined
-      const result = await window.electronAPI.invoke('dialog:open-file', { filters })
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE, { filters })
       if ('cancelled' in result) return
       setFileName(result.filePath)
       setMode('browse')

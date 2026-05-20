@@ -27,6 +27,7 @@ import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import { IPC_EVENTS } from '@shared/ipc'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
@@ -107,9 +108,9 @@ export function App() {
 
     // Listen for native menu commands
     const cleanups = [
-      window.electronAPI.on('menu:new-query-tab', () => addQueryTab(activeConnectionId)),
-      window.electronAPI.on('menu:new-connection', () => openConnectionForm()),
-      window.electronAPI.on('menu:toggle-command-palette', () => setPaletteOpen(prev => !prev)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => addQueryTab(activeConnectionId)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
+      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
     ]
 
     const handleStatusBarNewConn = () => openConnectionForm()

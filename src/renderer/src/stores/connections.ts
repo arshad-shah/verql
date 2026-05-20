@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { ConnectionProfile } from '@shared/types'
 import { useNotificationsStore } from './notifications'
 import { useToastStore } from './toast'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface ConnectionsState {
   connections: ConnectionProfile[]
@@ -36,15 +37,15 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
   setLoading: (loading) => set({ loading }),
   loadConnections: async () => {
     set({ loading: true })
-    const connections = await window.electronAPI.invoke('connections:list')
+    const connections = await window.electronAPI.invoke(IPC_CHANNELS.CONNECTIONS_LIST)
     set({ connections, loading: false })
   },
   saveConnection: async (profile) => {
-    await window.electronAPI.invoke('connections:save', profile)
+    await window.electronAPI.invoke(IPC_CHANNELS.CONNECTIONS_SAVE, profile)
     await get().loadConnections()
   },
   deleteConnection: async (id) => {
-    await window.electronAPI.invoke('connections:delete', id)
+    await window.electronAPI.invoke(IPC_CHANNELS.CONNECTIONS_DELETE, id)
     const state = get()
     if (state.activeConnectionId === id) set({ activeConnectionId: null })
     await state.loadConnections()
@@ -61,7 +62,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
       persistent: true,
     })
 
-    const result = await window.electronAPI.invoke('db:connect', id)
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.DB_CONNECT, id)
     if (result.success) {
       get().addConnected(id)
       set({ activeConnectionId: id })
@@ -102,7 +103,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
       type: 'info',
       title: `Disconnected from ${name}`,
     })
-    await window.electronAPI.invoke('db:disconnect', id)
+    await window.electronAPI.invoke(IPC_CHANNELS.DB_DISCONNECT, id)
     get().removeConnected(id)
     useNotificationsStore.getState().addNotification({
       type: 'info',

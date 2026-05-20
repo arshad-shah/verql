@@ -385,3 +385,154 @@ export interface IpcChannelMap {
     return: void
   }
 }
+
+// ─── Central channel registry ───────────────────────────────────────────────
+//
+// Use these constants instead of inline string literals at every IPC call
+// site. Adding a new channel is a three-step operation, all in this file:
+//
+//   1. Add the channel definition to `IpcChannelMap` above (args + return).
+//   2. Add the matching constant to `IPC_CHANNELS` below.
+//   3. Use `IPC_CHANNELS.<NAME>` from both main and renderer.
+//
+// The `satisfies` clause makes TypeScript reject any constant whose value
+// isn't a key of `IpcChannelMap`. The coverage test (tests/unit/ipc-channels-
+// coverage.test.ts) makes TypeScript reject any IpcChannelMap key that
+// doesn't appear in IPC_CHANNELS. Together they keep this registry the
+// single source of truth.
+
+export type IpcChannel = keyof IpcChannelMap
+
+export const IPC_CHANNELS = {
+  // ── Database lifecycle ─────────────────────────────────────────────────
+  DB_CONNECT: 'db:connect',
+  DB_DISCONNECT: 'db:disconnect',
+  DB_QUERY: 'db:query',
+  DB_TEST_CONNECTION: 'db:test-connection',
+  DB_CONNECTION_OPTIONS: 'db:connection-options',
+  DB_CANCEL_QUERY: 'db:cancel-query',
+  DB_SAMPLE_QUERY: 'db:sample-query',
+  DB_DRIVER_CAPABILITIES: 'db:driver-capabilities',
+  // ── Schema introspection ───────────────────────────────────────────────
+  DB_GET_TABLES: 'db:get-tables',
+  DB_GET_COLUMNS: 'db:get-columns',
+  DB_GET_INDEXES: 'db:get-indexes',
+  DB_GET_SCHEMAS: 'db:get-schemas',
+  DB_GET_DATABASES: 'db:get-databases',
+  DB_GET_ROW_COUNT: 'db:get-row-count',
+  DB_GET_SCHEMA_OBJECTS: 'db:get-schema-objects',
+  DB_GET_TABLE_NAMES: 'db:get-table-names',
+  // ── Database session controls ─────────────────────────────────────────
+  DB_SWITCH_DATABASE: 'db:switch-database',
+  DB_SWITCH_WAREHOUSE: 'db:switch-warehouse',
+  DB_SWITCH_ROLE: 'db:switch-role',
+  DB_SET_SCHEMA: 'db:set-schema',
+  // ── Connection profiles ────────────────────────────────────────────────
+  CONNECTIONS_LIST: 'connections:list',
+  CONNECTIONS_SAVE: 'connections:save',
+  CONNECTIONS_DELETE: 'connections:delete',
+  // ── Export / Import ────────────────────────────────────────────────────
+  EXPORT_TABLE: 'export:table',
+  EXPORT_QUERY_RESULT: 'export:query-result',
+  IMPORT_CSV: 'import:csv',
+  IMPORT_SQL: 'import:sql',
+  // ── Migration ──────────────────────────────────────────────────────────
+  MIGRATION_TYPE_MAP: 'migration:type-map',
+  MIGRATION_GENERATE_DDL: 'migration:generate-ddl',
+  // ── Plugins ────────────────────────────────────────────────────────────
+  PLUGINS_LIST: 'plugins:list',
+  PLUGINS_ACTIVATE: 'plugins:activate',
+  PLUGINS_DEACTIVATE: 'plugins:deactivate',
+  PLUGINS_INSTALL_FROM_PATH: 'plugins:install-from-path',
+  PLUGINS_INSTALL_FROM_ZIP: 'plugins:install-from-zip',
+  PLUGINS_OPEN_INSTALL_DIALOG: 'plugins:open-install-dialog',
+  PLUGINS_UNINSTALL: 'plugins:uninstall',
+  PLUGINS_ERRORS: 'plugins:errors',
+  PLUGINS_GET_SETTINGS: 'plugins:get-settings',
+  PLUGINS_SET_SETTING: 'plugins:set-setting',
+  PLUGINS_CONNECTION_FIELDS: 'plugins:connection-fields',
+  PLUGINS_MIDDLEWARE_FIELDS: 'plugins:middleware-fields',
+  PLUGINS_GET_COMMANDS: 'plugins:get-commands',
+  PLUGINS_COMPLETIONS: 'plugins:completions',
+  PLUGINS_GET_CATEGORIZED_SETTINGS: 'plugins:get-categorized-settings',
+  PLUGINS_UI_GET_CONTRIBUTIONS: 'plugins:ui:get-contributions',
+  PLUGINS_UI_RESOLVE: 'plugins:ui:resolve',
+  PLUGINS_UI_ACTION: 'plugins:ui:action',
+  PLUGINS_UI_CONTRIBUTIONS_CHANGED: 'plugins:ui:contributions-changed',
+  // ── App settings ───────────────────────────────────────────────────────
+  SETTINGS_GET_ALL: 'settings:get-all',
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_SET: 'settings:set',
+  SETTINGS_RESET: 'settings:reset',
+  // ── File dialogs ───────────────────────────────────────────────────────
+  DIALOG_OPEN_FILE: 'dialog:open-file',
+  DIALOG_OPEN_FILE_PATH: 'dialog:open-file-path',
+  // ── Keyring ────────────────────────────────────────────────────────────
+  KEYRING_STORE: 'keyring:store',
+  KEYRING_RETRIEVE: 'keyring:retrieve',
+  KEYRING_DELETE: 'keyring:delete',
+  // ── AI ─────────────────────────────────────────────────────────────────
+  AI_CHAT_START: 'ai:chat:start',
+  AI_CHAT_ABORT: 'ai:chat:abort',
+  AI_CHAT_APPROVAL_RESPONSE: 'ai:chat:approval-response',
+  AI_PROVIDERS_LIST: 'ai:providers:list',
+  AI_PROVIDERS_LIST_CONFIGURED: 'ai:providers:list-configured',
+  AI_PROVIDERS_SET_ACTIVE: 'ai:providers:set-active',
+  AI_PROVIDERS_GET_ACTIVE: 'ai:providers:get-active',
+  AI_MODELS_LIST: 'ai:models:list',
+  AI_MODELS_SET_ACTIVE: 'ai:models:set-active',
+  AI_MODELS_GET_ACTIVE: 'ai:models:get-active',
+  AI_MESSAGES_LIST: 'ai:messages:list',
+  AI_MESSAGES_CLEAR: 'ai:messages:clear',
+  AI_TOOLS_LIST: 'ai:tools:list',
+  AI_KEYS_HAS: 'ai:keys:has',
+  AI_KEYS_SET: 'ai:keys:set',
+  AI_GENERATE_SQL: 'ai:generate-sql',
+  AI_COMPLETE_SQL: 'ai:complete-sql',
+  AI_EXPLAIN_RESULTS: 'ai:explain-results',
+  // ── MCP server ─────────────────────────────────────────────────────────
+  MCP_START: 'mcp:start',
+  MCP_STOP: 'mcp:stop',
+  MCP_STATUS: 'mcp:status',
+  MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
+  // ── App lifecycle ──────────────────────────────────────────────────────
+  APP_RESTART: 'app:restart'
+} as const satisfies Record<string, IpcChannel>
+
+// ─── Broadcast events (main → renderer push) ────────────────────────────────
+//
+// Unlike invoke channels these are one-way notifications without a return
+// value. The renderer subscribes via `window.electronAPI.on(IPC_EVENTS.X, …)`.
+// The contract here keeps both sides honest about payload shape.
+
+export interface IpcEventMap {
+  /** Stream events for an in-flight AI chat (delta tokens, tool calls, …). */
+  'ai:chat:event': [event: AIStreamEvent]
+  /** MCP server requested user approval for a sensitive action. */
+  'mcp:approval-request': [request: AIApprovalRequest]
+  /** App menu accelerator: focus / create a new query tab. */
+  'menu:new-query-tab': []
+  /** App menu accelerator: open the new-connection form. */
+  'menu:new-connection': []
+  /** App menu accelerator: toggle the command palette. */
+  'menu:toggle-command-palette': []
+  /** A plugin transitioned through its lifecycle. */
+  'plugins:lifecycle': [payload: { name: string; event: 'activated' | 'deactivated' | 'installed' | 'uninstalled' }]
+  /** Plugin UI contributions have changed; renderer should refetch. */
+  'plugins:ui:contributions-changed': []
+  /** A setting changed; renderer mirrors should refresh. */
+  'settings:changed': [payload: { keyPath: string; value: unknown }]
+}
+
+export type IpcEvent = keyof IpcEventMap
+
+export const IPC_EVENTS = {
+  AI_CHAT_EVENT: 'ai:chat:event',
+  MCP_APPROVAL_REQUEST: 'mcp:approval-request',
+  MENU_NEW_QUERY_TAB: 'menu:new-query-tab',
+  MENU_NEW_CONNECTION: 'menu:new-connection',
+  MENU_TOGGLE_COMMAND_PALETTE: 'menu:toggle-command-palette',
+  PLUGINS_LIFECYCLE: 'plugins:lifecycle',
+  PLUGINS_UI_CONTRIBUTIONS_CHANGED: 'plugins:ui:contributions-changed',
+  SETTINGS_CHANGED: 'settings:changed'
+} as const satisfies Record<string, IpcEvent>

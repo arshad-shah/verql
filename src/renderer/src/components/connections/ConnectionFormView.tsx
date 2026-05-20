@@ -10,6 +10,7 @@ import {
   FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput,
   Button, Spinner
 } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tabId: string
@@ -63,8 +64,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   })
 
   useEffect(() => {
-    window.electronAPI.invoke('plugins:connection-fields').then(setPluginDrivers).catch(() => {})
-    window.electronAPI.invoke('plugins:middleware-fields').then(setMiddlewareFields).catch(() => {})
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_CONNECTION_FIELDS).then(setPluginDrivers).catch(() => {})
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_MIDDLEWARE_FIELDS).then(setMiddlewareFields).catch(() => {})
   }, [])
 
   const allTypes = pluginDrivers.map(d => ({

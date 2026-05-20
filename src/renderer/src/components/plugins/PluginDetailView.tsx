@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput, NumberInput, Select } from '@/primitives'
 import { SettingRow } from '@/components/settings/SettingRow'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface PluginInfo {
   name: string
@@ -80,7 +81,7 @@ export function PluginDetailView({ pluginName }: Props) {
   const addToast = useToastStore(s => s.addToast)
 
   const loadPlugin = async () => {
-    const list: PluginInfo[] = await window.electronAPI.invoke('plugins:list')
+    const list: PluginInfo[] = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_LIST)
     const found = list.find(p => p.name === pluginName)
     if (found) setPlugin(found)
   }
@@ -88,13 +89,13 @@ export function PluginDetailView({ pluginName }: Props) {
   useEffect(() => { loadPlugin() }, [pluginName])
 
   useEffect(() => {
-    window.electronAPI.invoke('plugins:errors', pluginName)
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_ERRORS, pluginName)
       .then(setErrors)
       .catch(() => {})
   }, [pluginName])
 
   useEffect(() => {
-    window.electronAPI.invoke('plugins:get-settings', pluginName)
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_GET_SETTINGS, pluginName)
       .then(({ schema, values }: { schema: SettingSchema[]; values: Record<string, unknown> }) => {
         setSettingsSchema(schema)
         setSettingsValues(values)
@@ -103,7 +104,7 @@ export function PluginDetailView({ pluginName }: Props) {
   }, [pluginName])
 
   const handleActivate = async () => {
-    const result = await window.electronAPI.invoke('plugins:activate', pluginName)
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_ACTIVATE, pluginName)
     if (!result.success) addToast({ type: 'error', title: 'Failed to activate', message: result.error })
     // Force immediate UI refresh
     const uiStore = usePluginUIStore.getState()
@@ -118,7 +119,7 @@ export function PluginDetailView({ pluginName }: Props) {
   }
 
   const handleDeactivate = async () => {
-    await window.electronAPI.invoke('plugins:deactivate', pluginName)
+    await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_DEACTIVATE, pluginName)
     // Force immediate UI cleanup — don't wait for debounced event
     const uiStore = usePluginUIStore.getState()
     uiStore.invalidateAll()
@@ -133,12 +134,12 @@ export function PluginDetailView({ pluginName }: Props) {
 
   const handleUninstall = async () => {
     setShowUninstallConfirm(false)
-    await window.electronAPI.invoke('plugins:uninstall', pluginName)
+    await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UNINSTALL, pluginName)
   }
 
   const handleSettingChange = async (key: string, value: unknown) => {
     setSettingsValues(prev => ({ ...prev, [key]: value }))
-    await window.electronAPI.invoke('plugins:set-setting', pluginName, key, value)
+    await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_SET_SETTING, pluginName, key, value)
   }
 
   if (!plugin) {

@@ -5,6 +5,7 @@ import { ThemeProvider } from './primitives/theme/ThemeProvider'
 import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import './styles/globals.css'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 function AppLoader() {
   const hydrate = useSettingsStore((s) => s.hydrate)
@@ -19,7 +20,7 @@ function AppLoader() {
 
       if (oldTheme || oldSidebarWidth || oldSplitRatio) {
         if (oldTheme) {
-          await window.electronAPI.invoke('settings:set', 'appearance.theme', oldTheme)
+          await window.electronAPI.invoke(IPC_CHANNELS.SETTINGS_SET, 'appearance.theme', oldTheme)
         }
         if (oldSidebarWidth) {
           await window.electronAPI.invoke(

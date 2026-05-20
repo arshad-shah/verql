@@ -6,6 +6,7 @@ import type {
   AIApprovalRequest,
   AIStreamEvent
 } from '@shared/ai-types'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { parseAppError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useUiStore } from './ui'
@@ -88,7 +89,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, userMsg] }))
 
-    const result = await window.electronAPI.invoke('ai:chat:start', {
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_START, {
       message,
       ...(connectionId ? { connectionId } : {}),
       ...(connectionMeta ? { connectionMeta } : {}),
@@ -98,25 +99,25 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   clearMessages: async () => {
-    await window.electronAPI.invoke('ai:messages:clear')
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_CLEAR)
     set({ messages: [], sessionStats: { ...EMPTY_STATS } })
   },
 
   abort: async () => {
     const { currentStreamId } = get()
     if (currentStreamId) {
-      await window.electronAPI.invoke('ai:chat:abort', currentStreamId)
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_ABORT, currentStreamId)
     }
     set({ isStreaming: false, streamingContent: '', currentStreamId: null })
   },
 
   loadProviders: async () => {
-    const providers = await window.electronAPI.invoke('ai:providers:list') as AIProviderInfo[]
+    const providers = await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_LIST) as AIProviderInfo[]
     set({ providers })
   },
 
   loadConfiguredProviders: async () => {
-    const providers = await window.electronAPI.invoke('ai:providers:list-configured') as AIProviderInfo[]
+    const providers = await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_LIST_CONFIGURED) as AIProviderInfo[]
     set({ providers })
 
     // Auto-select if only one configured
@@ -125,7 +126,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       await get().setActiveProvider(providers[0])
     } else if (providers.length > 0 && !activeProvider) {
       // Restore active from the list
-      const active = await window.electronAPI.invoke('ai:providers:get-active') as AIProviderInfo | null
+      const active = await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_GET_ACTIVE) as AIProviderInfo | null
       if (active && providers.some(p => p.id === active.id)) {
         set({ activeProvider: active })
       } else {
@@ -135,34 +136,34 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   loadModels: async () => {
-    const models = await window.electronAPI.invoke('ai:models:list') as AIModelInfo[]
+    const models = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_LIST) as AIModelInfo[]
     set({ models })
   },
 
   setActiveProvider: async (provider) => {
     if (provider) {
-      await window.electronAPI.invoke('ai:providers:set-active', provider.id)
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_SET_ACTIVE, provider.id)
     }
     set({ activeProvider: provider })
     // Reload models for the new provider
-    const models = await window.electronAPI.invoke('ai:models:list') as AIModelInfo[]
+    const models = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_LIST) as AIModelInfo[]
     set({ models })
   },
 
   setActiveModel: async (model) => {
     if (model) {
-      await window.electronAPI.invoke('ai:models:set-active', model)
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_SET_ACTIVE, model)
     }
     set({ activeModel: model })
   },
 
   respondToApproval: async (requestId, approved) => {
-    await window.electronAPI.invoke('ai:chat:approval-response', requestId, approved)
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_APPROVAL_RESPONSE, requestId, approved)
     set({ pendingApproval: null })
   },
 
   respondToMCPApproval: async (requestId, approved) => {
-    await window.electronAPI.invoke('mcp:approval-response', requestId, approved)
+    await window.electronAPI.invoke(IPC_CHANNELS.MCP_APPROVAL_RESPONSE, requestId, approved)
     set({ mcpPendingApproval: null })
   },
 
@@ -273,7 +274,7 @@ export const useAIStore = create<AIState>((set, get) => ({
 
 // Set up IPC listeners
 if (typeof window !== 'undefined' && window.electronAPI) {
-  window.electronAPI.on('ai:chat:event', (streamId: unknown, event: unknown) => {
+  window.electronAPI.on(IPC_EVENTS.AI_CHAT_EVENT, (streamId: unknown, event: unknown) => {
     const state = useAIStore.getState()
     if (streamId === state.currentStreamId) {
       state.handleStreamEvent(event as AIStreamEvent)
@@ -281,7 +282,7 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   })
 
   // MCP approval requests
-  window.electronAPI.on('mcp:approval-request', (request: unknown) => {
+  window.electronAPI.on(IPC_EVENTS.MCP_APPROVAL_REQUEST, (request: unknown) => {
     const req = request as { requestId: string; sql: string }
     useAIStore.setState({ mcpPendingApproval: req })
   })
