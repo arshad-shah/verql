@@ -27,6 +27,11 @@ import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
+
+// Register CodeLens statement contributions once at module init. Re-registration
+// is a no-op (the registry replaces by dbType), so HMR remains safe.
+registerBuiltinStatementContributions()
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
