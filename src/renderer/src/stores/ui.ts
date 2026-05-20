@@ -3,7 +3,7 @@ import { useSettingsStore } from './settings'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
-export type SecondaryPanelId = 'inspector' | (string & {})
+export type SecondaryPanelId = 'inspector' | 'notifications' | (string & {})
 export type BottomPanelId = 'results' | (string & {})
 
 export type SettingsCategoryId =
@@ -76,7 +76,7 @@ export const useUiStore = create<UiState>((set) => ({
       return { expandedTreeNodes: next }
     }),
   collapseAllTreeNodes: () => set({ expandedTreeNodes: new Set<string>() }),
-  secondarySidebarVisible: false,
+  secondarySidebarVisible: useSettingsStore.getState().settings.appearance.showSecondarySidebar,
   secondaryActivePanel: 'inspector',
   setSecondaryActivePanel: (panel) =>
     set((state) => ({
@@ -90,7 +90,7 @@ export const useUiStore = create<UiState>((set) => ({
     const clamped = Math.min(640, Math.max(220, width))
     useSettingsStore.getState().set('appearance.secondarySidebarWidth', clamped)
   },
-  bottomDockVisible: true,
+  bottomDockVisible: useSettingsStore.getState().settings.appearance.showBottomDock,
   bottomDockActivePanel: 'results',
   setBottomDockActivePanel: (panel) =>
     set((state) => ({

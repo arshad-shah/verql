@@ -4,6 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
+import { NotificationsSidebar } from './NotificationsSidebar'
 
 export function SecondarySidebar() {
   const active = useUiStore(s => s.secondaryActivePanel)
@@ -11,6 +12,17 @@ export function SecondarySidebar() {
   const fetchContributions = usePluginUIStore(s => s.fetchContributions)
 
   useEffect(() => { fetchContributions('panels') }, [fetchContributions])
+
+  if (active === 'notifications') {
+    return (
+      <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
+        <PanelHeader title="Notifications" />
+        <Box className="flex-1 overflow-auto">
+          <NotificationsSidebar />
+        </Box>
+      </Flex>
+    )
+  }
 
   if (active === 'inspector') {
     return (
