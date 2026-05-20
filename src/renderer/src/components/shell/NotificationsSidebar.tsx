@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNotificationsStore, type Notification } from '@/stores/notifications'
 import {
   Bell,
@@ -8,8 +9,10 @@ import {
   Info,
   CheckCircle,
   X,
+  Copy,
+  Check,
 } from 'lucide-react'
-import { Flex, Text, Button, Box, EmptyState } from '@/primitives'
+import { Flex, Text, Button, EmptyState } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 
 const typeIcons: Record<Notification['type'], typeof AlertCircle> = {
@@ -44,9 +47,32 @@ function formatRelativeTime(timestamp: number): string {
   return `${days}d ago`
 }
 
+function buildCopyPayload(n: Notification): string {
+  const parts = [n.title]
+  if (n.message) parts.push(n.message)
+  const sourceBits: string[] = []
+  if (n.source) sourceBits.push(`source: ${n.source.label} (${n.source.type}:${n.source.id})`)
+  sourceBits.push(`at: ${new Date(n.timestamp).toISOString()}`)
+  parts.push(sourceBits.join(' · '))
+  return parts.join('\n')
+}
+
 function NotificationItem({ notification }: { notification: Notification }) {
   const { markRead, removeNotification } = useNotificationsStore()
   const Icon = typeIcons[notification.type]
+  const [copied, setCopied] = useState(false)
+  const isError = notification.type === 'error'
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(buildCopyPayload(notification))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* clipboard blocked — silent */
+    }
+  }
 
   return (
     <div
@@ -92,13 +118,17 @@ function NotificationItem({ notification }: { notification: Notification }) {
         </Text>
 
         {notification.message && (
-          <Text
-            size="xs"
-            color="muted"
-            className="mt-0.5 leading-snug line-clamp-2 break-words"
+          <div
+            className={cn(
+              'mt-0.5 leading-snug break-words text-text-muted text-xs',
+              isError
+                ? 'font-mono whitespace-pre-wrap select-text cursor-text'
+                : 'line-clamp-2'
+            )}
+            onClick={isError ? (e) => e.stopPropagation() : undefined}
           >
             {notification.message}
-          </Text>
+          </div>
         )}
 
         <Flex align="center" gap="xs" className="mt-1">
@@ -120,21 +150,37 @@ function NotificationItem({ notification }: { notification: Notification }) {
         </Flex>
       </div>
 
-      {/* Dismiss button — visible on hover */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          removeNotification(notification.id)
-        }}
-        className={cn(
-          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded',
-          'text-text-disabled hover:text-text-primary hover:bg-white/5',
-          'opacity-0 group-hover:opacity-100 transition-opacity'
+      {/* Action buttons — copy for errors (always visible), dismiss on hover */}
+      <Flex direction="column" gap="xs" className="mt-0.5 shrink-0">
+        {isError && (
+          <button
+            onClick={handleCopy}
+            className={cn(
+              'flex h-5 w-5 items-center justify-center rounded',
+              'text-text-disabled hover:text-text-primary hover:bg-white/5',
+              'transition-colors'
+            )}
+            aria-label={copied ? 'Copied' : 'Copy error details'}
+            title={copied ? 'Copied' : 'Copy error details'}
+          >
+            {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+          </button>
         )}
-        aria-label="Dismiss notification"
-      >
-        <X size={12} />
-      </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            removeNotification(notification.id)
+          }}
+          className={cn(
+            'flex h-5 w-5 items-center justify-center rounded',
+            'text-text-disabled hover:text-text-primary hover:bg-white/5',
+            isError ? 'transition-colors' : 'opacity-0 group-hover:opacity-100 transition-opacity'
+          )}
+          aria-label="Dismiss notification"
+        >
+          <X size={12} />
+        </button>
+      </Flex>
     </div>
   )
 }

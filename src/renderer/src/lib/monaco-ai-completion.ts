@@ -61,6 +61,10 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
         }, 300)
       })
     },
-    freeInlineCompletions: () => { /* no-op */ }
-  })
+    freeInlineCompletions: () => { /* no-op */ },
+    // Monaco renamed `freeInlineCompletions` → `disposeInlineCompletions` in
+    // newer builds. Some builds call the new name and crash if it's missing.
+    // Provide both so we work across the bundled Monaco versions.
+    disposeInlineCompletions: () => { /* no-op */ },
+  } as Parameters<typeof monaco.languages.registerInlineCompletionsProvider>[1])
 }
