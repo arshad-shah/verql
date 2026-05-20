@@ -277,6 +277,14 @@ export interface IpcChannelMap {
     args: []
     return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
   }
+  'ai:keys:has': {
+    args: [provider: 'openai' | 'anthropic']
+    return: boolean
+  }
+  'ai:keys:set': {
+    args: [provider: 'openai' | 'anthropic', value: string]
+    return: void
+  }
   // ─── AI Enhancements ────────────────────────────────────────────────────────
   'ai:generate-sql': {
     args: [request: { prompt: string; connectionId: string; schema?: string }]

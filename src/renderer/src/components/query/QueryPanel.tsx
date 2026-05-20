@@ -8,11 +8,24 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useSettingsStore } from '@/stores/settings'
+import { useSchemaStore } from '@/stores/schema'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Text, Box, Alert } from '@/primitives'
 
 interface Props {
   tab: QueryTab
+}
+
+const DDL_PATTERN = /(^|;)\s*(CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT|GRANT|REVOKE)\b/i
+
+function stripSqlNoise(sql: string): string {
+  return sql
+    .replace(/--[^\n]*/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+}
+
+function isSchemaMutatingSql(sql: string): boolean {
+  return DDL_PATTERN.test(stripSqlNoise(sql))
 }
 
 export function QueryPanel({ tab }: Props) {
@@ -54,6 +67,9 @@ export function QueryPanel({ tab }: Props) {
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
       if (result) setTabResults(tab.id, result)
+      if (isSchemaMutatingSql(tab.sql) && tab.connectionId) {
+        useSchemaStore.getState().clearCache(tab.connectionId)
+      }
     } catch (err) {
       const message = (err as Error).message
       setTabError(tab.id, message)

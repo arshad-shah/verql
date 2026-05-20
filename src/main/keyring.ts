@@ -21,11 +21,30 @@ export class KeyringService {
   }
 
   async retrieve(profileId: string, key: string): Promise<string | null> {
+    return this.retrieveSync(profileId, key)
+  }
+
+  retrieveSync(profileId: string, key: string): string | null {
     const compositeKey = `${profileId}:${key}`
     const encoded = this.cache[compositeKey]
     if (!encoded) return null
     const buffer = Buffer.from(encoded, 'base64')
     return safeStorage.decryptString(buffer)
+  }
+
+  has(profileId: string, key: string): boolean {
+    return Boolean(this.cache[`${profileId}:${key}`])
+  }
+
+  storeSync(profileId: string, key: string, value: string): void {
+    const compositeKey = `${profileId}:${key}`
+    if (!value) {
+      delete this.cache[compositeKey]
+    } else {
+      const encrypted = safeStorage.encryptString(value)
+      this.cache[compositeKey] = encrypted.toString('base64')
+    }
+    this.save()
   }
 
   async delete(profileId: string, key: string): Promise<void> {

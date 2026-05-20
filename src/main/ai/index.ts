@@ -10,11 +10,14 @@ import { ConversationManager } from './conversation-manager'
 import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
-import type { KeyringAccess, SchemaAccess, ConnectionAccess } from '../plugins/sdk/types'
+import type { SchemaAccess, ConnectionAccess } from '../plugins/sdk/types'
+import type { KeyringService } from '../keyring'
 import { createAIEnhancements } from './enhancements'
 
+const AI_KEYRING_NS = '__ai__'
+
 export interface AIModuleDeps {
-  keyring: KeyringAccess
+  keyring: KeyringService
   schemaAccess: SchemaAccess
   connectionAccess: ConnectionAccess
   handle: <K extends keyof IpcChannelMap>(
@@ -37,15 +40,17 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
   const toolRegistry = new AIToolRegistry()
   const permissionManager = new PermissionManager()
 
-  // Register built-in providers
-  const openai = new OpenAIProvider(() => {
-    // KeyringAccess.retrieve is async but provider getApiKey expects sync for now
-    // We'll store the key in a local cache on first retrieval
-    return (deps.settingsStore.get('ai.openaiKey') as string) || null
-  })
-  const anthropic = new AnthropicProvider(() => {
-    return (deps.settingsStore.get('ai.anthropicKey') as string) || null
-  })
+  // One-time migration: move legacy plaintext keys from settings.json into the keyring.
+  for (const provider of ['openai', 'anthropic'] as const) {
+    const legacy = deps.settingsStore.get(`ai.${provider}Key`) as string | undefined
+    if (legacy && !deps.keyring.has(AI_KEYRING_NS, provider)) {
+      deps.keyring.storeSync(AI_KEYRING_NS, provider, legacy)
+    }
+    if (legacy) deps.settingsStore.set(`ai.${provider}Key`, '')
+  }
+
+  const openai = new OpenAIProvider(() => deps.keyring.retrieveSync(AI_KEYRING_NS, 'openai'))
+  const anthropic = new AnthropicProvider(() => deps.keyring.retrieveSync(AI_KEYRING_NS, 'anthropic'))
 
   const ollamaEndpoint = (deps.settingsStore.get('ai.ollamaEndpoint') as string) || undefined
   const ollama = new OllamaProvider(ollamaEndpoint)
@@ -61,8 +66,8 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
     providerRegistry.setActive(savedProvider)
   } else {
     // Auto-select first provider that has an API key configured
-    const anthropicKey = deps.settingsStore.get('ai.anthropicKey') as string | undefined
-    const openaiKey = deps.settingsStore.get('ai.openaiKey') as string | undefined
+    const anthropicKey = deps.keyring.has(AI_KEYRING_NS, 'anthropic')
+    const openaiKey = deps.keyring.has(AI_KEYRING_NS, 'openai')
     if (anthropicKey) {
       providerRegistry.setActive('anthropic')
       deps.settingsStore.set('ai.activeProvider', 'anthropic')
@@ -165,11 +170,8 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
 
   deps.handle('ai:providers:list-configured', async () => {
     const configured: { id: string; name: string }[] = []
-    const anthropicKey = deps.settingsStore.get('ai.anthropicKey') as string | undefined
-    const openaiKey = deps.settingsStore.get('ai.openaiKey') as string | undefined
-
-    if (anthropicKey) configured.push({ id: 'anthropic', name: 'Anthropic' })
-    if (openaiKey) configured.push({ id: 'openai', name: 'OpenAI' })
+    if (deps.keyring.has(AI_KEYRING_NS, 'anthropic')) configured.push({ id: 'anthropic', name: 'Anthropic' })
+    if (deps.keyring.has(AI_KEYRING_NS, 'openai')) configured.push({ id: 'openai', name: 'OpenAI' })
 
     // Check Ollama reachability
     const ollamaEndpoint = (deps.settingsStore.get('ai.ollamaEndpoint') as string) || 'http://localhost:11434'
@@ -212,6 +214,14 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
 
   deps.handle('ai:messages:clear', async () => {
     conversationManager.clearMessages()
+  })
+
+  deps.handle('ai:keys:has', async (provider) => {
+    return deps.keyring.has(AI_KEYRING_NS, provider)
+  })
+
+  deps.handle('ai:keys:set', async (provider, value) => {
+    deps.keyring.storeSync(AI_KEYRING_NS, provider, value)
   })
 
   deps.handle('ai:tools:list', async () => {
