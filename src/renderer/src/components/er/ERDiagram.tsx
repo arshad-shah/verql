@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { TableNode } from './TableNode'
 import { buildErElements, layoutErDiagram, type TableNodeData } from './er-layout'
+import { useSelectionStore } from '@/stores/selection'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
@@ -89,6 +90,14 @@ export function ERDiagram({ connectionId, schema }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        onNodeClick={(_, node) => {
+          useSelectionStore.getState().setSelection({
+            kind: 'erNode',
+            connectionId,
+            schema,
+            table: node.id,
+          })
+        }}
         fitView
         minZoom={0.1}
         maxZoom={2}

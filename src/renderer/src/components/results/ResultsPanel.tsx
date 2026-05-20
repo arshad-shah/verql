@@ -14,7 +14,7 @@ interface Props {
 export function ResultsPanel({ results, sql, tabId, aiExplanation }: Props) {
   return (
     <Flex direction="column" className="flex-1 min-h-0">
-      <ResultsGrid results={results} />
+      <ResultsGrid results={results} tabId={tabId} />
       {sql && tabId && (
         <PluginSlot
           id="results.actions"

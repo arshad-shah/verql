@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, type ColDef, themeQuartz } from 'ag-grid-community'
 import type { QueryResult } from '@shared/types'
+import { useSelectionStore } from '@/stores/selection'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
 import { Box } from '@/primitives'
@@ -34,9 +35,10 @@ function useGridTheme() {
 
 interface Props {
   results: QueryResult
+  tabId?: string
 }
 
-export function ResultsGrid({ results }: Props) {
+export function ResultsGrid({ results, tabId }: Props) {
   const gridTheme = useGridTheme()
   const dataDisplay = useSettingsStore(s => s.settings.dataDisplay)
   const defaultPageSize = useSettingsStore(s => s.settings.general.defaultPageSize)
@@ -91,6 +93,19 @@ export function ResultsGrid({ results }: Props) {
         }}
         enableCellTextSelection={true}
         suppressRowClickSelection={true}
+        onRowClicked={(e) => {
+          if (!tabId || !e.data) return
+          const columns = results.fields.map((f) => ({
+            name: f.name,
+            dataType: f.dataType,
+          }))
+          useSelectionStore.getState().setSelection({
+            kind: 'row',
+            tabId,
+            row: e.data as Record<string, unknown>,
+            columns,
+          })
+        }}
         animateRows={false}
         rowHeight={28}
         headerHeight={32}

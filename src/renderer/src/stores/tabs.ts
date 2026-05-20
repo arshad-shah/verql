@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import { useSelectionStore } from './selection'
 
 let tabCounter = 0
 
@@ -35,6 +36,10 @@ interface TabsState {
   setActiveTab: (id: string) => void
   updateTabSql: (id: string, sql: string) => void
   setTabDirty: (id: string, dirty: boolean) => void
+  /** Marks the tab as saved: records the current sql as the saved snapshot,
+   *  optionally updating title/savedQueryId. Subsequent edits dirty the tab
+   *  again automatically; reverting to this exact text clears the flag. */
+  markTabSaved: (id: string, opts?: { title?: string; savedQueryId?: string }) => void
   setTabConnection: (id: string, connectionId: string) => void
   setTabDatabase: (id: string, database: string) => void
   setTabSchema: (id: string, schema: string) => void
@@ -83,6 +88,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
           : s.recentlyClosed
       }
     })
+    useSelectionStore.getState().clearForTab(id)
   },
 
   closeOtherTabs: (id) => {
@@ -124,13 +130,35 @@ export const useTabsStore = create<TabsState>((set, get) => ({
 
   updateTabSql: (id, sql) => {
     set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, sql } : t)
+      tabs: s.tabs.map(t => {
+        if (t.id !== id || t.type !== 'query') return t
+        // Dirty is derived: true iff content drifted from the saved snapshot.
+        // For never-saved tabs we treat the empty string as the baseline so a
+        // fresh tab starts clean and dirties on the first keystroke.
+        const baseline = t.savedSnapshot ?? ''
+        return { ...t, sql, isDirty: sql !== baseline }
+      })
     }))
   },
 
   setTabDirty: (id, dirty) => {
     set((s) => ({
       tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, isDirty: dirty } : t)
+    }))
+  },
+
+  markTabSaved: (id, opts) => {
+    set((s) => ({
+      tabs: s.tabs.map(t => {
+        if (t.id !== id || t.type !== 'query') return t
+        return {
+          ...t,
+          savedSnapshot: t.sql,
+          isDirty: false,
+          ...(opts?.title ? { title: opts.title } : {}),
+          ...(opts?.savedQueryId ? { savedQueryId: opts.savedQueryId } : {})
+        }
+      })
     }))
   },
 
