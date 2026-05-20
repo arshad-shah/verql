@@ -1,4 +1,4 @@
-export type SqlDialect = 'postgresql' | 'mysql' | 'sqlite'
+export type SqlDialect = 'postgresql' | 'mysql' | 'sqlite' | 'snowflake'
 
 export class IdentifierError extends Error {
   constructor(message: string) {
@@ -33,7 +33,8 @@ export function validateIdentifier(name: string): void {
 const QUOTE_CHAR: Record<SqlDialect, string> = {
   postgresql: '"',
   mysql: '`',
-  sqlite: '"'
+  sqlite: '"',
+  snowflake: '"'
 }
 
 export function quoteIdentifier(name: string | string[], dialect: SqlDialect): string {

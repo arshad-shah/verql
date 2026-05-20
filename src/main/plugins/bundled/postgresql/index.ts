@@ -3,6 +3,7 @@ import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
+import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-postgresql',
@@ -104,6 +105,7 @@ export function activate(ctx: PluginContext): void {
 
   ctx.drivers.register('postgresql', {
     createAdapter: (config) => new PostgresAdapter(config),
+    sqlDialect: 'postgresql',
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 5432 },
@@ -111,7 +113,8 @@ export function activate(ctx: PluginContext): void {
       { key: 'username', label: 'Username', type: 'text' },
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
-    ]
+    ],
+    getTableData: createRelationalGetTableData('postgresql')
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

@@ -2,6 +2,7 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
 import { RedisAdapter } from './redis-adapter'
+import { getTableData, jsonExporter } from './data-format'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-redis',
@@ -10,7 +11,8 @@ export const manifest: PluginManifest = {
   description: 'Redis database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'redis', name: 'Redis' }]
+    drivers: [{ id: 'redis', name: 'Redis' }],
+    exporters: [{ id: 'json', name: 'JSON (Redis key/value)', extension: 'json' }]
   }
 }
 
@@ -131,6 +133,9 @@ const REDIS_COMMANDS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  // ── Export contributions ───────────────────────────────────────────────────
+  ctx.exporters.register('json', jsonExporter)
+
   // ── AI context provider ────────────────────────────────────────────────────
   ctx.ai.registerContextProvider({
     id: 'redis-query-format',
@@ -155,6 +160,7 @@ Do not use SQL syntax. Use standard Redis commands.`
   ctx.drivers.register('redis', {
     createAdapter: (config) => new RedisAdapter(config),
     sampleQuery: (key: string) => `GET ${key}`,
+    getTableData,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 6379 },

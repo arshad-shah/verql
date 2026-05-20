@@ -14,7 +14,7 @@
     "build:mac": "npm run build && electron-builder --mac",
     "build:win": "npm run build && electron-builder --win",
     "build:linux": "npm run build && electron-builder --linux",
-    "build:icons": "rsvg-convert -w 1024 -h 1024 build/icon.svg -o build/icon.png && rsvg-convert -w 1024 -h 1024 build/icon-light.svg -o build/icon-light.png && electron-icon-builder --input=build/icon.png --output=build --flatten && cp build/icons/icon.icns build/icon.icns && cp build/icons/icon.ico build/icon.ico",
+    "build:icons": "rsvg-convert -w 1024 -h 1024 build/icon.svg -o build/icon.png && rsvg-convert -w 1024 -h 1024 build/icon-light.svg -o build/icon-light.png && echo 'Run: npx --yes png2icons build/icon.png build/icon -ic -i  (icns + ico). electron-icon-builder removed due to unpatched svg2png/request CVEs (GHSA-mpp5-2x55-49xw, GHSA-p8p7-x288-28g6).'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -51,7 +51,7 @@
     "zustand": "5.0.12"
   },
   "devDependencies": {
-    "@electron/rebuild": "4.0.3",
+    "@electron/rebuild": "4.0.4",
     "@storybook/addon-a11y": "10.3.5",
     "@storybook/addon-docs": "10.3.5",
     "@storybook/addon-mcp": "0.5.0",
@@ -73,9 +73,8 @@
     "@vitejs/plugin-react": "4.7.0",
     "@vitest/browser-playwright": "4.1.3",
     "@vitest/coverage-v8": "4.1.3",
-    "electron": "33.4.11",
+    "electron": "39.8.10",
     "electron-builder": "26.8.1",
-    "electron-icon-builder": "2.0.1",
     "electron-vite": "5.0.0",
     "jsdom": "29.0.2",
     "playwright": "1.59.1",
@@ -117,6 +116,28 @@
       "better-sqlite3",
       "electron",
       "@electron/rebuild"
-    ]
+    ],
+    "overrides": {
+      "axios@<1.15.1": ">=1.15.1",
+      "form-data@<2.5.4": ">=2.5.4",
+      "fast-uri@<3.1.2": ">=3.1.2",
+      "xmldom": "npm:@xmldom/xmldom@^0.8.13",
+      "@xmldom/xmldom@<0.8.13": ">=0.8.13",
+      "fast-xml-parser@<4.4.1": ">=4.4.1",
+      "fast-xml-builder@<1.1.7": ">=1.1.7",
+      "tough-cookie@<4.1.3": ">=4.1.3",
+      "yargs-parser@<5.0.1": ">=5.0.1",
+      "dompurify@<3.4.5": ">=3.4.5",
+      "follow-redirects@<1.16.0": ">=1.16.0",
+      "qs@<6.14.1": ">=6.14.1",
+      "phin@<3.7.1": ">=3.7.1",
+      "postcss@<8.5.10": ">=8.5.10",
+      "hono@<4.12.18": ">=4.12.18",
+      "ip-address@<10.2.0": ">=10.2.0",
+      "brace-expansion": ">=5.0.6",
+      "ws@<8.20.0": ">=8.20.0",
+      "ws@>=8.0.0 <8.20.1": ">=8.20.1",
+      "fast-xml-parser@<5.7.0": ">=5.7.0"
+    }
   }
 }

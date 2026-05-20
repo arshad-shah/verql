@@ -70,6 +70,30 @@ jobs:
       - name: TypeScript check
         run: pnpm exec tsc -b --noEmit
 
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit (fail on high or critical)
+        run: pnpm audit --audit-level high
+
   build:
     name: Production build
     runs-on: ubuntu-latest

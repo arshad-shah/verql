@@ -4,15 +4,8 @@ import { createAdapter } from '../db/factory'
 import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import { getSecretFieldKeys, mergeIncomingProfile } from './secrets'
-import { quoteIdentifier, type SqlDialect } from '../db/identifier'
+import { quoteIdentifier } from '../db/identifier'
 import type { IpcContext, Handle } from './context'
-
-const FALLBACK_DIALECT_BY_TYPE: Record<string, SqlDialect> = {
-  postgresql: 'postgresql',
-  postgres: 'postgresql',
-  mysql: 'mysql',
-  sqlite: 'sqlite'
-}
 
 export function registerDbHandlers(
   ctx: IpcContext,
@@ -172,14 +165,18 @@ export function registerDbHandlers(
     if (!profile) throw new Error('Unknown connection')
     const driver = ctx.driverRegistry.get(profile.type)
     if (driver?.sampleQuery) return driver.sampleQuery(table, schema)
-    // Drivers without a sampleQuery contribution fall back to a generic SELECT.
-    // Identifiers go through quoteIdentifier so an attacker-controlled table
-    // name (e.g. from an introspected schema on a malicious server) cannot
-    // break out of the statement.
-    const dialect = FALLBACK_DIALECT_BY_TYPE[profile.type] ?? 'postgresql'
+    // SQL-dialect-aware fallback: only available for drivers that declare a
+    // dialect. Non-SQL drivers MUST provide their own sampleQuery — the
+    // orchestrator refuses to guess what a "sample" looks like in that case.
+    if (!driver?.sqlDialect) {
+      throw new Error(
+        `Driver '${profile.type}' does not provide a sampleQuery() and is not ` +
+        `a SQL dialect. Add a sampleQuery contribution to the driver plugin.`
+      )
+    }
     const qualified = schema
-      ? quoteIdentifier([schema, table], dialect)
-      : quoteIdentifier(table, dialect)
+      ? quoteIdentifier([schema, table], driver.sqlDialect)
+      : quoteIdentifier(table, driver.sqlDialect)
     return `SELECT * FROM ${qualified} LIMIT 100;`
   })
 }

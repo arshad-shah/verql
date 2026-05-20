@@ -3,6 +3,7 @@ import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { SqliteAdapter } from './sqlite-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
+import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 
 export const manifest: PluginManifest = {
   name: 'dbstudio-plugin-sqlite',
@@ -116,9 +117,11 @@ export function activate(ctx: PluginContext): void {
 
   ctx.drivers.register('sqlite', {
     createAdapter: (config) => new SqliteAdapter(config),
+    sqlDialect: 'sqlite',
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },
-    ]
+    ],
+    getTableData: createRelationalGetTableData('sqlite')
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

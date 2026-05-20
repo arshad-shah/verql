@@ -103,6 +103,21 @@ describe('quoteIdentifier - qualified names', () => {
   })
 })
 
+describe('quoteIdentifier - snowflake dialect', () => {
+  it('wraps in double quotes', () => {
+    expect(quoteIdentifier('users', 'snowflake')).toBe('"users"')
+  })
+
+  it('escapes embedded double quotes', () => {
+    expect(quoteIdentifier('a"b', 'snowflake')).toBe('"a""b"')
+  })
+
+  it('supports schema.table qualifying', () => {
+    expect(quoteIdentifier(['PUBLIC', 'USERS'], 'snowflake'))
+      .toBe('"PUBLIC"."USERS"')
+  })
+})
+
 describe('quoteIdentifier - unknown dialect', () => {
   it('throws for unknown dialect rather than guessing', () => {
     expect(() => quoteIdentifier('users', 'oracle' as never)).toThrow(IdentifierError)

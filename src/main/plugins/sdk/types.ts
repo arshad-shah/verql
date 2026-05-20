@@ -91,8 +91,21 @@ export interface DriverRegistry {
 export interface DriverFactory {
   createAdapter(config: Record<string, unknown>): DbAdapter
   connectionFields: ConnectionField[]
+  /** SQL dialect this driver speaks, if any. Lets shared SQL builders (e.g.
+   *  the CSV-into-table importer) pick the right identifier quoting and
+   *  placeholder syntax without the orchestrator hardcoding a type→dialect
+   *  table. Non-SQL drivers (mongo, redis) leave this undefined. */
+  sqlDialect?: 'postgresql' | 'mysql' | 'sqlite' | 'snowflake'
   /** Returns a sample/preview query for a table. Used by the explorer "Open in tab" action. */
   sampleQuery?(table: string, schema?: string): string
+  /** Reads every row of a table/collection for export. The driver decides how
+   *  (SQL SELECT, Mongo find, Redis SCAN, …); the orchestrator never assumes
+   *  the source is a relational database. Must use safe identifier escaping
+   *  for whichever query language it speaks. */
+  getTableData?(adapter: DbAdapter, table: string, schema?: string): Promise<{
+    rows: Record<string, unknown>[]
+    columns: SchemaColumn[]
+  }>
 }
 
 export interface ConnectionField {

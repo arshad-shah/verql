@@ -1,20 +1,41 @@
 import { dialog } from 'electron'
 import fs from 'fs'
-import { quoteIdentifier, type SqlDialect } from '../db/identifier'
+import type { SchemaColumn } from '@shared/types'
 import type { ExporterRegistry } from '../plugins/sdk/exporter-registry'
 import type { ImporterRegistry } from '../plugins/sdk/importer-registry'
+import { importCsvToTable } from '../import/csv-import'
 import type { IpcContext, Handle } from './context'
-
-const DIALECT_BY_TYPE: Record<string, SqlDialect> = {
-  postgresql: 'postgresql',
-  postgres: 'postgresql',
-  mysql: 'mysql',
-  sqlite: 'sqlite'
-}
 
 interface RegistryDeps {
   exporterRegistry: ExporterRegistry
   importerRegistry: ImporterRegistry
+}
+
+function safeFileName(name: string): string {
+  // Strip path separators, NUL, control chars, and Windows-reserved characters
+  // from a user-supplied "table" name before using it as a filename. Anything
+  // that survives is then constrained by the save dialog, but defense in depth.
+  return name.replace(/[\x00-\x1F<>:"/\\|?*]/g, '_').slice(0, 200) || 'export'
+}
+
+async function readRowsForExport(
+  ctx: IpcContext,
+  profileId: string,
+  table: string,
+  schema?: string
+): Promise<{ rows: Record<string, unknown>[]; columns: SchemaColumn[] }> {
+  const adapter = ctx.activeAdapters.get(profileId)
+  if (!adapter) throw new Error('Not connected')
+  const profile = ctx.configStore.getConnection(profileId)
+  const connectionType = profile?.type ?? ''
+  const driver = ctx.driverRegistry.get(connectionType)
+  if (!driver?.getTableData) {
+    throw new Error(
+      `Driver '${connectionType}' does not implement getTableData(). ` +
+      `Cannot export this connection type without a driver-provided data fetcher.`
+    )
+  }
+  return driver.getTableData(adapter, table, schema)
 }
 
 export function registerExportImportHandlers(
@@ -25,47 +46,23 @@ export function registerExportImportHandlers(
   const { exporterRegistry, importerRegistry } = deps
 
   handle('export:table', async (profileId, tableName, format, options) => {
-    const adapter = ctx.activeAdapters.get(profileId)
-    if (!adapter) throw new Error('Not connected')
     const profile = ctx.configStore.getConnection(profileId)
     const connectionType = profile?.type ?? ''
-
     const exporter = exporterRegistry.resolve(format, connectionType)
     if (!exporter) {
       throw new Error(`No exporter registered for format '${format}' on '${connectionType}' connections`)
     }
 
-    const schema = options?.schema
-    const columns = await adapter.getColumns(tableName, schema)
-
-    // Read the row data through the adapter. For relational drivers we
-    // generate a safely-quoted SELECT; non-relational drivers fall back to
-    // their driver-provided sample query.
-    let rows: Record<string, unknown>[] = []
-    const dialect = DIALECT_BY_TYPE[connectionType]
-    if (dialect) {
-      const qualifiedTable = schema
-        ? quoteIdentifier([schema, tableName], dialect)
-        : quoteIdentifier(tableName, dialect)
-      const result = await adapter.query(`SELECT * FROM ${qualifiedTable}`)
-      rows = result.rows
-    } else {
-      const driver = ctx.driverRegistry.get(connectionType)
-      if (driver?.sampleQuery) {
-        const result = await adapter.query(driver.sampleQuery(tableName, schema))
-        rows = result.rows
-      }
-    }
-
+    const { rows, columns } = await readRowsForExport(ctx, profileId, tableName, options?.schema)
     const content = await exporter.execute(rows, columns, {
       tableName,
-      schema,
+      schema: options?.schema,
       connectionType,
       includeSchema: options?.includeSchema
     })
 
     const { filePath, canceled } = await dialog.showSaveDialog({
-      defaultPath: `${tableName}.${exporter.extension}`,
+      defaultPath: `${safeFileName(tableName)}.${exporter.extension}`,
       filters: [{ name: exporter.displayName, extensions: [exporter.extension] }]
     })
     if (canceled || !filePath) return { cancelled: true as const }
@@ -78,7 +75,7 @@ export function registerExportImportHandlers(
     if (!exporter) {
       throw new Error(`No exporter registered for format '${format}'`)
     }
-    const columns = fields.map(name => ({
+    const columns: SchemaColumn[] = fields.map(name => ({
       name, dataType: 'unknown', nullable: true,
       isPrimaryKey: false, isForeignKey: false, defaultValue: null
     }))
@@ -116,14 +113,21 @@ export function registerExportImportHandlers(
     const result = await importer.parse(content, {
       tableName, connectionType, adapter, columnMapping, onConflict
     })
-    // Data importers return rows; the driver is responsible for the actual
-    // INSERT loop. We fall back to a shared insert helper for relational
-    // drivers when the importer didn't run statements itself.
     if (!importer.driverExecutes) {
-      const { importCsvToTable } = await import('../import/csv-import')
+      // Generic CSV-into-relational-table fallback. The driver tells us its
+      // dialect; if it has none, we can't generate INSERT statements, so the
+      // importer plugin must register with driverExecutes:true and handle
+      // insertion itself.
+      const driver = ctx.driverRegistry.get(connectionType)
+      if (!driver?.sqlDialect) {
+        throw new Error(
+          `Driver '${connectionType}' has no sqlDialect. The generic CSV → table ` +
+          `importer cannot be used; register a driverExecutes importer instead.`
+        )
+      }
       return importCsvToTable(adapter, result.rows as Record<string, string>[], {
         tableName, columnMapping, onConflict,
-        dialect: DIALECT_BY_TYPE[connectionType]
+        dialect: driver.sqlDialect
       })
     }
     return {

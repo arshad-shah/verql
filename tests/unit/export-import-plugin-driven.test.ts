@@ -14,6 +14,9 @@ import * as aiPlugin from '../../src/main/plugins/bundled/ai/index'
 import * as postgresqlPlugin from '../../src/main/plugins/bundled/postgresql/index'
 import * as mysqlPlugin from '../../src/main/plugins/bundled/mysql/index'
 import * as sqlitePlugin from '../../src/main/plugins/bundled/sqlite/index'
+import * as snowflakePlugin from '../../src/main/plugins/bundled/snowflake/index'
+import * as mongoPlugin from '../../src/main/plugins/bundled/mongodb/index'
+import * as redisPlugin from '../../src/main/plugins/bundled/redis/index'
 
 const noopKeyring = {
   store: async () => {},
@@ -45,28 +48,36 @@ async function bootCoordinator() {
   coordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
   coordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
   coordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
+  coordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
+  coordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
+  coordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
 
   for (const name of [
     'dbstudio-plugin-ai',
     'dbstudio-plugin-core-formats',
     'dbstudio-plugin-postgresql',
     'dbstudio-plugin-mysql',
-    'dbstudio-plugin-sqlite'
+    'dbstudio-plugin-sqlite',
+    'dbstudio-plugin-snowflake',
+    'dbstudio-plugin-mongodb',
+    'dbstudio-plugin-redis'
   ]) {
     const p = coordinator.getPlugin(name)!
     await coordinator.activatePlugin(p)
   }
-  return { coordinator, exporterRegistry, importerRegistry }
+  return { coordinator, exporterRegistry, importerRegistry, driverRegistry }
 }
 
 describe('Plugin-driven export/import architecture', () => {
   let exporterRegistry: ExporterRegistryImpl
   let importerRegistry: ImporterRegistryImpl
+  let driverRegistry: DriverRegistryImpl
 
   beforeEach(async () => {
     const r = await bootCoordinator()
     exporterRegistry = r.exporterRegistry
     importerRegistry = r.importerRegistry
+    driverRegistry = r.driverRegistry
   })
 
   it('core-formats plugin registers CSV and JSON exporters', () => {
@@ -125,5 +136,60 @@ describe('Plugin-driven export/import architecture', () => {
     expect(importerRegistry.findByExtension('csv', 'postgresql')).toBeDefined()
     expect(importerRegistry.findByExtension('csv', 'mongodb')).toBeDefined()
     expect(importerRegistry.findByExtension('csv', 'redis')).toBeDefined()
+  })
+
+  it('Snowflake plugin registers SQL exporter + importer', () => {
+    expect(exporterRegistry.resolve('sql', 'snowflake')!.displayName).toBe('SQL (Snowflake)')
+    expect(importerRegistry.findByExtension('sql', 'snowflake')).toBeDefined()
+  })
+
+  it('MongoDB plugin registers JSON Lines + JSON Array exporters and a JSONL importer', () => {
+    expect(exporterRegistry.resolve('jsonl', 'mongodb')).toBeDefined()
+    expect(exporterRegistry.resolve('json', 'mongodb')).toBeDefined()
+    expect(importerRegistry.findByExtension('jsonl', 'mongodb')).toBeDefined()
+    expect(importerRegistry.findByExtension('ndjson', 'mongodb')).toBeDefined()
+  })
+
+  it('Redis plugin registers a JSON exporter', () => {
+    expect(exporterRegistry.resolve('json', 'redis')).toBeDefined()
+  })
+
+  it('every bundled driver registers getTableData so the orchestrator never assumes SQL', () => {
+    for (const t of ['postgresql', 'mysql', 'sqlite', 'snowflake', 'mongodb', 'redis']) {
+      const driver = driverRegistry.get(t)
+      expect(driver, `driver for ${t}`).toBeDefined()
+      expect(driver!.getTableData, `${t}.getTableData`).toBeTypeOf('function')
+    }
+  })
+
+  it('relational drivers declare their sqlDialect; non-relational ones do not', () => {
+    expect(driverRegistry.get('postgresql')!.sqlDialect).toBe('postgresql')
+    expect(driverRegistry.get('mysql')!.sqlDialect).toBe('mysql')
+    expect(driverRegistry.get('sqlite')!.sqlDialect).toBe('sqlite')
+    expect(driverRegistry.get('snowflake')!.sqlDialect).toBe('snowflake')
+    expect(driverRegistry.get('mongodb')!.sqlDialect).toBeUndefined()
+    expect(driverRegistry.get('redis')!.sqlDialect).toBeUndefined()
+  })
+
+  it('JSON-lines exporter formats one document per line', () => {
+    const exp = exporterRegistry.resolve('jsonl', 'mongodb')!
+    const out = exp.execute(
+      [{ _id: '1', name: 'Alice' }, { _id: '2', name: 'Bob' }],
+      [],
+      { tableName: 'users', connectionType: 'mongodb' }
+    )
+    expect(out).toBe('{"_id":"1","name":"Alice"}\n{"_id":"2","name":"Bob"}\n')
+  })
+
+  it('Redis JSON exporter dumps the key/value rows as pretty JSON', () => {
+    const exp = exporterRegistry.resolve('json', 'redis')!
+    const out = exp.execute(
+      [{ key: 'user:1', type: 'string', value: 'Alice' }],
+      [],
+      { tableName: 'user', connectionType: 'redis' }
+    )
+    expect(JSON.parse(out as string)).toEqual([
+      { key: 'user:1', type: 'string', value: 'Alice' }
+    ])
   })
 })

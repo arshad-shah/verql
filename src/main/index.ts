@@ -155,7 +155,16 @@ function createWindow(): BrowserWindow {
     icon,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // Renderer security baseline:
+      //   contextIsolation defaults to true since Electron 12
+      //   nodeIntegration defaults to false
+      //   sandbox: true puts the renderer inside Chromium's OS-level sandbox.
+      // The preload script only imports from 'electron' and uses
+      // contextBridge.exposeInMainWorld, which is sandbox-compatible.
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: true
     }
   })
 
