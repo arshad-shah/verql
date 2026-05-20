@@ -65,4 +65,32 @@ describe('useUiStore', () => {
     useUiStore.getState().toggleSidebar()
     expect(useUiStore.getState().sidebarVisible).toBe(true)
   })
+
+  // ── secondary sidebar ────────────────────────────────────────────────────
+
+  it('secondarySidebarVisible defaults to false', () => {
+    useUiStore.setState({ secondarySidebarVisible: false, secondaryActivePanel: 'inspector' })
+    expect(useUiStore.getState().secondarySidebarVisible).toBe(false)
+  })
+
+  it('toggleSecondarySidebar flips visibility', () => {
+    useUiStore.setState({ secondarySidebarVisible: false, secondaryActivePanel: 'inspector' })
+    useUiStore.getState().toggleSecondarySidebar()
+    expect(useUiStore.getState().secondarySidebarVisible).toBe(true)
+    useUiStore.getState().toggleSecondarySidebar()
+    expect(useUiStore.getState().secondarySidebarVisible).toBe(false)
+  })
+
+  it('setSecondaryActivePanel shows sidebar when selecting a new panel', () => {
+    useUiStore.setState({ secondarySidebarVisible: false, secondaryActivePanel: 'inspector' })
+    useUiStore.getState().setSecondaryActivePanel('plugin:ai-chat-panel')
+    expect(useUiStore.getState().secondaryActivePanel).toBe('plugin:ai-chat-panel')
+    expect(useUiStore.getState().secondarySidebarVisible).toBe(true)
+  })
+
+  it('setSecondaryActivePanel hides sidebar when clicking the active panel again', () => {
+    useUiStore.setState({ secondarySidebarVisible: true, secondaryActivePanel: 'inspector' })
+    useUiStore.getState().setSecondaryActivePanel('inspector')
+    expect(useUiStore.getState().secondarySidebarVisible).toBe(false)
+  })
 })

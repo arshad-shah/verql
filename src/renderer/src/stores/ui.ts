@@ -3,6 +3,8 @@ import { useSettingsStore } from './settings'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
+export type SecondaryPanelId = 'inspector' | (string & {})
+
 export type SettingsCategoryId =
   | 'general' | 'appearance' | 'editor' | 'connections'
   | 'data-display' | 'keybindings' | 'ai' | 'mcp' | 'plugins'
@@ -21,6 +23,12 @@ interface UiState {
   toggleTreeNode: (path: string) => void
   expandTreeNode: (path: string) => void
   collapseAllTreeNodes: () => void
+  // Secondary sidebar (right)
+  secondarySidebarVisible: boolean
+  secondaryActivePanel: SecondaryPanelId
+  setSecondaryActivePanel: (panel: SecondaryPanelId) => void
+  toggleSecondarySidebar: () => void
+  setSecondarySidebarWidth: (width: number) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -61,4 +69,18 @@ export const useUiStore = create<UiState>((set) => ({
       return { expandedTreeNodes: next }
     }),
   collapseAllTreeNodes: () => set({ expandedTreeNodes: new Set<string>() }),
+  secondarySidebarVisible: false,
+  secondaryActivePanel: 'inspector',
+  setSecondaryActivePanel: (panel) =>
+    set((state) => ({
+      secondaryActivePanel: panel,
+      secondarySidebarVisible:
+        state.secondaryActivePanel === panel ? !state.secondarySidebarVisible : true,
+    })),
+  toggleSecondarySidebar: () =>
+    set((state) => ({ secondarySidebarVisible: !state.secondarySidebarVisible })),
+  setSecondarySidebarWidth: (width) => {
+    const clamped = Math.min(640, Math.max(220, width))
+    useSettingsStore.getState().set('appearance.secondarySidebarWidth', clamped)
+  },
 }))
