@@ -13,6 +13,30 @@ export const manifest: PluginManifest = {
     drivers: [{ id: 'snowflake', name: 'Snowflake' }],
     toolbar: [
       { id: 'snowflake-context', zone: 'right' }
+    ],
+    settings: [
+      {
+        key: 'queryTimeoutSec',
+        title: 'Query timeout (seconds)',
+        type: 'number',
+        default: 120,
+        min: 5,
+        max: 3600,
+        step: 5,
+        description: 'STATEMENT_TIMEOUT_IN_SECONDS applied to queries from Nova.'
+      },
+      {
+        key: 'defaultRole',
+        title: 'Default role',
+        type: 'text',
+        description: 'Role assumed when a connection profile leaves it blank.'
+      },
+      {
+        key: 'defaultWarehouse',
+        title: 'Default warehouse',
+        type: 'text',
+        description: 'Warehouse used when a connection profile leaves it blank.'
+      }
     ]
   }
 }

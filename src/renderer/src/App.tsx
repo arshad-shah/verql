@@ -223,7 +223,7 @@ export function App() {
           </>
         )}
         <Flex direction="column" className="flex-1 overflow-hidden">
-          <TabBar />
+          { activeTab && <TabBar /> }
           <Flex direction="column" className="flex-1 overflow-hidden">
             <Box className="flex-1 overflow-hidden">
               <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>

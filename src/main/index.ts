@@ -159,12 +159,6 @@ function createWindow(): BrowserWindow {
     }
   })
 
-  // macOS uses the Dock-level icon, not the per-window icon. Set it once at
-  // app boot so the Dock shows the Nova mark during dev too.
-  if (process.platform === 'darwin' && icon && app.dock) {
-    app.dock.setIcon(icon)
-  }
-
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -175,6 +169,14 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  // Set the Dock icon BEFORE creating any window. macOS shows the icon baked
+  // into the .app bundle until something overrides it; in dev that's Electron's
+  // default icon. Doing this first minimizes the visible swap on launch.
+  if (process.platform === 'darwin' && app.dock) {
+    const icon = resolveAppIcon()
+    if (icon) app.dock.setIcon(icon)
+  }
+
   registerIpcHandlers()
   buildAppMenu()
   createWindow()

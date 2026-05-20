@@ -9,6 +9,14 @@ import './styles/globals.css'
 function AppLoader() {
   const hydrate = useSettingsStore((s) => s.hydrate)
   const loaded = useSettingsStore((s) => s.loaded)
+  const editorFontFamily = useSettingsStore((s) => s.settings.editor.fontFamily)
+
+  // Push the user's editor font onto the root `--app-font-mono` variable so
+  // every `font-mono` surface (inspector, result grid, code chips, …) reflects
+  // the Settings → Editor choice instead of the Tailwind default mono stack.
+  useEffect(() => {
+    document.documentElement.style.setProperty('--app-font-mono', editorFontFamily)
+  }, [editorFontFamily])
 
   useEffect(() => {
     async function init() {

@@ -1,3 +1,8 @@
+/* Editor / results-grid font choices. Without these @font-face URLs the user
+   could pick "JetBrains Mono" or "Fira Code" in Settings → Editor and silently
+   fall back to the system monospace, since the names aren't installed by
+   default. Must come before any other @import per the CSS spec. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=Cascadia+Code:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "../primitives/theme/tokens.css";
 @import "../primitives/theme/themes/dark.css";
@@ -8,7 +13,16 @@
 @import "../primitives/theme/themes/solarized.css";
 @import "../primitives/theme/themes/catppuccin.css";
 
+:root {
+  /* App-wide monospace stack. Synced at runtime from
+     `useSettingsStore(s => s.settings.editor.fontFamily)` so picking a font in
+     Settings → Editor changes every `font-mono` surface (inspector, result
+     grid, code chips, …) — not just the Monaco editor. */
+  --app-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Menlo', monospace;
+}
+
 @theme {
+  --font-mono: var(--app-font-mono);
   --color-bg-primary: var(--color-bg-primary);
   --color-bg-secondary: var(--color-bg-secondary);
   --color-bg-tertiary: var(--color-bg-tertiary);

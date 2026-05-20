@@ -28,7 +28,8 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': resolve('src/renderer/src'),
-        '@shared': resolve('shared')
+        '@shared': resolve('shared'),
+        '@brand': resolve('build')
       }
     },
     plugins: [react(), tailwindcss()]
