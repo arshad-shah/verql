@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
+import { requestCloseTab } from '@/stores/tab-actions'
 import { useConnectionsStore } from '@/stores/connections'
 import { Flex, IconButton, Tooltip, cn } from '@/primitives'
 import { TabItem } from './TabItem'
@@ -38,7 +39,7 @@ export function TabBar() {
   const getContextMenuItems = (tabId: string, index: number) => {
     const tab = tabs.find(t => t.id === tabId)
     return [
-      { label: 'Close', onSelect: () => closeTab(tabId) },
+      { label: 'Close', onSelect: () => requestCloseTab(tabId, closeTab) },
       { label: 'Close Others', onSelect: () => closeOtherTabs(tabId), disabled: tabs.length <= 1 },
       { label: 'Close to the Right', onSelect: () => closeTabsToRight(tabId), disabled: index >= tabs.length - 1 },
       { label: 'Close All', onSelect: () => closeAllTabs() },
@@ -89,7 +90,7 @@ export function TabBar() {
             isDropTarget={dropIndex === index && draggedIndex !== index}
             contextMenuItems={getContextMenuItems(tab.id, index)}
             onActivate={() => setActiveTab(tab.id)}
-            onClose={() => closeTab(tab.id)}
+            onClose={() => requestCloseTab(tab.id, closeTab)}
             onDragStart={(e) => onDragStart(e, index)}
             onDragOver={(e) => onDragOver(e, index)}
             onDragEnd={onDragEnd}

@@ -9,6 +9,7 @@ import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginConte
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { ColumnRow } from './ColumnRow'
+import { HighlightedText } from './HighlightedText'
 
 interface TableNodeProps {
   tableName: string
@@ -16,6 +17,7 @@ interface TableNodeProps {
   schema: string
   depth: number
   onExportTable?: (tableName: string) => void
+  highlightQuery?: string
 }
 
 function formatRowCount(count: number): string {
@@ -30,6 +32,7 @@ export function TableNode({
   schema,
   depth,
   onExportTable,
+  highlightQuery,
 }: TableNodeProps) {
   const nodeKey = `table:${connectionId}:${schema}:${tableName}`
   const cacheKey = `${connectionId}:${schema}:${tableName}`
@@ -155,8 +158,9 @@ export function TableNode({
           <span
             className="flex-1 truncate min-w-0 text-xs"
             style={{ color: 'var(--color-text-primary)' }}
+            title={tableName}
           >
-            {tableName}
+            <HighlightedText text={tableName} query={highlightQuery ?? ''} />
           </span>
           {rowCountDisplay}
 
@@ -230,8 +234,9 @@ export function TableNode({
           <span
             className="flex-1 truncate min-w-0 text-xs font-medium"
             style={{ color: 'var(--color-text-primary)' }}
+            title={tableName}
           >
-            {tableName}
+            <HighlightedText text={tableName} query={highlightQuery ?? ''} />
           </span>
 
           {/* Stat pills */}

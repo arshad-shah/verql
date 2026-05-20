@@ -26,7 +26,12 @@ interface PluginInfo {
   status: { state: string }
 }
 
-export function SettingsCategoryNav() {
+interface NavProps {
+  /** Optional pre-filtered category list (used by the settings search box). */
+  categories?: CategoryDef[]
+}
+
+export function SettingsCategoryNav({ categories }: NavProps = {}) {
   const activeCategory = useUiStore((s) => s.activeSettingsCategory)
   const setActive = useUiStore((s) => s.setActiveSettingsCategory)
   const [activePlugins, setActivePlugins] = useState<Set<string>>(new Set())
@@ -50,8 +55,11 @@ export function SettingsCategoryNav() {
   }, [reload])
 
   // Hide categories whose owning plugin isn't active so disabling/uninstalling
-  // a plugin removes its top-level Settings entry without a restart.
-  const visible = SETTINGS_CATEGORIES.filter((c) => !c.ownedBy || activePlugins.has(c.ownedBy))
+  // a plugin removes its top-level Settings entry without a restart. Then
+  // intersect with any caller-supplied filter (the search box) so the same
+  // visibility rules apply whether or not search is in play.
+  const source = categories ?? SETTINGS_CATEGORIES
+  const visible = source.filter((c) => !c.ownedBy || activePlugins.has(c.ownedBy))
 
   return (
     <Box paddingY="sm">

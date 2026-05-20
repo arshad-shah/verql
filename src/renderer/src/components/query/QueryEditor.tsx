@@ -76,10 +76,21 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
 
   const language = databaseType === 'mongodb' ? 'json' : databaseType === 'redis' ? 'plaintext' : 'sql'
 
+  // Define themes BEFORE the editor mounts. Monaco's <Editor> applies its
+  // `theme` prop synchronously during construction; if the named theme
+  // ("dbterm-dark" etc.) hasn't been defined yet, Monaco silently falls back
+  // to its built-in "vs" (light). Using `beforeMount` rather than `onMount`
+  // means the first paint already shows the correct colours — no light flash.
+  const handleBeforeMount = useCallback((monaco: Monaco) => {
+    defineAppThemes(monaco)
+  }, [])
+
   const handleMount: OnMount = useCallback((ed, monaco) => {
     setEditorInstance(ed)
     setMonacoInstance(monaco)
 
+    // Idempotent — defineAppThemes guards itself. Belt and suspenders in case
+    // a host wires this editor without going through beforeMount.
     defineAppThemes(monaco)
 
     if (!registeredLanguages.has(language)) {
@@ -190,6 +201,28 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
     scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
   }), [editorSettings])
 
+  // Force-apply option changes to the live editor.
+  //
+  // @monaco-editor/react diffs the `options` prop and pushes changes via
+  // `updateOptions`, but its diff misses nested keys in some versions and
+  // certain options (fontFamily, fontLigatures) need a re-layout to take
+  // effect visually. Calling updateOptions ourselves on every change is
+  // cheap (Monaco no-ops unchanged keys) and guarantees the editor reflects
+  // the latest Settings → Editor selections immediately.
+  useEffect(() => {
+    if (!editorInstance) return
+    editorInstance.updateOptions(options)
+  }, [editorInstance, options])
+
+  // Same story for theme — Monaco won't restyle existing tokens when the
+  // `theme` prop changes mid-life unless we tell it to. `setTheme` is
+  // global (affects every editor instance), which is what we want here:
+  // when the user flips themes in Settings, every open query tab updates.
+  useEffect(() => {
+    if (!monacoInstance) return
+    monacoInstance.editor.setTheme(getMonacoThemeName(theme))
+  }, [monacoInstance, theme])
+
   return (
     <Editor
       language={language}
@@ -197,6 +230,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
       onChange={(v) => onChange(v ?? '')}
       theme={getMonacoThemeName(theme)}
       options={options}
+      beforeMount={handleBeforeMount}
       onMount={handleMount}
       loading={
         <Flex align="center" justify="center" className="h-full">

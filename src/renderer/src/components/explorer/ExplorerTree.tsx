@@ -4,12 +4,12 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { EmptyState } from '@/primitives/data-display/EmptyState'
 import { Text } from '@/primitives/typography/Text'
-import { ConnectionSwitcher } from './ConnectionSwitcher'
 import { SearchFilter } from './SearchFilter'
 import { DatabaseNode } from './DatabaseNode'
 import { SchemaNode } from './SchemaNode'
 import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
+import { fuzzyMatch } from '@/lib/fuzzy-match'
 
 interface ExplorerTreeProps {
   onExportTable?: (tableName: string) => void
@@ -60,24 +60,35 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
     fetchTables(activeConnectionId, defaultSchema)
   }, [hierarchyLoaded, isFlat, activeConnectionId, isConnected, defaultSchema, fetchTables])
 
-  // Filter tables/views for the flat view
-  const filter = filterText.toLowerCase()
-  const filteredTables = allTables.filter(
-    (t) => t.type === 'table' && t.name.toLowerCase().includes(filter)
-  )
-  const filteredViews = allTables.filter(
-    (t) => t.type === 'view' && t.name.toLowerCase().includes(filter)
-  )
+  // Fuzzy filter + score-sort for the flat view
+  const filteredTables = (filterText
+    ? allTables
+        .filter((t) => t.type === 'table')
+        .map((t) => ({ t, m: fuzzyMatch(filterText, t.name) }))
+        .filter((x) => x.m !== null)
+        .sort((a, b) => (a.m!.score - b.m!.score) || a.t.name.localeCompare(b.t.name))
+        .map((x) => x.t)
+    : allTables.filter((t) => t.type === 'table'))
+  const filteredViews = (filterText
+    ? allTables
+        .filter((t) => t.type === 'view')
+        .map((t) => ({ t, m: fuzzyMatch(filterText, t.name) }))
+        .filter((x) => x.m !== null)
+        .sort((a, b) => (a.m!.score - b.m!.score) || a.t.name.localeCompare(b.t.name))
+        .map((x) => x.t)
+    : allTables.filter((t) => t.type === 'view'))
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <ConnectionSwitcher />
-
+      {/* Connection selection lives in the secondary sidebar's Connections
+          panel (and as a quick-swap in the StatusBar). The Explorer just
+          shows the active connection's tree — keeps one source of truth
+          for who's connected and which connection is "active". */}
       {!isConnected ? (
         <div className="flex-1 flex items-center justify-center p-4">
           <EmptyState
             title="No connection"
-            description="Select a connection to browse databases"
+            description="Open the Connections panel (right sidebar) or click the status bar to connect."
             icon={<Database size={32} className="text-[var(--color-text-disabled)]" />}
           />
         </div>
@@ -88,14 +99,22 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
         </div>
       ) : (
         <>
-          <SearchFilter />
+          <SearchFilter
+            resultCount={
+              isFlat && filterText ? filteredTables.length + filteredViews.length : undefined
+            }
+          />
 
           {/* Flat: single-DB + single-schema (e.g. SQLite) */}
           {isFlat && (
             <div className="py-1 flex-1 overflow-y-auto min-h-0">
               {filteredTables.length === 0 && filteredViews.length === 0 && (
                 <Text size="xs" color="muted" className="px-4 py-2">
-                  {allTables.length === 0 ? 'Loading tables…' : 'No matches'}
+                  {allTables.length === 0
+                    ? 'Loading tables…'
+                    : filterText
+                    ? `No matches for "${filterText}"`
+                    : 'No tables'}
                 </Text>
               )}
               {filteredTables.length > 0 && (
@@ -116,6 +135,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                       schema={defaultSchema}
                       depth={0}
                       onExportTable={onExportTable}
+                      highlightQuery={filterText}
                     />
                   ))}
                 </div>
@@ -137,6 +157,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                       connectionId={activeConnectionId}
                       schema={defaultSchema}
                       depth={0}
+                      highlightQuery={filterText}
                     />
                   ))}
                 </div>

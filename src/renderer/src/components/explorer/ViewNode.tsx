@@ -6,15 +6,17 @@ import { useToastStore } from '@/stores/toast'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { ColumnRow } from './ColumnRow'
+import { HighlightedText } from './HighlightedText'
 
 interface ViewNodeProps {
   viewName: string
   connectionId: string
   schema: string
   depth: number
+  highlightQuery?: string
 }
 
-export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProps) {
+export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery }: ViewNodeProps) {
   const expandedTreeNodes = useUiStore((s) => s.expandedTreeNodes)
   const toggleTreeNode = useUiStore((s) => s.toggleTreeNode)
   const columns = useSchemaStore((s) => s.columns)
@@ -96,8 +98,9 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
           <span
             className="flex-1 truncate min-w-0 text-xs"
             style={{ color: 'var(--color-text-primary)' }}
+            title={viewName}
           >
-            {viewName}
+            <HighlightedText text={viewName} query={highlightQuery ?? ''} />
           </span>
           <span
             className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
@@ -149,8 +152,9 @@ export function ViewNode({ viewName, connectionId, schema, depth }: ViewNodeProp
           <span
             className="flex-1 truncate min-w-0 text-xs font-medium"
             style={{ color: 'var(--color-text-primary)' }}
+            title={viewName}
           >
-            {viewName}
+            <HighlightedText text={viewName} query={highlightQuery ?? ''} />
           </span>
         </div>
 

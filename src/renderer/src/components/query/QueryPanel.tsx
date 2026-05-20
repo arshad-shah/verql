@@ -1,10 +1,11 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { QueryEditor } from './QueryEditor'
 import { QueryToolbar } from './QueryToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { saveQuery } from '@/components/saved-queries/SavedQueriesPanel'
 import { editorRegistry } from '@/stores/editor'
+import { tabActions } from '@/stores/tab-actions'
 import { parseDbError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useTabsStore } from '@/stores/tabs'
@@ -13,7 +14,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
 import { useSchemaStore } from '@/stores/schema'
 import type { QueryTab } from '@shared/types'
-import { Flex, Divider, Box } from '@/primitives'
+import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 
 interface Props {
   tab: QueryTab
@@ -127,6 +128,10 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, false)
   }, [tab.id, tab.connectionId, setTabExecuting])
 
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [saveDialogName, setSaveDialogName] = useState('')
+  const pendingSqlRef = useRef<string>('')
+
   const handleSave = useCallback(() => {
     // Read the latest tab state directly — closures captured by event listeners
     // would otherwise see stale `tab.savedQueryId`/`tab.sql` and re-prompt or
@@ -144,31 +149,38 @@ export function QueryPanel({ tab }: Props) {
       useToastStore.getState().addToast({ type: 'success', title: 'Saved', message: current.title })
       return
     }
-    const suggested = current.title?.trim() || `Query ${new Date().toLocaleString()}`
-    const name = window.prompt('Save query as:', suggested)
-    if (!name) return
-    const id = saveQuery({ name, sql, connectionType: dbType })
-    markTabSaved(current.id, { title: name, savedQueryId: id })
-    useToastStore.getState().addToast({ type: 'success', title: 'Query saved', message: name })
+    // First-time save: open the in-app prompt (window.prompt is unsupported in
+    // Electron's renderer and throws).
+    pendingSqlRef.current = sql
+    setSaveDialogName(current.title?.trim() || `Query ${new Date().toLocaleString()}`)
+    setSaveDialogOpen(true)
   }, [tab.id, dbType, markTabSaved])
 
-  // IDE-style: catch Cmd/Ctrl+S anywhere in the window while a query tab is
-  // active. Monaco's own action only fires when the editor itself is focused,
-  // so this guarantees save works even when the user is clicked into results,
-  // the toolbar, or the schema picker.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey
-      if (!mod || e.shiftKey || e.altKey) return
-      if (e.key !== 's' && e.key !== 'S') return
-      e.preventDefault()
-      e.stopPropagation()
-      handleSave()
+  const confirmSaveDialog = useCallback(() => {
+    const name = saveDialogName.trim()
+    const sql = pendingSqlRef.current
+    if (!name || !sql) {
+      setSaveDialogOpen(false)
+      return
     }
-    // Capture phase so we beat the browser's default save dialog.
-    window.addEventListener('keydown', onKeyDown, true)
-    return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [handleSave])
+    const id = saveQuery({ name, sql, connectionType: dbType })
+    markTabSaved(tab.id, { title: name, savedQueryId: id })
+    useToastStore.getState().addToast({ type: 'success', title: 'Query saved', message: name })
+    setSaveDialogOpen(false)
+  }, [saveDialogName, dbType, markTabSaved, tab.id])
+
+  // Publish this tab's save + dirty handlers to the registry. The global
+  // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
+  // so save works no matter what type of tab is in front — and the close
+  // button can ask `tabActions.isDirty(id)` to decide whether to confirm.
+  useEffect(() => {
+    tabActions.register(tab.id, {
+      onSave: handleSave,
+      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
+      label: tab.title,
+    })
+    return () => tabActions.unregister(tab.id)
+  }, [tab.id, tab.title, handleSave])
 
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
@@ -229,6 +241,37 @@ export function QueryPanel({ tab }: Props) {
           onSqlGenerated: (sql: string) => { updateTabSql(tab.id, sql) }
         }}
       />
+
+      <Modal open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
+        <form
+          onSubmit={(e) => { e.preventDefault(); confirmSaveDialog() }}
+          className="p-4 flex flex-col gap-3"
+        >
+          <div className="flex flex-col gap-1">
+            <div className="text-sm font-medium">Save query</div>
+            <div className="text-xs text-text-tertiary">
+              Give this query a name to find it again in the Saved panel.
+            </div>
+          </div>
+          <Input
+            autoFocus
+            value={saveDialogName}
+            onChange={(e) => setSaveDialogName(e.target.value)}
+            placeholder="Query name"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setSaveDialogOpen(false)
+            }}
+          />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setSaveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm" disabled={!saveDialogName.trim()}>
+              Save
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Editor */}
       <Box className="flex-1 min-h-30">

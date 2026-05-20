@@ -1,4 +1,8 @@
-import { ListTree } from 'lucide-react'
+// `Plug` (vs the Explorer's `Database`) keeps the two activity bars visually
+// distinct — Explorer is for browsing schema objects, Connections is for
+// managing live sessions. Same verbs as the per-row PlugZap/Plug actions
+// inside ActiveConnectionsPanel, so the iconography reads as one family.
+import { ListTree, Plug } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
@@ -37,6 +41,7 @@ export function SecondaryActivityBar() {
       gap="xs"
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
+      {renderButton('connections', Plug, 'Connections')}
       {renderButton('inspector', ListTree, 'Inspector')}
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />

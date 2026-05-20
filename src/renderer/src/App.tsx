@@ -12,6 +12,7 @@ import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { Flex, Box, ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
+import { tabActions, requestCloseTab as routeCloseTab, usePendingClose } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { useConnectionsStore } from '@/stores/connections'
@@ -41,10 +42,29 @@ export function App() {
   const secondarySidebarVisible = useUiStore(s => s.secondarySidebarVisible)
   const setSecondarySidebarWidth = useUiStore(s => s.setSecondarySidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
+  const loadConnections = useConnectionsStore(s => s.loadConnections)
+
+  // Bootstrap the connections store on first render. Previously the explorer's
+  // top-of-tree dropdown owned this load via its own useEffect; when we
+  // consolidated connection management into the secondary-sidebar panel and
+  // deleted that component, the load lost its caller and the panel rendered
+  // against an empty store. Doing it at the App level guarantees every
+  // consumer (the panel, the status bar quick-switcher, the per-tab
+  // ConnectionSelector) sees the saved profiles regardless of mount order.
+  useEffect(() => {
+    void loadConnections()
+  }, [loadConnections])
   const activeTab = tabs.find(t => t.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
+  // Shared across every close site (tab-bar X, Cmd+W, context menu). The
+  // store gives us a single pending tab id; setting it raises the dialog.
+  const pendingCloseId = usePendingClose(s => s.pendingId)
+  const clearPendingClose = usePendingClose(s => s.clear)
+  // Local convenience wrapper — every Cmd+W / programmatic close in App.tsx
+  // goes through this so dirty-check stays consistent with the tab-bar.
+  const requestCloseTab = (tabId: string) => routeCloseTab(tabId, closeTab)
 
   // Keyboard shortcuts + native menu events
   useEffect(() => {
@@ -56,7 +76,15 @@ export function App() {
       }
       if (mod && e.key === 'w') {
         e.preventDefault()
-        if (activeTabId) closeTab(activeTabId)
+        if (activeTabId) requestCloseTab(activeTabId)
+      }
+      // Global save: dispatches to whichever tab is in front. Settings, query,
+      // any future tab kind — they all participate by registering with
+      // tabActions. Capture phase + preventDefault keeps the browser's
+      // default "Save Page As" dialog out of the way.
+      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (activeTabId) void tabActions.save(activeTabId)
       }
       if (mod && e.key === 't' && !e.shiftKey) {
         e.preventDefault()
@@ -283,6 +311,24 @@ export function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <MCPApprovalDialog />
       <PluginRestartBanner />
+      <ConfirmDialog
+        open={pendingCloseId !== null}
+        title="Unsaved changes"
+        message={(() => {
+          if (!pendingCloseId) return ''
+          const label = tabActions.get(pendingCloseId)?.label ?? 'this tab'
+          return `${label} has unsaved changes. Close anyway?`
+        })()}
+        confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
+        variant="danger"
+        onCancel={clearPendingClose}
+        onConfirm={() => {
+          const id = pendingCloseId
+          clearPendingClose()
+          if (id) closeTab(id)
+        }}
+      />
     </Flex>
   )
 }

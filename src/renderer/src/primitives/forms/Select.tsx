@@ -141,11 +141,14 @@ export function Select({
       flip({ padding: 8 }),
       shift({ padding: 8 }),
       floatingSize({
-        apply({ rects, elements }) {
+        apply({ rects, elements, availableHeight }) {
           Object.assign(elements.floating.style, {
             minWidth: `${rects.reference.width}px`,
+            maxWidth: `${Math.max(rects.reference.width, 320)}px`,
+            maxHeight: `${Math.min(availableHeight, 320)}px`,
           })
         },
+        padding: 8,
       }),
     ],
   })

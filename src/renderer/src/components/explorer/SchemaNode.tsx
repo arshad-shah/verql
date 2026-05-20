@@ -9,6 +9,8 @@ import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
+import { HighlightedText } from './HighlightedText'
+import { fuzzyMatch } from '@/lib/fuzzy-match'
 
 interface SchemaNodeProps {
   schemaName: string
@@ -90,17 +92,22 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     { label: 'Copy schema name', onSelect: handleCopySchemaName },
   ]
 
-  const filter = filterText.toLowerCase()
-  const matches = (name: string) => name.toLowerCase().includes(filter)
-  const filteredTables = allTables.filter((t) => t.type === 'table' && matches(t.name))
-  const filteredViews = allTables.filter((t) => t.type === 'view' && matches(t.name))
-  const matViews = allObjects.filter((o) => o.kind === 'materialized_view' && matches(o.name))
-  const functions = allObjects.filter((o) => o.kind === 'function' && matches(o.name))
-  const procedures = allObjects.filter((o) => o.kind === 'procedure' && matches(o.name))
-  const triggers = allObjects.filter((o) => o.kind === 'trigger' && matches(o.name))
-  const sequences = allObjects.filter((o) => o.kind === 'sequence' && matches(o.name))
-  const indexes = allObjects.filter((o) => o.kind === 'index' && matches(o.name))
-  const extensions = allObjects.filter((o) => o.kind === 'extension' && matches(o.name))
+  const matches = (name: string) => !filterText || fuzzyMatch(filterText, name) !== null
+  const byScore = <T extends { name: string }>(a: T, b: T) => {
+    if (!filterText) return a.name.localeCompare(b.name)
+    const sa = fuzzyMatch(filterText, a.name)?.score ?? 0
+    const sb = fuzzyMatch(filterText, b.name)?.score ?? 0
+    return sa - sb || a.name.localeCompare(b.name)
+  }
+  const filteredTables = allTables.filter((t) => t.type === 'table' && matches(t.name)).sort(byScore)
+  const filteredViews = allTables.filter((t) => t.type === 'view' && matches(t.name)).sort(byScore)
+  const matViews = allObjects.filter((o) => o.kind === 'materialized_view' && matches(o.name)).sort(byScore)
+  const functions = allObjects.filter((o) => o.kind === 'function' && matches(o.name)).sort(byScore)
+  const procedures = allObjects.filter((o) => o.kind === 'procedure' && matches(o.name)).sort(byScore)
+  const triggers = allObjects.filter((o) => o.kind === 'trigger' && matches(o.name)).sort(byScore)
+  const sequences = allObjects.filter((o) => o.kind === 'sequence' && matches(o.name)).sort(byScore)
+  const indexes = allObjects.filter((o) => o.kind === 'index' && matches(o.name)).sort(byScore)
+  const extensions = allObjects.filter((o) => o.kind === 'extension' && matches(o.name)).sort(byScore)
 
   const paddingLeft = 8 + depth * 16
   // Group label indent: align with icon content (chevron 12px + gap 6px + folder 14px + gap 6px = 38px offset from paddingLeft)
@@ -131,8 +138,9 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
           <span
             className="flex-1 truncate min-w-0 text-xs font-medium"
             style={{ color: 'var(--color-text-primary)' }}
+            title={schemaName}
           >
-            {schemaName}
+            <HighlightedText text={schemaName} query={filterText} />
           </span>
 
           {/* Hover actions */}
@@ -203,6 +211,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                       schema={schemaName}
                       depth={depth + 1}
                       onExportTable={onExportTable}
+                      highlightQuery={filterText}
                     />
                   ))}
                 </SchemaGroup>
@@ -221,6 +230,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                       connectionId={connectionId}
                       schema={schemaName}
                       depth={depth + 1}
+                      highlightQuery={filterText}
                     />
                   ))}
                 </SchemaGroup>
@@ -398,18 +408,20 @@ function SchemaGroup({
   children: React.ReactNode
 }) {
   const [expanded, setExpanded] = useGroupExpanded(storageKey, defaultExpanded)
+  const filterText = useSchemaStore((s) => s.filterText)
   if (count === 0) return null
+  const showExpanded = expanded || Boolean(filterText)
   return (
     <div>
       <GroupHeader
         label={label}
         count={count}
-        expanded={expanded}
+        expanded={showExpanded}
         onToggle={() => setExpanded(!expanded)}
         icon={icon}
         paddingLeft={headerPaddingLeft}
       />
-      {expanded && children}
+      {showExpanded && children}
     </div>
   )
 }
@@ -431,27 +443,32 @@ function SchemaObjectGroup({
   itemPaddingLeft: number
 }) {
   const [expanded, setExpanded] = useGroupExpanded(storageKey, false)
+  const filterText = useSchemaStore((s) => s.filterText)
   if (items.length === 0) return null
+  // Auto-expand when actively searching, so matches are visible without manual clicks.
+  const showExpanded = expanded || Boolean(filterText)
   return (
     <div>
       <GroupHeader
         label={label}
         count={items.length}
-        expanded={expanded}
+        expanded={showExpanded}
         onToggle={() => setExpanded(!expanded)}
         icon={icon}
         paddingLeft={headerPaddingLeft}
       />
-      {expanded && items.map((it) => (
+      {showExpanded && items.map((it) => (
         <div
           key={it.key}
-          className="flex items-center gap-1.5 text-xs py-0.5 truncate"
+          className="flex items-center gap-1.5 text-xs py-0.5 min-w-0"
           style={{ paddingLeft: itemPaddingLeft, color: 'var(--color-text-secondary)' }}
           title={it.sub ? `${it.label} ${it.sub}` : it.label}
         >
-          <span className="truncate">{it.label}</span>
+          <span className="truncate min-w-0">
+            <HighlightedText text={it.label} query={filterText} />
+          </span>
           {it.sub && (
-            <span className="opacity-50 truncate text-[10px]" style={{ fontStyle: 'italic' }}>
+            <span className="opacity-50 truncate text-[10px] shrink min-w-0" style={{ fontStyle: 'italic' }}>
               {it.sub}
             </span>
           )}

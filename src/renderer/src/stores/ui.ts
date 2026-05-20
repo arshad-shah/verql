@@ -3,7 +3,7 @@ import { useSettingsStore } from './settings'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
 
-export type SecondaryPanelId = 'inspector' | 'notifications' | (string & {})
+export type SecondaryPanelId = 'inspector' | 'notifications' | 'connections' | (string & {})
 export type BottomPanelId = 'results' | (string & {})
 
 export type SettingsCategoryId =
