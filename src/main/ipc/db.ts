@@ -124,6 +124,11 @@ export function registerDbHandlers(
     requireAdapter(profileId).getRowCount(table, schema)
   )
 
+  handle('db:get-schema-objects', async (profileId, schema) => {
+    const adapter = requireAdapter(profileId)
+    return adapter.getSchemaObjects ? adapter.getSchemaObjects(schema) : []
+  })
+
   handle('db:get-table-names', async (profileId, schema) => {
     const tables = await requireAdapter(profileId).getTables(schema)
     return tables.map(t => t.name)

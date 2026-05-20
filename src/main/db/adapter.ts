@@ -1,4 +1,4 @@
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, TestConnectionResult } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, TestConnectionResult } from '@shared/types'
 
 export interface DbAdapter {
   connect(): Promise<void>
@@ -18,4 +18,10 @@ export interface DbAdapter {
   cancelQuery?(): void
   isConnected(): boolean
   getConnectionOptions?(field: string): Promise<string[]>
+  /**
+   * Returns non-table schema objects (views, materialized views, functions,
+   * procedures, triggers, sequences) for the given schema. Drivers that don't
+   * support a kind simply omit it; the renderer renders whatever it gets.
+   */
+  getSchemaObjects?(schema?: string): Promise<SchemaObject[]>
 }

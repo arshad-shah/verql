@@ -1,6 +1,6 @@
 import pg from 'pg'
 import type { DbAdapter } from '../../../db/adapter'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class PostgresAdapter implements DbAdapter {
   private pool: pg.Pool | null = null
@@ -151,5 +151,67 @@ export class PostgresAdapter implements DbAdapter {
       `SELECT count(*) as cnt FROM "${s}"."${table}"`
     )
     return parseInt(result.rows[0].cnt, 10)
+  }
+
+  async getSchemaObjects(schema?: string): Promise<SchemaObject[]> {
+    if (!this.pool) throw new Error('Not connected')
+    const s = schema ?? 'public'
+    const objects: SchemaObject[] = []
+
+    // Materialized views (regular views are reported via getTables)
+    const mvs = await this.pool.query(
+      `SELECT matviewname AS name FROM pg_matviews WHERE schemaname = $1 ORDER BY matviewname`, [s]
+    )
+    for (const r of mvs.rows as { name: string }[]) {
+      objects.push({ name: r.name, schema: s, kind: 'materialized_view' })
+    }
+
+    // Functions and procedures
+    const funcs = await this.pool.query(
+      `SELECT p.proname AS name,
+              pg_get_function_arguments(p.oid) AS signature,
+              pg_get_function_result(p.oid) AS return_type,
+              p.prokind AS kind
+       FROM pg_proc p
+       JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = $1
+         AND p.prokind IN ('f','p')
+       ORDER BY p.proname`,
+      [s]
+    )
+    for (const r of funcs.rows as { name: string; signature: string; return_type: string; kind: 'f' | 'p' }[]) {
+      objects.push({
+        name: r.name,
+        schema: s,
+        kind: r.kind === 'p' ? 'procedure' : 'function',
+        signature: r.signature ? `(${r.signature})` : '()',
+        returnType: r.kind === 'f' ? r.return_type : undefined
+      })
+    }
+
+    // Triggers
+    const triggers = await this.pool.query(
+      `SELECT tgname AS name, c.relname AS parent
+       FROM pg_trigger t
+       JOIN pg_class c ON c.oid = t.tgrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE n.nspname = $1 AND NOT t.tgisinternal
+       ORDER BY tgname`,
+      [s]
+    )
+    for (const r of triggers.rows as { name: string; parent: string }[]) {
+      objects.push({ name: r.name, schema: s, kind: 'trigger', parent: r.parent })
+    }
+
+    // Sequences
+    const seqs = await this.pool.query(
+      `SELECT sequence_name AS name FROM information_schema.sequences WHERE sequence_schema = $1 ORDER BY sequence_name`,
+      [s]
+    )
+    for (const r of seqs.rows as { name: string }[]) {
+      objects.push({ name: r.name, schema: s, kind: 'sequence' })
+    }
+
+    return objects
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork } from 'lucide-react'
+import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork, Layers, FunctionSquare, Workflow, Zap, Hash } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
@@ -31,25 +31,32 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const isExpanded = expandedTreeNodes.has(nodeKey)
 
   const tables = useSchemaStore((s) => s.tables)
+  const objects = useSchemaStore((s) => s.objects)
   const filterText = useSchemaStore((s) => s.filterText)
   const switchDatabase = useSchemaStore((s) => s.switchDatabase)
   const fetchTables = useSchemaStore((s) => s.fetchTables)
+  const fetchSchemaObjects = useSchemaStore((s) => s.fetchSchemaObjects)
   const clearCache = useSchemaStore((s) => s.clearCache)
 
   const openErDiagram = useTabsStore((s) => s.openErDiagram)
   const addToast = useToastStore((s) => s.addToast)
 
   const allTables = tables.get(tableCacheKey) ?? []
+  const allObjects = objects.get(tableCacheKey) ?? []
 
-  // Fetch on mount if already expanded and cache is empty
+  const loadAll = async () => {
+    if (databaseName) await switchDatabase(connectionId, databaseName)
+    await Promise.all([
+      fetchTables(connectionId, schemaName, databaseName),
+      fetchSchemaObjects(connectionId, schemaName, databaseName)
+    ])
+  }
+
   useEffect(() => {
     if (!isExpanded || allTables.length > 0) return
     let cancelled = false
     ;(async () => {
-      try {
-        if (databaseName) await switchDatabase(connectionId, databaseName)
-        if (!cancelled) await fetchTables(connectionId, schemaName, databaseName)
-      } catch { /* handled by store */ }
+      try { if (!cancelled) await loadAll() } catch { /* handled by store */ }
     })()
     return () => { cancelled = true }
   }, [isExpanded, connectionId, databaseName, schemaName]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -57,18 +64,14 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   async function handleToggle() {
     toggleTreeNode(nodeKey)
     if (!isExpanded) {
-      try {
-        if (databaseName) await switchDatabase(connectionId, databaseName)
-        await fetchTables(connectionId, schemaName, databaseName)
-      } catch { /* handled by store */ }
+      try { await loadAll() } catch { /* handled by store */ }
     }
   }
 
   async function handleRefresh() {
     try {
-      if (databaseName) await switchDatabase(connectionId, databaseName)
       clearCache(connectionId)
-      await fetchTables(connectionId, schemaName, databaseName)
+      await loadAll()
       addToast({ type: 'success', title: 'Schema refreshed' })
     } catch {
       addToast({ type: 'error', title: 'Failed to refresh schema' })
@@ -88,12 +91,14 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   ]
 
   const filter = filterText.toLowerCase()
-  const filteredTables = allTables.filter(
-    (t) => t.type === 'table' && t.name.toLowerCase().includes(filter)
-  )
-  const filteredViews = allTables.filter(
-    (t) => t.type === 'view' && t.name.toLowerCase().includes(filter)
-  )
+  const matches = (name: string) => name.toLowerCase().includes(filter)
+  const filteredTables = allTables.filter((t) => t.type === 'table' && matches(t.name))
+  const filteredViews = allTables.filter((t) => t.type === 'view' && matches(t.name))
+  const matViews = allObjects.filter((o) => o.kind === 'materialized_view' && matches(o.name))
+  const functions = allObjects.filter((o) => o.kind === 'function' && matches(o.name))
+  const procedures = allObjects.filter((o) => o.kind === 'procedure' && matches(o.name))
+  const triggers = allObjects.filter((o) => o.kind === 'trigger' && matches(o.name))
+  const sequences = allObjects.filter((o) => o.kind === 'sequence' && matches(o.name))
 
   const paddingLeft = 8 + depth * 16
   // Group label indent: align with icon content (chevron 12px + gap 6px + folder 14px + gap 6px = 38px offset from paddingLeft)
@@ -220,11 +225,106 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                     ))}
                   </div>
                 )}
+
+                <SchemaObjectGroup
+                  label="Materialized Views"
+                  items={matViews.map((o) => ({ key: o.name, label: o.name }))}
+                  icon={<Layers size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
+                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  label="Functions"
+                  items={functions.map((o) => ({
+                    key: `${o.name}${o.signature ?? ''}`,
+                    label: `${o.name}${o.signature ?? ''}`,
+                    sub: o.returnType ? `→ ${o.returnType}` : undefined,
+                  }))}
+                  icon={<FunctionSquare size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
+                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  label="Procedures"
+                  items={procedures.map((o) => ({
+                    key: `${o.name}${o.signature ?? ''}`,
+                    label: `${o.name}${o.signature ?? ''}`,
+                  }))}
+                  icon={<Workflow size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
+                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  label="Triggers"
+                  items={triggers.map((o) => ({
+                    key: o.name,
+                    label: o.name,
+                    sub: o.parent ? `on ${o.parent}` : undefined,
+                  }))}
+                  icon={<Zap size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
+                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  label="Sequences"
+                  items={sequences.map((o) => ({ key: o.name, label: o.name }))}
+                  icon={<Hash size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
+                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
               </>
             )}
           </div>
         )}
       </div>
     </ContextMenu>
+  )
+}
+
+interface SchemaObjectGroupItem {
+  key: string
+  label: string
+  sub?: string
+}
+
+function SchemaObjectGroup({
+  label,
+  items,
+  icon,
+  groupLabelPaddingLeft,
+  itemPaddingLeft,
+}: {
+  label: string
+  items: SchemaObjectGroupItem[]
+  icon: React.ReactNode
+  groupLabelPaddingLeft: number
+  itemPaddingLeft: number
+}) {
+  if (items.length === 0) return null
+  return (
+    <div>
+      <p
+        className="uppercase tracking-wider opacity-40 px-2 py-1 text-xs"
+        style={{ paddingLeft: groupLabelPaddingLeft }}
+      >
+        {label}
+      </p>
+      {items.map((it) => (
+        <div
+          key={it.key}
+          className="flex items-center gap-1.5 text-xs py-0.5 truncate"
+          style={{ paddingLeft: itemPaddingLeft, color: 'var(--color-text-secondary)' }}
+          title={it.sub ? `${it.label} ${it.sub}` : it.label}
+        >
+          {icon}
+          <span className="truncate">{it.label}</span>
+          {it.sub && (
+            <span className="opacity-50 truncate" style={{ fontStyle: 'italic' }}>
+              {it.sub}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, DatabaseType } from './types'
+import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType } from './types'
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage, AIApprovalRequest } from './ai-types'
 
@@ -42,6 +42,10 @@ export interface IpcChannelMap {
   'db:get-row-count': {
     args: [profileId: string, table: string, schema?: string]
     return: number
+  }
+  'db:get-schema-objects': {
+    args: [profileId: string, schema?: string]
+    return: SchemaObject[]
   }
   'db:switch-database': {
     args: [profileId: string, database: string]

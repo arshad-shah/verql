@@ -37,6 +37,28 @@ export interface SchemaTable {
   rowCount?: number
 }
 
+export type SchemaObjectKind =
+  | 'view'
+  | 'materialized_view'
+  | 'function'
+  | 'procedure'
+  | 'trigger'
+  | 'sequence'
+
+export interface SchemaObject {
+  name: string
+  schema: string
+  kind: SchemaObjectKind
+  /** Functions/procedures: argument list, e.g. "(integer, text)" */
+  signature?: string
+  /** Triggers: the table the trigger fires on */
+  parent?: string
+  /** Functions: return type */
+  returnType?: string
+  /** Free-form definition snippet, when cheaply available */
+  definition?: string
+}
+
 export interface SchemaColumn {
   name: string
   dataType: string

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { SchemaTable, SchemaColumn, SchemaIndex } from '@shared/types'
+import type { SchemaTable, SchemaColumn, SchemaIndex, SchemaObject } from '@shared/types'
 
 interface SchemaState {
   tables: Map<string, SchemaTable[]>
@@ -7,6 +7,7 @@ interface SchemaState {
   indexes: Map<string, SchemaIndex[]>
   schemas: Map<string, string[]>
   databases: Map<string, string[]>
+  objects: Map<string, SchemaObject[]>
   expandedTables: Set<string>
   filterText: string
   rowCounts: Map<string, number>
@@ -20,6 +21,7 @@ interface SchemaState {
   fetchTables: (connectionId: string, schema: string, database?: string) => Promise<SchemaTable[]>
   fetchColumns: (connectionId: string, table: string, schema: string) => Promise<SchemaColumn[]>
   fetchIndexes: (connectionId: string, table: string, schema: string) => Promise<SchemaIndex[]>
+  fetchSchemaObjects: (connectionId: string, schema: string, database?: string) => Promise<SchemaObject[]>
   toggleTable: (key: string) => void
   clearCache: (connectionId?: string) => void
   setFilterText: (text: string) => void
@@ -36,6 +38,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
   indexes: new Map(),
   schemas: new Map(),
   databases: new Map(),
+  objects: new Map(),
   expandedTables: new Set(),
   filterText: '',
   rowCounts: new Map(),
@@ -149,6 +152,28 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
     return result
   },
 
+  fetchSchemaObjects: async (connectionId, schema, database) => {
+    const key = database ? cacheKey(connectionId, database, schema) : cacheKey(connectionId, schema)
+    const cached = get().objects.get(key)
+    if (cached) return cached
+    try {
+      const result = await window.electronAPI.invoke('db:get-schema-objects', connectionId, schema)
+      set((s) => {
+        const next = new Map(s.objects)
+        next.set(key, result)
+        return { objects: next }
+      })
+      return result
+    } catch {
+      set((s) => {
+        const next = new Map(s.objects)
+        next.set(key, [])
+        return { objects: next }
+      })
+      return []
+    }
+  },
+
   toggleTable: (key) => {
     set((s) => {
       const next = new Set(s.expandedTables)
@@ -172,7 +197,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
 
   clearCache: (connectionId) => {
     if (!connectionId) {
-      set((s) => ({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map(), rowCounts: new Map(), filterText: '', cacheVersion: s.cacheVersion + 1 }))
+      set((s) => ({ tables: new Map(), columns: new Map(), indexes: new Map(), schemas: new Map(), databases: new Map(), objects: new Map(), rowCounts: new Map(), filterText: '', cacheVersion: s.cacheVersion + 1 }))
       return
     }
     set((s) => {
@@ -181,9 +206,6 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
         for (const [k, v] of m) if (!k.startsWith(connectionId)) next.set(k, v)
         return next
       }
-      // Clear per-database schemas (connectionId:dbName) but keep the root-level
-      // schemas entry (key = exactly connectionId) so ExplorerTree's
-      // hierarchyLoaded stays true — its useEffect deps won't re-trigger a fetch.
       const nextSchemas = new Map(s.schemas)
       for (const k of nextSchemas.keys()) {
         if (k.startsWith(connectionId) && k !== connectionId) nextSchemas.delete(k)
@@ -192,7 +214,7 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
         tables: filterMap(s.tables),
         columns: filterMap(s.columns),
         indexes: filterMap(s.indexes),
-        // Preserve databases list (tree structure, rarely changes)
+        objects: filterMap(s.objects),
         schemas: nextSchemas,
         rowCounts: filterMap(s.rowCounts),
         cacheVersion: s.cacheVersion + 1
