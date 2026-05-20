@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork, Layers, FunctionSquare, Workflow, Zap, Hash } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork, Layers, FunctionSquare, Workflow, Zap, Hash, Table2, Eye, KeySquare, Package } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
@@ -99,6 +99,8 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const procedures = allObjects.filter((o) => o.kind === 'procedure' && matches(o.name))
   const triggers = allObjects.filter((o) => o.kind === 'trigger' && matches(o.name))
   const sequences = allObjects.filter((o) => o.kind === 'sequence' && matches(o.name))
+  const indexes = allObjects.filter((o) => o.kind === 'index' && matches(o.name))
+  const extensions = allObjects.filter((o) => o.kind === 'extension' && matches(o.name))
 
   const paddingLeft = 8 + depth * 16
   // Group label indent: align with icon content (chevron 12px + gap 6px + folder 14px + gap 6px = 38px offset from paddingLeft)
@@ -185,55 +187,68 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
               </p>
             ) : (
               <>
-                {filteredTables.length > 0 && (
-                  <div>
-                    <p
-                      className="uppercase tracking-wider opacity-40 px-2 py-1 text-xs"
-                      style={{ paddingLeft: groupLabelPaddingLeft }}
-                    >
-                      Tables
-                    </p>
-                    {filteredTables.map((t) => (
-                      <TableNode
-                        key={t.name}
-                        tableName={t.name}
-                        connectionId={connectionId}
-                        schema={schemaName}
-                        depth={depth + 1}
-                        onExportTable={onExportTable}
-                      />
-                    ))}
-                  </div>
-                )}
+                <SchemaGroup
+                  storageKey={`${tableCacheKey}:tables`}
+                  label="Tables"
+                  count={filteredTables.length}
+                  icon={<Table2 size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
+                  headerPaddingLeft={groupLabelPaddingLeft}
+                  defaultExpanded
+                >
+                  {filteredTables.map((t) => (
+                    <TableNode
+                      key={t.name}
+                      tableName={t.name}
+                      connectionId={connectionId}
+                      schema={schemaName}
+                      depth={depth + 1}
+                      onExportTable={onExportTable}
+                    />
+                  ))}
+                </SchemaGroup>
 
-                {filteredViews.length > 0 && (
-                  <div>
-                    <p
-                      className="uppercase tracking-wider opacity-40 px-2 py-1 text-xs"
-                      style={{ paddingLeft: groupLabelPaddingLeft }}
-                    >
-                      Views
-                    </p>
-                    {filteredViews.map((v) => (
-                      <ViewNode
-                        key={v.name}
-                        viewName={v.name}
-                        connectionId={connectionId}
-                        schema={schemaName}
-                        depth={depth + 1}
-                      />
-                    ))}
-                  </div>
-                )}
+                <SchemaGroup
+                  storageKey={`${tableCacheKey}:views`}
+                  label="Views"
+                  count={filteredViews.length}
+                  icon={<Eye size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
+                  headerPaddingLeft={groupLabelPaddingLeft}
+                >
+                  {filteredViews.map((v) => (
+                    <ViewNode
+                      key={v.name}
+                      viewName={v.name}
+                      connectionId={connectionId}
+                      schema={schemaName}
+                      depth={depth + 1}
+                    />
+                  ))}
+                </SchemaGroup>
 
                 <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:mvs`}
                   label="Materialized Views"
                   items={matViews.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Layers size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
-                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  headerPaddingLeft={groupLabelPaddingLeft}
                   itemPaddingLeft={paddingLeft + 28}
                 />
                 <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:indexes`}
+                  label="Indexes"
+                  items={indexes.map((o) => ({
+                    key: `${o.parent ?? ''}.${o.name}`,
+                    label: o.name,
+                    sub: o.parent
+                      ? `on ${o.parent}${o.returnType ? ' • ' + o.returnType : ''}`
+                      : o.returnType ?? undefined
+                  }))}
+                  icon={<KeySquare size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
+                  headerPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:functions`}
                   label="Functions"
                   items={functions.map((o) => ({
                     key: `${o.name}${o.signature ?? ''}`,
@@ -241,35 +256,46 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                     sub: o.returnType ? `→ ${o.returnType}` : undefined,
                   }))}
                   icon={<FunctionSquare size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
-                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  headerPaddingLeft={groupLabelPaddingLeft}
                   itemPaddingLeft={paddingLeft + 28}
                 />
                 <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:procedures`}
                   label="Procedures"
                   items={procedures.map((o) => ({
                     key: `${o.name}${o.signature ?? ''}`,
                     label: `${o.name}${o.signature ?? ''}`,
                   }))}
                   icon={<Workflow size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
-                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  headerPaddingLeft={groupLabelPaddingLeft}
                   itemPaddingLeft={paddingLeft + 28}
                 />
                 <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:triggers`}
                   label="Triggers"
                   items={triggers.map((o) => ({
-                    key: o.name,
+                    key: `${o.parent ?? ''}.${o.name}`,
                     label: o.name,
                     sub: o.parent ? `on ${o.parent}` : undefined,
                   }))}
                   icon={<Zap size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
-                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  headerPaddingLeft={groupLabelPaddingLeft}
                   itemPaddingLeft={paddingLeft + 28}
                 />
                 <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:sequences`}
                   label="Sequences"
                   items={sequences.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Hash size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
-                  groupLabelPaddingLeft={groupLabelPaddingLeft}
+                  headerPaddingLeft={groupLabelPaddingLeft}
+                  itemPaddingLeft={paddingLeft + 28}
+                />
+                <SchemaObjectGroup
+                  storageKey={`${tableCacheKey}:extensions`}
+                  label="Extensions"
+                  items={extensions.map((o) => ({ key: o.name, label: o.name }))}
+                  icon={<Package size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
+                  headerPaddingLeft={groupLabelPaddingLeft}
                   itemPaddingLeft={paddingLeft + 28}
                 />
               </>
@@ -287,39 +313,145 @@ interface SchemaObjectGroupItem {
   sub?: string
 }
 
+/**
+ * Collapsible header row used by every schema sub-category. Persists its
+ * expanded state in localStorage so it survives reloads — keyed by
+ * connection+schema+group so different schemas don't share state.
+ */
+function useGroupExpanded(storageKey: string, defaultExpanded: boolean) {
+  const fullKey = `schema-group:${storageKey}`
+  const [expanded, setExpandedState] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(fullKey)
+      return raw === null ? defaultExpanded : raw === '1'
+    } catch {
+      return defaultExpanded
+    }
+  })
+  const setExpanded = (next: boolean) => {
+    setExpandedState(next)
+    try { localStorage.setItem(fullKey, next ? '1' : '0') } catch { /* quota */ }
+  }
+  return [expanded, setExpanded] as const
+}
+
+function GroupHeader({
+  label,
+  count,
+  expanded,
+  onToggle,
+  icon,
+  paddingLeft
+}: {
+  label: string
+  count: number
+  expanded: boolean
+  onToggle: () => void
+  icon: React.ReactNode
+  paddingLeft: number
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="group w-full flex items-center gap-1.5 py-0.5 text-left transition-colors duration-[var(--transition-fast)]"
+      style={{ paddingLeft, paddingRight: 4 }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-hover)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = '')}
+    >
+      {expanded
+        ? <ChevronDown size={10} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />
+        : <ChevronRight size={10} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
+      {icon}
+      <span
+        className="uppercase tracking-wider opacity-60 text-[10px] font-medium flex-1 truncate"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-[10px] opacity-50 tabular-nums"
+        style={{ color: 'var(--color-text-tertiary)' }}
+      >
+        {count}
+      </span>
+    </button>
+  )
+}
+
+/** Generic collapsible group; children are the rendered rows. Used for Tables/Views. */
+function SchemaGroup({
+  storageKey,
+  label,
+  count,
+  icon,
+  headerPaddingLeft,
+  defaultExpanded = false,
+  children
+}: {
+  storageKey: string
+  label: string
+  count: number
+  icon: React.ReactNode
+  headerPaddingLeft: number
+  defaultExpanded?: boolean
+  children: React.ReactNode
+}) {
+  const [expanded, setExpanded] = useGroupExpanded(storageKey, defaultExpanded)
+  if (count === 0) return null
+  return (
+    <div>
+      <GroupHeader
+        label={label}
+        count={count}
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
+        icon={icon}
+        paddingLeft={headerPaddingLeft}
+      />
+      {expanded && children}
+    </div>
+  )
+}
+
+/** Collapsible group for flat lists of objects (functions, indexes, etc.). */
 function SchemaObjectGroup({
+  storageKey,
   label,
   items,
   icon,
-  groupLabelPaddingLeft,
+  headerPaddingLeft,
   itemPaddingLeft,
 }: {
+  storageKey: string
   label: string
   items: SchemaObjectGroupItem[]
   icon: React.ReactNode
-  groupLabelPaddingLeft: number
+  headerPaddingLeft: number
   itemPaddingLeft: number
 }) {
+  const [expanded, setExpanded] = useGroupExpanded(storageKey, false)
   if (items.length === 0) return null
   return (
     <div>
-      <p
-        className="uppercase tracking-wider opacity-40 px-2 py-1 text-xs"
-        style={{ paddingLeft: groupLabelPaddingLeft }}
-      >
-        {label}
-      </p>
-      {items.map((it) => (
+      <GroupHeader
+        label={label}
+        count={items.length}
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
+        icon={icon}
+        paddingLeft={headerPaddingLeft}
+      />
+      {expanded && items.map((it) => (
         <div
           key={it.key}
           className="flex items-center gap-1.5 text-xs py-0.5 truncate"
           style={{ paddingLeft: itemPaddingLeft, color: 'var(--color-text-secondary)' }}
           title={it.sub ? `${it.label} ${it.sub}` : it.label}
         >
-          {icon}
           <span className="truncate">{it.label}</span>
           {it.sub && (
-            <span className="opacity-50 truncate" style={{ fontStyle: 'italic' }}>
+            <span className="opacity-50 truncate text-[10px]" style={{ fontStyle: 'italic' }}>
               {it.sub}
             </span>
           )}

@@ -212,6 +212,41 @@ export class PostgresAdapter implements DbAdapter {
       objects.push({ name: r.name, schema: s, kind: 'sequence' })
     }
 
+    // Indexes across all tables in the schema, excluding the implicit ones
+    // created for primary keys (those are surfaced as PK markers on columns).
+    const idx = await this.pool.query(
+      `SELECT i.relname AS name,
+              t.relname AS parent,
+              CASE WHEN ix.indisunique THEN 'UNIQUE' ELSE '' END AS kind
+       FROM pg_index ix
+       JOIN pg_class i ON i.oid = ix.indexrelid
+       JOIN pg_class t ON t.oid = ix.indrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       WHERE n.nspname = $1 AND NOT ix.indisprimary
+       ORDER BY t.relname, i.relname`,
+      [s]
+    )
+    for (const r of idx.rows as { name: string; parent: string; kind: string }[]) {
+      objects.push({
+        name: r.name,
+        schema: s,
+        kind: 'index',
+        parent: r.parent,
+        returnType: r.kind || undefined
+      })
+    }
+
+    // Extensions installed in the database (not per-schema; we still surface
+    // them under the 'public'-ish view since users expect to discover them here).
+    if (s === 'public') {
+      const exts = await this.pool.query(
+        `SELECT extname AS name FROM pg_extension ORDER BY extname`
+      )
+      for (const r of exts.rows as { name: string }[]) {
+        objects.push({ name: r.name, schema: s, kind: 'extension' })
+      }
+    }
+
     return objects
   }
 }

@@ -44,6 +44,8 @@ export type SchemaObjectKind =
   | 'procedure'
   | 'trigger'
   | 'sequence'
+  | 'index'
+  | 'extension'
 
 export interface SchemaObject {
   name: string
@@ -51,9 +53,9 @@ export interface SchemaObject {
   kind: SchemaObjectKind
   /** Functions/procedures: argument list, e.g. "(integer, text)" */
   signature?: string
-  /** Triggers: the table the trigger fires on */
+  /** Triggers/indexes: the table they're attached to */
   parent?: string
-  /** Functions: return type */
+  /** Functions: return type. Indexes: 'UNIQUE' / 'PRIMARY' etc. */
   returnType?: string
   /** Free-form definition snippet, when cheaply available */
   definition?: string
