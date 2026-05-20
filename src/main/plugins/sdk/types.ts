@@ -169,6 +169,8 @@ export interface KeyringAccess {
   retrieveSync(profileId: string, key: string): string | null
   storeSync(profileId: string, key: string, value: string): void
   has(profileId: string, key: string): boolean
+  /** Returns all stored key names for a profile (field portion of `profileId:key`). */
+  listKeys(profileId: string): string[]
 }
 
 // ─── Boot Report ─────────────────────────────────────────────────────────────

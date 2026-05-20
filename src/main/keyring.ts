@@ -63,6 +63,13 @@ export class KeyringService {
     this.save()
   }
 
+  listKeys(profileId: string): string[] {
+    const prefix = `${profileId}:`
+    return Object.keys(this.cache)
+      .filter(k => k.startsWith(prefix))
+      .map(k => k.slice(prefix.length))
+  }
+
   async deleteAll(profileId: string): Promise<void> {
     const prefix = `${profileId}:`
     for (const key of Object.keys(this.cache)) {
