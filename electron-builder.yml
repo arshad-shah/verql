@@ -1,5 +1,6 @@
-appId: com.nova.app
+appId: com.arshadshah.nova
 productName: Nova
+copyright: Copyright © 2026 Arshad Shah
 directories:
   buildResources: build
   output: dist
@@ -7,19 +8,40 @@ files:
   - out/**/*
 asarUnpack:
   - "**/*.{node,dylib}"
+
+# Publish target — releases go to the GitHub Releases of this repo only.
+# CI guards on $GITHUB_REPOSITORY before invoking electron-builder, so a
+# fork that triggers the workflow can't publish to this owner.
+publish:
+  provider: github
+  owner: arshad-shah
+  repo: nova
+  releaseType: release
+
 mac:
   category: public.app-category.developer-tools
   target:
     - target: dmg
       arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  # gatekeeperAssess: false  # left at default; CI runs codesign + notarytool
+
+# Windows: shipped UNSIGNED on first release. Users will see a SmartScreen
+# warning until reputation builds or a code-signing certificate is added.
+# (See docs/release.md for the upgrade path.)
 win:
   target:
     - target: nsis
       arch: [x64]
+  verifyUpdateCodeSignature: false
+
 linux:
   target:
     - AppImage
   category: Development
+  # AppImage isn't signed at the binary level; the release pipeline
+  # publishes a detached GPG signature for the sha256sums file instead.

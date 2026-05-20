@@ -14,9 +14,9 @@ function AppLoader() {
   useEffect(() => {
     async function init() {
       // One-time migration from localStorage to settings store
-      const oldTheme = localStorage.getItem('dbstudio-theme')
-      const oldSidebarWidth = localStorage.getItem('dbstudio-sidebar-width')
-      const oldSplitRatio = localStorage.getItem('dbstudio-split-ratio')
+      const oldTheme = localStorage.getItem('nova-theme')
+      const oldSidebarWidth = localStorage.getItem('nova-sidebar-width')
+      const oldSplitRatio = localStorage.getItem('nova-split-ratio')
 
       if (oldTheme || oldSidebarWidth || oldSplitRatio) {
         if (oldTheme) {
@@ -36,9 +36,9 @@ function AppLoader() {
             parseFloat(oldSplitRatio)
           )
         }
-        localStorage.removeItem('dbstudio-theme')
-        localStorage.removeItem('dbstudio-sidebar-width')
-        localStorage.removeItem('dbstudio-split-ratio')
+        localStorage.removeItem('nova-theme')
+        localStorage.removeItem('nova-sidebar-width')
+        localStorage.removeItem('nova-split-ratio')
       }
 
       await hydrate()

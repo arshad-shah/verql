@@ -38,7 +38,7 @@ and is where the plugin *registers* those contributions through the SDK.
 
 ```json
 {
-  "name": "dbstudio-plugin-cassandra",
+  "name": "nova-plugin-cassandra",
   "version": "1.0.0",
   "displayName": "Cassandra",
   "description": "Apache Cassandra driver",
@@ -71,7 +71,7 @@ this repo (since the audit; see `tests/unit/plugin-boot.test.ts`).
 
 ```ts
 // my-plugin/index.ts
-import type { PluginContext } from '@dbstudio/plugin-sdk'
+import type { PluginContext } from '@nova/plugin-sdk'
 import { CassandraAdapter } from './cassandra-adapter'
 
 export function activate(ctx: PluginContext): void {
@@ -390,7 +390,7 @@ ctx.commands.register('format-sql', async () => {
 ```
 
 The orchestrator prepends the plugin name to the command id, so the
-palette ends up running `dbstudio-plugin-foo:format-sql`.
+palette ends up running `nova-plugin-foo:format-sql`.
 
 ### 10. AI provider / tool
 

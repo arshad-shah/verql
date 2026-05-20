@@ -1,0 +1,238 @@
+# Releasing Nova
+
+This document covers cutting a new release end-to-end:
+
+1. [The flow](#the-flow)
+2. [Required secrets & accounts](#required-secrets--accounts)
+3. [What the user gets](#what-the-user-gets)
+4. [Verifying a release as a user](#verifying-a-release-as-a-user)
+5. [Upgrading the pipeline](#upgrading-the-pipeline)
+
+## The flow
+
+```
+                ┌──────────────────────────────────┐
+   Maintainer ▶ │  pnpm changeset                  │  (per PR)
+                │  pnpm changeset version          │  (when cutting a release)
+                │  commit + push to main           │
+                │  git tag vX.Y.Z && git push tag  │
+                └──────────────────────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────┐
+              │ .github/workflows/     │  triggered by `v*.*.*` tag
+              │   release.yml          │
+              └────────────────────────┘
+                  │       │       │
+        ┌─────────┘       │       └─────────┐
+        ▼                 ▼                 ▼
+   ┌─────────┐       ┌──────────┐      ┌─────────┐
+   │ macOS   │       │  Linux   │      │ Windows │
+   │ build   │       │  build   │      │  build  │
+   │ + sign  │       │ (+GPG    │      │ (no     │
+   │ + notar │       │  sums)   │      │  sign)  │
+   └─────────┘       └──────────┘      └─────────┘
+        └──────────────┬───────────────────┘
+                       ▼
+              ┌──────────────────────┐
+              │ Aggregate + publish  │
+              │ - sha256sums.txt     │
+              │ - cosign signature   │
+              │ - CycloneDX SBOM     │
+              │ - draft GitHub       │
+              │   release            │
+              └──────────────────────┘
+                       │
+                       ▼
+                Maintainer reviews
+                and clicks Publish.
+```
+
+The release workflow is in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
+
+A guard job runs first and refuses to publish from any repo other than
+`arshad-shah/nova`, so a fork that pushes a tag cannot trigger an
+arshad-shah/nova release.
+
+## Required secrets & accounts
+
+Set each as a **Repository Secret** at
+`https://github.com/arshad-shah/nova/settings/secrets/actions`.
+Several are optional — leave them empty and the workflow produces
+unsigned binaries for that platform instead of failing.
+
+### macOS — signed + notarised
+
+You need a paid **Apple Developer Program** membership
+([apple.com/developer](https://developer.apple.com/programs/), $99/year).
+With that you can mint:
+
+1. **Developer ID Application certificate** — used to sign the
+   `.app`/`.dmg`.
+   - Generate it from Xcode → Settings → Accounts → Manage Certificates,
+     or from
+     [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/certificates/list).
+   - Choose "Developer ID Application".
+   - Export from Keychain Access as a `.p12` with a password.
+2. **App-specific password** for `notarytool` — generated at
+   [appleid.apple.com](https://appleid.apple.com/) → Sign-In and Security
+   → App-Specific Passwords → "+".
+
+Then set these GitHub secrets:
+
+| Secret | What it is | How to compute |
+|--------|------------|----------------|
+| `MAC_CERT_P12_BASE64` | The exported `.p12`, base64-encoded so it can live in a secret | `base64 -i Developer-ID.p12 \| pbcopy` |
+| `MAC_CERT_PASSWORD` | The password you used when exporting the `.p12` | (whatever you typed) |
+| `APPLE_ID` | The Apple ID email associated with the developer account | e.g. `you@example.com` |
+| `APPLE_APP_SPECIFIC_PASSWORD` | The app-specific password from above | `abcd-efgh-ijkl-mnop` |
+| `APPLE_TEAM_ID` | 10-character team ID | Visible at [Membership Details](https://developer.apple.com/account#MembershipDetailsCard) |
+
+Without these, the macOS build still produces a `.dmg`, but unsigned —
+Gatekeeper will block the first launch unless the user right-clicks →
+Open. Notarisation also fails (silently in CI for now), which would
+trigger a "developer cannot be verified" prompt.
+
+### Linux — GPG-signed checksums
+
+The AppImage itself isn't signed at the binary level, but the release
+publishes a `sha256sums.txt` and signs it with a detached GPG
+signature. The cosign keyless flow does this for free — see
+[Sigstore keyless](#sigstore-keyless-signing) below. Nothing extra to
+configure.
+
+If you'd rather use a traditional GPG key:
+
+1. `gpg --full-generate-key` → RSA 4096, no expiration (or short
+   expiry if you want to rotate annually).
+2. `gpg --armor --export-secret-keys YOUR_KEY_ID | base64 | pbcopy`.
+3. Set:
+   - `GPG_PRIVATE_KEY` — the base64 armoured private key
+   - `GPG_PASSPHRASE` — passphrase for that key
+4. Replace the `cosign sign-blob` step in `release.yml` with a
+   `gpg --detach-sign --armor sha256sums.txt` step.
+
+The current pipeline uses sigstore by default because it requires no
+key material at all.
+
+### Windows — **unsigned per your decision**
+
+The pipeline ships the NSIS installer without signing. Users will see a
+SmartScreen "Unrecognized App" warning on first run and can click
+"More info" → "Run anyway". This is fine for the first public release
+but should be revisited if you want a smoother install experience.
+
+When you're ready to sign, the recommended path is **Azure Trusted
+Signing** (~$10/month, no hardware token, signs in CI). Add these
+secrets and replace the `Build (Windows)` step with a sign action
+([Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action)):
+
+- `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` — for
+  a Service Principal with the Code Signing role on your Trusted
+  Signing account.
+
+Alternatives: [SignPath.io](https://signpath.io/) is free for OSS and
+provides a signing portal you trigger manually. Traditional EV / OV
+certs from DigiCert / Sectigo / SSL.com work too but cost more and
+(for EV) require a hardware token, which doesn't translate cleanly
+into CI.
+
+### Sigstore keyless signing
+
+The release workflow signs the `sha256sums.txt` with
+[cosign](https://docs.sigstore.dev/) using a short-lived OIDC token
+provisioned by GitHub itself (`permissions: id-token: write`). No
+secrets, no key material to rotate. The resulting `.sig` + `.pem`
+files are published alongside the binaries.
+
+Users verify with:
+
+```bash
+cosign verify-blob \
+  --certificate sha256sums.txt.pem \
+  --signature   sha256sums.txt.sig \
+  --certificate-identity 'https://github.com/arshad-shah/nova/.github/workflows/release.yml@refs/tags/vX.Y.Z' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  sha256sums.txt
+```
+
+(See [Verifying a release](#verifying-a-release-as-a-user) for the
+full command without the CI gobbledygook.)
+
+### `GITHUB_TOKEN`
+
+Provided automatically by GitHub Actions. The workflow's job-level
+`permissions:` block scopes it to `contents: write` only in the
+`publish` job. No action needed.
+
+## What the user gets
+
+A published release on
+`https://github.com/arshad-shah/nova/releases/tag/vX.Y.Z` includes:
+
+| Asset | Platform | What it is |
+|-------|----------|------------|
+| `Nova-X.Y.Z.dmg` | macOS Intel | Disk image, signed & notarised |
+| `Nova-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
+| `Nova-X.Y.Z-mac.zip` | macOS (both arches) | For auto-updater |
+| `Nova-X.Y.Z.AppImage` | Linux x64 | Portable, no install needed |
+| `Nova Setup X.Y.Z.exe` | Windows x64 | NSIS installer (currently unsigned) |
+| `latest-mac.yml` / `latest-linux.yml` / `latest.yml` | All | Auto-updater feeds |
+| `sha256sums.txt` | All | Hashes of every binary |
+| `sha256sums.txt.sig` + `.pem` | All | Sigstore signature + cert |
+| `nova-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
+
+## Verifying a release as a user
+
+```bash
+# 1. Download the binary plus sha256sums.txt(.sig|.pem) from the release page.
+# 2. Install cosign once: brew install cosign  /  apt install cosign
+
+cosign verify-blob \
+  --certificate       sha256sums.txt.pem \
+  --signature         sha256sums.txt.sig \
+  --certificate-identity-regexp 'https://github.com/arshad-shah/nova/' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  sha256sums.txt
+
+# 3. Verify your downloaded binary matches the recorded hash:
+sha256sum -c sha256sums.txt --ignore-missing   # Linux
+shasum -a 256 -c sha256sums.txt --ignore-missing # macOS
+```
+
+If both succeed, you have a binary that was produced by the
+`release.yml` workflow running in `arshad-shah/nova`, and nothing
+mutated it after the build.
+
+## Upgrading the pipeline
+
+### Add Windows signing later
+
+1. Sign up for Azure Trusted Signing.
+2. Add the three Azure secrets above.
+3. Replace the `Build (Windows)` step in `release.yml` with the
+   trusted-signing action (or wire `electron-builder` to call
+   `signtool.exe` via the SignPath toolset).
+
+### Add `latest*.yml` upload for auto-updates
+
+Already produced by `electron-builder` per platform. They're uploaded
+alongside the binaries. `electron-updater` in the app can be wired
+later by:
+
+1. `pnpm add electron-updater`
+2. In `src/main/index.ts`, call `autoUpdater.checkForUpdatesAndNotify()`
+   on app startup.
+3. The renderer can subscribe to lifecycle events via a new IPC
+   channel.
+
+### Promote a draft release
+
+The pipeline creates **drafts** so the maintainer can sanity-check
+before users see them. Once you're happy:
+
+1. Go to https://github.com/arshad-shah/nova/releases
+2. Find the draft, click Edit
+3. Click "Publish release"
+4. Users with the app installed will get notified by the
+   auto-updater (once that's wired).

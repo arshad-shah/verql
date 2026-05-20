@@ -56,14 +56,14 @@ async function bootCoordinator() {
   coordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
 
   for (const name of [
-    'dbstudio-plugin-ai',
-    'dbstudio-plugin-core-formats',
-    'dbstudio-plugin-postgresql',
-    'dbstudio-plugin-mysql',
-    'dbstudio-plugin-sqlite',
-    'dbstudio-plugin-snowflake',
-    'dbstudio-plugin-mongodb',
-    'dbstudio-plugin-redis'
+    'nova-plugin-ai',
+    'nova-plugin-core-formats',
+    'nova-plugin-postgresql',
+    'nova-plugin-mysql',
+    'nova-plugin-sqlite',
+    'nova-plugin-snowflake',
+    'nova-plugin-mongodb',
+    'nova-plugin-redis'
   ]) {
     const p = coordinator.getPlugin(name)!
     await coordinator.activatePlugin(p)

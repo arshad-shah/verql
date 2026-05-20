@@ -7,13 +7,15 @@ const isDev = !app.isPackaged
 const APP_NAME = 'Nova'
 /**
  * Identity used for on-disk storage (`app.getPath('userData')`) and the macOS
- * keychain service that backs `safeStorage`. This MUST stay stable across
- * rebrands — changing it points the app at a new userData dir AND a new
- * keychain entry, which makes previously-encrypted ciphertexts (API keys)
- * undecryptable. Connection passwords stored plainly in config.json survive a
- * rename, but encrypted credentials do not. Keep this constant forever.
+ * keychain service that backs `safeStorage`. From v0.1.0 onwards this MUST
+ * stay constant — changing it points the app at a new userData dir and a new
+ * keychain entry, which makes previously-encrypted ciphertexts (API keys,
+ * connection passwords stored as ciphertext in config.json) undecryptable
+ * for every existing installation. If a future rebrand is unavoidable, ship
+ * a one-shot migration that copies the old `userData/<old-name>` directory
+ * to the new path before any read.
  */
-const STORAGE_NAME = 'dbstudio'
+const STORAGE_NAME = 'nova'
 
 app.setName(STORAGE_NAME)
 

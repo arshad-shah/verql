@@ -8,7 +8,7 @@ import type { ConnectionProfile } from '@shared/types'
 const activeTunnels = new Map<string, Client>()
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-ssh',
+  name: 'nova-plugin-ssh',
   version: '1.0.0',
   displayName: 'SSH Tunnels',
   description: 'SSH tunnel support for database connections',

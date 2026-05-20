@@ -13,7 +13,7 @@ import { parseCsvFile } from '../../../import/csv-import'
  * doesn't require editing the main app.
  */
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-core-formats',
+  name: 'nova-plugin-core-formats',
   version: '1.0.0',
   displayName: 'Core Formats',
   description: 'CSV and JSON import/export for any database',

@@ -6,7 +6,7 @@ import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-snowflake',
+  name: 'nova-plugin-snowflake',
   version: '1.0.0',
   displayName: 'Snowflake',
   description: 'Snowflake data warehouse driver',
@@ -187,8 +187,8 @@ export function activate(ctx: PluginContext): void {
   // ── Declarative UI: Toolbar selectors (Snowsight-style Role + Warehouse) ──
 
   ctx.ui.registerToolbar('snowflake-context', [
-    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'dbstudio-plugin-snowflake:use-role', searchable: true },
-    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'dbstudio-plugin-snowflake:use-warehouse', searchable: true },
+    { type: 'selector', id: 'sf-role', label: 'Role', resolver: 'sf-roles', onChange: 'nova-plugin-snowflake:use-role', searchable: true },
+    { type: 'selector', id: 'sf-warehouse', label: 'Warehouse', resolver: 'sf-warehouses', onChange: 'nova-plugin-snowflake:use-warehouse', searchable: true },
   ])
 
   // ── Dynamic resolvers ─────────────────────────────────────────────────────

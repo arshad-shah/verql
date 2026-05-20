@@ -8,7 +8,7 @@ vi.mock('electron', () => ({
     decryptString: (buffer: Buffer) => buffer.toString().replace('encrypted:', '')
   },
   app: {
-    getPath: () => '/tmp/dbstudio-test'
+    getPath: () => '/tmp/nova-test'
   }
 }))
 

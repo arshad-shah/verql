@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "Nova — a fast, extensible desktop database client.",
+  "license": "MIT",
+  "author": "Arshad Shah",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arshad-shah/nova.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arshad-shah/nova/issues"
+  },
+  "homepage": "https://github.com/arshad-shah/nova#readme",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -11,6 +21,8 @@
     "postinstall": "electron-rebuild --only better-sqlite3",
     "test": "vitest run",
     "test:watch": "vitest",
+    "changeset": "changeset",
+    "version": "changeset version",
     "build:mac": "npm run build && electron-builder --mac",
     "build:win": "npm run build && electron-builder --win",
     "build:linux": "npm run build && electron-builder --linux",
@@ -51,6 +63,8 @@
     "zustand": "5.0.12"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
     "@electron/rebuild": "4.0.4",
     "@storybook/addon-a11y": "10.3.5",
     "@storybook/addon-docs": "10.3.5",

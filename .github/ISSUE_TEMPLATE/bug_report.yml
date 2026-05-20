@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a defect, crash, or unexpected behaviour.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The most useful
+        thing you can give us is a reproduction — exact steps that
+        reliably trigger the problem.
+  - type: input
+    id: version
+    attributes:
+      label: Nova version
+      description: From the Help menu → "About Nova", or the release tag.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [macOS, Windows, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: driver
+    attributes:
+      label: Database driver
+      description: Only if the bug involves a database connection.
+      options:
+        - "Not applicable"
+        - PostgreSQL
+        - MySQL
+        - SQLite
+        - Snowflake
+        - MongoDB
+        - Redis
+        - Other (specify in description)
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug. Include the actual error message verbatim.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open Nova
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: |
+        Optional. If a renderer-side log helps, copy from the DevTools
+        Console (Cmd/Ctrl+Shift+I). Redact anything sensitive.

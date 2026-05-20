@@ -5,7 +5,7 @@ import { RedisAdapter } from './redis-adapter'
 import { getTableData, jsonExporter } from './data-format'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-redis',
+  name: 'nova-plugin-redis',
   version: '1.0.0',
   displayName: 'Redis',
   description: 'Redis database driver',

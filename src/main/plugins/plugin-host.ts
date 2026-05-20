@@ -183,7 +183,7 @@ export class PluginBootCoordinator {
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
-        if (!pkg.keywords?.includes('dbstudio-plugin')) return null
+        if (!pkg.keywords?.includes('nova-plugin')) return null
         return {
           name: pkg.name,
           version: pkg.version ?? '0.0.0',
@@ -540,7 +540,7 @@ export class PluginBootCoordinator {
   }
 
   installFromZip(zipPath: string): { success: boolean; name?: string; error?: string } {
-    const tmpDir = path.join(os.tmpdir(), `dbstudio-plugin-${Date.now()}`)
+    const tmpDir = path.join(os.tmpdir(), `nova-plugin-${Date.now()}`)
     try {
       fs.mkdirSync(tmpDir, { recursive: true })
       execFileSync('unzip', ['-o', '-q', zipPath, '-d', tmpDir])
