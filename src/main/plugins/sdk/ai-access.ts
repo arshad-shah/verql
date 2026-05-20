@@ -1,9 +1,9 @@
 // src/main/plugins/sdk/ai-access.ts
 import type { Disposable } from './types'
-import type { AITool, AIContextProvider, AIProvider } from '../../ai/types'
-import type { AIToolRegistry } from '../../ai/tool-registry'
-import type { AIProviderRegistry } from '../../ai/provider-registry'
-import type { ConversationManager } from '../../ai/conversation-manager'
+import type { AITool, AIContextProvider, AIProvider } from '../bundled/ai/internal/types'
+import type { AIToolRegistry } from '../bundled/ai/internal/tool-registry'
+import type { AIProviderRegistry } from '../bundled/ai/internal/provider-registry'
+import type { ConversationManager } from '../bundled/ai/internal/conversation-manager'
 
 export interface AIAccess {
   registerTool(tool: AITool): Disposable

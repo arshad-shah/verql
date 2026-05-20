@@ -1,4 +1,4 @@
-// src/main/ai/index.ts
+// src/main/plugins/bundled/ai/internal/index.ts
 import { randomUUID } from 'crypto'
 import { BrowserWindow } from 'electron'
 import type { IpcChannelMap } from '@shared/ipc'
@@ -10,8 +10,8 @@ import { ConversationManager } from './conversation-manager'
 import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
-import type { SchemaAccess, ConnectionAccess } from '../plugins/sdk/types'
-import type { KeyringService } from '../keyring'
+import type { SchemaAccess, ConnectionAccess } from '../../../sdk/types'
+import type { KeyringService } from '../../../../keyring'
 import { createAIEnhancements } from './enhancements'
 
 const AI_KEYRING_NS = '__ai__'
@@ -91,8 +91,8 @@ export function createAIModule(deps: AIModuleDeps): AIModule {
   const getSchemaContext = async (connectionId: string): Promise<string> => {
     try {
       const summary = await deps.schemaAccess.getSchemaSummary(connectionId)
-      return summary.tables.map(t => {
-        const cols = t.columns.map(c => {
+      return summary.tables.map((t: typeof summary.tables[number]) => {
+        const cols = t.columns.map((c: typeof t.columns[number]) => {
           let desc = `${c.name} ${c.dataType}`
           if (c.isPrimaryKey) desc += ' PK'
           if (c.isForeignKey && c.references) desc += ` FK→${c.references.table}.${c.references.column}`

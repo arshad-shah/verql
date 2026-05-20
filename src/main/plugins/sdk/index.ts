@@ -1,5 +1,6 @@
 // src/main/plugins/sdk/index.ts
-import type { PluginContext, Disposable } from './types'
+import { ipcMain, BrowserWindow } from 'electron'
+import type { PluginContext, Disposable, PluginIpc, BroadcastFn } from './types'
 import { DriverRegistryImpl } from './driver-registry'
 import { CommandRegistryImpl } from './command-registry'
 import { PanelRegistryImpl } from './panel-registry'
@@ -32,9 +33,9 @@ interface ContextDeps {
   connectionAccess: ConnectionAccessImpl
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   keyring: import('./types').KeyringAccess
-  aiToolRegistry: import('../../ai/tool-registry').AIToolRegistry
-  aiProviderRegistry: import('../../ai/provider-registry').AIProviderRegistry
-  aiConversationManager: import('../../ai/conversation-manager').ConversationManager
+  aiToolRegistry: import('../bundled/ai/internal/tool-registry').AIToolRegistry
+  aiProviderRegistry: import('../bundled/ai/internal/provider-registry').AIProviderRegistry
+  aiConversationManager: import('../bundled/ai/internal/conversation-manager').ConversationManager
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
@@ -137,6 +138,23 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  const ipc: PluginIpc = {
+    handle(channel, handler) {
+      ipcMain.handle(channel, (_event, ...args) =>
+        (handler as (...a: unknown[]) => unknown)(...args)
+      )
+      const disposable: Disposable = { dispose: () => ipcMain.removeHandler(channel as string) }
+      subscriptions.push(disposable)
+      return disposable
+    }
+  }
+
+  const broadcast: BroadcastFn = (channel, ...args) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(channel, ...args)
+    }
+  }
+
   return {
     drivers,
     commands,
@@ -148,6 +166,8 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     settings,
     keyring: deps.keyring,
     ai,
+    ipc,
+    broadcast,
     subscriptions
   }
 }

@@ -1,5 +1,5 @@
 // src/main/plugins/bundled/ai/tools/query-tools.ts
-import type { AITool, AIToolContext, AIToolExecutionResult } from '../../../../ai/types'
+import type { AITool, AIToolContext, AIToolExecutionResult } from '../internal/types'
 import type { ConnectionAccess } from '../../../sdk/types'
 
 export function createQueryTools(connections: ConnectionAccess): AITool[] {

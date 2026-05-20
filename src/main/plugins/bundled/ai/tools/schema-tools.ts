@@ -1,5 +1,5 @@
 // src/main/plugins/bundled/ai/tools/schema-tools.ts
-import type { AITool, AIToolContext, AIToolExecutionResult } from '../../../../ai/types'
+import type { AITool, AIToolContext, AIToolExecutionResult } from '../internal/types'
 import type { SchemaAccess } from '../../../sdk/types'
 
 export function createSchemaTools(schema: SchemaAccess): AITool[] {

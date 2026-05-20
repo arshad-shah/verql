@@ -42,8 +42,23 @@ export interface PluginContext {
   settings: PluginSettings
   keyring: KeyringAccess
   ai: AIAccess
+  ipc: PluginIpc
+  broadcast: BroadcastFn
   subscriptions: Disposable[]
 }
+
+/** Lets a plugin own typed IPC channels in main → renderer direction. */
+export interface PluginIpc {
+  handle<K extends keyof import('@shared/ipc').IpcChannelMap>(
+    channel: K,
+    handler: (...args: import('@shared/ipc').IpcChannelMap[K]['args']) =>
+      | import('@shared/ipc').IpcChannelMap[K]['return']
+      | Promise<import('@shared/ipc').IpcChannelMap[K]['return']>
+  ): Disposable
+}
+
+/** Sends an event from main to all renderer windows. */
+export type BroadcastFn = (channel: string, ...args: unknown[]) => void
 
 // ─── Driver Registry ─────────────────────────────────────────────────────────
 
