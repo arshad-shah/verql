@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react'
 import { Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
 import { useTabsStore } from '@/stores/tabs'
+import { useToastStore } from '@/stores/toast'
+import { extractAIErrorMessage } from '@/lib/ai-errors'
 
 interface Props {
   tabId: string
@@ -30,7 +32,9 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
       }) as { explanation: string }
       setTabAiExplanation(tabId, result.explanation)
     } catch (err) {
-      setTabAiExplanation(tabId, `Failed to explain: ${err instanceof Error ? err.message : String(err)}`)
+      const message = extractAIErrorMessage(err)
+      setTabAiExplanation(tabId, `Failed to explain: ${message}`)
+      useToastStore.getState().addToast({ type: 'error', title: 'AI: Explain failed', message })
     } finally {
       setLoading(false)
     }

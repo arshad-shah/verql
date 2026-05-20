@@ -6,6 +6,8 @@ import type {
   AIApprovalRequest,
   AIStreamEvent
 } from '@shared/ai-types'
+import { extractAIErrorMessage } from '@/lib/ai-errors'
+import { useToastStore } from '@/stores/toast'
 
 interface SessionStats {
   totalInputTokens: number
@@ -232,10 +234,11 @@ export const useAIStore = create<AIState>((set, get) => ({
       }
 
       case 'error': {
+        const friendly = extractAIErrorMessage(event.error)
         const errorMsg: AIChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `Error: ${event.error}`,
+          content: `⚠ ${friendly}`,
           timestamp: Date.now()
         }
         set((s) => ({
@@ -244,6 +247,7 @@ export const useAIStore = create<AIState>((set, get) => ({
           streamingContent: '',
           currentStreamId: null
         }))
+        useToastStore.getState().addToast({ type: 'error', title: 'AI chat error', message: friendly })
         break
       }
     }

@@ -1,5 +1,8 @@
 import { useState, useCallback, type KeyboardEvent } from 'react'
 import { Sparkles, Loader2 } from 'lucide-react'
+import { useToastStore } from '@/stores/toast'
+import { useNotificationsStore } from '@/stores/notifications'
+import { extractAIErrorMessage } from '@/lib/ai-errors'
 
 interface Props {
   connectionId: string | null
@@ -10,6 +13,8 @@ interface Props {
 export function NLInputBar({ connectionId, schema, onSqlGenerated }: Props) {
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
+  const addToast = useToastStore((s) => s.addToast)
+  const addNotification = useNotificationsStore((s) => s.addNotification)
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || !connectionId || loading) return
@@ -25,11 +30,13 @@ export function NLInputBar({ connectionId, schema, onSqlGenerated }: Props) {
         setPrompt('')
       }
     } catch (err) {
-      console.error('Failed to generate SQL:', err)
+      const message = extractAIErrorMessage(err)
+      addToast({ type: 'error', title: 'AI request failed', message })
+      addNotification({ type: 'error', title: 'AI: Generate SQL failed', message })
     } finally {
       setLoading(false)
     }
-  }, [prompt, connectionId, schema, loading, onSqlGenerated])
+  }, [prompt, connectionId, schema, loading, onSqlGenerated, addToast, addNotification])
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
