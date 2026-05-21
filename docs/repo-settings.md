@@ -165,7 +165,7 @@ under `Discussions → Categories`:
 
 - 💬 Q&A
 - 💡 Ideas
-- 🙌 Show and tell (extensions, themes the community builds)
+- 🙌 Show and tell (plugins, themes the community builds)
 - 📣 Announcements (lock to maintainers)
 
 ## 10. After the rename — update README badges

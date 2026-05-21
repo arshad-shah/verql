@@ -16,12 +16,12 @@ export function registerConnectionHandlers(ctx: IpcContext, handle: Handle): voi
     return redactConnection(saved, secretKeys)
   })
 
-  handle('connections:delete', (profileId: string) => {
+  handle('connections:delete', async (profileId: string) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter) {
-      adapter.disconnect()
       ctx.activeAdapters.delete(profileId)
+      await adapter.disconnect()
     }
-    ctx.configStore.deleteConnection(profileId)
+    await ctx.configStore.deleteConnection(profileId)
   })
 }

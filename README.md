@@ -67,7 +67,7 @@ and the plugin host. Everything dialect-specific lives in a plugin under
 process through typed IPC channels declared in `shared/ipc.ts`.
 
 To add a new database type, file format, AI provider, or UI panel: write
-a plugin. See [docs/extensions.md](./docs/extensions.md).
+a plugin. See [docs/plugins.md](./docs/plugins.md).
 
 To add or change an IPC channel: see [docs/ipc.md](./docs/ipc.md).
 

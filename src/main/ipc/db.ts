@@ -18,29 +18,44 @@ export function registerDbHandlers(
     return adapter
   }
 
+  // Tracks in-flight connect() calls per profile so concurrent renderer
+  // requests share one adapter instead of each constructing their own and
+  // orphaning the losers (which never get disconnect()'d).
+  const inFlightConnects = new Map<string, Promise<{ success: true } | { success: false; error: string }>>()
+
   handle('db:connect', async (profileId: string) => {
-    try {
-      let profile = ctx.configStore.getConnection(profileId)
-      if (!profile) return { success: false, error: 'Connection profile not found — it may have been deleted' }
-      if (ctx.activeAdapters.has(profileId)) {
-        connectionAccess.setActiveConnectionId(profileId)
-        return { success: true }
-      }
-
-      for (const { middleware, pluginName } of ctx.driverRegistry.getMiddlewares()) {
-        if (middleware.shouldApply(profile)) {
-          profile = await safeCall(pluginName, () => middleware.beforeConnect(profile!), { timeoutMs: 15_000 })
-        }
-      }
-
-      const adapter = createAdapter(profile)
-      await adapter.connect()
-      ctx.activeAdapters.set(profileId, adapter)
+    if (ctx.activeAdapters.has(profileId)) {
       connectionAccess.setActiveConnectionId(profileId)
       return { success: true }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) }
     }
+    const existing = inFlightConnects.get(profileId)
+    if (existing) return existing
+
+    const attempt = (async () => {
+      try {
+        let profile = ctx.configStore.getConnection(profileId)
+        if (!profile) return { success: false as const, error: 'Connection profile not found — it may have been deleted' }
+
+        for (const { middleware, pluginName } of ctx.driverRegistry.getMiddlewares()) {
+          if (middleware.shouldApply(profile)) {
+            profile = await safeCall(pluginName, () => middleware.beforeConnect(profile!), { timeoutMs: 15_000 })
+          }
+        }
+
+        const adapter = createAdapter(profile)
+        await adapter.connect()
+        ctx.activeAdapters.set(profileId, adapter)
+        connectionAccess.setActiveConnectionId(profileId)
+        return { success: true as const }
+      } catch (err) {
+        return { success: false as const, error: err instanceof Error ? err.message : String(err) }
+      } finally {
+        inFlightConnects.delete(profileId)
+      }
+    })()
+
+    inFlightConnects.set(profileId, attempt)
+    return attempt
   })
 
   handle('db:disconnect', async (profileId: string) => {

@@ -15,6 +15,10 @@ export interface KeyringLike {
   storeSync(profileId: string, key: string, value: string): void
   retrieveSync(profileId: string, key: string): string | null
   delete(profileId: string, key: string): Promise<void>
+  /** Optional: delete every key for a profile in one atomic save. When
+   *  present, callers should prefer this over a loop of per-key
+   *  `delete()` calls to keep credential file writes O(1). */
+  deleteAll?(profileId: string): Promise<void>
 }
 
 const isSecretValue = (v: unknown): v is string =>
@@ -60,12 +64,20 @@ export function injectSecretsFromKeyring(
 /**
  * Remove all keyring entries that belong to a profile.
  * Called when a connection profile is deleted.
+ *
+ * Returns a Promise so callers can await the deletion before reporting
+ * success to the renderer; the previous fire-and-forget implementation
+ * turned any keyring rejection into an unhandled promise rejection.
  */
-export function deleteProfileSecrets(
+export async function deleteProfileSecrets(
   profileId: string,
   keyring: KeyringLike
-): void {
+): Promise<void> {
+  if (keyring.deleteAll) {
+    await keyring.deleteAll(profileId)
+    return
+  }
   for (const key of keyring.listKeys(profileId)) {
-    void keyring.delete(profileId, key)
+    await keyring.delete(profileId, key)
   }
 }

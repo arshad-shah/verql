@@ -28,7 +28,7 @@ interface Props {
 
 /**
  * Renders plugin-contributed settings that target a core category. Refreshes
- * when plugins are activated/deactivated/uninstalled so disabled extensions
+ * when plugins are activated/deactivated/uninstalled so disabled plugins
  * disappear from the host's Settings UI without a restart.
  */
 export function PluginContributedSettings({ category }: Props) {

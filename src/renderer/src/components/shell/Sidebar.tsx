@@ -6,7 +6,7 @@ import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
-import { ExtensionsPanel } from '@/components/plugins/ExtensionsPanel'
+import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
@@ -29,7 +29,7 @@ export function Sidebar() {
     explorer: 'Explorer',
     query: 'Saved Queries',
     charts: 'Charts',
-    extensions: 'Extensions',
+    plugins: 'Plugins',
     settings: 'Settings',
   }
   const pluginTitles = Object.fromEntries(
@@ -75,7 +75,7 @@ export function Sidebar() {
             </Text>
           )
         )}
-        {activePanel === 'extensions' && <ExtensionsPanel />}
+        {activePanel === 'plugins' && <PluginsPanel />}
         {/* Plugin-contributed panels */}
         {panelContributions
           .filter((c) => activePanel === `plugin:${c.contributionId}`)

@@ -36,9 +36,9 @@ CI already handles this in `.github/workflows/ci.yml`.
    significant work — we want to avoid you spending time on something
    that won't land.
 3. **Documentation**: tighten or extend
-   [docs/extensions.md](./docs/extensions.md) and
+   [docs/plugins.md](./docs/plugins.md) and
    [docs/ipc.md](./docs/ipc.md) as the surfaces evolve.
-4. **Plugins**: see [docs/extensions.md](./docs/extensions.md) for the
+4. **Plugins**: see [docs/plugins.md](./docs/plugins.md) for the
    full contribution surface menu.
 
 ## Architectural rules

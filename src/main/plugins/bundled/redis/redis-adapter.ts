@@ -112,8 +112,11 @@ export class RedisAdapter implements DbAdapter {
 
     for (const args of commands) {
       const [cmd, ...cmdArgs] = args
-      // ioredis supports calling commands by lowercase method names via call()
-      const value = await (this.client as unknown as Record<string, (...a: string[]) => Promise<unknown>>)[cmd.toLowerCase()](...cmdArgs)
+      // Dispatch through ioredis's command parser so unknown commands —
+      // and Object.prototype-inherited methods like `toString` — surface
+      // as proper Redis ERR replies instead of being reachable through
+      // raw bracket access on the client instance.
+      const value = await this.client.call(cmd, ...cmdArgs)
       results.push({ command: args.join(' '), value })
     }
 
