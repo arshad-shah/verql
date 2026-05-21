@@ -1,6 +1,6 @@
 {
   "name": "nova",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": true,
   "description": "Nova — a fast, extensible desktop database client.",
   "license": "MIT",
@@ -101,6 +101,7 @@
   "build": {
     "npmRebuild": true,
     "buildDependenciesFromSource": false,
+    "afterPack": "./build/afterPack.cjs",
     "files": [
       "out/**/*"
     ],
