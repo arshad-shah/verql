@@ -1,6 +1,6 @@
 {
   "name": "verql",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "Verql — a fast, extensible desktop database client.",
   "license": "MIT",
@@ -46,6 +46,8 @@
     "dompurify": "^3.4.0",
     "ioredis": "5.10.1",
     "lucide-react": "1.7.0",
+    "mime-db": "1.52.0",
+    "mime-types": "2.1.35",
     "monaco-editor": "0.55.1",
     "mongodb": "7.1.1",
     "mysql2": "3.20.0",
