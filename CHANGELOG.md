@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+### Patch Changes
+
+- Fix release workflow hashing step on macOS. macOS runners don't ship GNU `sha256sum`; use the platform's available hasher (`shasum -a 256` on macOS, `sha256sum` on Linux/Windows runners) so the artifact SHA file is produced on every platform.
+
 ## 0.2.2
 
 ### Patch Changes
