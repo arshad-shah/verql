@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+### Patch Changes
+
+- Fix `Cannot find module 'mime-db'` crash at launch (still hitting users on v0.3.3). Despite `shamefullyHoist: true` in `pnpm-workspace.yaml` placing `mime-db` at the top of `node_modules` locally, the same install on macos-14 CI runners didn't include it in the packaged `app.asar` — snowflake-sdk's nested `mime-types` then couldn't resolve `mime-db` at runtime.
+
+  Declared `mime-db@1.52.0` and `mime-types@2.1.35` as direct dependencies so electron-builder's dep-graph walker always packs them regardless of pnpm layout quirks.
+
 ## 0.3.3
 
 ### Patch Changes
