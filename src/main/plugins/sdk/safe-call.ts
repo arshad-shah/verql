@@ -58,13 +58,17 @@ export class ErrorBudget {
   }
 
   record(pluginName: string, error: Error): boolean {
-    const records = this.errors.get(pluginName) ?? []
-    records.push({
-      timestamp: Date.now(),
+    const now = Date.now()
+    // Drop entries that have aged out of the window so a long-running
+    // plugin that errors steadily doesn't accumulate a million records.
+    const existing = this.errors.get(pluginName) ?? []
+    const pruned = existing.filter(r => now - r.timestamp < this.windowMs)
+    pruned.push({
+      timestamp: now,
       error: error.message,
       stack: error.stack
     })
-    this.errors.set(pluginName, records)
+    this.errors.set(pluginName, pruned)
     return this.isExceeded(pluginName)
   }
 

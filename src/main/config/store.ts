@@ -18,6 +18,26 @@ const noOpKeyring: KeyringLike = {
   delete: async () => undefined,
 }
 
+// Settings paths arrive over IPC from the renderer. Reject segments that
+// would walk into the prototype chain — without this guard, a renderer
+// (or a misbehaving plugin) can pollute `Object.prototype` via
+// `setSetting('__proto__.polluted', …)` and affect every other object
+// in the main process.
+const FORBIDDEN_KEYPATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function splitSettingsKeyPath(keyPath: string): string[] {
+  const parts = keyPath.split('.')
+  for (const part of parts) {
+    if (FORBIDDEN_KEYPATH_SEGMENTS.has(part)) {
+      throw new Error(`Settings key path '${keyPath}' contains forbidden segment '${part}'`)
+    }
+    if (part.length === 0) {
+      throw new Error(`Settings key path '${keyPath}' contains an empty segment`)
+    }
+  }
+  return parts
+}
+
 interface ConfigData {
   connections: ConnectionProfile[]
   settings: AppSettings
@@ -162,21 +182,29 @@ export class ConfigStore {
   }
 
   getSetting(keyPath: string): unknown {
-    const parts = keyPath.split('.')
-    let target: any = this.data.settings
+    const parts = splitSettingsKeyPath(keyPath)
+    let target: unknown = this.data.settings
     for (const part of parts) {
       if (target == null || typeof target !== 'object') return undefined
-      target = target[part]
+      target = (target as Record<string, unknown>)[part]
     }
     return target
   }
 
   setSetting(keyPath: string, value: unknown): void {
-    const parts = keyPath.split('.')
-    let target: any = this.data.settings
+    const parts = splitSettingsKeyPath(keyPath)
+    let target: Record<string, unknown> = this.data.settings as unknown as Record<string, unknown>
     for (let i = 0; i < parts.length - 1; i++) {
-      if (target[parts[i]] === undefined) target[parts[i]] = {}
-      target = target[parts[i]]
+      const part = parts[i]
+      const next = target[part]
+      if (next === undefined) {
+        target[part] = {}
+      } else if (next === null || typeof next !== 'object') {
+        throw new Error(
+          `Cannot set '${keyPath}': intermediate '${parts.slice(0, i + 1).join('.')}' is not an object (got ${next === null ? 'null' : typeof next})`,
+        )
+      }
+      target = target[part] as Record<string, unknown>
     }
     target[parts[parts.length - 1]] = value
     this.save()

@@ -3,6 +3,15 @@ import type { DbAdapter } from '../../../db/adapter'
 import { quoteIdentifier } from '../../../db/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
+// MySQL FieldPacket flag bit 0 is NOT_NULL. The previous inline expression
+// `(f.flags ?? 0 & 1) === 0` parsed as `(f.flags ?? 0) === 0` because `&`
+// binds tighter than `??`, which mis-reported any column with any other
+// bit set (PRI_KEY, UNIQUE_KEY, AUTO_INCREMENT, …) as NOT-nullable.
+const MYSQL_NOT_NULL_FLAG = 1
+export function isNullableFromMysqlFlags(flags: number | undefined | null): boolean {
+  return ((flags ?? 0) & MYSQL_NOT_NULL_FLAG) === 0
+}
+
 export class MysqlAdapter implements DbAdapter {
   private pool: mysql.Pool | null = null
   private config: mysql.PoolOptions
@@ -59,7 +68,7 @@ export class MysqlAdapter implements DbAdapter {
     const isRows = Array.isArray(result)
     const rows = isRows ? (result as Record<string, unknown>[]) : []
     const fieldInfo: FieldInfo[] = (fields as mysql.FieldPacket[] ?? []).map(f => ({
-      name: f.name, dataType: String(f.type), nullable: (f.flags ?? 0 & 1) === 0
+      name: f.name, dataType: String(f.type), nullable: isNullableFromMysqlFlags(f.flags)
     }))
     return { rows, fields: fieldInfo, rowCount: rows.length, duration, affectedRows: isRows ? 0 : (result as mysql.ResultSetHeader).affectedRows ?? 0 }
   }
