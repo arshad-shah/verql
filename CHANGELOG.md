@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+### Patch Changes
+
+- Fix macOS `.dmg` crashing on launch with `Library not loaded: Electron Framework ... mapping process and mapped file ... have different Team IDs`. Without `mac.identity: null`, electron-builder left the embedded Electron Framework's original signature intact while the outer binary was ad-hoc signed, so dyld refused to load nested frameworks at runtime. Setting `identity: null` forces consistent ad-hoc signing across every nested binary.
+
 ## 0.2.3
 
 ### Patch Changes
