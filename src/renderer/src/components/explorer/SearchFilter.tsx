@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, type ChangeEvent } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { SearchInput, Box } from '@/primitives'
@@ -20,7 +20,7 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
     setLocalValue('')
   }, [activeConnectionId, setFilterText])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setLocalValue(value)
     clearTimeout(timerRef.current)

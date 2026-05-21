@@ -3,6 +3,16 @@ import type { Preview } from '@storybook/react'
 import { withThemeByDataAttribute } from '@storybook/addon-themes'
 import '../src/renderer/src/styles/globals.css'
 
+// Stub the preload bridge so renderer components that call window.electronAPI.invoke
+// during mount (plugin contribution fetches, connection field fetches, etc.) don't
+// crash in the browser-based Storybook environment.
+if (typeof window !== 'undefined' && !(window as unknown as { electronAPI?: unknown }).electronAPI) {
+  ;(window as unknown as { electronAPI: { invoke: (...a: unknown[]) => Promise<unknown>; on: () => () => void } }).electronAPI = {
+    invoke: async () => [],
+    on: () => () => {},
+  }
+}
+
 const preview: Preview = {
   parameters: {
     controls: {

@@ -4,7 +4,7 @@ import type { editor } from 'monaco-editor'
 import { registerCompletionProvider, updateCompletionItems } from '@/lib/monaco-sql'
 import { registerAIInlineCompletionProvider, setAICompletionContext } from '@/lib/monaco-ai-completion'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
-import { registerSqlCodeLens, installSqlCodeLensCommandHandlers } from '@/lib/monaco-codelens'
+import { installCodeLensCommand, registerCodeLensProviderForLanguage } from '@/lib/monaco-codelens'
 import { editorRegistry } from '@/stores/editor'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -112,15 +112,13 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
       registeredLanguages.add(language)
     }
 
-    // CodeLens (inline "▶ Run / Explain" buttons) lives outside the language
-    // gate above because the gate set persists across HMR reloads — so adding
-    // the lens later would never register it on existing dev sessions. The
-    // installers themselves are idempotent (own internal flags), so it's
-    // safe to call on every mount.
-    if (language === 'sql') {
-      installSqlCodeLensCommandHandlers(monaco)
-      registerSqlCodeLens(monaco, language)
-    }
+    // CodeLens lives outside the completion-provider gate above because the
+    // gate set persists across HMR reloads. Installers are idempotent (own
+    // internal flags), so it's safe to call on every mount. The provider
+    // itself returns no lenses when no statement-contribution is registered
+    // for the active tab's dbType, so non-SQL editors are handled gracefully.
+    installCodeLensCommand(monaco)
+    registerCodeLensProviderForLanguage(monaco, language)
 
     // Publish ourselves to the editor registry so the command palette,
     // run-selection action, and any plugin can introspect or drive the editor.

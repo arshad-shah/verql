@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Download } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
 import { Flex, Text, Button } from '@/primitives'
@@ -6,9 +6,11 @@ import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   results: QueryResult
+  /** Plugin-contributed action buttons (e.g. AI Explain). Rendered inline. */
+  actions?: ReactNode
 }
 
-export function ResultsStatusBar({ results }: Props) {
+export function ResultsStatusBar({ results, actions }: Props) {
   const [exporting, setExporting] = useState(false)
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -23,13 +25,21 @@ export function ResultsStatusBar({ results }: Props) {
   }
 
   return (
-    <Flex direction="row" align="center" justify="between" className="px-3 py-1 border-t border-border bg-bg-secondary text-xs shrink-0">
-      <Flex direction="row" align="center" gap="md">
+    <Flex
+      direction="row"
+      align="center"
+      justify="between"
+      gap="md"
+      className="px-3 py-1 border-t border-border bg-bg-secondary text-xs shrink-0"
+    >
+      <Flex direction="row" align="center" gap="md" className="min-w-0">
         <Text size="xs" color="success">
           {results.rowCount} {results.rowCount === 1 ? 'row' : 'rows'}
         </Text>
         <Text size="xs" color="muted">·</Text>
         <Text size="xs" color="secondary">{results.duration}ms</Text>
+        <Text size="xs" color="muted">·</Text>
+        <Text size="xs" color="muted">{results.fields.length} cols</Text>
         {results.affectedRows > 0 && (
           <>
             <Text size="xs" color="muted">·</Text>
@@ -37,9 +47,8 @@ export function ResultsStatusBar({ results }: Props) {
           </>
         )}
       </Flex>
-      <Flex direction="row" align="center" gap="sm">
-        <Text size="xs" color="muted">{results.fields.length} columns</Text>
-        <Text size="xs" color="muted">·</Text>
+      <Flex direction="row" align="center" gap="xs">
+        {actions}
         <Button
           variant="ghost"
           size="xs"

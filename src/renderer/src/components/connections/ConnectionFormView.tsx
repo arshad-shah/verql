@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
@@ -124,7 +124,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     setCompletedSteps(prev => new Set([...prev, step]))
   }
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await saveConnection(profile as unknown as ConnectionProfile)
     closeTab(tabId)

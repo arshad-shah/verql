@@ -94,5 +94,5 @@ Releases are cut by a maintainer from `main`:
    builds + signs binaries for macOS / Linux, drafts a GitHub release,
    and uploads SBOM and sha256sums.
 
-See [docs/release.md](./docs/release.md) for the full pipeline, the
+See [.github/maintainers/release.md](./.github/maintainers/release.md) for the full pipeline, the
 required secrets, and where they come from.

@@ -33,7 +33,7 @@ export const Default: Story = {
     onRespond: fn(),
   },
   play: async ({ args, canvas }) => {
-    const approveBtn = canvas.getByRole('button', { name: /approve/i })
+    const approveBtn = canvas.getByRole('button', { name: /run/i })
     await userEvent.click(approveBtn)
     await expect(args.onRespond).toHaveBeenCalledWith('req-1', true)
   },
@@ -45,7 +45,7 @@ export const Reject: Story = {
     onRespond: fn(),
   },
   play: async ({ args, canvas }) => {
-    const rejectBtn = canvas.getByRole('button', { name: /reject/i })
+    const rejectBtn = canvas.getByRole('button', { name: /decline/i })
     await userEvent.click(rejectBtn)
     await expect(args.onRespond).toHaveBeenCalledWith('req-1', false)
   },

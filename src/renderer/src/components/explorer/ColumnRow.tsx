@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Key, Link, Hash } from 'lucide-react'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { useToastStore } from '@/stores/toast'
@@ -122,7 +123,7 @@ export function ColumnRow({ column, tableName }: ColumnRowProps) {
     <ContextMenu items={menuItems}>
       <div
         className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs min-w-0 cursor-default group"
-        style={{ '--hover-bg': 'var(--color-hover)' } as React.CSSProperties}
+        style={{ '--hover-bg': 'var(--color-hover)' } as CSSProperties}
         onMouseEnter={(e) =>
           (e.currentTarget.style.background = 'var(--color-hover)')
         }

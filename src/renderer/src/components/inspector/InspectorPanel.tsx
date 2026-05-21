@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useSelectionStore } from '@/stores/selection'
 import { useTabsStore } from '@/stores/tabs'
 import { useSchemaStore } from '@/stores/schema'
@@ -177,7 +177,7 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Box>
       <Text size="xs" color="muted" className="mb-1 uppercase tracking-wider">{title}</Text>

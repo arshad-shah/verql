@@ -11,6 +11,8 @@ ModuleRegistry.registerModules([AllCommunityModule])
 
 function useGridTheme() {
   const { theme } = useTheme()
+  const editorFontFamily = useSettingsStore(s => s.settings.editor.fontFamily)
+  const editorFontSize = useSettingsStore(s => s.settings.editor.fontSize)
   return useMemo(() => {
     const style = getComputedStyle(document.documentElement)
     const get = (v: string) => style.getPropertyValue(v).trim()
@@ -23,14 +25,14 @@ function useGridTheme() {
       borderColor: get('--color-border-default'),
       rowHoverColor: get('--color-hover'),
       selectedRowBackgroundColor: get('--color-active'),
-      fontFamily: "'SF Mono', 'Fira Code', monospace",
-      fontSize: 12,
-      headerFontSize: 11,
+      fontFamily: editorFontFamily,
+      fontSize: Math.max(11, editorFontSize - 2),
+      headerFontSize: Math.max(10, editorFontSize - 3),
       headerFontWeight: 600,
       cellHorizontalPadding: 10,
       oddRowBackgroundColor: get('--color-bg-primary'),
     })
-  }, [theme])
+  }, [theme, editorFontFamily, editorFontSize])
 }
 
 interface Props {
@@ -81,7 +83,7 @@ export function ResultsGrid({ results, tabId }: Props) {
   }, [results.fields, dataDisplay])
 
   return (
-    <Box className="flex-1 overflow-hidden">
+    <Box className="h-full w-full overflow-hidden">
       <AgGridReact
         theme={gridTheme}
         rowData={results.rows}

@@ -20,6 +20,7 @@
  * component without changing this file's API.
  */
 
+import type { CSSProperties } from 'react'
 // `?url` is a Vite primitive — imports the file's served URL at build time.
 import novaMarkUrl from '@/assets/brand/nova-mark.svg?url'
 import novaHeroUrl from '@/assets/brand/nova-hero.svg?url'
@@ -31,7 +32,7 @@ interface MarkProps {
   tone?: 'light' | 'dark'
 }
 
-function maskStyle(url: string, size: number, tone?: 'light' | 'dark'): React.CSSProperties {
+function maskStyle(url: string, size: number, tone?: 'light' | 'dark'): CSSProperties {
   const color = tone === 'light' ? '#f5f3ff' : tone === 'dark' ? '#1a1330' : 'currentColor'
   return {
     display: 'inline-block',

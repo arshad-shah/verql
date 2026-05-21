@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from 'react'
 import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
@@ -6,6 +6,7 @@ import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
+import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
@@ -83,8 +84,9 @@ export function CommandPalette({ open, onClose }: Props) {
         category: 'Editor',
         keybinding: 'Cmd+Enter',
         action: () => {
+          const reg = editorRegistry.get()
           const sql = editorRegistry.getSelectedSql()
-          if (sql) window.dispatchEvent(new CustomEvent('nova:run-statement', { detail: { sql } }))
+          if (reg && sql) tabActions.runStatement(reg.tabId, sql)
         }
       })
       cmds.push({
@@ -177,7 +179,7 @@ export function CommandPalette({ open, onClose }: Props) {
     setSelectedIndex(0)
   }, [query])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSelectedIndex(i => Math.min(i + 1, filtered.length - 1))

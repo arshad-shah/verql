@@ -32,7 +32,7 @@ mac:
 
 # Windows: shipped UNSIGNED on first release. Users will see a SmartScreen
 # warning until reputation builds or a code-signing certificate is added.
-# (See docs/release.md for the upgrade path.)
+# (See .github/maintainers/release.md for the upgrade path.)
 win:
   target:
     - target: nsis

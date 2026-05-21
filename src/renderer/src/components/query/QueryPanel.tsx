@@ -209,24 +209,23 @@ export function QueryPanel({ tab }: Props) {
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
 
-  // CodeLens "▶ Run" / "Explain" buttons above each statement dispatch window
-  // events. We listen here so the lens layer stays React-free.
+  // Publish this tab's save + dirty + lens handlers to the registry. The global
+  // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
+  // and the CodeLens dispatcher routes run/explain through tabActions so the
+  // editor library stays decoupled from React.
   useEffect(() => {
-    const onRun = (e: Event) => {
-      const detail = (e as CustomEvent<{ sql: string }>).detail
-      if (detail?.sql) void runSql(detail.sql)
-    }
-    const onExplain = (e: Event) => {
-      const detail = (e as CustomEvent<{ sql: string }>).detail
-      if (detail?.sql) void explainSql(detail.sql)
-    }
-    window.addEventListener('nova:run-statement', onRun)
-    window.addEventListener('nova:explain-statement', onExplain)
-    return () => {
-      window.removeEventListener('nova:run-statement', onRun)
-      window.removeEventListener('nova:explain-statement', onExplain)
-    }
-  }, [runSql, explainSql])
+    tabActions.register(tab.id, {
+      onSave: handleSave,
+      isDirty: () => {
+        const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
+        return t?.type === 'query' && t.isDirty
+      },
+      label: tab.title,
+      runStatement: (sql) => { void runSql(sql) },
+      explainStatement: (sql) => { void explainSql(sql) },
+    })
+    return () => tabActions.unregister(tab.id)
+  }, [tab.id, tab.title, handleSave, runSql, explainSql])
 
   return (
     <Flex direction="column" className="h-full">

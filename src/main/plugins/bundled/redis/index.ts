@@ -12,6 +12,37 @@ export const manifest: PluginManifest = {
   main: 'index.js',
   contributes: {
     drivers: [{ id: 'redis', name: 'Redis' }],
+    settings: [
+      {
+        key: 'defaultDb',
+        title: 'Default database index',
+        type: 'number',
+        default: 0,
+        min: 0,
+        max: 15,
+        description: 'Database number selected when a connection profile does not specify one.'
+      },
+      {
+        key: 'scanCount',
+        title: 'Key scan batch size',
+        type: 'number',
+        default: 200,
+        min: 10,
+        max: 5000,
+        step: 50,
+        description: 'COUNT hint used when listing keys via SCAN.'
+      },
+      {
+        key: 'commandTimeoutMs',
+        title: 'Command timeout (ms)',
+        type: 'number',
+        default: 5000,
+        min: 100,
+        max: 60000,
+        step: 100,
+        description: 'Abort a command if Redis does not respond within this window.'
+      }
+    ],
     exporters: [{ id: 'json', name: 'JSON (Redis key/value)', extension: 'json' }]
   }
 }

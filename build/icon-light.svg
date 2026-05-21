@@ -30,21 +30,28 @@
     </radialGradient>
   </defs>
 
-  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <circle cx="512" cy="512" r="380" fill="url(#glow)"/>
+  <!--
+    Entire squircle is inset inside the 1024 canvas to match Apple's macOS
+    Big-Sur+ icon template — the colored shape occupies 824x824 centered,
+    leaving ~100px transparent margin around it.
+  -->
+  <g transform="translate(512 512) scale(0.805) translate(-512 -512)">
+    <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+    <circle cx="512" cy="512" r="380" fill="url(#glow)"/>
 
-  <g stroke="url(#arm)" stroke-width="36" stroke-linecap="round" opacity="0.55">
-    <line x1="232" y1="232" x2="396" y2="396"/>
-    <line x1="792" y1="232" x2="628" y2="396"/>
-    <line x1="232" y1="792" x2="396" y2="628"/>
-    <line x1="792" y1="792" x2="628" y2="628"/>
+    <g stroke="url(#arm)" stroke-width="36" stroke-linecap="round" opacity="0.55">
+      <line x1="232" y1="232" x2="396" y2="396"/>
+      <line x1="792" y1="232" x2="628" y2="396"/>
+      <line x1="232" y1="792" x2="396" y2="628"/>
+      <line x1="792" y1="792" x2="628" y2="628"/>
+    </g>
+
+    <g stroke="url(#arm)" stroke-width="56" stroke-linecap="round">
+      <line x1="512" y1="128" x2="512" y2="896"/>
+      <line x1="128" y1="512" x2="896" y2="512"/>
+    </g>
+
+    <circle cx="512" cy="512" r="92" fill="url(#core)"/>
+    <circle cx="512" cy="512" r="36" fill="#3b2d92" opacity="0.95"/>
   </g>
-
-  <g stroke="url(#arm)" stroke-width="56" stroke-linecap="round">
-    <line x1="512" y1="128" x2="512" y2="896"/>
-    <line x1="128" y1="512" x2="896" y2="512"/>
-  </g>
-
-  <circle cx="512" cy="512" r="92" fill="url(#core)"/>
-  <circle cx="512" cy="512" r="36" fill="#3b2d92" opacity="0.95"/>
 </svg>

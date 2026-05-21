@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 import { useState } from 'react'
 import { QueryEditor } from './QueryEditor'
+import { ThemeProvider } from '@/primitives/theme/ThemeProvider'
 
 /**
  * Renders the real `QueryEditor`. The component is uncontrolled-ish
@@ -41,6 +42,13 @@ const meta: Meta<typeof Host> = {
   title: 'Components/Query/QueryEditor',
   component: Host,
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <ThemeProvider>
+        <Story />
+      </ThemeProvider>
+    ),
+  ],
 }
 export default meta
 type Story = StoryObj<typeof Host>
@@ -65,6 +73,21 @@ export const MultipleStatements: Story = {
       'GROUP BY status;',
       '',
       'EXPLAIN ANALYZE SELECT * FROM orders WHERE total > 1000;',
+    ].join('\n'),
+  },
+}
+
+/**
+ * Reproduces the original bug: multiple queries without `;` between them.
+ * Previously rendered a single Run/Explain stack; should now show one stack
+ * per statement (boundary detected via the statement-introducing keyword).
+ */
+export const MultipleStatementsNoSemicolons: Story = {
+  args: {
+    initial: [
+      'SELECT 1',
+      'SELECT 2',
+      'INSERT INTO whatever (x) VALUES (1)',
     ].join('\n'),
   },
 }

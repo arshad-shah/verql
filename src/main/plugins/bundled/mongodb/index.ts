@@ -12,6 +12,32 @@ export const manifest: PluginManifest = {
   main: 'index.js',
   contributes: {
     drivers: [{ id: 'mongodb', name: 'MongoDB' }],
+    settings: [
+      {
+        key: 'defaultLimit',
+        title: 'Default query limit',
+        type: 'number',
+        default: 100,
+        min: 1,
+        max: 10000,
+        step: 50,
+        description: 'Row cap used when no explicit limit is provided in a query.'
+      },
+      {
+        key: 'defaultAuthSource',
+        title: 'Default auth source',
+        type: 'text',
+        default: 'admin',
+        description: 'Authentication database used when a connection profile does not set one.'
+      },
+      {
+        key: 'preferSrv',
+        title: 'Prefer SRV connection strings',
+        type: 'boolean',
+        default: false,
+        description: 'Use mongodb+srv:// by default for new connections.'
+      }
+    ],
     exporters: [
       { id: 'jsonl', name: 'JSON Lines', extension: 'jsonl' },
       { id: 'json-array', name: 'JSON Array', extension: 'json' }

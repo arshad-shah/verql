@@ -36,7 +36,7 @@ Pre-built binaries are published to
 |----------|--------|-------|
 | macOS    | `.dmg` (Intel + Apple Silicon) | Signed and notarised. |
 | Linux    | `.AppImage` | Signature published as a detached `.sig` next to the `sha256sums.txt`. |
-| Windows  | `.exe` (NSIS installer) | **Unsigned.** SmartScreen will warn the first time it runs; see `docs/release.md` for the upgrade path. |
+| Windows  | `.exe` (NSIS installer) | **Unsigned.** SmartScreen will warn the first time it runs; see `.github/maintainers/release.md` for the upgrade path. |
 
 Verifying a release:
 

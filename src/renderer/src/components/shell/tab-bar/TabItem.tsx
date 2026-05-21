@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type DragEvent } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { Flex, Text, Tooltip, ContextMenu, cn, IconButton } from '@/primitives'
@@ -13,8 +13,8 @@ interface TabItemProps {
   contextMenuItems: { label: string; onSelect: () => void; disabled?: boolean }[]
   onActivate: () => void
   onClose: () => void
-  onDragStart: (e: React.DragEvent) => void
-  onDragOver: (e: React.DragEvent) => void
+  onDragStart: (e: DragEvent) => void
+  onDragOver: (e: DragEvent) => void
   onDragEnd: () => void
 }
 

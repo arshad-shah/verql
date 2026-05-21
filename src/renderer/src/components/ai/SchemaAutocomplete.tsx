@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react'
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent, type RefObject } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 
@@ -12,7 +12,7 @@ interface Props {
   triggerText: string
   onSelect: (item: string) => void
   onDismiss: () => void
-  anchorRef: React.RefObject<HTMLElement | null>
+  anchorRef: RefObject<HTMLElement | null>
 }
 
 export function SchemaAutocomplete({ triggerText, onSelect, onDismiss, anchorRef }: Props) {

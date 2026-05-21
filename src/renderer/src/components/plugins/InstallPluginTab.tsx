@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { Flex, Box, Text, Button, Spinner } from '@/primitives'
@@ -33,20 +33,20 @@ export function InstallPluginTab() {
     setState('idle')
   }, [addToast])
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setState((s) => (s === 'installing' ? s : 'drag-over'))
   }, [])
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setState((s) => (s === 'installing' ? s : 'idle'))
   }, [])
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
       if (state === 'installing') return

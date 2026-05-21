@@ -26,5 +26,5 @@ Commit the generated `.changeset/<name>.md` along with your code change.
    builds, signs, and uploads to GitHub Releases as a **draft**.
 5. Maintainer reviews the draft and clicks "Publish".
 
-See [docs/release.md](../docs/release.md) for the full pipeline + the
+See [.github/maintainers/release.md](../.github/maintainers/release.md) for the full pipeline + the
 secrets it needs.

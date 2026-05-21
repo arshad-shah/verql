@@ -27,6 +27,11 @@ import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
+
+// Register CodeLens statement contributions once at module init. Re-registration
+// is a no-op (the registry replaces by dbType), so HMR remains safe.
+registerBuiltinStatementContributions()
 import { IPC_EVENTS } from '@shared/ipc'
 
 export function App() {
@@ -224,7 +229,7 @@ export function App() {
           </>
         )}
         <Flex direction="column" className="flex-1 overflow-hidden">
-          <TabBar />
+          { activeTab && <TabBar /> }
           <Flex direction="column" className="flex-1 overflow-hidden">
             <Box className="flex-1 overflow-hidden">
               <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
