@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- Fix release workflow dropping the Windows `.exe` from the release assets. With the new `artifactName` template the installer is named `verql-X.Y.Z-x64.exe` instead of `verql Setup X.Y.Z.exe`; the `*Setup*.exe` globs in the SHA computation and the upload step missed it. Switched both to `*.exe`.
+
 ## 0.3.2
 
 ### Patch Changes

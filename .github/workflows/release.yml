@@ -132,7 +132,7 @@ jobs:
           elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             files=( *.AppImage latest-linux.yml )
           else
-            files=( *Setup*.exe latest.yml )
+            files=( *.exe latest.yml )
           fi
           # macOS ships `shasum` (Perl); Linux/Windows runners ship GNU
           # `sha256sum`. Pick whichever is available so output format is
@@ -171,7 +171,7 @@ jobs:
             dist/*.dmg
             dist/*.zip
             dist/*.AppImage
-            dist/*Setup*.exe
+            dist/*.exe
             dist/latest*.yml
             dist/sha256sums.txt
             dist/sha256sums.txt.sig
