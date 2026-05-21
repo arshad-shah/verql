@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork, Layers, FunctionSquare, Workflow, Zap, Hash, Table2, Eye, KeySquare, Package } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
@@ -110,8 +110,13 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const extensions = allObjects.filter((o) => o.kind === 'extension' && matches(o.name)).sort(byScore)
 
   const paddingLeft = 8 + depth * 16
-  // Group label indent: align with icon content (chevron 12px + gap 6px + folder 14px + gap 6px = 38px offset from paddingLeft)
-  const groupLabelPaddingLeft = paddingLeft + 28
+  // One indent step in from the schema row, so group headers sit clearly under it.
+  const groupLabelPaddingLeft = paddingLeft + 16
+  // Items inside a group nest one step further in (matches TableNode/ViewNode depth+2).
+  const groupItemPaddingLeft = paddingLeft + 32
+  // Tables/Views rows are real TreeItems with their own chevron; depth+2 keeps
+  // them visually nested under their group header instead of crashing into it.
+  const childDepth = depth + 2
 
   const chevron = isExpanded ? (
     <ChevronDown size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />
@@ -209,7 +214,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                       tableName={t.name}
                       connectionId={connectionId}
                       schema={schemaName}
-                      depth={depth + 1}
+                      depth={childDepth}
                       onExportTable={onExportTable}
                       highlightQuery={filterText}
                     />
@@ -229,7 +234,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                       viewName={v.name}
                       connectionId={connectionId}
                       schema={schemaName}
-                      depth={depth + 1}
+                      depth={childDepth}
                       highlightQuery={filterText}
                     />
                   ))}
@@ -241,7 +246,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   items={matViews.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Layers size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:indexes`}
@@ -255,7 +260,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   }))}
                   icon={<KeySquare size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:functions`}
@@ -267,7 +272,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   }))}
                   icon={<FunctionSquare size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:procedures`}
@@ -278,7 +283,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   }))}
                   icon={<Workflow size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:triggers`}
@@ -290,7 +295,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   }))}
                   icon={<Zap size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:sequences`}
@@ -298,7 +303,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   items={sequences.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Hash size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:extensions`}
@@ -306,7 +311,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                   items={extensions.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Package size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
-                  itemPaddingLeft={paddingLeft + 28}
+                  itemPaddingLeft={groupItemPaddingLeft}
                 />
               </>
             )}
@@ -357,7 +362,7 @@ function GroupHeader({
   count: number
   expanded: boolean
   onToggle: () => void
-  icon: React.ReactNode
+  icon: ReactNode
   paddingLeft: number
 }) {
   return (
@@ -402,10 +407,10 @@ function SchemaGroup({
   storageKey: string
   label: string
   count: number
-  icon: React.ReactNode
+  icon: ReactNode
   headerPaddingLeft: number
   defaultExpanded?: boolean
-  children: React.ReactNode
+  children: ReactNode
 }) {
   const [expanded, setExpanded] = useGroupExpanded(storageKey, defaultExpanded)
   const filterText = useSchemaStore((s) => s.filterText)
@@ -438,7 +443,7 @@ function SchemaObjectGroup({
   storageKey: string
   label: string
   items: SchemaObjectGroupItem[]
-  icon: React.ReactNode
+  icon: ReactNode
   headerPaddingLeft: number
   itemPaddingLeft: number
 }) {

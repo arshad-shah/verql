@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, type DragEvent } from 'react'
 
 interface UseTabDragOptions {
   onReorder: (fromIndex: number, toIndex: number) => void
@@ -10,7 +10,7 @@ export function useTabDrag({ onReorder }: UseTabDragOptions) {
   const dragStartX = useRef(0)
   const hasMoved = useRef(false)
 
-  const onDragStart = useCallback((e: React.DragEvent, index: number) => {
+  const onDragStart = useCallback((e: DragEvent, index: number) => {
     dragStartX.current = e.clientX
     hasMoved.current = false
     setDraggedIndex(index)
@@ -23,7 +23,7 @@ export function useTabDrag({ onReorder }: UseTabDragOptions) {
     requestAnimationFrame(() => ghost.remove())
   }, [])
 
-  const onDragOver = useCallback((e: React.DragEvent, index: number) => {
+  const onDragOver = useCallback((e: DragEvent, index: number) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     if (!hasMoved.current && Math.abs(e.clientX - dragStartX.current) > 3) {

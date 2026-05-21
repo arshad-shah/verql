@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ComponentType } from 'react'
 import { selectContributions, usePluginUIStore } from '@/stores/plugin-ui'
 import { ChatPanel } from '@/components/ai/ChatPanel'
 
@@ -17,7 +17,7 @@ import { ChatPanel } from '@/components/ai/ChatPanel'
  *
  * To add a new host-component, add an entry to `RENDERERS` below.
  */
-const RENDERERS: Record<string, React.ComponentType> = {
+const RENDERERS: Record<string, ComponentType> = {
   'ai-chat-panel': ChatPanel
 }
 

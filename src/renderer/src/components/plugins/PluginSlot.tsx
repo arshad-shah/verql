@@ -1,4 +1,4 @@
-import { useEffect, type ComponentType } from 'react'
+import { useEffect, type ComponentType, type ReactNode } from 'react'
 import { selectContributions, usePluginUIStore } from '@/stores/plugin-ui'
 import { ChatPanel } from '@/components/ai/ChatPanel'
 import { AIToggleButton } from '@/components/ai/AIToggleButton'
@@ -31,7 +31,7 @@ interface Props {
    */
   context?: Record<string, unknown>
   /** Optional wrapper around the contribution list (e.g. a flex container). */
-  wrap?: (children: React.ReactNode) => React.ReactNode
+  wrap?: (children: ReactNode) => ReactNode
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, type WheelEvent } from 'react'
 
 export function useTabScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -51,7 +51,7 @@ export function useTabScroll() {
     }
   }, [])
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
+  const onWheel = useCallback((e: WheelEvent) => {
     const el = scrollRef.current
     if (!el) return
     // Convert vertical scroll to horizontal

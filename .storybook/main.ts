@@ -31,6 +31,13 @@ const config: StorybookConfig = {
     }
     config.plugins = config.plugins || []
     config.plugins.push(tailwindcss())
+    // Force esbuild to use the automatic JSX runtime so story files don't need
+    // an explicit `import React` — without this, Storybook's builder transpiles
+    // JSX to `React.createElement(...)` and stories throw "React is not defined".
+    config.esbuild = {
+      ...(config.esbuild || {}),
+      jsx: 'automatic',
+    }
     return config
   },
   docs: {

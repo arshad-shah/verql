@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from 'react'
 import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
@@ -179,7 +179,7 @@ export function CommandPalette({ open, onClose }: Props) {
     setSelectedIndex(0)
   }, [query])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSelectedIndex(i => Math.min(i + 1, filtered.length - 1))

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { ReactNode } from 'react'
 import { BadgeIndicator } from './BadgeIndicator'
 
-const IconButton = ({ children }: { children: React.ReactNode }) => (
+const IconButton = ({ children }: { children: ReactNode }) => (
   <button
     className="inline-flex items-center justify-center h-9 w-9 rounded-md bg-bg-elevated text-text-primary hover:bg-bg-hover"
     aria-label="Notifications"
@@ -48,7 +49,7 @@ type Story = StoryObj<typeof meta>
 export const Dot: Story = {
   args: {
     variant: 'dot',
-    children: null as unknown as React.ReactNode,
+    children: null as unknown as ReactNode,
   },
   render: (args) => (
     <BadgeIndicator {...args}>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { useNotificationsStore, type Notification } from '@/stores/notifications'
 import {
   Bell,
@@ -63,7 +63,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const [copied, setCopied] = useState(false)
   const isError = notification.type === 'error'
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = async (e: MouseEvent) => {
     e.stopPropagation()
     try {
       await navigator.clipboard.writeText(buildCopyPayload(notification))

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 import { useState } from 'react'
 import { QueryEditor } from './QueryEditor'
+import { ThemeProvider } from '@/primitives/theme/ThemeProvider'
 
 /**
  * Renders the real `QueryEditor`. The component is uncontrolled-ish
@@ -41,6 +42,13 @@ const meta: Meta<typeof Host> = {
   title: 'Components/Query/QueryEditor',
   component: Host,
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <ThemeProvider>
+        <Story />
+      </ThemeProvider>
+    ),
+  ],
 }
 export default meta
 type Story = StoryObj<typeof Host>
