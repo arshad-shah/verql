@@ -65,6 +65,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # electron-builder packages whatever electron-vite emitted into `out/`.
+      # Without this step the asar sanity check fails with:
+      #   Application entry file "out/main/index.js" ... was not found
+      - name: Build (electron-vite)
+        run: pnpm exec electron-vite build
+
       # ─── macOS code-signing setup ─────────────────────────────────────────
       # Imports the Apple Developer ID Application certificate into a temporary
       # keychain. Skipped silently when the secret isn't set so forks / branch
