@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- Fix macOS release build when no Apple signing certificate is configured. The previous workflow set `CSC_LINK: ""` which electron-builder treated as a path to the project root, failing with `not a file`. Now sets `CSC_IDENTITY_AUTO_DISCOVERY=false` when `MAC_CERT_P12_BASE64` is unset, producing an unsigned bundle instead.
+
 ## 0.2.1
 
 ### Patch Changes
