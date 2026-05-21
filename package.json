@@ -1,6 +1,6 @@
 {
   "name": "verql",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "Verql — a fast, extensible desktop database client.",
   "license": "MIT",
@@ -101,6 +101,7 @@
   "build": {
     "appId": "com.electron.verql",
     "productName": "Verql",
+    "artifactName": "${name}-${version}-${arch}.${ext}",
     "npmRebuild": true,
     "buildDependenciesFromSource": false,
     "afterPack": "./build/afterPack.cjs",
