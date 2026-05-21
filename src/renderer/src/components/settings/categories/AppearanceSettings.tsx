@@ -28,7 +28,7 @@ export function AppearanceSettings() {
     <Stack gap="md">
       <Box>
         <Heading level={4}>Appearance</Heading>
-        <Text size="xs" color="muted" className="mt-1">Customize how nova looks and feels</Text>
+        <Text size="xs" color="muted" className="mt-1">Customize how verql looks and feels</Text>
       </Box>
 
       <Box>

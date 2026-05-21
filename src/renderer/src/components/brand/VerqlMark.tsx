@@ -1,5 +1,5 @@
 /**
- * Nova brand mark components.
+ * Verql brand mark components.
  *
  * Geometry lives in `assets/brand/*.svg` — those files are the source of
  * truth. Edit the SVG, get the new shape everywhere.
@@ -22,8 +22,8 @@
 
 import type { CSSProperties } from 'react'
 // `?url` is a Vite primitive — imports the file's served URL at build time.
-import novaMarkUrl from '@/assets/brand/nova-mark.svg?url'
-import novaHeroUrl from '@/assets/brand/nova-hero.svg?url'
+import verqlMarkUrl from '@/assets/brand/verql-mark.svg?url'
+import verqlHeroUrl from '@/assets/brand/verql-hero.svg?url'
 
 interface MarkProps {
   size?: number
@@ -50,10 +50,10 @@ function maskStyle(url: string, size: number, tone?: 'light' | 'dark'): CSSPrope
   }
 }
 
-export function NovaMark({ size = 16, className, tone }: MarkProps) {
-  return <span className={className} style={maskStyle(novaMarkUrl, size, tone)} aria-hidden="true" />
+export function VerqlMark({ size = 16, className, tone }: MarkProps) {
+  return <span className={className} style={maskStyle(verqlMarkUrl, size, tone)} aria-hidden="true" />
 }
 
-export function NovaHero({ size = 120, className }: { size?: number; className?: string }) {
-  return <span className={className} style={maskStyle(novaHeroUrl, size)} aria-hidden="true" />
+export function VerqlHero({ size = 120, className }: { size?: number; className?: string }) {
+  return <span className={className} style={maskStyle(verqlHeroUrl, size)} aria-hidden="true" />
 }

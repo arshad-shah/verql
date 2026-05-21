@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <!-- Nova mark — canonical small glyph. Inherits `currentColor` so it
+  <!-- Verql mark — canonical small glyph. Inherits `currentColor` so it
        picks up the surrounding text color (theme/light/dark). Edit this
        file to change the in-app mark everywhere it's used. -->
   <path d="M12 2 L12 22"/>

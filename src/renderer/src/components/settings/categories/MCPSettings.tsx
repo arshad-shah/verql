@@ -59,7 +59,7 @@ export function MCPSettings() {
     const port = status.port || mcp.port
     const config = JSON.stringify({
       mcpServers: {
-        nova: {
+        verql: {
           type: 'sse',
           url: `http://localhost:${port}/sse`,
           headers: {
@@ -155,7 +155,7 @@ export function MCPSettings() {
         <pre className="text-xs text-text-secondary font-mono whitespace-pre overflow-x-auto">
 {JSON.stringify({
   mcpServers: {
-    nova: {
+    verql: {
       type: 'sse',
       url: `http://localhost:${status.port || mcp.port}/sse`,
       headers: {

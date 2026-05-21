@@ -7,7 +7,7 @@ import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 import { PG_TO_MYSQL, pgToMysqlFallback } from './type-maps'
 
 export const manifest: PluginManifest = {
-  name: 'nova-plugin-mysql',
+  name: 'verql-plugin-mysql',
   version: '1.0.0',
   displayName: 'MySQL',
   description: 'MySQL database driver',

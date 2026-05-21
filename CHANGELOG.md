@@ -1,10 +1,25 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- **Rebrand from Nova to Verql** — the previous name conflicted with existing trademarks.
+
+  - Project, repo (`arshad-shah/nova` → `arshad-shah/verql`), package (`nova` → `verql`), and Homebrew tap (`arshad-shah/homebrew-nova` → `arshad-shah/homebrew-verql`) are all renamed.
+  - macOS bundle identifier changes from `com.electron.nova` to `com.electron.verql`; settings paths under `~/Library/Application Support/` move accordingly.
+  - Existing Homebrew installs need to be reinstalled: `brew uninstall --cask arshad-shah/nova/nova` and then `brew install --cask arshad-shah/verql/verql`.
+
+  **Other fixes bundled with the rebrand:**
+
+  - **pnpm-workspace.yaml** is now the source of truth for pnpm config. The previous `.npmrc` setting `shamefully-hoist=true` was silently ignored by pnpm 11; switching to `shamefullyHoist: true` in this file makes the hoist take effect. Without hoisting, transitive deps (e.g., `mime-db` pulled in by `snowflake-sdk` → `mime-types`) were dropped from the packaged `app.asar` and the app crashed at launch with `Cannot find module 'mime-db'`.
+  - Explicit `build.appId` (`com.electron.verql`) and `build.productName` (`Verql`) so the bundle, dock label, and Info.plist all carry the proper brand instead of falling back to the lowercase package name.
+
 ## 0.2.5
 
 ### Patch Changes
 
-- Fix macOS `.dmg` rejected with "nova is damaged and can't be opened". With `mac.identity: null`, electron-builder was skipping signing entirely, leaving every nested binary with its stale Electron-prebuild linker signature while the bundle's resource hashes (Info.plist, app.asar, icons) no longer matched. macOS rejected the app at launch (`spctl: code has no resources but signature indicates they must be present`).
+- Fix macOS `.dmg` rejected with "verql is damaged and can't be opened". With `mac.identity: null`, electron-builder was skipping signing entirely, leaving every nested binary with its stale Electron-prebuild linker signature while the bundle's resource hashes (Info.plist, app.asar, icons) no longer matched. macOS rejected the app at launch (`spctl: code has no resources but signature indicates they must be present`).
 
   Adds an `afterPack` hook that ad-hoc re-signs the assembled bundle with `codesign --force --deep --sign -` before the dmg is created. Every nested binary now ends up with a consistent ad-hoc signature, matching resource hashes, and a null Team ID — so Gatekeeper accepts the bundle even without an Apple Developer ID.
 
@@ -36,7 +51,7 @@
 
 ### Minor Changes
 
-- Initial public release of Nova — a fast, extensible desktop database client built on Electron + React.
+- Initial public release of Verql — a fast, extensible desktop database client built on Electron + React.
 
   - **Database drivers** (each a bundled plugin): PostgreSQL, MySQL, SQLite, MongoDB, Redis, Snowflake.
   - **SQL editor** powered by Monaco with per-dialect autocomplete and code lens.
@@ -49,7 +64,7 @@
 
   Pre-built binaries for macOS, Linux, and Windows are attached to this release. macOS and Windows builds are currently **unsigned**; see the README for verification steps using `sha256sums.txt` and the detached GPG signature.
 
-All notable changes to Nova are documented here. The format is based on
+All notable changes to Verql are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -63,7 +78,7 @@ private prototype phase through to first public release.
 
 ## [0.1.0] - First public release
 
-The initial release of Nova as an open-source project. Highlights of
+The initial release of Verql as an open-source project. Highlights of
 the prototype phase that fed into 0.1.0:
 
 ### Application shell
@@ -182,5 +197,5 @@ the prototype phase that fed into 0.1.0:
 - GitHub Actions CI: unit tests on Node 20 + 22, typecheck, dependency
   audit, and a production `electron-vite build`.
 
-[Unreleased]: https://github.com/arshad-shah/nova/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/arshad-shah/nova/releases/tag/v0.1.0
+[Unreleased]: https://github.com/arshad-shah/verql/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/arshad-shah/verql/releases/tag/v0.1.0

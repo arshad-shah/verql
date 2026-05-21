@@ -1,7 +1,7 @@
 name: Bump Homebrew cask
 
 # After a release is published (not just drafted), update the
-# arshad-shah/homebrew-nova cask file to point at the new dmg + sha256s.
+# arshad-shah/homebrew-verql cask file to point at the new dmg + sha256s.
 on:
   release:
     types: [published]
@@ -34,20 +34,20 @@ jobs:
         run: |
           gh release download "$TAG" \
             -R "$REPO" \
-            -p "nova-${VERSION}.dmg" \
-            -p "nova-${VERSION}-arm64.dmg" \
+            -p "verql-${VERSION}.dmg" \
+            -p "verql-${VERSION}-arm64.dmg" \
             -D dmgs
 
       - name: Compute sha256s
         run: |
-          ARM64_SHA=$(sha256sum "dmgs/nova-${VERSION}-arm64.dmg" | awk '{print $1}')
-          X64_SHA=$(sha256sum "dmgs/nova-${VERSION}.dmg" | awk '{print $1}')
+          ARM64_SHA=$(sha256sum "dmgs/verql-${VERSION}-arm64.dmg" | awk '{print $1}')
+          X64_SHA=$(sha256sum "dmgs/verql-${VERSION}.dmg" | awk '{print $1}')
           echo "ARM64_SHA=$ARM64_SHA" >> "$GITHUB_ENV"
           echo "X64_SHA=$X64_SHA"     >> "$GITHUB_ENV"
 
       - name: Configure SSH deploy key
         env:
-          DEPLOY_KEY: ${{ secrets.HOMEBREW_NOVA_DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.HOMEBREW_VERQL_DEPLOY_KEY }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
@@ -56,25 +56,25 @@ jobs:
 
       - name: Clone tap and update cask
         run: |
-          git clone git@github.com:arshad-shah/homebrew-nova.git tap
+          git clone git@github.com:arshad-shah/homebrew-verql.git tap
           cd tap
           awk -v ver="$VERSION" -v arm="$ARM64_SHA" -v x86="$X64_SHA" '
             /^  version / { print "  version \"" ver "\""; next }
             /sha256 "[a-f0-9]+"/ && !arm_done { sub(/"[a-f0-9]+"/, "\"" arm "\""); arm_done=1; print; next }
             /sha256 "[a-f0-9]+"/ &&  arm_done { sub(/"[a-f0-9]+"/, "\"" x86 "\""); print; next }
             { print }
-          ' Casks/nova.rb > Casks/nova.rb.new
-          mv Casks/nova.rb.new Casks/nova.rb
+          ' Casks/verql.rb > Casks/verql.rb.new
+          mv Casks/verql.rb.new Casks/verql.rb
 
-          if git diff --quiet Casks/nova.rb; then
+          if git diff --quiet Casks/verql.rb; then
             echo "Cask already up to date; nothing to push."
             exit 0
           fi
 
-          git -c user.email='nova-release-bot@users.noreply.github.com' \
-              -c user.name='Nova Release Bot' \
-              add Casks/nova.rb
-          git -c user.email='nova-release-bot@users.noreply.github.com' \
-              -c user.name='Nova Release Bot' \
-              commit -m "Bump Nova to v${VERSION}"
+          git -c user.email='verql-release-bot@users.noreply.github.com' \
+              -c user.name='Verql Release Bot' \
+              add Casks/verql.rb
+          git -c user.email='verql-release-bot@users.noreply.github.com' \
+              -c user.name='Verql Release Bot' \
+              commit -m "Bump Verql to v${VERSION}"
           git push origin main

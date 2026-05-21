@@ -11,7 +11,7 @@ export function TitleBar() {
     >
       <Flex align="center" gap="sm" className="ml-20 no-drag">
         <img src={appIconUrl} width={18} height={18} alt="" aria-hidden="true" />
-        <Text size="sm" weight="semibold" color="primary" className="tracking-wide">Nova</Text>
+        <Text size="sm" weight="semibold" color="primary" className="tracking-wide">Verql</Text>
         {isDev && (
           <Badge variant="warning" size="sm" className="text-[9px] leading-none">DEV</Badge>
         )}

@@ -5,7 +5,7 @@ import { RedisAdapter } from './redis-adapter'
 import { getTableData, jsonExporter } from './data-format'
 
 export const manifest: PluginManifest = {
-  name: 'nova-plugin-redis',
+  name: 'verql-plugin-redis',
   version: '1.0.0',
   displayName: 'Redis',
   description: 'Redis database driver',

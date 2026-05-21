@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
   <!--
-    Nova app icon.
-    Geometry mirrors the in-app NovaMark glyph but scaled for the 1024-px
+    Verql app icon.
+    Geometry mirrors the in-app VerqlMark glyph but scaled for the 1024-px
     canvas used by macOS/Win/Linux icon templates:
       - rounded background using Apple's 22% radius rule
       - radial glow centred on the core so the mark reads at 16px

@@ -54,13 +54,13 @@ describe('Bundled Plugins', () => {
     // The AI plugin provides the `ai` service that mongo/redis plugins consume
     // at activation. Register and activate it first to mirror production boot.
     coordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
-    const ai = coordinator.getPlugin('nova-plugin-ai')!
+    const ai = coordinator.getPlugin('verql-plugin-ai')!
     await coordinator.activatePlugin(ai)
   })
 
   it('SSH plugin registers middleware', async () => {
     coordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-ssh')!
+    const plugin = coordinator.getPlugin('verql-plugin-ssh')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.hasMiddleware('ssh-tunnel')).toBe(true)
@@ -68,7 +68,7 @@ describe('Bundled Plugins', () => {
 
   it('MongoDB plugin registers driver', async () => {
     coordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-mongodb')!
+    const plugin = coordinator.getPlugin('verql-plugin-mongodb')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('mongodb')).toBe(true)
@@ -76,7 +76,7 @@ describe('Bundled Plugins', () => {
 
   it('Redis plugin registers driver', async () => {
     coordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-redis')!
+    const plugin = coordinator.getPlugin('verql-plugin-redis')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('redis')).toBe(true)
@@ -84,7 +84,7 @@ describe('Bundled Plugins', () => {
 
   it('Snowflake plugin registers driver', async () => {
     coordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-snowflake')!
+    const plugin = coordinator.getPlugin('verql-plugin-snowflake')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('snowflake')).toBe(true)
@@ -92,7 +92,7 @@ describe('Bundled Plugins', () => {
 
   it('PostgreSQL plugin registers driver', async () => {
     coordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-postgresql')!
+    const plugin = coordinator.getPlugin('verql-plugin-postgresql')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('postgresql')).toBe(true)
@@ -100,7 +100,7 @@ describe('Bundled Plugins', () => {
 
   it('MySQL plugin registers driver', async () => {
     coordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-mysql')!
+    const plugin = coordinator.getPlugin('verql-plugin-mysql')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('mysql')).toBe(true)
@@ -108,7 +108,7 @@ describe('Bundled Plugins', () => {
 
   it('SQLite plugin registers driver', async () => {
     coordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
-    const plugin = coordinator.getPlugin('nova-plugin-sqlite')!
+    const plugin = coordinator.getPlugin('verql-plugin-sqlite')!
     await coordinator.activatePlugin(plugin)
     expect(plugin.status.state).toBe('active')
     expect(driverRegistry.has('sqlite')).toBe(true)
@@ -124,9 +124,9 @@ describe('Bundled Plugins', () => {
     coordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
 
     for (const name of [
-      'nova-plugin-ssh', 'nova-plugin-mongodb', 'nova-plugin-redis',
-      'nova-plugin-snowflake', 'nova-plugin-postgresql', 'nova-plugin-mysql',
-      'nova-plugin-sqlite'
+      'verql-plugin-ssh', 'verql-plugin-mongodb', 'verql-plugin-redis',
+      'verql-plugin-snowflake', 'verql-plugin-postgresql', 'verql-plugin-mysql',
+      'verql-plugin-sqlite'
     ]) {
       const plugin = coordinator.getPlugin(name)!
       await coordinator.activatePlugin(plugin)

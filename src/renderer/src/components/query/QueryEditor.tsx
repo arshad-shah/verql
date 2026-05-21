@@ -89,7 +89,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
 
   // Define themes BEFORE the editor mounts. Monaco's <Editor> applies its
   // `theme` prop synchronously during construction; if the named theme
-  // ("nova-dark" etc.) hasn't been defined yet, Monaco silently falls back
+  // ("verql-dark" etc.) hasn't been defined yet, Monaco silently falls back
   // to its built-in "vs" (light). Using `beforeMount` rather than `onMount`
   // means the first paint already shows the correct colours — no light flash.
   const handleBeforeMount = useCallback((monaco: Monaco) => {

@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Nova is in pre-1.0 development. Security fixes are applied to the
+Verql is in pre-1.0 development. Security fixes are applied to the
 latest minor release on `main`. Older releases are not maintained.
 
 | Version | Supported |
@@ -15,11 +15,11 @@ latest minor release on `main`. Older releases are not maintained.
 **Please do not file a public GitHub issue for security bugs.**
 
 Report privately via GitHub's
-[private vulnerability reporting](https://github.com/arshad-shah/nova/security/advisories/new)
+[private vulnerability reporting](https://github.com/arshad-shah/verql/security/advisories/new)
 form. You'll get an acknowledgement within 72 hours.
 
 If you cannot use the GitHub form, email the maintainer at
-`shaharshad57@gmail.com` with the subject line `Nova security`. Include:
+`shaharshad57@gmail.com` with the subject line `Verql security`. Include:
 
 - A short description of the issue.
 - Steps to reproduce.

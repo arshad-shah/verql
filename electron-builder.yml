@@ -1,5 +1,5 @@
-appId: com.arshadshah.nova
-productName: Nova
+appId: com.arshadshah.verql
+productName: Verql
 copyright: Copyright © 2026 Arshad Shah
 directories:
   buildResources: build
@@ -15,7 +15,7 @@ asarUnpack:
 publish:
   provider: github
   owner: arshad-shah
-  repo: nova
+  repo: verql
   releaseType: release
 
 mac:
