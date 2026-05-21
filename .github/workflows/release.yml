@@ -94,14 +94,17 @@ jobs:
           echo "CSC_KEYCHAIN=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
       # ─── Build + sign via electron-builder ────────────────────────────────
+      # When MAC_CERT_P12_BASE64 is set, the previous step imported the cert
+      # into a temporary keychain so electron-builder picks it up automatically.
+      # When it's unset, we explicitly disable identity discovery so the build
+      # produces an unsigned bundle instead of erroring on a missing cert.
       - name: Build (macOS)
         if: matrix.os == 'macos-14'
         env:
-          # electron-builder reads these from env for codesign + notarization.
-          CSC_LINK: ""             # not used; we imported the cert manually above
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERT_P12_BASE64 != '' && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only for publish=never, kept for parity
         run: pnpm exec electron-builder --mac --publish=never
 
