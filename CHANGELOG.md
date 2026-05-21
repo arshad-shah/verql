@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- Force lowercase artifact filenames via explicit `artifactName` template (`${name}-${version}-${arch}.${ext}`). electron-builder previously derived names from `productName` ("Verql" with a capital V), producing `Verql-0.3.1-arm64.dmg` etc. — which mismatched the lowercase URLs in the Homebrew cask and broke the auto-bump workflow's asset download. Both architectures now carry an explicit `-x64` / `-arm64` suffix; workflow and cask updated to match.
+
 ## 0.3.1
 
 ### Patch Changes
