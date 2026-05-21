@@ -7,9 +7,15 @@ import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, Te
 // `(f.flags ?? 0 & 1) === 0` parsed as `(f.flags ?? 0) === 0` because `&`
 // binds tighter than `??`, which mis-reported any column with any other
 // bit set (PRI_KEY, UNIQUE_KEY, AUTO_INCREMENT, …) as NOT-nullable.
+// mysql2 emits `flags` as either a numeric bitfield or — in some packet
+// modes — an array of flag names, so we accept both shapes.
 const MYSQL_NOT_NULL_FLAG = 1
-export function isNullableFromMysqlFlags(flags: number | undefined | null): boolean {
-  return ((flags ?? 0) & MYSQL_NOT_NULL_FLAG) === 0
+export function isNullableFromMysqlFlags(
+  flags: number | string[] | undefined | null,
+): boolean {
+  if (flags == null) return true
+  if (Array.isArray(flags)) return !flags.includes('NOT_NULL')
+  return (flags & MYSQL_NOT_NULL_FLAG) === 0
 }
 
 export class MysqlAdapter implements DbAdapter {

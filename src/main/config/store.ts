@@ -25,6 +25,24 @@ const noOpKeyring: KeyringLike = {
 // in the main process.
 const FORBIDDEN_KEYPATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
 
+// Atomic save: write to a sibling temp file, then rename onto the final
+// path. The rename is atomic on POSIX (and `MoveFileEx`-style on
+// Windows), so a crash mid-save leaves either the old file or the new
+// file fully readable — never a half-written JSON that fails to parse
+// on next launch and drops every saved profile.
+function writeAtomic(filePath: string, contents: string): void {
+  const dir = path.dirname(filePath)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  const tmpPath = path.join(dir, `.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`)
+  try {
+    fs.writeFileSync(tmpPath, contents, 'utf-8')
+    fs.renameSync(tmpPath, filePath)
+  } catch (err) {
+    try { fs.unlinkSync(tmpPath) } catch { /* ignore — temp file may not exist */ }
+    throw err
+  }
+}
+
 function splitSettingsKeyPath(keyPath: string): string[] {
   const parts = keyPath.split('.')
   for (const part of parts) {
@@ -79,9 +97,7 @@ export class ConfigStore {
   }
 
   private save(): void {
-    const dir = path.dirname(this.filePath)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
+    writeAtomic(this.filePath, JSON.stringify(this.data, null, 2))
   }
 
   // ─── Connections ──────────────────────────────────────────────
@@ -157,17 +173,15 @@ export class ConfigStore {
       diskConnections.push(profile)
     }
     // Write full config with updated connections list
-    const dir = path.dirname(this.filePath)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const diskData = {
       connections: diskConnections,
       settings: this.data.settings,
     }
-    fs.writeFileSync(this.filePath, JSON.stringify(diskData, null, 2), 'utf-8')
+    writeAtomic(this.filePath, JSON.stringify(diskData, null, 2))
   }
 
-  deleteConnection(id: string): void {
-    deleteProfileSecrets(id, this.keyring)
+  async deleteConnection(id: string): Promise<void> {
+    await deleteProfileSecrets(id, this.keyring)
     this.data.connections = this.data.connections.filter(c => c.id !== id)
     this.save()
   }

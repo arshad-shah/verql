@@ -64,7 +64,7 @@ export function PluginIcon({ plugin, size = 28 }: { plugin: PluginInfo; size?: n
   )
 }
 
-export function ExtensionsPanel() {
+export function PluginsPanel() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -99,7 +99,7 @@ export function ExtensionsPanel() {
       <Flex direction="row" align="center" gap="xs" className="px-2 py-1.5">
         <SearchInput
           size="xs"
-          placeholder="Search extensions..."
+          placeholder="Search plugins..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           onClear={() => setSearch('')}
@@ -129,7 +129,7 @@ export function ExtensionsPanel() {
         {filtered.length === 0 && (
           <EmptyState
             icon={<Package size={24} className="text-text-muted" />}
-            title={search ? 'No matches' : 'No extensions'}
+            title={search ? 'No matches' : 'No plugins'}
             className="py-8"
           />
         )}
@@ -168,7 +168,7 @@ export function ExtensionsPanel() {
 
         {filtered.length > 0 && (
           <Text size="xs" color="muted" className="text-[10px] text-center py-3 block">
-            {plugins.length} extension{plugins.length !== 1 ? 's' : ''}
+            {plugins.length} plugin{plugins.length !== 1 ? 's' : ''}
           </Text>
         )}
       </ScrollArea>

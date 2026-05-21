@@ -53,7 +53,7 @@ function buildHarness(adapter: DbAdapter): {
       listConnections: () => [],
       getConnection: () => undefined,
       saveConnection: (p: unknown) => p,
-      deleteConnection: () => { configDeletedAt = Date.now() },
+      deleteConnection: async () => { configDeletedAt = Date.now() },
     } as unknown as IpcContext['configStore'],
     keyring: {} as IpcContext['keyring'],
     driverRegistry: new DriverRegistryImpl(),

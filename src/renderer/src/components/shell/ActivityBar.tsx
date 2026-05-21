@@ -11,7 +11,7 @@ const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = 
   { id: 'explorer', icon: Database, label: 'Explorer' },
   { id: 'query', icon: PenSquare, label: 'Saved Queries' },
   { id: 'charts', icon: BarChart3, label: 'Charts' },
-  { id: 'extensions', icon: Puzzle, label: 'Extensions' }
+  { id: 'plugins', icon: Puzzle, label: 'Plugins' }
 ]
 
 export function ActivityBar() {

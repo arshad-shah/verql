@@ -22,6 +22,6 @@ export function registerConnectionHandlers(ctx: IpcContext, handle: Handle): voi
       ctx.activeAdapters.delete(profileId)
       await adapter.disconnect()
     }
-    ctx.configStore.deleteConnection(profileId)
+    await ctx.configStore.deleteConnection(profileId)
   })
 }

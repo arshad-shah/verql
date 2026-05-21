@@ -12,17 +12,31 @@ vi.mock('electron', () => ({
   }
 }))
 
-// Mock fs to avoid real file I/O
+// Mock fs to avoid real file I/O. The keyring writes atomically (write
+// to a sibling temp file, then rename onto the final path), so the
+// mock simulates a tiny in-memory filesystem keyed by absolute path.
+const mockFs: Record<string, string> = {}
 const mockStore: Record<string, string> = {}
 vi.mock('fs', () => ({
   default: {
-    existsSync: () => Object.keys(mockStore).length > 0,
-    readFileSync: () => JSON.stringify(mockStore),
-    writeFileSync: (_path: string, data: string) => {
-      const parsed = JSON.parse(data)
-      for (const key of Object.keys(mockStore)) delete mockStore[key]
-      Object.assign(mockStore, parsed)
+    existsSync: (p: string) => p in mockFs || Object.keys(mockStore).length > 0,
+    readFileSync: (p: string) => mockFs[p] ?? JSON.stringify(mockStore),
+    writeFileSync: (p: string, data: string) => {
+      mockFs[p] = data
+      // Mirror writes onto the in-memory keyring snapshot so reads after
+      // a "rename" still observe the same data shape the real keyring
+      // would see on next boot.
+      try {
+        const parsed = JSON.parse(data)
+        for (const key of Object.keys(mockStore)) delete mockStore[key]
+        Object.assign(mockStore, parsed)
+      } catch { /* not a credentials JSON write */ }
     },
+    renameSync: (from: string, to: string) => {
+      mockFs[to] = mockFs[from]
+      delete mockFs[from]
+    },
+    unlinkSync: (p: string) => { delete mockFs[p] },
     mkdirSync: () => {}
   }
 }))
@@ -34,6 +48,7 @@ describe('KeyringService', () => {
 
   beforeEach(() => {
     for (const key of Object.keys(mockStore)) delete mockStore[key]
+    for (const key of Object.keys(mockFs)) delete mockFs[key]
     keyring = new KeyringService()
   })
 

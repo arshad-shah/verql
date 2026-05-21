@@ -22,7 +22,7 @@ const HOST_COMPONENTS: Record<string, ComponentType<any>> = {
 }
 
 interface Props {
-  /** Slot identifier — extensions target this with ctx.ui.registerSlot. */
+  /** Slot identifier — plugins target this with ctx.ui.registerSlot. */
   id: string
   /**
    * Optional context object forwarded as props to every mounted host component.
@@ -36,7 +36,7 @@ interface Props {
 
 /**
  * Generic mount point for plugin-contributed UI. The host drops one of these
- * wherever it wants extensions to be able to add UI; plugins call
+ * wherever it wants plugins to be able to add UI; plugins call
  * `ctx.ui.registerSlot('<id>', [widgets])` to fill it. Disabling the plugin
  * removes the contribution and the slot empties automatically.
  *

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Power, PowerOff, Trash2, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
-import { PluginIcon } from './ExtensionsPanel'
+import { PluginIcon } from './PluginsPanel'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput, NumberInput, Select } from '@/primitives'
@@ -276,7 +276,7 @@ function OverviewTab({ plugin, stateConfig, errors }: {
 
 function ContributionsTab({ contributions }: { contributions: string[] }) {
   if (contributions.length === 0) {
-    return <EmptyState title="No contributions" description="This extension has no registered contributions" className="py-12" />
+    return <EmptyState title="No contributions" description="This plugin has no registered contributions" className="py-12" />
   }
 
   return (
@@ -303,7 +303,7 @@ function ErrorsTab({ errors, expandedError, onToggleError }: {
   onToggleError: (i: number | null) => void
 }) {
   if (errors.length === 0) {
-    return <EmptyState title="No errors" description="No errors have been recorded for this extension" className="py-12" />
+    return <EmptyState title="No errors" description="No errors have been recorded for this plugin" className="py-12" />
   }
 
   return (
@@ -342,7 +342,7 @@ function SettingsTab({ schema, values, onChange }: {
   onChange: (key: string, value: unknown) => void
 }) {
   if (schema.length === 0) {
-    return <EmptyState title="No settings" description="This extension has no configurable settings" className="py-12" />
+    return <EmptyState title="No settings" description="This plugin has no configurable settings" className="py-12" />
   }
 
   return (

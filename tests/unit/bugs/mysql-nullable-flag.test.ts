@@ -54,4 +54,16 @@ describe('MySQL: isNullableFromMysqlFlags', () => {
     // column as NOT nullable.
     expect(isNullableFromMysqlFlags(2)).toBe(true)
   })
+
+  // mysql2 also emits `flags` as a string array of flag names in some
+  // packet modes; the helper must handle both shapes.
+  it('returns true when flags is an array without NOT_NULL', () => {
+    expect(isNullableFromMysqlFlags(['PRI_KEY'])).toBe(true)
+    expect(isNullableFromMysqlFlags([])).toBe(true)
+  })
+
+  it('returns false when flags array contains NOT_NULL', () => {
+    expect(isNullableFromMysqlFlags(['NOT_NULL'])).toBe(false)
+    expect(isNullableFromMysqlFlags(['NOT_NULL', 'PRI_KEY', 'AUTO_INCREMENT'])).toBe(false)
+  })
 })
