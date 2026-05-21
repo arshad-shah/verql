@@ -21,7 +21,7 @@ function useGridTheme() {
       backgroundColor: get('--color-bg-secondary'),
       foregroundColor: get('--color-text-primary'),
       headerBackgroundColor: get('--color-bg-primary'),
-      headerForegroundColor: get('--color-text-secondary'),
+      headerTextColor: get('--color-text-secondary'),
       borderColor: get('--color-border-default'),
       rowHoverColor: get('--color-hover'),
       selectedRowBackgroundColor: get('--color-active'),
@@ -46,7 +46,7 @@ export function ResultsGrid({ results, tabId }: Props) {
   const defaultPageSize = useSettingsStore(s => s.settings.general.defaultPageSize)
 
   const columnDefs = useMemo<ColDef[]>(() => {
-    return results.fields.map((field) => ({
+    return results.fields.map((field): ColDef => ({
       field: field.name,
       headerName: field.name,
       resizable: true,
@@ -54,15 +54,15 @@ export function ResultsGrid({ results, tabId }: Props) {
       filter: true,
       minWidth: 80,
       maxWidth: dataDisplay.maxColumnWidth,
-      cellStyle: (params: any) => {
+      cellStyle: ((params: { value: unknown }) => {
         if (params.value === null || params.value === undefined) {
           return { color: 'var(--color-text-disabled)', fontStyle: 'italic' }
         }
         if (typeof params.value === 'number') {
           return { color: 'var(--color-warning)' }
         }
-        return null
-      },
+        return undefined
+      }) as ColDef['cellStyle'],
       valueFormatter: (params: any) => {
         if (params.value === null || params.value === undefined) return dataDisplay.nullDisplay
         if (params.value instanceof Date || (typeof params.value === 'string' && !isNaN(Date.parse(params.value)) && /^\d{4}-\d{2}/.test(params.value))) {

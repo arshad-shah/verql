@@ -7,6 +7,7 @@ import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface ViewNodeProps {
   viewName: string
@@ -32,7 +33,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
 
   async function getSampleQuery(): Promise<string> {
     try {
-      return await window.electronAPI.invoke('db:sample-query', connectionId, viewName, schema) as string
+      return await window.electronAPI.invoke(IPC_CHANNELS.DB_SAMPLE_QUERY, connectionId, viewName, schema) as string
     } catch {
       return `SELECT * FROM "${viewName}" LIMIT 100;`
     }

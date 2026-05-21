@@ -1,6 +1,7 @@
 import snowflake from 'snowflake-sdk'
 import fs from 'fs/promises'
 import type { DbAdapter } from '../../../db/adapter'
+import { quoteIdentifier } from '../../../db/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 // Suppress SDK precision-loss warnings — we handle large numbers via fetchAsString on execute()
@@ -130,7 +131,7 @@ export class SnowflakeAdapter implements DbAdapter {
           if (err) reject(err)
           else resolve({
             rows: (rows ?? []) as Record<string, unknown>[],
-            columns: stmt.getColumns(),
+            columns: stmt.getColumns() ?? [],
             statementId: stmt.getStatementId(),
           })
         },
@@ -156,8 +157,7 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   private escapeIdentifier(name: string): string {
-    if (!name) throw new Error('Identifier cannot be empty')
-    return '"' + name.replace(/"/g, '""') + '"'
+    return quoteIdentifier(name, 'snowflake')
   }
 
   cancelQuery(): void {

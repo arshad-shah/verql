@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Spinner, SearchInput, cn } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface PluginInfo {
   name: string
@@ -72,7 +73,7 @@ export function ExtensionsPanel() {
   const activeTabId = useTabsStore(s => s.activeTabId)
   const loadPlugins = async () => {
     setLoading(true)
-    const list = await window.electronAPI.invoke('plugins:list')
+    const list = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_LIST)
     setPlugins(list)
     setLoading(false)
   }

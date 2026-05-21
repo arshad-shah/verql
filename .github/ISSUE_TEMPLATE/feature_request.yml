@@ -1,0 +1,37 @@
+name: Feature request
+description: Suggest a new capability or improvement.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Big features often start as a discussion. If this is large,
+        consider opening a Discussion first so we can align on scope
+        before code goes in.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user-facing need, not the proposed implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Optional. Sketch the UI / API / behaviour you have in mind.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Does this fit a plugin?
+      description: |
+        Nova's architecture pushes dialect / format / theme specific
+        logic into plugins. If your idea can ship as a plugin, that's
+        usually the lower-friction path.
+      options:
+        - label: I think this could ship as a plugin (see docs/extensions.md)
+        - label: This needs changes to the orchestrator / renderer

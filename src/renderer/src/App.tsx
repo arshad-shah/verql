@@ -32,6 +32,7 @@ import { registerBuiltinStatementContributions } from '@/lib/statement-contribut
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
 registerBuiltinStatementContributions()
+import { IPC_EVENTS } from '@shared/ipc'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
@@ -112,9 +113,9 @@ export function App() {
 
     // Listen for native menu commands
     const cleanups = [
-      window.electronAPI.on('menu:new-query-tab', () => addQueryTab(activeConnectionId)),
-      window.electronAPI.on('menu:new-connection', () => openConnectionForm()),
-      window.electronAPI.on('menu:toggle-command-palette', () => setPaletteOpen(prev => !prev)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => addQueryTab(activeConnectionId)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
+      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
     ]
 
     const handleStatusBarNewConn = () => openConnectionForm()

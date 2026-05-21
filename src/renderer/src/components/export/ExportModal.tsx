@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tableName?: string
@@ -23,7 +24,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
     if (!tableName) return
     setExporting(true)
     try {
-      const res = await window.electronAPI.invoke('export:table', connectionId, tableName, format, { includeSchema })
+      const res = await window.electronAPI.invoke(IPC_CHANNELS.EXPORT_TABLE, connectionId, tableName, format, { includeSchema })
       if ('filePath' in res) {
         setResult(`Exported to ${res.filePath}`)
         setTimeout(onClose, 1500)

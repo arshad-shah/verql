@@ -81,7 +81,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
 
   return (
     <div>
-      {React.cloneElement(trigger, {
+      {React.cloneElement(trigger as React.ReactElement<Record<string, unknown>>, {
         ref: refs.setReference,
         ...getReferenceProps(),
       })}

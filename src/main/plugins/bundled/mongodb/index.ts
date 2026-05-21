@@ -2,9 +2,10 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
 import { MongoAdapter } from './mongo-adapter'
+import { getTableData, jsonLinesExporter, bsonArrayExporter, jsonLinesImporter } from './data-format'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-mongodb',
+  name: 'nova-plugin-mongodb',
   version: '1.0.0',
   displayName: 'MongoDB',
   description: 'MongoDB database driver',
@@ -36,6 +37,13 @@ export const manifest: PluginManifest = {
         default: false,
         description: 'Use mongodb+srv:// by default for new connections.'
       }
+    ],
+    exporters: [
+      { id: 'jsonl', name: 'JSON Lines', extension: 'jsonl' },
+      { id: 'json-array', name: 'JSON Array', extension: 'json' }
+    ],
+    importers: [
+      { id: 'jsonl', name: 'JSON Lines', extensions: ['jsonl', 'ndjson'] }
     ]
   }
 }
@@ -167,6 +175,11 @@ const STATIC_COMPLETIONS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  // ── Export / Import contributions ──────────────────────────────────────────
+  ctx.exporters.register('jsonl', jsonLinesExporter)
+  ctx.exporters.register('json-array', bsonArrayExporter)
+  ctx.importers.register('jsonl', jsonLinesImporter)
+
   // ── AI context provider ────────────────────────────────────────────────────
   // Tells the AI assistant how to format queries for MongoDB connections.
   ctx.ai.registerContextProvider({
@@ -191,6 +204,7 @@ Examples:
   })
 
   ctx.drivers.register('mongodb', {
+    editorLanguage: 'json',
     createAdapter: (config) => {
       const host = config.host as string || 'localhost'
       const port = config.port as number || 27017
@@ -216,6 +230,7 @@ Examples:
     },
     sampleQuery: (collection: string) =>
       JSON.stringify({ collection, operation: 'find', filter: {}, limit: 100 }),
+    getTableData,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 27017 },

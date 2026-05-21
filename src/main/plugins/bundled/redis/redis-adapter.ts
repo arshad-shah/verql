@@ -1,4 +1,4 @@
-import Redis from 'ioredis'
+import Redis, { type RedisOptions } from 'ioredis'
 import type { DbAdapter } from '../../../db/adapter'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
@@ -66,16 +66,18 @@ export function formatRedisResult(results: CommandResult[]): QueryResult {
 
 export class RedisAdapter implements DbAdapter {
   private client: Redis | null = null
-  private readonly connectionOptions: ConstructorParameters<typeof Redis>[0]
+  private readonly connectionOptions: RedisOptions | string
   private currentDatabase: number
 
-  constructor(options: ConstructorParameters<typeof Redis>[0], database = 0) {
+  constructor(options: RedisOptions | string, database = 0) {
     this.connectionOptions = options
     this.currentDatabase = database
   }
 
   async connect(): Promise<void> {
-    this.client = new Redis(this.connectionOptions as string)
+    this.client = typeof this.connectionOptions === 'string'
+      ? new Redis(this.connectionOptions)
+      : new Redis(this.connectionOptions)
     if (this.currentDatabase !== 0) {
       await this.client.select(this.currentDatabase)
     }

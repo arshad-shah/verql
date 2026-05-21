@@ -2,15 +2,20 @@ import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { MysqlAdapter } from './mysql-adapter'
+import { sqlExporter, sqlImporter } from './sql-format'
+import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { PG_TO_MYSQL, pgToMysqlFallback } from './type-maps'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-mysql',
+  name: 'nova-plugin-mysql',
   version: '1.0.0',
   displayName: 'MySQL',
   description: 'MySQL database driver',
   main: 'index.js',
   contributes: {
-    drivers: [{ id: 'mysql', name: 'MySQL' }]
+    drivers: [{ id: 'mysql', name: 'MySQL' }],
+    exporters: [{ id: 'sql', name: 'SQL (MySQL)', extension: 'sql' }],
+    importers: [{ id: 'sql', name: 'SQL (MySQL)', extensions: ['sql'] }]
   }
 }
 
@@ -110,8 +115,15 @@ const MYSQL_FUNCTIONS: { label: string; detail: string }[] = [
 // ─── activate ────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  ctx.exporters.register('sql', sqlExporter)
+  ctx.importers.register('sql', sqlImporter)
+  ctx.typeMappers.register('postgresql', 'mysql', PG_TO_MYSQL, pgToMysqlFallback)
+
   ctx.drivers.register('mysql', {
     createAdapter: (config) => new MysqlAdapter(config),
+    sqlDialect: 'mysql',
+    editorLanguage: 'sql',
+    defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 3306 },
@@ -119,7 +131,8 @@ export function activate(ctx: PluginContext): void {
       { key: 'username', label: 'Username', type: 'text' },
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
-    ]
+    ],
+    getTableData: createRelationalGetTableData('mysql')
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

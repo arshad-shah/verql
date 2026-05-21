@@ -2,9 +2,10 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
 import { RedisAdapter } from './redis-adapter'
+import { getTableData, jsonExporter } from './data-format'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-redis',
+  name: 'nova-plugin-redis',
   version: '1.0.0',
   displayName: 'Redis',
   description: 'Redis database driver',
@@ -41,7 +42,8 @@ export const manifest: PluginManifest = {
         step: 100,
         description: 'Abort a command if Redis does not respond within this window.'
       }
-    ]
+    ],
+    exporters: [{ id: 'json', name: 'JSON (Redis key/value)', extension: 'json' }]
   }
 }
 
@@ -162,6 +164,9 @@ const REDIS_COMMANDS: CompletionItem[] = [
 // ─── Plugin ──────────────────────────────────────────────────────────────────
 
 export function activate(ctx: PluginContext): void {
+  // ── Export contributions ───────────────────────────────────────────────────
+  ctx.exporters.register('json', jsonExporter)
+
   // ── AI context provider ────────────────────────────────────────────────────
   ctx.ai.registerContextProvider({
     id: 'redis-query-format',
@@ -185,7 +190,9 @@ Do not use SQL syntax. Use standard Redis commands.`
 
   ctx.drivers.register('redis', {
     createAdapter: (config) => new RedisAdapter(config),
+    editorLanguage: 'plaintext',
     sampleQuery: (key: string) => `GET ${key}`,
+    getTableData,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
       { key: 'port', label: 'Port', type: 'number', required: true, default: 6379 },

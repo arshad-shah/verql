@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import type { DbAdapter } from '../../../db/adapter'
+import { quoteIdentifier } from '../../../db/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class SqliteAdapter implements DbAdapter {
@@ -71,10 +72,11 @@ export class SqliteAdapter implements DbAdapter {
 
   async getColumns(table: string, _schema?: string): Promise<SchemaColumn[]> {
     if (!this.db) throw new Error('Not connected')
-    const rows = this.db.prepare(`PRAGMA table_info("${table}")`).all() as {
+    const qt = quoteIdentifier(table, 'sqlite')
+    const rows = this.db.prepare(`PRAGMA table_info(${qt})`).all() as {
       cid: number; name: string; type: string; notnull: number; dflt_value: string | null; pk: number
     }[]
-    const fkRows = this.db.prepare(`PRAGMA foreign_key_list("${table}")`).all() as {
+    const fkRows = this.db.prepare(`PRAGMA foreign_key_list(${qt})`).all() as {
       from: string; table: string; to: string
     }[]
     const fkMap = new Map(fkRows.map(fk => [fk.from, { table: fk.table, column: fk.to }]))
@@ -91,11 +93,11 @@ export class SqliteAdapter implements DbAdapter {
 
   async getIndexes(table: string, _schema?: string): Promise<SchemaIndex[]> {
     if (!this.db) throw new Error('Not connected')
-    const idxRows = this.db.prepare(`PRAGMA index_list("${table}")`).all() as {
+    const idxRows = this.db.prepare(`PRAGMA index_list(${quoteIdentifier(table, 'sqlite')})`).all() as {
       name: string; unique: number
     }[]
     return idxRows.map(idx => {
-      const cols = this.db!.prepare(`PRAGMA index_info("${idx.name}")`).all() as { name: string }[]
+      const cols = this.db!.prepare(`PRAGMA index_info(${quoteIdentifier(idx.name, 'sqlite')})`).all() as { name: string }[]
       return {
         name: idx.name,
         columns: cols.map(c => c.name),
@@ -106,7 +108,7 @@ export class SqliteAdapter implements DbAdapter {
 
   async getRowCount(table: string, _schema?: string): Promise<number> {
     if (!this.db) throw new Error('Not connected')
-    const row = this.db.prepare(`SELECT count(*) as cnt FROM "${table}"`).get() as { cnt: number }
+    const row = this.db.prepare(`SELECT count(*) as cnt FROM ${quoteIdentifier(table, 'sqlite')}`).get() as { cnt: number }
     return row.cnt
   }
 

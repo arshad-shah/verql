@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 import { Copy, Check, RefreshCw } from 'lucide-react'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 export function MCPSettings() {
   const mcp = useSettingsStore((s) => s.settings.mcp ?? { enabled: false, port: 3100, token: '' })
@@ -17,7 +18,7 @@ export function MCPSettings() {
 
   const refreshStatus = useCallback(async () => {
     try {
-      const s = await window.electronAPI.invoke('mcp:status') as { running: boolean; port: number; clients: number; token: string }
+      const s = await window.electronAPI.invoke(IPC_CHANNELS.MCP_STATUS) as { running: boolean; port: number; clients: number; token: string }
       setStatus(s)
     } catch { /* */ }
   }, [])
@@ -32,9 +33,9 @@ export function MCPSettings() {
     setLoading(true)
     try {
       if (status.running) {
-        await window.electronAPI.invoke('mcp:stop')
+        await window.electronAPI.invoke(IPC_CHANNELS.MCP_STOP)
       } else {
-        await window.electronAPI.invoke('mcp:start')
+        await window.electronAPI.invoke(IPC_CHANNELS.MCP_START)
       }
       await refreshStatus()
     } catch (err) {
@@ -58,7 +59,7 @@ export function MCPSettings() {
     const port = status.port || mcp.port
     const config = JSON.stringify({
       mcpServers: {
-        dbstudio: {
+        nova: {
           type: 'sse',
           url: `http://localhost:${port}/sse`,
           headers: {
@@ -76,8 +77,8 @@ export function MCPSettings() {
     // Clear existing token so server generates a new one
     await setSetting('mcp.token', '')
     if (status.running) {
-      await window.electronAPI.invoke('mcp:stop')
-      await window.electronAPI.invoke('mcp:start')
+      await window.electronAPI.invoke(IPC_CHANNELS.MCP_STOP)
+      await window.electronAPI.invoke(IPC_CHANNELS.MCP_START)
       await refreshStatus()
     }
   }
@@ -97,7 +98,7 @@ export function MCPSettings() {
           : 'Server is stopped'
       }>
         <Button
-          variant={status.running ? 'outline' : 'primary'}
+          variant={status.running ? 'outline' : 'solid'}
           size="sm"
           onClick={handleToggle}
           disabled={loading}
@@ -154,7 +155,7 @@ export function MCPSettings() {
         <pre className="text-xs text-text-secondary font-mono whitespace-pre overflow-x-auto">
 {JSON.stringify({
   mcpServers: {
-    dbstudio: {
+    nova: {
       type: 'sse',
       url: `http://localhost:${status.port || mcp.port}/sse`,
       headers: {

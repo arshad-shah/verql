@@ -3,10 +3,14 @@ import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore } from '@/stores/ui'
+import { useSchemaStore } from '@/stores/schema'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
+import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
 interface Command {
   id: string
@@ -53,12 +57,12 @@ export function CommandPalette({ open, onClose }: Props) {
   useEffect(() => {
     let cancelled = false
     const load = () => {
-      window.electronAPI.invoke('plugins:get-commands').then((list) => {
+      window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_GET_COMMANDS).then((list) => {
         if (!cancelled) setPluginCommands(list)
       }).catch(() => { if (!cancelled) setPluginCommands([]) })
     }
     load()
-    const offLifecycle = window.electronAPI.on('plugins:lifecycle', load)
+    const offLifecycle = window.electronAPI.on(IPC_EVENTS.PLUGINS_LIFECYCLE, load)
     return () => { cancelled = true; offLifecycle?.() }
   }, [])
 
@@ -122,8 +126,22 @@ export function CommandPalette({ open, onClose }: Props) {
       }
     }
     if (isConnected && conn) {
-      const schema = conn.type === 'sqlite' ? 'main' : conn.type === 'mysql' ? conn.database : 'public'
-      cmds.push({ id: 'er-diagram', title: 'Open ER Diagram', category: 'Schema', action: () => openErDiagram(activeConnectionId!, schema) })
+      cmds.push({
+        id: 'er-diagram',
+        title: 'Open ER Diagram',
+        category: 'Schema',
+        action: async () => {
+          // Resolve the default schema generically: fetch the live schema
+          // list, ask the driver's capability spec which name to prefer, fall
+          // back to the first schema if nothing matches. Zero hardcoded
+          // db-type branches in this code path.
+          const schemas = await useSchemaStore.getState()
+            .fetchSchemas(conn.id, conn.database)
+          const caps = await useDriverCapabilitiesStore.getState().fetch(conn.type)
+          const schema = pickDefaultSchema(caps ?? {}, schemas, conn.database) ?? ''
+          openErDiagram(conn.id, schema)
+        }
+      })
     }
     for (const pc of pluginCommands) {
       cmds.push({
@@ -132,7 +150,7 @@ export function CommandPalette({ open, onClose }: Props) {
         category: pc.pluginDisplayName,
         keybinding: pc.keybinding,
         action: () => {
-          window.electronAPI.invoke('plugins:ui:action', pc.pluginId, pc.commandId, {}).catch(() => {})
+          window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UI_ACTION, pc.pluginId, pc.commandId, {}).catch(() => {})
         }
       })
     }

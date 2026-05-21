@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload, X } from 'lucide-react'
 import { Modal, Button, Input, Text, Flex, Spinner, Stack, Box } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   connectionId: string
@@ -18,7 +19,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
   const handleImportSql = async () => {
     setImporting(true)
     try {
-      const res = await window.electronAPI.invoke('import:sql', connectionId)
+      const res = await window.electronAPI.invoke(IPC_CHANNELS.IMPORT_SQL, connectionId)
       if ('cancelled' in res) { setImporting(false); return }
       const msg = `Executed ${res.executed} statements` + (res.errors.length > 0 ? ` (${res.errors.length} errors)` : '')
       setResult(msg)
@@ -37,7 +38,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
       // Simple 1:1 column mapping — CSV headers match DB columns
       const mapping: Record<string, string> = {}
       // We'll let the backend figure out the mapping from CSV headers
-      const res = await window.electronAPI.invoke('import:csv', connectionId, tableName, mapping, 'skip')
+      const res = await window.electronAPI.invoke(IPC_CHANNELS.IMPORT_CSV, connectionId, tableName, mapping, 'skip')
       if ('cancelled' in res) { setImporting(false); return }
       const msg = `Inserted ${res.inserted} rows` + (res.skipped > 0 ? `, ${res.skipped} skipped` : '') + (res.errors.length > 0 ? `, ${res.errors.length} errors` : '')
       setResult(msg)

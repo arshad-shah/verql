@@ -9,7 +9,7 @@ import type {
   AIProviderChunk,
   AIProviderChatRequest,
   AIToolDefinition
-} from '../../src/main/ai/types'
+} from '../../src/main/plugins/bundled/ai/internal/types'
 
 describe('AITool', () => {
   it('can construct a read-only tool that satisfies the interface', async () => {

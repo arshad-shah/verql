@@ -7,13 +7,15 @@ const isDev = !app.isPackaged
 const APP_NAME = 'Nova'
 /**
  * Identity used for on-disk storage (`app.getPath('userData')`) and the macOS
- * keychain service that backs `safeStorage`. This MUST stay stable across
- * rebrands — changing it points the app at a new userData dir AND a new
- * keychain entry, which makes previously-encrypted ciphertexts (API keys)
- * undecryptable. Connection passwords stored plainly in config.json survive a
- * rename, but encrypted credentials do not. Keep this constant forever.
+ * keychain service that backs `safeStorage`. From v0.1.0 onwards this MUST
+ * stay constant — changing it points the app at a new userData dir and a new
+ * keychain entry, which makes previously-encrypted ciphertexts (API keys,
+ * connection passwords stored as ciphertext in config.json) undecryptable
+ * for every existing installation. If a future rebrand is unavoidable, ship
+ * a one-shot migration that copies the old `userData/<old-name>` directory
+ * to the new path before any read.
  */
-const STORAGE_NAME = 'dbstudio'
+const STORAGE_NAME = 'nova'
 
 app.setName(STORAGE_NAME)
 
@@ -43,13 +45,13 @@ function buildAppMenu(): void {
         {
           label: 'New Query Tab',
           accelerator: 'CmdOrCtrl+N',
-          click: (_, win) => win?.webContents.send('menu:new-query-tab'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-query-tab'),
         },
         { type: 'separator' },
         {
           label: 'New Connection',
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: (_, win) => win?.webContents.send('menu:new-connection'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-connection'),
         },
         { type: 'separator' },
         process.platform === 'darwin'
@@ -75,7 +77,7 @@ function buildAppMenu(): void {
         {
           label: 'Command Palette',
           accelerator: 'CmdOrCtrl+Shift+P',
-          click: (_, win) => win?.webContents.send('menu:toggle-command-palette'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:toggle-command-palette'),
         },
         { type: 'separator' },
         { role: 'togglefullscreen' },
@@ -155,7 +157,16 @@ function createWindow(): BrowserWindow {
     icon,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // Renderer security baseline:
+      //   contextIsolation defaults to true since Electron 12
+      //   nodeIntegration defaults to false
+      //   sandbox: true puts the renderer inside Chromium's OS-level sandbox.
+      // The preload script only imports from 'electron' and uses
+      // contextBridge.exposeInMainWorld, which is sandbox-compatible.
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: true
     }
   })
 

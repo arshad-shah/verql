@@ -1,4 +1,5 @@
 import type { Monaco } from '@monaco-editor/react'
+import type { editor, Position } from 'monaco-editor'
 import type { CompletionItem, CompletionItemKind } from '@shared/plugin-ui-types'
 
 let cachedItems: CompletionItem[] = []
@@ -22,7 +23,7 @@ const kindMap: Record<CompletionItemKind, number> = {
 export function registerCompletionProvider(monaco: Monaco, language: string): void {
   monaco.languages.registerCompletionItemProvider(language, {
     triggerCharacters: ['.', ' ', '$', '"'],
-    provideCompletionItems: (model, position) => {
+    provideCompletionItems: (model: editor.ITextModel, position: Position) => {
       const word = model.getWordUntilPosition(position)
       const range = {
         startLineNumber: position.lineNumber,

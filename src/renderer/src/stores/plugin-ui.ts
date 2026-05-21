@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { UIContribution, ContributionSurface } from '@shared/plugin-ui-types'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
 interface ResolverCache {
   [key: string]: { value: string; label: string }[] | undefined
@@ -23,7 +24,7 @@ export const usePluginUIStore = create<PluginUIState>((set, get) => ({
   resolverCache: {},
 
   fetchContributions: async (surface) => {
-    const result = await window.electronAPI.invoke('plugins:ui:get-contributions', surface)
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UI_GET_CONTRIBUTIONS, surface)
     set((state) => ({
       contributions: { ...state.contributions, [surface]: result }
     }))
@@ -34,7 +35,7 @@ export const usePluginUIStore = create<PluginUIState>((set, get) => ({
     const cached = get().resolverCache[cacheKey]
     if (cached) return cached
 
-    const result = await window.electronAPI.invoke('plugins:ui:resolve', pluginId, resolverId, { connectionId })
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UI_RESOLVE, pluginId, resolverId, { connectionId })
     set((state) => ({
       resolverCache: { ...state.resolverCache, [cacheKey]: result }
     }))
@@ -42,7 +43,7 @@ export const usePluginUIStore = create<PluginUIState>((set, get) => ({
   },
 
   executeAction: async (pluginId, commandId, payload) => {
-    await window.electronAPI.invoke('plugins:ui:action', pluginId, commandId, payload)
+    await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UI_ACTION, pluginId, commandId, payload)
   },
 
   invalidateResolver: (resolverId, connectionId) => {
@@ -68,7 +69,7 @@ export function selectContributions(surface: string) {
 // Debounce to avoid re-render storms during plugin boot.
 if (typeof window !== 'undefined' && window.electronAPI) {
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
-  window.electronAPI.on('plugins:ui:contributions-changed', () => {
+  window.electronAPI.on(IPC_EVENTS.PLUGINS_UI_CONTRIBUTIONS_CHANGED, () => {
     if (debounceTimer) clearTimeout(debounceTimer)
     debounceTimer = setTimeout(async () => {
       const store = usePluginUIStore.getState()

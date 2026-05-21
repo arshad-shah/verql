@@ -9,6 +9,9 @@ import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
+import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
+import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
+import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
@@ -20,6 +23,7 @@ import * as postgresqlPlugin from './plugins/bundled/postgresql'
 import * as mysqlPlugin from './plugins/bundled/mysql'
 import * as sqlitePlugin from './plugins/bundled/sqlite'
 import * as aiPlugin from './plugins/bundled/ai'
+import * as coreFormatsPlugin from './plugins/bundled/core-formats'
 
 import type { IpcContext } from './ipc/context'
 import { handle } from './ipc/context'
@@ -53,6 +57,9 @@ export function registerIpcHandlers(): void {
   const uiRegistry = new UIRegistryImpl()
   const completionRegistry = new CompletionRegistryImpl()
   const services = new ServiceRegistryImpl()
+  const exporterRegistry = new ExporterRegistryImpl()
+  const importerRegistry = new ImporterRegistryImpl()
+  const typeMapperRegistry = new TypeMapperRegistryImpl()
 
   const connectionAccess = new ConnectionAccessImpl(
     (id) => ctx.activeAdapters.get(id),
@@ -68,9 +75,11 @@ export function registerIpcHandlers(): void {
   registerSettingsHandlers(ctx, handle)
   registerKeyringHandlers(ctx, handle)
   registerDbHandlers(ctx, handle, connectionAccess)
-  registerExportImportHandlers(ctx, handle)
+  registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
+  // The migration IPC handler resolves type mappings through the registry,
+  // so it needs visibility into what each driver plugin contributed.
   registerDialogHandlers(handle)
-  registerMigrationHandlers(handle)
+  registerMigrationHandlers(handle, typeMapperRegistry)
   registerAppHandlers(handle)
 
   registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
@@ -85,12 +94,17 @@ export function registerIpcHandlers(): void {
     getProfile: (id) => ctx.configStore.getConnection(id),
     keyring: ctx.keyring,
     settingsStore,
-    services
+    services,
+    exporterRegistry,
+    importerRegistry,
+    typeMapperRegistry
   })
 
   // The AI plugin is registered first so its `ai` service is available
   // synchronously when other plugins (mongo, redis) register their AI tools.
   pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
+  // Core formats (CSV/JSON) before drivers so DB plugins can override defaults.
+  pluginCoordinator.registerBundledPlugin(coreFormatsPlugin.manifest, coreFormatsPlugin)
   pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
   pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
   pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)

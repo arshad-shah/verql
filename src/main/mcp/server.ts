@@ -12,7 +12,7 @@ interface MCPServerDeps {
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
 }
 
-interface MCPServerInstance {
+export interface MCPServerInstance {
   start: (port: number) => Promise<{ port: number; token: string }>
   stop: () => Promise<void>
   getStatus: () => { running: boolean; port: number; clients: number; token: string }

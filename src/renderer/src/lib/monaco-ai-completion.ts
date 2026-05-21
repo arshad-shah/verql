@@ -1,4 +1,6 @@
 import type { Monaco } from '@monaco-editor/react'
+import type { editor, Position, CancellationToken, languages } from 'monaco-editor'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let currentConnectionId: string | null = null
@@ -9,7 +11,12 @@ export function setAICompletionContext(connectionId: string | null): void {
 
 export function registerAIInlineCompletionProvider(monaco: Monaco, language: string): void {
   monaco.languages.registerInlineCompletionsProvider(language, {
-    provideInlineCompletions: async (model, position, _context, token) => {
+    provideInlineCompletions: async (
+      model: editor.ITextModel,
+      position: Position,
+      _context: languages.InlineCompletionContext,
+      token: CancellationToken
+    ) => {
       // Don't trigger if no connection
       if (!currentConnectionId) return { items: [] }
 
@@ -33,7 +40,7 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
           }
 
           try {
-            const result = await window.electronAPI.invoke('ai:complete-sql', {
+            const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_COMPLETE_SQL, {
               sql: fullText,
               cursorOffset: offset,
               connectionId: currentConnectionId!

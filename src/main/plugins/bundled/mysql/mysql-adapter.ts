@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise'
 import type { DbAdapter } from '../../../db/adapter'
+import { quoteIdentifier } from '../../../db/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
 
 export class MysqlAdapter implements DbAdapter {
@@ -34,13 +35,13 @@ export class MysqlAdapter implements DbAdapter {
 
   async switchDatabase(database: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`USE \`${database}\``)
+    await this.pool.query(`USE ${quoteIdentifier(database, 'mysql')}`)
     this.config = { ...this.config, database }
   }
 
   async setSchema(schema: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`USE \`${schema}\``)
+    await this.pool.query(`USE ${quoteIdentifier(schema, 'mysql')}`)
   }
 
   async disconnect(): Promise<void> {
@@ -106,8 +107,10 @@ export class MysqlAdapter implements DbAdapter {
 
   async getRowCount(table: string, schema?: string): Promise<number> {
     if (!this.pool) throw new Error('Not connected')
-    const db = schema ?? this.config.database
-    const [rows] = await this.pool.query(`SELECT count(*) as cnt FROM \`${db}\`.\`${table}\``)
+    const db = (schema ?? this.config.database) as string
+    const [rows] = await this.pool.query(
+      `SELECT count(*) as cnt FROM ${quoteIdentifier([db, table], 'mysql')}`
+    )
     return (rows as { cnt: number }[])[0].cnt
   }
 }

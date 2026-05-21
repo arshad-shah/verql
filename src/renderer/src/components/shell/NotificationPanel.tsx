@@ -22,16 +22,20 @@ const categoryColors: Record<string, string> = {
 }
 
 export function NotificationPanel() {
-  const { notifications, panelOpen, closePanel, markRead, markAllRead, unreadCount } =
+  const { notifications, markRead, markAllRead, unreadCount } =
     useNotificationsStore()
+  // Panel open/close is now driven by the secondary-sidebar UI store. This
+  // component renders inside that sidebar and shouldn't dismiss itself —
+  // closing the sidebar is the user's job via the activity bar / Esc handler
+  // in the shell.
+  const panelOpen = true
+  const closePanel = () => {}
   const panelRef = useRef<HTMLDivElement>(null)
   const unread = unreadCount()
 
   useEffect(() => {
     if (!panelOpen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closePanel()
-    }
+    const handleKeyDown = (_e: KeyboardEvent) => { /* no-op */ }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [panelOpen, closePanel])

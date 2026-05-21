@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { OpenAIProvider } from '../../src/main/ai/providers/openai'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { OpenAIProvider } from '../../src/main/plugins/bundled/ai/internal/providers/openai'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('OpenAIProvider', () => {
   it('has correct metadata', () => {
@@ -10,10 +14,25 @@ describe('OpenAIProvider', () => {
   })
 
   it('returns models list', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        data: [
+          { id: 'gpt-4o' },
+          { id: 'gpt-4o-mini' },
+          { id: 'whisper-1' } // non-chat, should be filtered out
+        ]
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    )
     const provider = new OpenAIProvider(() => 'test-key')
     const models = await provider.models()
     expect(models.length).toBeGreaterThan(0)
     expect(models.some(m => m.id === 'gpt-4o')).toBe(true)
+  })
+
+  it('returns empty list when API key is missing', async () => {
+    const provider = new OpenAIProvider(() => null)
+    const models = await provider.models()
+    expect(models).toEqual([])
   })
 
   it('throws when no API key', async () => {

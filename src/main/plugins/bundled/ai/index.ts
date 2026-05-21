@@ -7,7 +7,7 @@ import { createSchemaTools } from './tools/schema-tools'
 import { createQueryTools } from './tools/query-tools'
 
 export const manifest: PluginManifest = {
-  name: 'dbstudio-plugin-ai',
+  name: 'nova-plugin-ai',
   version: '1.0.0',
   displayName: 'AI Assistant',
   description:

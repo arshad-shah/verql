@@ -10,6 +10,7 @@ import {
   FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput,
   Button, Spinner
 } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 
 interface Props {
   tabId: string
@@ -63,8 +64,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   })
 
   useEffect(() => {
-    window.electronAPI.invoke('plugins:connection-fields').then(setPluginDrivers).catch(() => {})
-    window.electronAPI.invoke('plugins:middleware-fields').then(setMiddlewareFields).catch(() => {})
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_CONNECTION_FIELDS).then(setPluginDrivers).catch(() => {})
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_MIDDLEWARE_FIELDS).then(setMiddlewareFields).catch(() => {})
   }, [])
 
   const allTypes = pluginDrivers.map(d => ({
@@ -108,7 +109,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       const fieldKeys = fetchableFields.map(f => f.key)
       const options = await window.electronAPI.invoke(
         'db:connection-options',
-        profile as ConnectionProfile,
+        profile as unknown as ConnectionProfile,
         fieldKeys
       )
       setFetchableOptions(options)
@@ -125,7 +126,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await saveConnection(profile as ConnectionProfile)
+    await saveConnection(profile as unknown as ConnectionProfile)
     closeTab(tabId)
   }
 
@@ -436,7 +437,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             )}
 
             {/* Test Connection */}
-            <ConnectionTestButton profile={profile as ConnectionProfile} />
+            <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
           </Stack>
         </form>
       </Container>

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AppSettings } from '@shared/settings'
 import { defaultSettings, mergeWithDefaults } from '@shared/settings'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
 interface SettingsState {
   settings: AppSettings
@@ -15,7 +16,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   loaded: false,
 
   hydrate: async () => {
-    const settings = await window.electronAPI.invoke('settings:get-all') as AppSettings
+    const settings = await window.electronAPI.invoke(IPC_CHANNELS.SETTINGS_GET_ALL) as AppSettings
     set({ settings: mergeWithDefaults(settings), loaded: true })
   },
 
@@ -38,7 +39,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   resetCategory: async (category: keyof AppSettings) => {
-    const updated = await window.electronAPI.invoke('settings:reset', category)
+    const updated = await window.electronAPI.invoke(IPC_CHANNELS.SETTINGS_RESET, category)
     set((state) => ({
       settings: { ...state.settings, [category]: updated },
     }))
@@ -47,7 +48,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
 // Listen for settings changes broadcast from main process
 export function initSettingsListener(): () => void {
-  return window.electronAPI.on('settings:changed', (keyPath: unknown, value: unknown) => {
+  return window.electronAPI.on(IPC_EVENTS.SETTINGS_CHANGED, (keyPath: unknown, value: unknown) => {
     const store = useSettingsStore.getState()
     const parts = (keyPath as string).split('.')
     const newSettings = { ...store.settings }
