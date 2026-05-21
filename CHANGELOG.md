@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- Fix release workflow: run `electron-vite build` before `electron-builder` so the packaged `app.asar` contains `out/main/index.js`. Without this step all three OS builds failed at the asar sanity check during the v0.2.0 release attempt.
+
 ## 0.2.0
 
 ### Minor Changes
