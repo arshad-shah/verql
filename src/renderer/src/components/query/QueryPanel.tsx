@@ -216,7 +216,10 @@ export function QueryPanel({ tab }: Props) {
   useEffect(() => {
     tabActions.register(tab.id, {
       onSave: handleSave,
-      isDirty: () => Boolean(useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')?.isDirty),
+      isDirty: () => {
+        const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
+        return t?.type === 'query' && t.isDirty
+      },
       label: tab.title,
       runStatement: (sql) => { void runSql(sql) },
       explainStatement: (sql) => { void explainSql(sql) },
