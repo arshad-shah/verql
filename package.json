@@ -1,18 +1,18 @@
 {
-  "name": "nova",
-  "version": "0.2.5",
+  "name": "verql",
+  "version": "0.3.0",
   "private": true,
-  "description": "Nova — a fast, extensible desktop database client.",
+  "description": "Verql — a fast, extensible desktop database client.",
   "license": "MIT",
   "author": "Arshad Shah",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arshad-shah/nova.git"
+    "url": "git+https://github.com/arshad-shah/verql.git"
   },
   "bugs": {
-    "url": "https://github.com/arshad-shah/nova/issues"
+    "url": "https://github.com/arshad-shah/verql/issues"
   },
-  "homepage": "https://github.com/arshad-shah/nova#readme",
+  "homepage": "https://github.com/arshad-shah/verql#readme",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -99,6 +99,8 @@
     "vitest": "4.1.3"
   },
   "build": {
+    "appId": "com.electron.verql",
+    "productName": "Verql",
     "npmRebuild": true,
     "buildDependenciesFromSource": false,
     "afterPack": "./build/afterPack.cjs",
@@ -125,35 +127,6 @@
     "linux": {
       "target": "AppImage",
       "icon": "build/icon.png"
-    }
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "electron",
-      "@electron/rebuild"
-    ],
-    "overrides": {
-      "axios@<1.15.1": ">=1.15.1",
-      "form-data@<2.5.4": ">=2.5.4",
-      "fast-uri@<3.1.2": ">=3.1.2",
-      "xmldom": "npm:@xmldom/xmldom@^0.8.13",
-      "@xmldom/xmldom@<0.8.13": ">=0.8.13",
-      "fast-xml-parser@<4.4.1": ">=4.4.1",
-      "fast-xml-builder@<1.1.7": ">=1.1.7",
-      "tough-cookie@<4.1.3": ">=4.1.3",
-      "yargs-parser@<5.0.1": ">=5.0.1",
-      "dompurify@<3.4.5": ">=3.4.5",
-      "follow-redirects@<1.16.0": ">=1.16.0",
-      "qs@<6.14.1": ">=6.14.1",
-      "phin@<3.7.1": ">=3.7.1",
-      "postcss@<8.5.10": ">=8.5.10",
-      "hono@<4.12.18": ">=4.12.18",
-      "ip-address@<10.2.0": ">=10.2.0",
-      "brace-expansion": ">=5.0.6",
-      "ws@<8.20.0": ">=8.20.0",
-      "ws@>=8.0.0 <8.20.1": ">=8.20.1",
-      "fast-xml-parser@<5.7.0": ">=5.7.0"
     }
   }
 }

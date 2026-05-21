@@ -1,4 +1,4 @@
-# Contributing to Nova
+# Contributing to Verql
 
 Thanks for taking the time. This guide is short on purpose — read top to
 bottom and you'll have everything you need to land your first PR.

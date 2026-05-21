@@ -1,6 +1,6 @@
 # Writing a plugin
 
-Nova's main process is an **orchestrator**. The actual database logic,
+Verql's main process is an **orchestrator**. The actual database logic,
 import/export formats, type translation, UI panels, AI tools, and
 connection middleware all come from **plugins**. Adding a new database or
 feature should not require editing the main app.
@@ -38,7 +38,7 @@ and is where the plugin *registers* those contributions through the SDK.
 
 ```json
 {
-  "name": "nova-plugin-cassandra",
+  "name": "verql-plugin-cassandra",
   "version": "1.0.0",
   "displayName": "Cassandra",
   "description": "Apache Cassandra driver",
@@ -71,7 +71,7 @@ this repo (since the audit; see `tests/unit/plugin-boot.test.ts`).
 
 ```ts
 // my-plugin/index.ts
-import type { PluginContext } from '@nova/plugin-sdk'
+import type { PluginContext } from '@verql/plugin-sdk'
 import { CassandraAdapter } from './cassandra-adapter'
 
 export function activate(ctx: PluginContext): void {
@@ -390,7 +390,7 @@ ctx.commands.register('format-sql', async () => {
 ```
 
 The orchestrator prepends the plugin name to the command id, so the
-palette ends up running `nova-plugin-foo:format-sql`.
+palette ends up running `verql-plugin-foo:format-sql`.
 
 ### 10. AI provider / tool
 
@@ -499,7 +499,7 @@ To **add a new bundled plugin**:
 
 To **add an external plugin** (third-party, installed by the user at
 runtime), package the directory as a zip and use the Plugins panel inside
-Nova → Install from Zip. The same `manifest.json` + compiled `index.js`
+Verql → Install from Zip. The same `manifest.json` + compiled `index.js`
 applies.
 
 ## When to add a new contribution surface

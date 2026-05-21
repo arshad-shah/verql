@@ -1,4 +1,4 @@
-# Nova internals
+# Verql internals
 
 | Doc | What's inside |
 |-----|---------------|

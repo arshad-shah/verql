@@ -14,7 +14,7 @@ import {
   type Statement,
 } from '@/lib/statement-registry'
 
-const INVOKE_COMMAND_ID = 'nova.invokeLensAction'
+const INVOKE_COMMAND_ID = 'verql.invokeLensAction'
 const registeredLangs = new Set<string>()
 
 interface LensArgs {

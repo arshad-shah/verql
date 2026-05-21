@@ -13,7 +13,7 @@ interface SavedQuery {
   connectionType?: string
 }
 
-const STORAGE_KEY = 'nova:saved-queries'
+const STORAGE_KEY = 'verql:saved-queries'
 const listeners = new Set<() => void>()
 
 function load(): SavedQuery[] {

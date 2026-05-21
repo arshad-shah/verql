@@ -17,7 +17,7 @@ export const SETTINGS_CATEGORIES: CategoryDef[] = [
   { id: 'connections', label: 'Connections' },
   { id: 'data-display', label: 'Data Display' },
   { id: 'keybindings', label: 'Keybindings' },
-  { id: 'ai', label: 'AI', ownedBy: 'nova-plugin-ai' },
+  { id: 'ai', label: 'AI', ownedBy: 'verql-plugin-ai' },
   { id: 'mcp', label: 'MCP Server' },
   { id: 'plugins', label: 'Plugins' },
 ]

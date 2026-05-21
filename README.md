@@ -1,4 +1,4 @@
-# Nova
+# Verql
 
 A fast, extensible desktop database client. Built on Electron + React,
 with a plugin architecture: the main app is an orchestrator and every
@@ -9,7 +9,7 @@ as a bundled plugin.
 > minor versions. The contribution surfaces (plugin APIs, IPC channels)
 > are documented in [docs/](./docs/) and will be stabilised before 1.0.
 
-![CI](https://github.com/arshad-shah/nova/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/arshad-shah/verql/actions/workflows/ci.yml/badge.svg)
 
 ## Features
 
@@ -30,7 +30,7 @@ as a bundled plugin.
 ## Install
 
 Pre-built binaries are published to
-[GitHub Releases](https://github.com/arshad-shah/nova/releases):
+[GitHub Releases](https://github.com/arshad-shah/verql/releases):
 
 | Platform | Format | Notes |
 |----------|--------|-------|

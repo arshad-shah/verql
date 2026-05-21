@@ -14,7 +14,7 @@ let configPath: string
 let store: ConfigStore
 
 beforeEach(() => {
-  configPath = path.join(os.tmpdir(), `nova-cfg-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
+  configPath = path.join(os.tmpdir(), `verql-cfg-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
   store = new ConfigStore(configPath)
 })
 

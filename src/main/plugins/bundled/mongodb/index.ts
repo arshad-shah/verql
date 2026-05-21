@@ -5,7 +5,7 @@ import { MongoAdapter } from './mongo-adapter'
 import { getTableData, jsonLinesExporter, bsonArrayExporter, jsonLinesImporter } from './data-format'
 
 export const manifest: PluginManifest = {
-  name: 'nova-plugin-mongodb',
+  name: 'verql-plugin-mongodb',
   version: '1.0.0',
   displayName: 'MongoDB',
   description: 'MongoDB database driver',

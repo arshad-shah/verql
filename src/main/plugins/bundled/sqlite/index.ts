@@ -11,7 +11,7 @@ import {
 } from './type-maps'
 
 export const manifest: PluginManifest = {
-  name: 'nova-plugin-sqlite',
+  name: 'verql-plugin-sqlite',
   version: '1.0.0',
   displayName: 'SQLite',
   description: 'SQLite database driver',

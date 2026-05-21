@@ -25,8 +25,8 @@ jobs:
     steps:
       - name: Refuse to publish from a fork
         run: |
-          if [ "${{ github.repository }}" != "arshad-shah/nova" ]; then
-            echo "Releases can only be cut from arshad-shah/nova, not ${{ github.repository }}."
+          if [ "${{ github.repository }}" != "arshad-shah/verql" ]; then
+            echo "Releases can only be cut from arshad-shah/verql, not ${{ github.repository }}."
             exit 1
           fi
 
@@ -44,11 +44,11 @@ jobs:
       matrix:
         include:
           - os: macos-14
-            artifact_glob: dist/Nova-*.dmg
+            artifact_glob: dist/Verql-*.dmg
           - os: ubuntu-latest
-            artifact_glob: dist/Nova-*.AppImage
+            artifact_glob: dist/Verql-*.AppImage
           - os: windows-latest
-            artifact_glob: dist/Nova*Setup*.exe
+            artifact_glob: dist/Verql*Setup*.exe
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -166,7 +166,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
-          name: nova-${{ matrix.os }}
+          name: verql-${{ matrix.os }}
           path: |
             dist/*.dmg
             dist/*.zip
@@ -205,7 +205,7 @@ jobs:
         with:
           path: .
           format: cyclonedx-json
-          output-file: release/nova-${{ github.ref_name }}-sbom.cdx.json
+          output-file: release/verql-${{ github.ref_name }}-sbom.cdx.json
 
       - name: Read release notes from CHANGELOG
         id: notes

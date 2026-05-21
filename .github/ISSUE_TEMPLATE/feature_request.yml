@@ -29,7 +29,7 @@ body:
     attributes:
       label: Does this fit a plugin?
       description: |
-        Nova's architecture pushes dialect / format / theme specific
+        Verql's architecture pushes dialect / format / theme specific
         logic into plugins. If your idea can ship as a plugin, that's
         usually the lower-friction path.
       options:

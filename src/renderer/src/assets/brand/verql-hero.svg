@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true">
-  <!-- Nova hero — decorative variant for the empty welcome screen. Inherits
+  <!-- Verql hero — decorative variant for the empty welcome screen. Inherits
        `currentColor`; opacity layers do the light/dark contrast lifting. -->
   <circle cx="100" cy="100" r="86" stroke-width="1" opacity="0.12"/>
   <circle cx="100" cy="100" r="58" stroke-width="1" opacity="0.22"/>

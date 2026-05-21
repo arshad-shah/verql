@@ -1,4 +1,4 @@
-# Releasing Nova
+# Releasing Verql
 
 This document covers cutting a new release end-to-end:
 
@@ -51,13 +51,13 @@ This document covers cutting a new release end-to-end:
 The release workflow is in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 
 A guard job runs first and refuses to publish from any repo other than
-`arshad-shah/nova`, so a fork that pushes a tag cannot trigger an
-arshad-shah/nova release.
+`arshad-shah/verql`, so a fork that pushes a tag cannot trigger an
+arshad-shah/verql release.
 
 ## Required secrets & accounts
 
 Set each as a **Repository Secret** at
-`https://github.com/arshad-shah/nova/settings/secrets/actions`.
+`https://github.com/arshad-shah/verql/settings/secrets/actions`.
 Several are optional — leave them empty and the workflow produces
 unsigned binaries for that platform instead of failing.
 
@@ -151,7 +151,7 @@ Users verify with:
 cosign verify-blob \
   --certificate sha256sums.txt.pem \
   --signature   sha256sums.txt.sig \
-  --certificate-identity 'https://github.com/arshad-shah/nova/.github/workflows/release.yml@refs/tags/vX.Y.Z' \
+  --certificate-identity 'https://github.com/arshad-shah/verql/.github/workflows/release.yml@refs/tags/vX.Y.Z' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   sha256sums.txt
 ```
@@ -168,19 +168,19 @@ Provided automatically by GitHub Actions. The workflow's job-level
 ## What the user gets
 
 A published release on
-`https://github.com/arshad-shah/nova/releases/tag/vX.Y.Z` includes:
+`https://github.com/arshad-shah/verql/releases/tag/vX.Y.Z` includes:
 
 | Asset | Platform | What it is |
 |-------|----------|------------|
-| `Nova-X.Y.Z.dmg` | macOS Intel | Disk image, signed & notarised |
-| `Nova-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
-| `Nova-X.Y.Z-mac.zip` | macOS (both arches) | For auto-updater |
-| `Nova-X.Y.Z.AppImage` | Linux x64 | Portable, no install needed |
-| `Nova Setup X.Y.Z.exe` | Windows x64 | NSIS installer (currently unsigned) |
+| `Verql-X.Y.Z.dmg` | macOS Intel | Disk image, signed & notarised |
+| `Verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
+| `Verql-X.Y.Z-mac.zip` | macOS (both arches) | For auto-updater |
+| `Verql-X.Y.Z.AppImage` | Linux x64 | Portable, no install needed |
+| `Verql Setup X.Y.Z.exe` | Windows x64 | NSIS installer (currently unsigned) |
 | `latest-mac.yml` / `latest-linux.yml` / `latest.yml` | All | Auto-updater feeds |
 | `sha256sums.txt` | All | Hashes of every binary |
 | `sha256sums.txt.sig` + `.pem` | All | Sigstore signature + cert |
-| `nova-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
+| `verql-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
 
 ## Verifying a release as a user
 
@@ -191,7 +191,7 @@ A published release on
 cosign verify-blob \
   --certificate       sha256sums.txt.pem \
   --signature         sha256sums.txt.sig \
-  --certificate-identity-regexp 'https://github.com/arshad-shah/nova/' \
+  --certificate-identity-regexp 'https://github.com/arshad-shah/verql/' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   sha256sums.txt
 
@@ -201,7 +201,7 @@ shasum -a 256 -c sha256sums.txt --ignore-missing # macOS
 ```
 
 If both succeed, you have a binary that was produced by the
-`release.yml` workflow running in `arshad-shah/nova`, and nothing
+`release.yml` workflow running in `arshad-shah/verql`, and nothing
 mutated it after the build.
 
 ## Upgrading the pipeline
@@ -231,7 +231,7 @@ later by:
 The pipeline creates **drafts** so the maintainer can sanity-check
 before users see them. Once you're happy:
 
-1. Go to https://github.com/arshad-shah/nova/releases
+1. Go to https://github.com/arshad-shah/verql/releases
 2. Find the draft, click Edit
 3. Click "Publish release"
 4. Users with the app installed will get notified by the

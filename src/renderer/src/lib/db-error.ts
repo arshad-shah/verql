@@ -273,7 +273,7 @@ const PATTERNS: Pattern[] = [
     // Electron safeStorage error after the OS keychain key rotates (laptop
     // password change, restore from backup, dev rebuilds with a new identity).
     match: /Error while decrypting the ciphertext|safeStorage\.decryptString|EncryptionAvailable/i,
-    message: () => 'The OS keychain refused to decrypt the credentials Nova has on file.',
+    message: () => 'The OS keychain refused to decrypt the credentials Verql has on file.',
     hint: 'Open the connection or AI provider settings and re-enter the password / API key.'
   },
   {
@@ -317,7 +317,7 @@ const PATTERNS: Pattern[] = [
     code: 'FILE_NOT_FOUND',
     title: 'File not found',
     match: /ENOENT|no such file or directory/i,
-    message: () => 'The file Nova tried to open isn\'t at that path anymore.',
+    message: () => 'The file Verql tried to open isn\'t at that path anymore.',
     hint: 'Confirm the file still exists and you have read access to it.'
   },
 ]

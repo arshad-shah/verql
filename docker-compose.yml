@@ -1,4 +1,4 @@
-# docker-compose.yml — Local test databases for nova
+# docker-compose.yml — Local test databases for verql
 # Usage:
 #   docker compose up -d        # Start all databases
 #   docker compose down -v      # Stop and remove volumes
@@ -9,66 +9,66 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: nova-postgres
+    container_name: verql-postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: nova
-      POSTGRES_PASSWORD: nova
+      POSTGRES_USER: verql
+      POSTGRES_PASSWORD: verql
       POSTGRES_DB: testdb
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nova"]
+      test: ["CMD-SHELL", "pg_isready -U verql"]
       interval: 5s
       retries: 5
 
   mysql:
     image: mysql:8.0
-    container_name: nova-mysql
+    container_name: verql-mysql
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: nova
-      MYSQL_PASSWORD: nova
+      MYSQL_USER: verql
+      MYSQL_PASSWORD: verql
       MYSQL_DATABASE: testdb
     volumes:
       - mysqldata:/var/lib/mysql
       - ./docker/seed/mysql.sql:/docker-entrypoint-initdb.d/seed.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "nova", "-pnova"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "verql", "-pverql"]
       interval: 5s
       retries: 5
 
   mongodb:
     image: mongo:7
-    container_name: nova-mongodb
+    container_name: verql-mongodb
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: nova
-      MONGO_INITDB_ROOT_PASSWORD: nova
+      MONGO_INITDB_ROOT_USERNAME: verql
+      MONGO_INITDB_ROOT_PASSWORD: verql
       MONGO_INITDB_DATABASE: testdb
     volumes:
       - mongodata:/data/db
       - ./docker/seed/mongo-init.js:/docker-entrypoint-initdb.d/seed.js:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "nova", "-p", "nova"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "-u", "verql", "-p", "verql"]
       interval: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: nova-redis
+    container_name: verql-redis
     ports:
       - "6379:6379"
-    command: redis-server --requirepass nova
+    command: redis-server --requirepass verql
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "nova", "ping"]
+      test: ["CMD", "redis-cli", "-a", "verql", "ping"]
       interval: 5s
       retries: 5
 

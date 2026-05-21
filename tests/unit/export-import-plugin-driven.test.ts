@@ -56,14 +56,14 @@ async function bootCoordinator() {
   coordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
 
   for (const name of [
-    'nova-plugin-ai',
-    'nova-plugin-core-formats',
-    'nova-plugin-postgresql',
-    'nova-plugin-mysql',
-    'nova-plugin-sqlite',
-    'nova-plugin-snowflake',
-    'nova-plugin-mongodb',
-    'nova-plugin-redis'
+    'verql-plugin-ai',
+    'verql-plugin-core-formats',
+    'verql-plugin-postgresql',
+    'verql-plugin-mysql',
+    'verql-plugin-sqlite',
+    'verql-plugin-snowflake',
+    'verql-plugin-mongodb',
+    'verql-plugin-redis'
   ]) {
     const p = coordinator.getPlugin(name)!
     await coordinator.activatePlugin(p)

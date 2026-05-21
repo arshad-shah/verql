@@ -20,7 +20,7 @@ import type { ConnectionProfile } from '../../../shared/types'
 let configPath: string
 
 beforeEach(() => {
-  configPath = path.join(os.tmpdir(), `nova-atomic-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
+  configPath = path.join(os.tmpdir(), `verql-atomic-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
 })
 
 afterEach(() => {

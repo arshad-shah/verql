@@ -4,7 +4,7 @@ import fs from 'fs'
 import { registerIpcHandlers } from './ipc-handlers'
 
 const isDev = !app.isPackaged
-const APP_NAME = 'Nova'
+const APP_NAME = 'Verql'
 /**
  * Identity used for on-disk storage (`app.getPath('userData')`) and the macOS
  * keychain service that backs `safeStorage`. From v0.1.0 onwards this MUST
@@ -15,7 +15,7 @@ const APP_NAME = 'Nova'
  * a one-shot migration that copies the old `userData/<old-name>` directory
  * to the new path before any read.
  */
-const STORAGE_NAME = 'nova'
+const STORAGE_NAME = 'verql'
 
 app.setName(STORAGE_NAME)
 
@@ -124,7 +124,7 @@ function buildAppMenu(): void {
  * In production the icon is baked in by electron-builder from electron-builder.yml,
  * but in `pnpm dev` we hit Electron's default icon because nothing tells the
  * window where to find ours. We point at `build/icon.png` (the rasterized
- * Nova mark) explicitly so the Dock / taskbar / window match in dev too.
+ * Verql mark) explicitly so the Dock / taskbar / window match in dev too.
  *
  * Falls back gracefully when the file is missing so a fresh checkout that
  * hasn't run `pnpm build:icons` still launches.

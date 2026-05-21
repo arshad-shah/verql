@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
   <!--
-    Nova app icon — LIGHT variant.
+    Verql app icon — LIGHT variant.
     Mirrors build/icon.svg but inverts the background palette so the mark
     reads on a pale canvas (light-mode dock, white documentation, paper
     print). The starburst itself stays in the brand-purple range so the
