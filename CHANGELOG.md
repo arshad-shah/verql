@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5
+
+### Patch Changes
+
+- Fix macOS `.dmg` rejected with "nova is damaged and can't be opened". With `mac.identity: null`, electron-builder was skipping signing entirely, leaving every nested binary with its stale Electron-prebuild linker signature while the bundle's resource hashes (Info.plist, app.asar, icons) no longer matched. macOS rejected the app at launch (`spctl: code has no resources but signature indicates they must be present`).
+
+  Adds an `afterPack` hook that ad-hoc re-signs the assembled bundle with `codesign --force --deep --sign -` before the dmg is created. Every nested binary now ends up with a consistent ad-hoc signature, matching resource hashes, and a null Team ID — so Gatekeeper accepts the bundle even without an Apple Developer ID.
+
 ## 0.2.4
 
 ### Patch Changes
