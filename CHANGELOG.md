@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- Initial public release of Nova — a fast, extensible desktop database client built on Electron + React.
+
+  - **Database drivers** (each a bundled plugin): PostgreSQL, MySQL, SQLite, MongoDB, Redis, Snowflake.
+  - **SQL editor** powered by Monaco with per-dialect autocomplete and code lens.
+  - **Schema browser** with ER diagrams, table previews, and a row inspector.
+  - **Import/export** for CSV, JSON, JSON-Lines, and SQL — all as plugin contributions.
+  - **AI assistant** with OpenAI, Anthropic, and Ollama providers; per-query permission gating for tool calls.
+  - **MCP server** built in, so Claude Code and other MCP clients can read schemas and run approved queries.
+  - **SSH tunnels** as connection middleware.
+  - **Themes**: dark, light, midnight — three-layer token system for further customisation.
+
+  Pre-built binaries for macOS, Linux, and Windows are attached to this release. macOS and Windows builds are currently **unsigned**; see the README for verification steps using `sha256sums.txt` and the detached GPG signature.
+
 All notable changes to Nova are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
