@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix macOS release build failing with `DOMParser.parseFromString: the provided mimeType "undefined" is not valid`. The `@xmldom/xmldom` 0.9 line made the `mimeType` argument mandatory; the `plist` library that electron-builder uses to parse the Electron prebuild's `Info.plist` doesn't pass one. Pin `@xmldom/xmldom` to `~0.8.13` via pnpm overrides.
+
 ## 0.3.0
 
 ### Minor Changes
