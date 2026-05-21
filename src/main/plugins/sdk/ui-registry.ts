@@ -16,8 +16,8 @@ export interface UIRegistry {
   registerTab(id: string, widgets: Widget[]): Disposable
   /**
    * Mount widgets into a host-defined slot. The host renders one
-   * `<PluginSlot id="..." />` per extension point; this is how an extension
-   * places UI in arbitrary parts of the app (e.g. above the editor, alongside
+   * `<PluginSlot id="..." />` per slot; this is how a plugin places UI
+   * in arbitrary parts of the app (e.g. above the editor, alongside
    * results actions) without the host knowing what plugin owns what.
    */
   registerSlot(id: string, widgets: Widget[]): Disposable

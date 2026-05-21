@@ -39,7 +39,7 @@ export function CommandPalette({ open, onClose }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [pluginCommands, setPluginCommands] = useState<PluginCommand[]>([])
   // Snapshot of Monaco editor actions exposed at the moment the palette opens.
-  // Recomputed each open so an extension-registered action shows up without a
+  // Recomputed each open so a plugin-registered action shows up without a
   // page reload, but stable while the user types so filtering doesn't churn.
   const [editorActions, setEditorActions] = useState<{ id: string; label: string }[]>([])
 
@@ -71,7 +71,7 @@ export function CommandPalette({ open, onClose }: Props) {
       { id: 'new-query', title: 'New Query Tab', category: 'Query', keybinding: 'Cmd+N', action: () => addQueryTab(activeConnectionId) },
       { id: 'explorer', title: 'Show Explorer', category: 'View', action: () => setActivePanel('explorer') },
       { id: 'show-schema', title: 'Show Schema', category: 'View', action: () => setActivePanel('schema') },
-      { id: 'show-extensions', title: 'Show Extensions', category: 'View', action: () => setActivePanel('extensions') },
+      { id: 'show-plugins', title: 'Show Plugins', category: 'View', action: () => setActivePanel('plugins') },
     ]
     // Editor-aware run commands. Only meaningful when there's a live editor
     // (i.e. the active tab is a query). The palette is the authoritative place

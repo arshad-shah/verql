@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { useSettingsStore } from './settings'
 
-export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'extensions' | 'settings' | (string & {})
+export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'plugins' | 'settings' | (string & {})
 
 export type SecondaryPanelId = 'inspector' | 'notifications' | 'connections' | (string & {})
 export type BottomPanelId = 'results' | 'query-plan' | 'chart' | (string & {})

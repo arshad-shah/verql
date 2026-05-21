@@ -18,6 +18,44 @@ const noOpKeyring: KeyringLike = {
   delete: async () => undefined,
 }
 
+// Settings paths arrive over IPC from the renderer. Reject segments that
+// would walk into the prototype chain — without this guard, a renderer
+// (or a misbehaving plugin) can pollute `Object.prototype` via
+// `setSetting('__proto__.polluted', …)` and affect every other object
+// in the main process.
+const FORBIDDEN_KEYPATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
+
+// Atomic save: write to a sibling temp file, then rename onto the final
+// path. The rename is atomic on POSIX (and `MoveFileEx`-style on
+// Windows), so a crash mid-save leaves either the old file or the new
+// file fully readable — never a half-written JSON that fails to parse
+// on next launch and drops every saved profile.
+function writeAtomic(filePath: string, contents: string): void {
+  const dir = path.dirname(filePath)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  const tmpPath = path.join(dir, `.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`)
+  try {
+    fs.writeFileSync(tmpPath, contents, 'utf-8')
+    fs.renameSync(tmpPath, filePath)
+  } catch (err) {
+    try { fs.unlinkSync(tmpPath) } catch { /* ignore — temp file may not exist */ }
+    throw err
+  }
+}
+
+function splitSettingsKeyPath(keyPath: string): string[] {
+  const parts = keyPath.split('.')
+  for (const part of parts) {
+    if (FORBIDDEN_KEYPATH_SEGMENTS.has(part)) {
+      throw new Error(`Settings key path '${keyPath}' contains forbidden segment '${part}'`)
+    }
+    if (part.length === 0) {
+      throw new Error(`Settings key path '${keyPath}' contains an empty segment`)
+    }
+  }
+  return parts
+}
+
 interface ConfigData {
   connections: ConnectionProfile[]
   settings: AppSettings
@@ -59,9 +97,7 @@ export class ConfigStore {
   }
 
   private save(): void {
-    const dir = path.dirname(this.filePath)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
+    writeAtomic(this.filePath, JSON.stringify(this.data, null, 2))
   }
 
   // ─── Connections ──────────────────────────────────────────────
@@ -137,17 +173,15 @@ export class ConfigStore {
       diskConnections.push(profile)
     }
     // Write full config with updated connections list
-    const dir = path.dirname(this.filePath)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const diskData = {
       connections: diskConnections,
       settings: this.data.settings,
     }
-    fs.writeFileSync(this.filePath, JSON.stringify(diskData, null, 2), 'utf-8')
+    writeAtomic(this.filePath, JSON.stringify(diskData, null, 2))
   }
 
-  deleteConnection(id: string): void {
-    deleteProfileSecrets(id, this.keyring)
+  async deleteConnection(id: string): Promise<void> {
+    await deleteProfileSecrets(id, this.keyring)
     this.data.connections = this.data.connections.filter(c => c.id !== id)
     this.save()
   }
@@ -162,21 +196,29 @@ export class ConfigStore {
   }
 
   getSetting(keyPath: string): unknown {
-    const parts = keyPath.split('.')
-    let target: any = this.data.settings
+    const parts = splitSettingsKeyPath(keyPath)
+    let target: unknown = this.data.settings
     for (const part of parts) {
       if (target == null || typeof target !== 'object') return undefined
-      target = target[part]
+      target = (target as Record<string, unknown>)[part]
     }
     return target
   }
 
   setSetting(keyPath: string, value: unknown): void {
-    const parts = keyPath.split('.')
-    let target: any = this.data.settings
+    const parts = splitSettingsKeyPath(keyPath)
+    let target: Record<string, unknown> = this.data.settings as unknown as Record<string, unknown>
     for (let i = 0; i < parts.length - 1; i++) {
-      if (target[parts[i]] === undefined) target[parts[i]] = {}
-      target = target[parts[i]]
+      const part = parts[i]
+      const next = target[part]
+      if (next === undefined) {
+        target[part] = {}
+      } else if (next === null || typeof next !== 'object') {
+        throw new Error(
+          `Cannot set '${keyPath}': intermediate '${parts.slice(0, i + 1).join('.')}' is not an object (got ${next === null ? 'null' : typeof next})`,
+        )
+      }
+      target = target[part] as Record<string, unknown>
     }
     target[parts[parts.length - 1]] = value
     this.save()

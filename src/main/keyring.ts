@@ -91,6 +91,19 @@ export class KeyringService {
   }
 
   private save(): void {
-    fs.writeFileSync(this.filePath, JSON.stringify(this.cache), 'utf-8')
+    // Atomic publish: write the new ciphertext blob to a sibling temp
+    // file and rename it onto the keyring. A crash mid-write would
+    // otherwise leave the file unparseable and we'd silently lose every
+    // saved credential on next launch.
+    const dir = path.dirname(this.filePath)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    const tmpPath = path.join(dir, `.${path.basename(this.filePath)}.${process.pid}.${Date.now()}.tmp`)
+    try {
+      fs.writeFileSync(tmpPath, JSON.stringify(this.cache), 'utf-8')
+      fs.renameSync(tmpPath, this.filePath)
+    } catch (err) {
+      try { fs.unlinkSync(tmpPath) } catch { /* ignore — temp may not exist */ }
+      throw err
+    }
   }
 }

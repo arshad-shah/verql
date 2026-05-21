@@ -243,7 +243,7 @@ export function QueryPanel({ tab }: Props) {
       </Flex>
 
       {/* Plugin-contributed surfaces (e.g. AI NL-to-SQL bar). Nothing renders
-          when no extension contributes here. */}
+          when no plugin contributes here. */}
       <PluginSlot
         id="query.editor.top"
         context={{

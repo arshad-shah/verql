@@ -15,8 +15,8 @@ export function ConnectionSettings() {
         <Heading level={4}>Connections</Heading>
         <Text size="xs" color="muted" className="mt-1">
           Defaults for new database connections. Per-driver settings (ports,
-          driver-specific options) live with the driver extension and only show
-          here while that extension is active.
+          driver-specific options) live with the driver plugin and only show
+          here while that plugin is active.
         </Text>
       </div>
 

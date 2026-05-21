@@ -39,10 +39,10 @@ describe('ConfigStore', () => {
     expect(list[0].name).toBe('Updated')
   })
 
-  it('deletes a connection', () => {
+  it('deletes a connection', async () => {
     store.saveConnection({ id: 'a', name: 'A', type: 'sqlite', database: '/a.db' })
     store.saveConnection({ id: 'b', name: 'B', type: 'sqlite', database: '/b.db' })
-    store.deleteConnection('a')
+    await store.deleteConnection('a')
     const list = store.listConnections()
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe('b')

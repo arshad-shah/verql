@@ -122,7 +122,7 @@ export function PluginSettings() {
     <Stack gap="md">
       <div>
         <Heading level={4}>Plugins</Heading>
-        <Text size="xs" color="muted" className="mt-1">Manage installed extensions</Text>
+        <Text size="xs" color="muted" className="mt-1">Manage installed plugins</Text>
       </div>
 
       {plugins.map((plugin) => {

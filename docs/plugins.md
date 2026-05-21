@@ -1,4 +1,4 @@
-# Writing an extension
+# Writing a plugin
 
 Nova's main process is an **orchestrator**. The actual database logic,
 import/export formats, type translation, UI panels, AI tools, and
@@ -7,9 +7,9 @@ feature should not require editing the main app.
 
 This document covers:
 
-1. [What an extension looks like](#what-an-extension-looks-like) — the
+1. [What a plugin looks like](#what-a-plugin-looks-like) — the
    manifest + activate function
-2. [Extension types](#extension-types) — the contribution surfaces (driver,
+2. [Plugin types](#plugin-types) — the contribution surfaces (driver,
    exporter, importer, type mapper, theme, panel, command, …) with worked
    examples
 3. [Lifecycle](#plugin-lifecycle) — how plugins are discovered, validated,
@@ -20,7 +20,7 @@ This document covers:
 For adding a new IPC channel after the contribution surface is built, see
 [IPC channels](./ipc.md).
 
-## What an extension looks like
+## What a plugin looks like
 
 A plugin is a directory with two files at minimum:
 
@@ -127,7 +127,7 @@ is automatically tracked under `ctx.subscriptions`. When the plugin is
 deactivated, those subscriptions are disposed in LIFO order — so the
 plugin doesn't have to manage cleanup explicitly.
 
-## Extension types
+## Plugin types
 
 This section is the **menu** of contribution surfaces. Each shows the
 manifest declaration, the `activate()` registration call, and where in
