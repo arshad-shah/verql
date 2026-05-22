@@ -69,7 +69,7 @@ export function registerPluginHandlers(
   handle('plugins:deactivate', async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
     if (plugin) {
-      await pluginCoordinator.deactivatePlugin(plugin)
+      await pluginCoordinator.deactivatePlugin(plugin, { persist: true })
       broadcastLifecycle(name, 'deactivated')
     }
   })

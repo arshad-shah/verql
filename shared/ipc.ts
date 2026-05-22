@@ -330,6 +330,27 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  /** Returns whether any updater can manage this install + which channel. */
+  'updater:status': {
+    args: []
+    return:
+      | { available: false }
+      | { available: true; id: string; displayName: string; currentVersion: string }
+  }
+  /** Asks the active updater whether a new version is available. */
+  'updater:check': {
+    args: []
+    return:
+      | { supported: false }
+      | { supported: true; currentVersion: string; latestVersion: string | null; available: boolean }
+  }
+  /** Kicks off the update install. Progress streams on `updater:progress`. */
+  'updater:update': {
+    args: []
+    return:
+      | { started: true }
+      | { started: false; reason: 'no-updater' }
+  }
   /**
    * Returns settings contributed by active plugins, filtered to a single
    * core category. Used to render plugin-contributed rows alongside core
@@ -518,6 +539,10 @@ export const IPC_CHANNELS = {
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',
+  // ── Updater ────────────────────────────────────────────────────────────
+  UPDATER_STATUS: 'updater:status',
+  UPDATER_CHECK: 'updater:check',
+  UPDATER_UPDATE: 'updater:update',
   // ── Themes ──────────────────────────────────────────────────────────────
   THEMES_LIST: 'themes:list',
   // ── Drag and drop ──────────────────────────────────────────────────────
@@ -551,6 +576,15 @@ export interface IpcEventMap {
   'notifications:show': [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
   /** The set of registered themes changed. */
   'themes:changed': []
+  /** Progress update for an in-flight `updater:update` install. */
+  'updater:progress': [payload:
+    | { phase: 'idle' }
+    | { phase: 'checking' }
+    | { phase: 'downloading'; percent?: number }
+    | { phase: 'installing' }
+    | { phase: 'done'; restartRequired: boolean }
+    | { phase: 'error'; message: string }
+  ]
 }
 
 export type IpcEvent = keyof IpcEventMap
@@ -565,5 +599,6 @@ export const IPC_EVENTS = {
   PLUGINS_UI_CONTRIBUTIONS_CHANGED: 'plugins:ui:contributions-changed',
   SETTINGS_CHANGED: 'settings:changed',
   NOTIFICATIONS_SHOW: 'notifications:show',
-  THEMES_CHANGED: 'themes:changed'
+  THEMES_CHANGED: 'themes:changed',
+  UPDATER_PROGRESS: 'updater:progress'
 } as const satisfies Record<string, IpcEvent>

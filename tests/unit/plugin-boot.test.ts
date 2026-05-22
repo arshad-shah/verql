@@ -1,4 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import os from 'os'
+import path from 'path'
+
+vi.mock('electron', () => ({
+  app: { getPath: () => path.join(os.tmpdir(), 'verql-plugin-boot-test') }
+}))
+
 import { validateManifest, PluginBootCoordinator } from '../../src/main/plugins/plugin-host'
 import { DriverRegistryImpl } from '../../src/main/plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from '../../src/main/plugins/sdk/command-registry'
@@ -212,5 +219,135 @@ describe('PluginBootCoordinator', () => {
     await coordinator.deactivatePlugin(activated)
     expect(deactivateFn).toHaveBeenCalledOnce()
     expect(activated.status.state).toBe('inactive')
+  })
+
+  describe('disabledPluginsStore persistence', () => {
+    function makeDisabledStore(initial: string[] = []) {
+      const set = new Set(initial)
+      return {
+        list: () => [...set],
+        store: {
+          isDisabled: (name: string) => set.has(name),
+          markDisabled: (name: string) => { set.add(name) },
+          markEnabled: (name: string) => { set.delete(name) }
+        }
+      }
+    }
+
+    function makeCoordinator(disabledStore: ReturnType<typeof makeDisabledStore>['store']) {
+      return new PluginBootCoordinator({
+        driverRegistry: new DriverRegistryImpl(),
+        commandRegistry: new CommandRegistryImpl(),
+        panelRegistry: new PanelRegistryImpl(),
+        uiRegistry: new UIRegistryImpl(),
+        completionRegistry: new CompletionRegistryImpl(),
+        getAdapter: () => undefined,
+        getProfile: () => undefined,
+        keyring: noopKeyring,
+        settingsStore: { get: () => undefined, set: () => {} },
+        services: new ServiceRegistryImpl(),
+        exporterRegistry: new ExporterRegistryImpl(),
+        importerRegistry: new ImporterRegistryImpl(),
+        typeMapperRegistry: new TypeMapperRegistryImpl(),
+        themeRegistry: new ThemeRegistryImpl(),
+        notificationBus: { show: () => {} },
+        dragDropRegistry: new DragDropRegistryImpl(),
+        disabledPluginsStore: disabledStore
+      })
+    }
+
+    const manifest = (name: string) => ({
+      name, version: '1.0.0', displayName: name,
+      description: 'desc', main: 'index.js', contributes: {}
+    })
+
+    it('user-initiated deactivation persists the disabled flag', async () => {
+      const disabled = makeDisabledStore()
+      const c = makeCoordinator(disabled.store)
+      const plugin = {
+        manifest: manifest('user-off'),
+        path: '<bundled>',
+        status: { state: 'validated' as const },
+        module: { activate: vi.fn(), deactivate: vi.fn() }
+      }
+      await c.activatePlugin(plugin)
+      await c.deactivatePlugin(plugin, { persist: true })
+      expect(disabled.list()).toEqual(['user-off'])
+    })
+
+    it('shutdown-style deactivation does NOT persist (defaults to persist:false)', async () => {
+      const disabled = makeDisabledStore()
+      const c = makeCoordinator(disabled.store)
+      const plugin = {
+        manifest: manifest('still-enabled'),
+        path: '<bundled>',
+        status: { state: 'validated' as const },
+        module: { activate: vi.fn(), deactivate: vi.fn() }
+      }
+      await c.activatePlugin(plugin)
+      await c.deactivatePlugin(plugin) // no opts — like shutdown/uninstall/auto
+      expect(disabled.list()).toEqual([])
+    })
+
+    it('boot() skips activation for plugins on the persisted disabled list', async () => {
+      const disabled = makeDisabledStore(['skipped'])
+      const c = makeCoordinator(disabled.store)
+      const activate = vi.fn()
+      c.registerBundledPlugin(manifest('skipped'), { activate })
+      c.validateAll()
+      c.resolveAll()
+      await c.boot()
+      expect(activate).not.toHaveBeenCalled()
+      expect(c.getPlugin('skipped')?.status.state).toBe('inactive')
+    })
+
+    it('boot() still activates plugins not on the disabled list', async () => {
+      const disabled = makeDisabledStore(['other-one'])
+      const c = makeCoordinator(disabled.store)
+      const activate = vi.fn()
+      c.registerBundledPlugin(manifest('keeper'), { activate })
+      c.validateAll()
+      c.resolveAll()
+      await c.boot()
+      expect(activate).toHaveBeenCalledOnce()
+      expect(c.getPlugin('keeper')?.status.state).toBe('active')
+    })
+
+    it('re-activating a plugin clears the persisted disabled flag', async () => {
+      const disabled = makeDisabledStore(['comeback'])
+      const c = makeCoordinator(disabled.store)
+      const plugin = {
+        manifest: manifest('comeback'),
+        path: '<bundled>',
+        status: { state: 'validated' as const },
+        module: { activate: vi.fn(), deactivate: vi.fn() }
+      }
+      await c.activatePlugin(plugin)
+      expect(disabled.list()).toEqual([])
+    })
+
+    it('disabled flag survives a deactivate → boot cycle (the original bug)', async () => {
+      const disabled = makeDisabledStore()
+
+      // Session 1: user deactivates the plugin via the IPC path.
+      const c1 = makeCoordinator(disabled.store)
+      c1.registerBundledPlugin(manifest('survivor'), { activate: vi.fn(), deactivate: vi.fn() })
+      c1.validateAll()
+      c1.resolveAll()
+      await c1.boot()
+      await c1.deactivatePlugin(c1.getPlugin('survivor')!, { persist: true })
+      expect(disabled.list()).toEqual(['survivor'])
+
+      // Session 2: fresh coordinator with the same persisted state — must NOT
+      // re-activate.
+      const activate2 = vi.fn()
+      const c2 = makeCoordinator(disabled.store)
+      c2.registerBundledPlugin(manifest('survivor'), { activate: activate2 })
+      c2.validateAll()
+      c2.resolveAll()
+      await c2.boot()
+      expect(activate2).not.toHaveBeenCalled()
+      expect(c2.getPlugin('survivor')?.status.state).toBe('inactive')
+    })
   })
 })

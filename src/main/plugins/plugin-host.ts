@@ -111,6 +111,14 @@ interface BootDeps {
   themeRegistry: import('./sdk/theme-registry').ThemeRegistry
   notificationBus: { show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void }
   dragDropRegistry: import('./sdk/drag-drop-registry').DragDropRegistry
+  /** Persistence for the user's enable/disable choice. Without this, the
+   *  coordinator can flip status in memory but `boot()` re-activates every
+   *  resolved plugin on next launch. */
+  disabledPluginsStore?: {
+    isDisabled(name: string): boolean
+    markDisabled(name: string): void
+    markEnabled(name: string): void
+  }
 }
 
 export class PluginBootCoordinator {
@@ -262,6 +270,10 @@ export class PluginBootCoordinator {
     }
 
     plugin.status = { state: 'activating' }
+
+    // User explicitly enabled this plugin — clear any persisted disabled flag
+    // so it stays active across restarts.
+    this.deps.disabledPluginsStore?.markEnabled(plugin.manifest.name)
 
     // Set the current plugin name so registries can track ownership
     this.deps.uiRegistry.currentPluginName = plugin.manifest.name
@@ -465,6 +477,12 @@ export class PluginBootCoordinator {
         continue
       }
 
+      if (this.deps.disabledPluginsStore?.isDisabled(plugin.manifest.name)) {
+        plugin.status = { state: 'inactive' }
+        report.plugins.push({ name: plugin.manifest.name, status: plugin.status, durationMs: 0 })
+        continue
+      }
+
       const start = performance.now()
       await this.activatePlugin(plugin)
       const durationMs = Math.round(performance.now() - start)
@@ -483,7 +501,7 @@ export class PluginBootCoordinator {
 
   // ── Deactivate ─────────────────────────────────────────────────────────────
 
-  async deactivatePlugin(plugin: LoadedPlugin): Promise<void> {
+  async deactivatePlugin(plugin: LoadedPlugin, opts: { persist?: boolean } = {}): Promise<void> {
     if (plugin.module?.deactivate) {
       try {
         await plugin.module.deactivate()
@@ -497,6 +515,12 @@ export class PluginBootCoordinator {
     }
     plugin.status = { state: 'inactive' }
     this.activationOrder = this.activationOrder.filter(n => n !== plugin.manifest.name)
+    // Only persist disabled-state for user-initiated deactivations. Shutdown
+    // and auto-tear-down also funnel through here, and those must not mark
+    // every active plugin disabled.
+    if (opts.persist) {
+      this.deps.disabledPluginsStore?.markDisabled(plugin.manifest.name)
+    }
   }
 
   async shutdown(): Promise<void> {
