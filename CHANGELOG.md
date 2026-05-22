@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.6
+
+### Patch Changes
+
+- Permanently fix `Cannot find module` crashes at launch by bundling pure-JS main-process dependencies (snowflake-sdk, axios, form-data, mongodb, ioredis, …) into `out/main/index.js` via Rollup, plus switch pnpm to `nodeLinker: hoisted` (pnpm's own recommendation for Electron projects).
+
+  Previously, electron-builder's dep-graph walker silently dropped transitive deps under pnpm's isolated layout — `es-object-atoms`, `mime-db`, `get-intrinsic`, `call-bind-apply-helpers`, … all went missing from the packaged `app.asar` even when they were present at top-level `node_modules` locally. Bundling inlines them so runtime resolution never reaches the filesystem.
+
+  Only native modules (`better-sqlite3`, `pg`, `mysql2`, `ssh2`, `cpu-features`) and `@electron/rebuild` remain external — those still ship in `node_modules` inside the asar and are packed reliably because they're declared direct dependencies.
+
 ## 0.3.5
 
 ### Patch Changes
