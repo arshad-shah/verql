@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Stack, Flex, Button, Text } from '@/primitives'
-import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
 import { SettingRow } from './SettingRow'
+
+type ProgressEvent = IpcEventMap['updater:progress'][0]
 
 type Status =
   | { kind: 'loading' }
@@ -51,7 +53,8 @@ export function UpdatesSection() {
   // `updater:update` is running so the UI can show phase changes without
   // polling.
   useEffect(() => {
-    return window.electronAPI.on(IPC_EVENTS.UPDATER_PROGRESS, (payload) => {
+    return window.electronAPI.on(IPC_EVENTS.UPDATER_PROGRESS, (...args: unknown[]) => {
+      const payload = args[0] as ProgressEvent
       if (payload.phase === 'done') {
         setAction({ kind: 'done', restartRequired: payload.restartRequired })
       } else if (payload.phase === 'error') {
@@ -112,7 +115,7 @@ export function UpdatesSection() {
             {action.kind === 'checking' ? 'Checking…' : 'Check for updates'}
           </Button>
           {status.available && action.kind !== 'updating' && action.kind !== 'done' && (
-            <Button variant="primary" size="sm" onClick={update}>
+            <Button variant="solid" size="sm" onClick={update}>
               Install update
             </Button>
           )}
@@ -120,14 +123,14 @@ export function UpdatesSection() {
             <Text size="xs" color="muted">{action.phase}…</Text>
           )}
           {action.kind === 'done' && action.restartRequired && (
-            <Button variant="primary" size="sm" onClick={restart}>
+            <Button variant="solid" size="sm" onClick={restart}>
               Restart to apply
             </Button>
           )}
         </Flex>
       </SettingRow>
       {action.kind === 'error' && (
-        <Text size="xs" color="danger">{action.message}</Text>
+        <Text size="xs" color="error">{action.message}</Text>
       )}
     </Stack>
   )

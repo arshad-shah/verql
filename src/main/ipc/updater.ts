@@ -6,10 +6,10 @@ import type { UpdateProgress } from '../updater/types'
 export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistry): void {
   handle('updater:status', async () => {
     const active = await registry.detectActive()
-    if (!active) return { available: false }
+    if (!active) return { available: false as const }
     return {
-      available: true,
-      id: active.id,
+      available: true as const,
+      id: active.id as string,
       displayName: active.displayName,
       currentVersion: active.getCurrentVersion(),
     }
