@@ -42,6 +42,8 @@ import { registerMcpHandlers } from './ipc/mcp'
 import { registerPluginHandlers } from './ipc/plugins'
 import { registerThemesHandlers } from './ipc/themes'
 import { registerAppHandlers } from './ipc/app'
+import { registerUpdaterHandlers } from './ipc/updater'
+import { createUpdaterRegistry } from './updater'
 import { getSecretFieldKeys, SECRET_PLACEHOLDER } from './ipc/secrets'
 
 export function registerIpcHandlers(): void {
@@ -95,6 +97,7 @@ export function registerIpcHandlers(): void {
   registerDialogHandlers(handle)
   registerMigrationHandlers(handle, typeMapperRegistry)
   registerAppHandlers(handle)
+  registerUpdaterHandlers(handle, createUpdaterRegistry())
 
   registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
 
@@ -114,7 +117,23 @@ export function registerIpcHandlers(): void {
     typeMapperRegistry,
     themeRegistry,
     notificationBus,
-    dragDropRegistry
+    dragDropRegistry,
+    disabledPluginsStore: {
+      isDisabled: (name) => {
+        const list = ctx.configStore.getSetting('disabledPlugins') as string[] | undefined
+        return Array.isArray(list) && list.includes(name)
+      },
+      markDisabled: (name) => {
+        const current = (ctx.configStore.getSetting('disabledPlugins') as string[] | undefined) ?? []
+        if (current.includes(name)) return
+        ctx.configStore.setSetting('disabledPlugins', [...current, name])
+      },
+      markEnabled: (name) => {
+        const current = (ctx.configStore.getSetting('disabledPlugins') as string[] | undefined) ?? []
+        if (!current.includes(name)) return
+        ctx.configStore.setSetting('disabledPlugins', current.filter(n => n !== name))
+      }
+    }
   })
 
   // The AI plugin is registered first so its `ai` service is available

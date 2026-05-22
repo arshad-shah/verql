@@ -3,6 +3,7 @@ import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
+import { UpdatesSection } from '../UpdatesSection'
 
 export function GeneralSettings() {
   const general = useSettingsStore((s) => s.settings.general)
@@ -88,6 +89,10 @@ export function GeneralSettings() {
       </SettingRow>
 
       <PluginContributedSettings category="general" />
+
+      <Divider />
+
+      <UpdatesSection />
 
       <Divider />
 

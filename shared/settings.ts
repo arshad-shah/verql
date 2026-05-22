@@ -119,6 +119,10 @@ export interface AppSettings {
   mcp: MCPSettings
   keybindings: KeyBinding[]
   plugins: Record<string, Record<string, unknown>>
+  /** Names of plugins the user has explicitly deactivated. Persisted so the
+   *  choice survives app restarts — without this, every boot re-activates
+   *  every resolved plugin. */
+  disabledPlugins: string[]
 }
 
 export const defaultSettings: AppSettings = {
@@ -201,6 +205,7 @@ export const defaultSettings: AppSettings = {
     { id: 'toggle-bottom-dock', label: 'Toggle Bottom Dock', keys: ['Ctrl+J', 'Cmd+J'], category: 'Panels' },
   ],
   plugins: {},
+  disabledPlugins: [],
 }
 
 /** Accent values that were the *default* (not user-chosen) in past versions.
@@ -215,7 +220,7 @@ const LEGACY_DEFAULT_ACCENTS = new Set([
 export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings {
   const result = { ...defaultSettings }
   for (const key of Object.keys(defaultSettings) as (keyof AppSettings)[]) {
-    if (key === 'keybindings' || key === 'plugins') {
+    if (key === 'keybindings' || key === 'plugins' || key === 'disabledPlugins') {
       if (persisted[key] !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(result as any)[key] = persisted[key]
