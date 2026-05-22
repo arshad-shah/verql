@@ -2,19 +2,30 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
+import { createRequire } from 'node:module'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import type { Plugin } from 'vite'
 
-// Modules that genuinely can't be bundled into out/main/index.js:
-//   - have native `.node` bindings
-//   - or use runtime path tricks against their own package layout
-// These stay external and must be in node_modules at runtime.
-//
-// EVERYTHING ELSE is bundled into out/main/index.js by Rollup. This is the
-// reliable workaround for electron-builder + pnpm: the dep-graph walker
-// silently drops transitive deps (es-object-atoms, mime-db, get-intrinsic,
-// ...) under some pnpm layouts, and the app crashes at launch with
-// "Cannot find module 'X'". Bundling eliminates the dependency on
-// node_modules layout entirely for pure-JS deps.
+const req = createRequire(import.meta.url)
+const projectNodeModules = resolve(process.cwd(), 'node_modules')
+
+/** True if the package is installed (CJS or ESM) — checks the directory,
+ * not require.resolve, because require.resolve throws for ESM-only packages
+ * even though they exist on disk.
+ */
+function packageIsInstalled(specifier: string): boolean {
+  const parts = specifier.split('/')
+  const pkgName = specifier.startsWith('@') ? `${parts[0]}/${parts[1]}` : parts[0]
+  return existsSync(join(projectNodeModules, pkgName, 'package.json'))
+}
+
+// Modules that must never be bundled — Electron runtime, native bindings,
+// or post-install hooks. Rollup leaves these as runtime require().
 const nativeExternals = [
+  'electron',
+  'electron/main',
+  'electron/common',
   'better-sqlite3',
   'pg',
   'pg-native',
@@ -24,31 +35,73 @@ const nativeExternals = [
   '@electron/rebuild'
 ]
 
+// Deps that ship as plain JS, get bundled into out/main/index.js by Rollup.
+// Bundling these inlines every transitive require so the packaged app.asar
+// doesn't depend on pnpm's node_modules layout (which is unreliable across
+// install variants).
+const bundleThese = [
+  'snowflake-sdk',
+  'axios',
+  'form-data',
+  'mime-types',
+  'mime-db',
+  '@modelcontextprotocol/sdk',
+  'zod',
+  'csv-parse',
+  'csv-stringify',
+  'mongodb',
+  'ioredis',
+  'shiki',
+  'react-markdown',
+  'remark-gfm',
+  'dompurify',
+  // ESM-only or interop-sensitive — must be bundled or Node CJS require() fails.
+  // fast-xml-parser@5.7+ pulls in xml-naming@0.1.0 which is ESM-only.
+  'fast-xml-parser',
+  'xml-naming',
+  'strnum'
+]
+
+/**
+ * Auto-externalise anything Rollup can't resolve. Bundled libs like mongodb
+ * and snowflake-sdk lazy-require optional peer deps inside try/catch (kerberos,
+ * mongodb-client-encryption, @aws-sdk/credential-providers, …). If Rollup
+ * tries to bundle them, build emits a hard-throw stub that crashes the app
+ * at startup; if we externalise them, the runtime require still throws but
+ * the host's try/catch handles it gracefully — exactly the npm-install
+ * behaviour.
+ */
+function externaliseUnresolvable(): Plugin {
+  return {
+    name: 'externalise-unresolvable',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      // Skip relative + alias imports
+      if (source.startsWith('.') || source.startsWith('/') || source.startsWith('@/') || source.startsWith('@shared')) {
+        return null
+      }
+      // Skip node built-ins (Rollup handles them)
+      if (source.startsWith('node:')) return null
+      // If the package is on disk, let Rollup bundle/resolve it (handles ESM-only too)
+      if (packageIsInstalled(source)) return null
+      // Try Node resolution as a final check (handles deep paths within installed packages)
+      try {
+        req.resolve(source, importer ? { paths: [importer] } : undefined)
+        return null
+      } catch {
+        // Not installed and not resolvable — externalise so it becomes a runtime
+        // require() that the host package's try/catch can handle.
+        return { id: source, external: true }
+      }
+    }
+  }
+}
+
 export default defineConfig({
   main: {
     plugins: [
-      // exclude lists deps to BUNDLE (i.e. NOT externalize). Snowflake-sdk
-      // and its tree was the original culprit; bundling them inlines
-      // every transitive require so it doesn't matter what's in node_modules.
-      externalizeDepsPlugin({
-        exclude: [
-          'snowflake-sdk',
-          'axios',
-          'form-data',
-          'mime-types',
-          'mime-db',
-          '@modelcontextprotocol/sdk',
-          'zod',
-          'csv-parse',
-          'csv-stringify',
-          'mongodb',
-          'ioredis',
-          'shiki',
-          'react-markdown',
-          'remark-gfm',
-          'dompurify'
-        ]
-      })
+      externalizeDepsPlugin({ exclude: bundleThese }),
+      externaliseUnresolvable()
     ],
     build: {
       rollupOptions: {

@@ -31,16 +31,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement
-    if (accentColor) {
+    // Empty / unset → don't override, let the active theme's accent win.
+    if (accentColor && accentColor.trim() !== '') {
       root.style.setProperty('--color-accent', accentColor)
       // Derive hover (lighter) and muted (very transparent) variants
       root.style.setProperty('--color-accent-hover', `color-mix(in oklch, ${accentColor}, white 20%)`)
       root.style.setProperty('--color-accent-muted', `color-mix(in oklch, ${accentColor}, transparent 80%)`)
-    }
-    return () => {
+      root.style.setProperty('--color-focus-ring', accentColor)
+    } else {
       root.style.removeProperty('--color-accent')
       root.style.removeProperty('--color-accent-hover')
       root.style.removeProperty('--color-accent-muted')
+      root.style.removeProperty('--color-focus-ring')
     }
   }, [accentColor])
 

@@ -35,6 +35,9 @@ const preview: Preview = {
   decorators: [
     withThemeByDataAttribute({
       themes: {
+        Nightshift: 'nightshift',
+        Lab: 'lab',
+        'Ink & Paper': 'inkpaper',
         Dark: 'dark',
         Light: 'light',
         Midnight: 'midnight',
@@ -43,7 +46,7 @@ const preview: Preview = {
         Solarized: 'solarized',
         Catppuccin: 'catppuccin',
       },
-      defaultTheme: 'Dark',
+      defaultTheme: 'Nightshift',
       attributeName: 'data-theme',
     }),
     (Story) => (

@@ -7,6 +7,78 @@ interface ThemeDef {
 }
 
 const themes: Record<string, ThemeDef> = {
+  'verql-nightshift': {
+    base: 'vs-dark',
+    colors: {
+      'editor.background': '#0B0F16',
+      'editor.foreground': '#E8ECF3',
+      'editor.lineHighlightBackground': '#E8ECF30A',
+      'editor.selectionBackground': '#2BD9A340',
+      'editorLineNumber.foreground': '#4A5468',
+      'editorCursor.foreground': '#2BD9A3',
+      'editor.selectionHighlightBackground': '#2BD9A320',
+      'editorBracketMatch.background': '#2BD9A330',
+      'editorBracketMatch.border': '#2BD9A350',
+    },
+    rules: [
+      { token: 'keyword', foreground: '#2BD9A3' },
+      { token: 'string', foreground: '#FFB23D' },
+      { token: 'number', foreground: '#FFC061' },
+      { token: 'comment', foreground: '#4A5468', fontStyle: 'italic' },
+      { token: 'type', foreground: '#5CE0BD' },
+      { token: 'identifier', foreground: '#E8ECF3' },
+      { token: 'operator', foreground: '#7C8499' },
+      { token: 'delimiter', foreground: '#B8C0D1' },
+    ],
+  },
+  'verql-lab': {
+    base: 'vs',
+    colors: {
+      'editor.background': '#FAFAF6',
+      'editor.foreground': '#1A1A1C',
+      'editor.lineHighlightBackground': '#1A1A1C08',
+      'editor.selectionBackground': '#115E5930',
+      'editorLineNumber.foreground': '#BFBDB4',
+      'editorCursor.foreground': '#115E59',
+      'editor.selectionHighlightBackground': '#115E5915',
+      'editorBracketMatch.background': '#115E5920',
+      'editorBracketMatch.border': '#115E5940',
+    },
+    rules: [
+      { token: 'keyword', foreground: '#115E59' },
+      { token: 'string', foreground: '#B45309' },
+      { token: 'number', foreground: '#9A4F0B' },
+      { token: 'comment', foreground: '#6B6B68', fontStyle: 'italic' },
+      { token: 'type', foreground: '#14716A' },
+      { token: 'identifier', foreground: '#1A1A1C' },
+      { token: 'operator', foreground: '#6B6B68' },
+      { token: 'delimiter', foreground: '#1A1A1C' },
+    ],
+  },
+  'verql-inkpaper': {
+    base: 'vs',
+    colors: {
+      'editor.background': '#F8F2E5',
+      'editor.foreground': '#14110F',
+      'editor.lineHighlightBackground': '#14110F08',
+      'editor.selectionBackground': '#9E302230',
+      'editorLineNumber.foreground': '#BFB29A',
+      'editorCursor.foreground': '#9E3022',
+      'editor.selectionHighlightBackground': '#9E302215',
+      'editorBracketMatch.background': '#9E302220',
+      'editorBracketMatch.border': '#9E302240',
+    },
+    rules: [
+      { token: 'keyword', foreground: '#9E3022' },
+      { token: 'string', foreground: '#6B4226' },
+      { token: 'number', foreground: '#8E5A1E' },
+      { token: 'comment', foreground: '#6D6759', fontStyle: 'italic' },
+      { token: 'type', foreground: '#B23A2A' },
+      { token: 'identifier', foreground: '#14110F' },
+      { token: 'operator', foreground: '#6D6759' },
+      { token: 'delimiter', foreground: '#14110F' },
+    ],
+  },
   'verql-dark': {
     base: 'vs-dark',
     colors: {
@@ -178,6 +250,9 @@ const themes: Record<string, ThemeDef> = {
 }
 
 const APP_TO_MONACO: Record<string, string> = {
+  nightshift: 'verql-nightshift',
+  lab: 'verql-lab',
+  inkpaper: 'verql-inkpaper',
   dark: 'verql-dark',
   light: 'verql-light',
   midnight: 'verql-midnight',
@@ -203,5 +278,5 @@ export function defineAppThemes(monaco: Monaco): void {
 }
 
 export function getMonacoThemeName(appTheme: string): string {
-  return APP_TO_MONACO[appTheme] ?? 'verql-dark'
+  return APP_TO_MONACO[appTheme] ?? 'verql-nightshift'
 }

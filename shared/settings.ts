@@ -127,7 +127,10 @@ export const defaultSettings: AppSettings = {
     theme: 'nightshift',
     uiDensity: 'comfortable',
     sidebarPosition: 'left',
-    accentColor: '#2bd9a3',
+    // Empty means "follow the theme's accent". Setting any non-empty value
+    // overrides the theme accent app-wide (and is preserved across theme
+    // switches — user opt-in customisation).
+    accentColor: '',
     sidebarWidth: 240,
     splitRatio: 50,
     showStatusBar: true,
@@ -190,6 +193,14 @@ export const defaultSettings: AppSettings = {
   plugins: {},
 }
 
+/** Accent values that were the *default* (not user-chosen) in past versions.
+ * Cleared on load so users who never customised the accent stop being stuck
+ * with the legacy purple after we changed the default. */
+const LEGACY_DEFAULT_ACCENTS = new Set([
+  '#7c6ff7', // pre-Nightshift purple default
+  '#2bd9a3', // 0.4.0 mint shipped briefly before the default went empty
+])
+
 /** Deep merge user settings with defaults so new keys get defaults automatically */
 export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings {
   const result = { ...defaultSettings }
@@ -203,6 +214,13 @@ export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(result as any)[key] = { ...(defaultSettings as any)[key], ...(persisted as any)[key] }
     }
+  }
+  // Migration: clear a previously-default accent so theme accent takes over.
+  if (
+    result.appearance.accentColor &&
+    LEGACY_DEFAULT_ACCENTS.has(result.appearance.accentColor.toLowerCase())
+  ) {
+    result.appearance.accentColor = ''
   }
   return result
 }

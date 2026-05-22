@@ -1,60 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
   <!--
-    Verql app icon.
-    Geometry mirrors the in-app VerqlMark glyph but scaled for the 1024-px
-    canvas used by macOS/Win/Linux icon templates:
-      - rounded background using Apple's 22% radius rule
-      - radial glow centred on the core so the mark reads at 16px
-      - four cardinal arms (full opacity) and four diagonal arms (half)
-      - bright filled core dot
+    Verql app icon — Nightshift edition.
+    Five vertical bars whose tops trace a V over a deep midnight background,
+    accented by an electric-mint glow. Mirrors the in-app VerqlMark.
+      - rounded background, Apple's 22% radius
+      - radial mint glow behind the bars so the mark reads at 16px
+      - bars in cool frost with a hot mint inner column
   -->
   <defs>
-    <radialGradient id="bg" cx="50%" cy="42%" r="65%">
-      <stop offset="0%" stop-color="#1a1330"/>
-      <stop offset="55%" stop-color="#0c0918"/>
-      <stop offset="100%" stop-color="#05030c"/>
+    <radialGradient id="bg" cx="50%" cy="42%" r="68%">
+      <stop offset="0%"   stop-color="#1A2030"/>
+      <stop offset="55%"  stop-color="#0E121C"/>
+      <stop offset="100%" stop-color="#06080F"/>
     </radialGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#9d8bff" stop-opacity="0.55"/>
-      <stop offset="60%" stop-color="#5548b0" stop-opacity="0"/>
+    <radialGradient id="glow" cx="50%" cy="62%" r="48%">
+      <stop offset="0%"   stop-color="#2BD9A3" stop-opacity="0.40"/>
+      <stop offset="60%"  stop-color="#00C990" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="arm" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#c8bcff"/>
-      <stop offset="100%" stop-color="#7c6ff7"/>
+    <linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#F3F6FB"/>
+      <stop offset="100%" stop-color="#9DB0CC"/>
     </linearGradient>
-    <radialGradient id="core" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="60%" stop-color="#c8bcff"/>
-      <stop offset="100%" stop-color="#7c6ff7"/>
-    </radialGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#5CE0BD"/>
+      <stop offset="100%" stop-color="#00C990"/>
+    </linearGradient>
   </defs>
 
-  <!--
-    Entire squircle is inset inside the 1024 canvas to match Apple's macOS
-    Big-Sur+ icon template: the colored shape occupies 824x824 centered,
-    leaving ~100px transparent margin so the dock renders it at the same
-    visual weight as system apps.
-  -->
   <g transform="translate(512 512) scale(0.805) translate(-512 -512)">
     <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-    <circle cx="512" cy="512" r="380" fill="url(#glow)"/>
+    <circle cx="512" cy="640" r="420" fill="url(#glow)"/>
 
-    <!-- Diagonal accent arms -->
-    <g stroke="url(#arm)" stroke-width="36" stroke-linecap="round" opacity="0.55">
-      <line x1="232" y1="232" x2="396" y2="396"/>
-      <line x1="792" y1="232" x2="628" y2="396"/>
-      <line x1="232" y1="792" x2="396" y2="628"/>
-      <line x1="792" y1="792" x2="628" y2="628"/>
+    <!-- Five V-bars. All bottoms at y=860; tops descend toward the middle. -->
+    <g>
+      <!-- bar 1 (left, tallest, frost) -->
+      <rect x="216" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
+      <!-- bar 2 (frost, faded) -->
+      <rect x="354" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
+      <!-- bar 3 (middle, shortest — MINT, the brand accent) -->
+      <rect x="492" y="500" width="106" height="360" rx="22" fill="url(#mint)"/>
+      <!-- bar 4 (frost, faded, mirror) -->
+      <rect x="630" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
+      <!-- bar 5 (right, tallest, frost) -->
+      <rect x="768" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
     </g>
-
-    <!-- Cardinal arms -->
-    <g stroke="url(#arm)" stroke-width="56" stroke-linecap="round">
-      <line x1="512" y1="128" x2="512" y2="896"/>
-      <line x1="128" y1="512" x2="896" y2="512"/>
-    </g>
-
-    <!-- Bright core -->
-    <circle cx="512" cy="512" r="92" fill="url(#core)"/>
-    <circle cx="512" cy="512" r="36" fill="#ffffff" opacity="0.95"/>
   </g>
 </svg>

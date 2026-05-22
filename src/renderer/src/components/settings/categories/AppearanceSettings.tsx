@@ -100,12 +100,30 @@ export function AppearanceSettings() {
         />
       </SettingRow>
 
-      <SettingRow label="Accent Color" description="Highlight color for active elements and focus rings">
-        <ColorInput
-          value={appearance.accentColor}
-          onChange={(v) => setSetting('appearance.accentColor', v)}
-          size="sm"
-        />
+      <SettingRow
+        label="Accent Color"
+        description={
+          appearance.accentColor
+            ? 'Custom accent overriding the theme default'
+            : 'Follows the theme — pick a colour to override'
+        }
+      >
+        <Flex gap="sm" align="center">
+          <ColorInput
+            value={appearance.accentColor || themePreview[currentTheme]?.accent || '#2bd9a3'}
+            onChange={(v) => setSetting('appearance.accentColor', v)}
+            size="sm"
+          />
+          {appearance.accentColor && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSetting('appearance.accentColor', '')}
+            >
+              Use theme default
+            </Button>
+          )}
+        </Flex>
       </SettingRow>
 
       <Divider />
