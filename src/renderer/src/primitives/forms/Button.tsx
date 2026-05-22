@@ -7,11 +7,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        solid: 'bg-accent-emphasis text-white hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)] hover:shadow-[inset_0_1px_0_var(--color-button-highlight),0_2px_4px_rgba(0,0,0,0.25)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]',
+        solid: 'bg-accent-emphasis text-text-inverse hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_var(--color-overlay-soft)] hover:shadow-[inset_0_1px_0_var(--color-button-highlight),0_2px_4px_var(--color-overlay-soft)] active:shadow-[inset_0_2px_4px_var(--color-overlay-strong)]',
         outline:
           'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
-        danger: 'bg-error-emphasis text-white hover:bg-error shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.2)]',
+        danger: 'bg-error-emphasis text-text-inverse hover:bg-error shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_var(--color-overlay-soft)]',
       },
       size: {
         xs: 'h-7 px-2 text-xs rounded',
@@ -53,10 +53,10 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        solid: 'bg-accent-emphasis text-white hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_rgba(0,0,0,0.2)]',
+        solid: 'bg-accent-emphasis text-text-inverse hover:bg-accent shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_var(--color-overlay-soft)]',
         outline: 'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
-        'tab-action': 'bg-transparent hover:bg-[rgba(255,255,255,0.06)] text-text-tertiary hover:text-text-primary rounded-full',
+        'tab-action': 'bg-transparent hover:bg-hover text-text-tertiary hover:text-text-primary rounded-full',
       },
       size: {
         xs: 'h-7 w-7 rounded',

@@ -1,4 +1,4 @@
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { Input, Select, NumberInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -11,10 +11,7 @@ export function DataDisplaySettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>Data Display</Heading>
-        <Text size="xs" color="muted" className="mt-1">How query results and table data are displayed</Text>
-      </div>
+      <Text size="xs" color="muted">How query results and table data are displayed</Text>
 
       <SettingRow label="Null Display" description="Text shown for NULL values in results">
         <Input value={display.nullDisplay} onChange={(e) => setSetting('dataDisplay.nullDisplay', e.target.value)} size="sm" className="w-24" />

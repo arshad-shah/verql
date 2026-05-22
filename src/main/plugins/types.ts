@@ -25,6 +25,9 @@ export interface PluginManifest {
     contextMenus?: ContextMenuContribution[]
     tabs?: TabContribution[]
     selectors?: SelectorContribution[]
+    dragDrop?: { id: string; extensions: string[] }[]
+    welcomeWidgets?: { id: string; title: string }[]
+    cellRenderers?: { id: string; matchType?: string }[]
   }
 }
 
@@ -38,6 +41,8 @@ export interface ThemeContribution {
   id: string
   name: string
   type: 'dark' | 'light'
+  /** Preview swatch shown in the theme picker. */
+  preview?: { bg: string; sidebar: string; text: string; accent: string }
 }
 
 export interface CommandContribution {

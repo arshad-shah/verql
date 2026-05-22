@@ -1,12 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <!-- Verql mark — canonical small glyph. Inherits `currentColor` so it
-       picks up the surrounding text color (theme/light/dark). Edit this
-       file to change the in-app mark everywhere it's used. -->
-  <path d="M12 2 L12 22"/>
-  <path d="M2 12 L22 12"/>
-  <path d="M5 5 L9 9" opacity="0.55"/>
-  <path d="M19 5 L15 9" opacity="0.55"/>
-  <path d="M5 19 L9 15" opacity="0.55"/>
-  <path d="M19 19 L15 15" opacity="0.55"/>
-  <circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+  <!--
+    Verql mark — "V-bars". Five vertical bars whose top edges trace a V.
+    Reads as data, structure, and (loosely) the letter V. The mark inherits
+    `currentColor` so it picks up the surrounding text or accent color
+    depending on context (sidebar item, toolbar, splash).
+  -->
+  <g>
+    <rect x="2"     y="4"  width="2.6" height="18" rx="0.6"/>
+    <rect x="6.35"  y="10" width="2.6" height="12" rx="0.6" opacity="0.82"/>
+    <rect x="10.7"  y="16" width="2.6" height="6"  rx="0.6"/>
+    <rect x="15.05" y="10" width="2.6" height="12" rx="0.6" opacity="0.82"/>
+    <rect x="19.4"  y="4"  width="2.6" height="18" rx="0.6"/>
+  </g>
 </svg>

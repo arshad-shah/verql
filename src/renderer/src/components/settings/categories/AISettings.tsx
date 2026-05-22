@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -71,10 +71,7 @@ export function AISettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>AI</Heading>
-        <Text size="xs" color="muted" className="mt-1">Provider credentials and endpoints for AI Assistant</Text>
-      </div>
+      <Text size="xs" color="muted">Provider credentials and endpoints for AI Assistant</Text>
 
       <ApiKeyField
         provider="openai"

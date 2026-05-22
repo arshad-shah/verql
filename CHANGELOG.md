@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- **New default theme: Nightshift.** Plus two more curated themes — Lab (refined light) and Ink & Paper (warm editorial) — bringing the total to three primary directions before legacy/community themes.
+
+  - `nightshift` (default) — modern dark with an electric mint accent (`#2bd9a3`)
+  - `lab` — refined off-white with a deep teal accent (`#115E59`)
+  - `inkpaper` — warm editorial paper-toned light with a rust accent (`#9E3022`)
+
+  Old themes (`dark`, `light`, `midnight`, `dracula`, `nord`, `solarized`, `catppuccin`) remain available for users who prefer them. Existing user theme preferences are preserved across upgrade.
+
+  Also wired up the **animations** appearance toggle — it now actually disables transitions app-wide instead of being a no-op switch. `ThemeProvider` writes `data-animations="off"` to `<html>`, and a global CSS rule kills `transition-duration` / `animation-duration` when set.
+
 ## 0.3.6
 
 ### Patch Changes

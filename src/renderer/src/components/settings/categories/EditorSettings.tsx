@@ -1,4 +1,4 @@
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { NumberInput, Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -11,10 +11,7 @@ export function EditorSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>Editor</Heading>
-        <Text size="xs" color="muted" className="mt-1">Configure the SQL editor</Text>
-      </div>
+      <Text size="xs" color="muted">Configure the SQL editor</Text>
 
       <SettingRow label="Font Size" description="Editor font size in pixels">
         <NumberInput value={editor.fontSize} onChange={(v) => setSetting('editor.fontSize', v)} min={10} max={24} size="sm" className="w-20" />

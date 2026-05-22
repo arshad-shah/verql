@@ -5,13 +5,11 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=Cascadia+Code:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "../primitives/theme/tokens.css";
-@import "../primitives/theme/themes/dark.css";
-@import "../primitives/theme/themes/light.css";
-@import "../primitives/theme/themes/midnight.css";
-@import "../primitives/theme/themes/dracula.css";
-@import "../primitives/theme/themes/nord.css";
-@import "../primitives/theme/themes/solarized.css";
-@import "../primitives/theme/themes/catppuccin.css";
+/* Baseline (Nightshift) is always loaded so the app stays styled even when
+ * the core-themes plugin is disabled or fails to boot. Plugin-contributed
+ * themes are injected at runtime via the theme registry — see
+ * [stores/themes.ts] — and override the baseline when present. */
+@import "../primitives/theme/baseline.css";
 
 :root {
   /* App-wide monospace stack. Synced at runtime from
@@ -45,6 +43,15 @@
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-tertiary);
   --color-text-disabled: var(--color-text-disabled);
+  /* Inverse text — used by solid/danger buttons so the label flips
+     legibly when the active theme is light. Themes that don't define it
+     fall back to white at runtime via the var() default. */
+  --color-text-inverse: var(--color-text-inverse, #ffffff);
+  /* Universal overlays — used in place of hardcoded rgba(0,0,0,…) /
+     rgba(255,255,255,…). Themes define values that read well on their
+     base palette. */
+  --color-overlay-strong: var(--color-overlay-strong, rgba(0, 0, 0, 0.3));
+  --color-overlay-soft: var(--color-overlay-soft, rgba(0, 0, 0, 0.2));
   --color-hover: var(--color-hover);
   --color-active: var(--color-active);
   --color-focus-ring: var(--color-focus-ring);
@@ -59,6 +66,11 @@
   --color-input-gradient-top: var(--color-input-gradient-top);
   --color-input-gradient-bottom: var(--color-input-gradient-bottom);
   --color-button-highlight: var(--color-button-highlight);
+  --color-tab-bar-bg: var(--color-tab-bar-bg);
+  --color-tab-active-bg: var(--color-tab-active-bg);
+  --color-tab-active-fg: var(--color-tab-active-fg);
+  --color-tab-inactive-fg: var(--color-tab-inactive-fg);
+  --color-tab-hover-bg: var(--color-tab-hover-bg);
 }
 
 body {
@@ -84,7 +96,9 @@ body {
 [data-theme="solarized"] {
   color-scheme: dark;
 }
-[data-theme="light"] {
+[data-theme="light"],
+[data-theme="lab"],
+[data-theme="inkpaper"] {
   color-scheme: light;
 }
 
@@ -155,3 +169,53 @@ dialog[open] { display: flex; flex-direction: column; }
 [data-density="spacious"] .py-2 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 [data-density="spacious"] .gap-sm { gap: 0.75rem; }
 [data-density="spacious"] .gap-md { gap: 1.125rem; }
+
+/* Honour the appearance.animations toggle. When off, kill all transitions/
+   animations app-wide so settings → UI is consistent. The exception list
+   covers things that aren't decoration: caret blink, loading spinners. */
+[data-animations="off"] *,
+[data-animations="off"] *::before,
+[data-animations="off"] *::after {
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Skeleton ──
+ * Theme-portable loading placeholder. The base colour and the shimmer
+ * highlight are both derived from the active theme's `--color-text-primary`
+ * via `color-mix()` (declared in tokens.css), so plugin-contributed themes
+ * automatically render a visible skeleton without needing to opt in. A theme
+ * can still override `--color-skeleton-base` / `--color-skeleton-highlight`
+ * if it wants a custom tone. */
+.skeleton-token {
+  background-color: var(--color-skeleton-base);
+}
+.skeleton-token--shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-skeleton-highlight) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-token--pulse {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-token--shimmer::after { animation: none; display: none; }
+  .skeleton-token--pulse { animation: none; }
+}

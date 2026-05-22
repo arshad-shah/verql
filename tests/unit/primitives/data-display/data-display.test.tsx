@@ -171,17 +171,31 @@ describe('Skeleton', () => {
     expect(container.firstChild).toBeInTheDocument()
   })
 
-  it('has animate-pulse class', () => {
+  it('uses the shimmer animation by default', () => {
     const { container } = render(<Skeleton />)
-    expect(container.firstChild).toHaveClass('animate-pulse')
+    expect(container.firstChild).toHaveClass('skeleton-token--shimmer')
+  })
+
+  it('honours the animation prop', () => {
+    const { container: pulse } = render(<Skeleton animation="pulse" />)
+    expect(pulse.firstChild).toHaveClass('skeleton-token--pulse')
+    const { container: none } = render(<Skeleton animation="none" />)
+    expect(none.firstChild).not.toHaveClass('skeleton-token--shimmer')
+    expect(none.firstChild).not.toHaveClass('skeleton-token--pulse')
   })
 
   it('has base styling classes', () => {
     const { container } = render(<Skeleton />)
-    expect(container.firstChild).toHaveClass('bg-bg-elevated')
+    expect(container.firstChild).toHaveClass('skeleton-token')
     expect(container.firstChild).toHaveClass('rounded-md')
     expect(container.firstChild).toHaveClass('h-4')
     expect(container.firstChild).toHaveClass('w-full')
+  })
+
+  it('supports shape variants', () => {
+    const { container } = render(<Skeleton shape="circle" />)
+    expect(container.firstChild).toHaveClass('rounded-full')
+    expect(container.firstChild).toHaveClass('aspect-square')
   })
 
   it('merges custom className', () => {

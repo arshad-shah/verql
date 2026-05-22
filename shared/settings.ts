@@ -1,5 +1,9 @@
-export const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
-export type Theme = (typeof AVAILABLE_THEMES)[number]
+/** Theme identifiers are now contributed by the bundled `core-themes` plugin
+ * (and any third-party plugin that registers more). The list lives in the
+ * theme registry; this type stays a permissive string so settings can hold
+ * any registered theme id without coupling the type system to the bundled
+ * set. The renderer's `useTheme()` hook returns the live list. */
+export type Theme = string
 
 export interface GeneralSettings {
   queryTimeout: number
@@ -13,8 +17,22 @@ export interface GeneralSettings {
   confirmDestructiveQueries: boolean
 }
 
+export type AppearanceMode = 'light' | 'dark' | 'system'
+
 export interface AppearanceSettings {
+  /** Theme id the user has explicitly picked. When `appearanceMode` is
+   *  `system`, the resolved theme is `lightTheme` or `darkTheme` based on
+   *  `prefers-color-scheme` and this field is ignored. */
   theme: Theme
+  /** Controls how the active theme is resolved:
+   *  - `light` → always render `lightTheme`
+   *  - `dark`  → always render `darkTheme`
+   *  - `system` → follow the OS color scheme, flipping between the two */
+  appearanceMode: AppearanceMode
+  /** Preferred theme id when the resolved mode is light. */
+  lightTheme: Theme
+  /** Preferred theme id when the resolved mode is dark. */
+  darkTheme: Theme
   uiDensity: 'compact' | 'comfortable' | 'spacious'
   sidebarPosition: 'left' | 'right'
   accentColor: string
@@ -113,10 +131,16 @@ export const defaultSettings: AppSettings = {
     confirmDestructiveQueries: true,
   },
   appearance: {
-    theme: 'dark',
+    theme: 'nightshift',
+    appearanceMode: 'dark',
+    lightTheme: 'lab',
+    darkTheme: 'nightshift',
     uiDensity: 'comfortable',
     sidebarPosition: 'left',
-    accentColor: '#7c6ff7',
+    // Empty means "follow the theme's accent". Setting any non-empty value
+    // overrides the theme accent app-wide (and is preserved across theme
+    // switches — user opt-in customisation).
+    accentColor: '',
     sidebarWidth: 240,
     splitRatio: 50,
     showStatusBar: true,
@@ -179,6 +203,14 @@ export const defaultSettings: AppSettings = {
   plugins: {},
 }
 
+/** Accent values that were the *default* (not user-chosen) in past versions.
+ * Cleared on load so users who never customised the accent stop being stuck
+ * with the legacy purple after we changed the default. */
+const LEGACY_DEFAULT_ACCENTS = new Set([
+  '#7c6ff7', // pre-Nightshift purple default
+  '#2bd9a3', // 0.4.0 mint shipped briefly before the default went empty
+])
+
 /** Deep merge user settings with defaults so new keys get defaults automatically */
 export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings {
   const result = { ...defaultSettings }
@@ -192,6 +224,13 @@ export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(result as any)[key] = { ...(defaultSettings as any)[key], ...(persisted as any)[key] }
     }
+  }
+  // Migration: clear a previously-default accent so theme accent takes over.
+  if (
+    result.appearance.accentColor &&
+    LEGACY_DEFAULT_ACCENTS.has(result.appearance.accentColor.toLowerCase())
+  ) {
+    result.appearance.accentColor = ''
   }
   return result
 }

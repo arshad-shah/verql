@@ -2,6 +2,7 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from './components/shell/ErrorBoundary'
 import { ThemeProvider } from './primitives/theme/ThemeProvider'
+import { SplashScreen } from './components/shell/SplashScreen'
 import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import './styles/globals.css'
@@ -55,13 +56,32 @@ function AppLoader() {
     init()
   }, [hydrate])
 
-  if (!loaded) return null
+  if (!loaded) {
+    return (
+      <ThemeProvider>
+        <SplashScreen />
+      </ThemeProvider>
+    )
+  }
 
   return (
     <ThemeProvider>
       <App />
     </ThemeProvider>
   )
+}
+
+/**
+ * Tear down the pre-React splash (rendered statically in index.html) once
+ * React has mounted. A short fade keeps the handoff smooth — the React-side
+ * <SplashScreen> picks up immediately while settings hydrate.
+ */
+function dismissBootSplash() {
+  const el = document.getElementById('boot-splash')
+  if (!el) return
+  el.classList.add('boot-splash--leaving')
+  // Wait out the CSS transition before removal so we don't flash through.
+  window.setTimeout(() => el.remove(), 300)
 }
 
 createRoot(document.getElementById('root')!).render(
@@ -71,3 +91,8 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>
 )
+
+// React has rendered (or at least scheduled) — fade out the static splash that
+// covers the gap between window-shown and bundle-evaluated. Use rAF so the
+// removal happens after the first React commit, not before it.
+requestAnimationFrame(() => requestAnimationFrame(dismissBootSplash))

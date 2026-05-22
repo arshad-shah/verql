@@ -14,8 +14,14 @@ import { createAIAccess } from './ai-access'
 import { ExporterRegistryImpl, type ExporterRegistry } from './exporter-registry'
 import { ImporterRegistryImpl, type ImporterRegistry } from './importer-registry'
 import { TypeMapperRegistryImpl, type TypeMapperRegistry } from './type-mapper-registry'
+import { ThemeRegistryImpl, type ThemeRegistry, type RegisteredTheme } from './theme-registry'
+import { DragDropRegistryImpl } from './drag-drop-registry'
 
 export { DriverRegistryImpl } from './driver-registry'
+export { ThemeRegistryImpl } from './theme-registry'
+export { DragDropRegistryImpl } from './drag-drop-registry'
+export type { RegisteredTheme, ThemeMonacoDef, ThemeMonacoRule, ThemePreview } from './theme-registry'
+export type { DragDropProvider, DragDropContext } from './drag-drop-registry'
 export { CommandRegistryImpl } from './command-registry'
 export { PanelRegistryImpl } from './panel-registry'
 export { UIRegistryImpl } from './ui-registry'
@@ -49,6 +55,17 @@ interface ContextDeps {
   exporterRegistry: ExporterRegistry
   importerRegistry: ImporterRegistry
   typeMapperRegistry: TypeMapperRegistry
+  themeRegistry: ThemeRegistry
+  notificationBus: { show(notification: PluginNotification): void }
+  dragDropRegistry: import('./drag-drop-registry').DragDropRegistry
+}
+
+export interface PluginNotification {
+  kind?: 'info' | 'success' | 'warning' | 'error'
+  title: string
+  message?: string
+  /** Auto-dismiss after this many milliseconds; 0 disables. */
+  durationMs?: number
 }
 
 export function createPluginContext(deps: ContextDeps): PluginContext {
@@ -203,6 +220,28 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  const themes = {
+    register(theme: RegisteredTheme): Disposable {
+      const d = deps.themeRegistry.register({ ...theme, source: pluginName })
+      subscriptions.push(d)
+      return d
+    }
+  }
+
+  const notifications = {
+    show(notification: PluginNotification): void {
+      deps.notificationBus.show(notification)
+    }
+  }
+
+  const dragDrop = {
+    register(provider: Parameters<typeof deps.dragDropRegistry.register>[0]): Disposable {
+      const d = deps.dragDropRegistry.register({ ...provider, source: pluginName })
+      subscriptions.push(d)
+      return d
+    }
+  }
+
   const typeMappers = {
     register(
       from: string,
@@ -233,6 +272,9 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     exporters,
     importers,
     typeMappers,
+    themes,
+    notifications,
+    dragDrop,
     rootSettings: deps.settingsStore,
     subscriptions
   }

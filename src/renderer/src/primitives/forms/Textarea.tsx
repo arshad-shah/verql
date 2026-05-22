@@ -12,7 +12,7 @@ const textareaVariants = cva(
         lg: 'px-4 py-3 text-sm rounded-md',
       },
       error: {
-        true: 'border-error focus:shadow-[0_0_0_3px_rgba(255,95,87,0.25),var(--shadow-input-inset)]',
+        true: 'border-error focus:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
         false: 'border-border-default hover:border-border-strong',
       },
     },

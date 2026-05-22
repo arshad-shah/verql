@@ -14,7 +14,7 @@ const inputVariants = cva(
         xl: 'h-12 px-5 text-base rounded-lg',
       },
       error: {
-        true: 'border-error focus:shadow-[0_0_0_3px_rgba(255,95,87,0.25),var(--shadow-input-inset)]',
+        true: 'border-error focus:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
         false: 'border-border-default hover:border-border-strong',
       },
     },

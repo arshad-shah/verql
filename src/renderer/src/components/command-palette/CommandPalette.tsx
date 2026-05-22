@@ -8,7 +8,7 @@ import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
-import { Input, ScrollArea, Text, Kbd, Box, Flex, Button } from '@/primitives'
+import { Input, ScrollArea, Text, KbdGroup, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
@@ -235,7 +235,7 @@ export function CommandPalette({ open, onClose }: Props) {
                 {cmd.category && <Text size="xs" color="muted" className="text-[10px] uppercase">{cmd.category}</Text>}
                 <Text size="xs">{cmd.title}</Text>
               </Flex>
-              {cmd.keybinding && <Kbd>{cmd.keybinding}</Kbd>}
+              {cmd.keybinding && <KbdGroup accelerator={cmd.keybinding} size="sm" />}
             </Button>
           ))}
         </ScrollArea>

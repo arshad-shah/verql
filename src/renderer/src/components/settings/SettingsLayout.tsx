@@ -146,7 +146,11 @@ export function SettingsLayout() {
           </Flex>
         </Box>
         <ScrollArea direction="vertical" className="flex-1">
-          <Box className="p-6 max-w-3xl">
+          {/* Fluid up to ~1280px, then centred so a 4K display doesn't put the
+              label on one coast and the control on the other. Padding scales
+              with breakpoint so the body breathes when the user widens the
+              tab. */}
+          <Box className="w-full max-w-[1280px] mx-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10">
             <SectionErrorBoundary label={`${currentLabel} settings`} resetKey={activeCategory}>
               <ActiveComponent />
             </SectionErrorBoundary>

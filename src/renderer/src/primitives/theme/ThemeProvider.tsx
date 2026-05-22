@@ -1,54 +1,137 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSettingsStore } from '@/stores/settings'
+import { useThemesStore } from '@/stores/themes'
+import type { AppearanceMode } from '@shared/settings'
 
-const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
-type Theme = (typeof AVAILABLE_THEMES)[number]
+export type Theme = string
 
 interface ThemeContextValue {
+  /** Resolved theme id currently applied to `<html>`. */
   theme: Theme
+  /** Set the active theme. Also pins it as the preference for the current
+   *  appearance mode (light → lightTheme, dark → darkTheme); when mode is
+   *  `system`, pins both light and dark sides depending on the theme's type. */
   setTheme: (theme: Theme) => void
+  /** Light/dark/system selector. */
+  mode: AppearanceMode
+  setMode: (mode: AppearanceMode) => void
+  /** All registered theme ids — for theme pickers. */
   themes: readonly Theme[]
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
+function getSystemPrefersDark(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return true
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useSettingsStore((s) => s.settings.appearance.theme)
-  const uiDensity = useSettingsStore((s) => s.settings.appearance.uiDensity)
-  const accentColor = useSettingsStore((s) => s.settings.appearance.accentColor)
+  const appearance = useSettingsStore((s) => s.settings.appearance)
   const setSetting = useSettingsStore((s) => s.set)
+  const themes = useThemesStore((s) => s.themes)
+  const themesLoaded = useThemesStore((s) => s.loaded)
+  const fetchThemes = useThemesStore((s) => s.fetch)
+
+  const { uiDensity, accentColor, animations, appearanceMode, lightTheme, darkTheme } = appearance
+
+  // Track OS dark-mode preference so `system` mode can flip themes when the
+  // user toggles their OS appearance without restarting the app.
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(getSystemPrefersDark)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches)
+    mql.addEventListener('change', onChange)
+    return () => mql.removeEventListener('change', onChange)
+  }, [])
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
+    fetchThemes()
+  }, [fetchThemes])
+
+  // Compute the effective theme based on appearance mode + OS preference.
+  // Falls back to whatever `theme` is set to if the configured light/dark
+  // theme id isn't in the registry yet (e.g. a plugin theme uninstalled).
+  const resolvedTheme = useMemo<string>(() => {
+    const ids = new Set(themes.map((t) => t.id))
+    const safe = (id: string, fallback: string) => (ids.has(id) ? id : fallback)
+    if (appearanceMode === 'light') return safe(lightTheme, 'lab')
+    if (appearanceMode === 'dark') return safe(darkTheme, 'nightshift')
+    // system
+    const wantDark = systemPrefersDark
+    return wantDark ? safe(darkTheme, 'nightshift') : safe(lightTheme, 'lab')
+  }, [appearanceMode, lightTheme, darkTheme, systemPrefersDark, themes])
+
+  // Mirror the resolved theme back into `appearance.theme` so other code
+  // paths (Monaco editor lookup, theme-aware components) can read a single
+  // source of truth without re-implementing the mode logic.
+  useEffect(() => {
+    if (appearance.theme !== resolvedTheme) {
+      setSetting('appearance.theme', resolvedTheme)
+    }
+  }, [resolvedTheme, appearance.theme, setSetting])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', resolvedTheme)
+  }, [resolvedTheme])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-density', uiDensity)
   }, [uiDensity])
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-animations', animations ? 'on' : 'off')
+  }, [animations])
+
+  useEffect(() => {
     const root = document.documentElement
-    if (accentColor) {
+    if (accentColor && accentColor.trim() !== '') {
       root.style.setProperty('--color-accent', accentColor)
-      // Derive hover (lighter) and muted (very transparent) variants
       root.style.setProperty('--color-accent-hover', `color-mix(in oklch, ${accentColor}, white 20%)`)
       root.style.setProperty('--color-accent-muted', `color-mix(in oklch, ${accentColor}, transparent 80%)`)
-    }
-    return () => {
+      root.style.setProperty('--color-focus-ring', accentColor)
+    } else {
       root.style.removeProperty('--color-accent')
       root.style.removeProperty('--color-accent-hover')
       root.style.removeProperty('--color-accent-muted')
+      root.style.removeProperty('--color-focus-ring')
     }
   }, [accentColor])
 
+  const themeIds = themes.map((t) => t.id)
+
+  // Picking a theme updates the corresponding side (light or dark) so the
+  // mode toggle stays meaningful. If the user is in system mode, we still
+  // pin the theme by its type so flipping the OS mode picks the same theme
+  // family the user just chose.
   const setTheme = (newTheme: Theme) => {
-    if (AVAILABLE_THEMES.includes(newTheme)) {
-      setSetting('appearance.theme', newTheme)
+    const meta = themes.find((t) => t.id === newTheme)
+    const side: 'lightTheme' | 'darkTheme' = meta?.type === 'light' ? 'lightTheme' : 'darkTheme'
+    setSetting(`appearance.${side}`, newTheme)
+    setSetting('appearance.theme', newTheme)
+    // If the user is in a fixed mode that doesn't match this theme's type,
+    // flip the mode too — picking a light theme while stuck in dark mode is
+    // clearly unintended.
+    if (
+      (appearanceMode === 'dark' && meta?.type === 'light') ||
+      (appearanceMode === 'light' && meta?.type === 'dark')
+    ) {
+      setSetting('appearance.appearanceMode', meta!.type)
     }
   }
 
+  const setMode = (m: AppearanceMode) => {
+    setSetting('appearance.appearanceMode', m)
+  }
+
+  // Don't block first paint: the baseline CSS already styles the app, and
+  // the fallback theme list contains Nightshift, so rendering before the
+  // IPC fetch completes is safe.
+  if (!themesLoaded && themes.length === 0) return null
+
   return (
-    <ThemeContext value={{ theme, setTheme, themes: AVAILABLE_THEMES }}>
+    <ThemeContext value={{ theme: resolvedTheme, setTheme, mode: appearanceMode, setMode, themes: themeIds }}>
       {children}
     </ThemeContext>
   )

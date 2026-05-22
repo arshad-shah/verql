@@ -27,7 +27,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
           'disabled:pointer-events-none disabled:opacity-50',
           // Dot pseudo-element
           'before:absolute before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2',
-          'before:h-1.5 before:w-1.5 before:rounded-full before:bg-white',
+          'before:h-1.5 before:w-1.5 before:rounded-full before:bg-text-inverse',
           'before:opacity-0 before:scale-0',
           'before:transition-all before:duration-(--transition-fast)',
           // Dot visible on checked

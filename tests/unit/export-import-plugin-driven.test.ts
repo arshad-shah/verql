@@ -9,6 +9,8 @@ import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry
 import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
 import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
+import { ThemeRegistryImpl } from '../../src/main/plugins/sdk/theme-registry'
+import { DragDropRegistryImpl } from '../../src/main/plugins/sdk/drag-drop-registry'
 
 import * as coreFormatsPlugin from '../../src/main/plugins/bundled/core-formats/index'
 import * as aiPlugin from '../../src/main/plugins/bundled/ai/index'
@@ -44,7 +46,10 @@ async function bootCoordinator() {
     services: new ServiceRegistryImpl(),
     exporterRegistry,
     importerRegistry,
-    typeMapperRegistry
+    typeMapperRegistry,
+    themeRegistry: new ThemeRegistryImpl(),
+    notificationBus: { show: () => {} },
+    dragDropRegistry: new DragDropRegistryImpl()
   })
   coordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
   coordinator.registerBundledPlugin(coreFormatsPlugin.manifest, coreFormatsPlugin)

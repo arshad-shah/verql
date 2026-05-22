@@ -185,7 +185,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                     disabled={isDayDisabled}
                     className={cn(
                       'h-7 w-7 rounded text-xs transition-colors',
-                      isSelected && 'bg-accent text-white',
+                      isSelected && 'bg-accent text-text-inverse',
                       !isSelected && isToday && 'border border-accent text-accent',
                       !isSelected && !isToday && 'hover:bg-hover text-text-primary',
                       isDayDisabled && 'opacity-30 pointer-events-none'
