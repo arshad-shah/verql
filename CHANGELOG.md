@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- [#47](https://github.com/arshad-shah/verql/pull/47) [`ea26f17`](https://github.com/arshad-shah/verql/commit/ea26f171f48a68e12f89ae308757dc3342ea14ee) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Redesigned the workspace tab bar in a browser-style: each tab now has rounded top corners and curved skirt corners that visually attach the active tab to the workspace below.
+
+  Introduced five new theme tokens — `--color-tab-bar-bg`, `--color-tab-active-bg`, `--color-tab-active-fg`, `--color-tab-inactive-fg`, `--color-tab-hover-bg` — so themes (bundled and plugin-contributed) can tune tab contrast independently from the underlying surface palette. All nine plugin themes plus the baseline Nightshift were updated with values that keep the active tab clearly distinct from the bar, including on light themes where the previous hover wash blended into the background.
+
+- [#47](https://github.com/arshad-shah/verql/pull/47) [`ea26f17`](https://github.com/arshad-shah/verql/commit/ea26f171f48a68e12f89ae308757dc3342ea14ee) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Nightshift is now owned by the app shell rather than the core-themes plugin. Its CSS variables already lived in the always-loaded baseline; this release moves the Monaco editor definition into the renderer alongside, so the brand syntax highlighting works even with every plugin disabled. The renderer always prepends Nightshift to the theme list and ignores any plugin attempting to register the same id, keeping the brand surface authoritative. The core-themes plugin now ships nine themes (Lab, Ink & Paper, Dark, Light, Midnight, Dracula, Nord, Solarized, Catppuccin).
+
+  The pre-React boot splash now uses the real Verql brand mark (frost-and-mint V-bars) instead of the placeholder chevron, matching the React-side splash so the loading-to-app handoff doesn't swap symbols.
+
+### Patch Changes
+
+- [#47](https://github.com/arshad-shah/verql/pull/47) [`ea26f17`](https://github.com/arshad-shah/verql/commit/ea26f171f48a68e12f89ae308757dc3342ea14ee) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Light themes (Light, Lab, Ink & Paper) now render correctly:
+
+  - The Light theme's selected-state and status colors (accent emphasis, success, warning, error, info) no longer fall back to the Nightshift baseline's mint/amber palette that washed out on white surfaces.
+  - The Color Mode toggle (Light / Dark / System) on Lab and Ink & Paper themes had dark text on a dark accent-muted background; the accent-muted token is now a translucent tint suitable for selected-state backgrounds on light surfaces.
+  - The Lab and Ink & Paper themes are now declared as `color-scheme: light` so native form controls render with the correct UA palette.
+
+  Removed the duplicate `<Heading>` element from every Settings category — the settings layout already shows the category name in its header, so each page no longer renders two headings stacked on top of each other.
+
+  Removed nine orphaned theme CSS files from `src/renderer/src/primitives/theme/themes/` that hadn't been imported since themes migrated to the plugin registry. The directory is gone; baseline Nightshift in `baseline.css` is the only renderer-bundled theme stylesheet.
+
+- [#47](https://github.com/arshad-shah/verql/pull/47) [`ea26f17`](https://github.com/arshad-shah/verql/commit/ea26f171f48a68e12f89ae308757dc3342ea14ee) Thanks [@arshad-shah](https://github.com/arshad-shah)! - The Plugins settings page now lists each plugin's actual contributions (drivers, commands, panels, themes, exporters, importers, middleware) as inline chips below the description. Previously, plugins that contributed only exporters or importers — like Core Formats — appeared blank because the plugin host's contribution-verification loop didn't track those kinds, so nothing flowed through to the UI. The verification path now covers exporters and importers, and the settings page renders the full contribution list.
+
 ## 0.4.0
 
 ### Minor Changes
