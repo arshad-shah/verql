@@ -1,19 +1,13 @@
-# pnpm 11 reads configuration from this file in addition to .npmrc, and for
-# some keys it's the *only* place pnpm respects them — `shamefully-hoist`
-# set in .npmrc is silently ignored under pnpm 11, but takes effect when set
-# here as `shamefullyHoist`. We use this file as the single source of truth.
-
-# Lay out node_modules in the flat npm-style format. The default pnpm layout
-# symlinks deps via .pnpm/, and electron-builder doesn't dereference deeply
-# enough — transitive deps (mime-db pulled in by snowflake-sdk → mime-types,
-# etc.) get dropped from the packaged app.asar and the app crashes at launch
-# with "Cannot find module 'mime-db'". Hoisting flattens everything so the
-# default Node resolver finds it inside the asar.
-shamefullyHoist: true
-hoistPattern:
-  - '*'
-publicHoistPattern:
-  - '*'
+# pnpm explicitly recommends `node-linker=hoisted` for Electron apps:
+# https://pnpm.io/settings#nodelinker
+# Under the default isolated layout pnpm uses symlinks via .pnpm/, and
+# electron-builder doesn't dereference deeply enough — transitive deps
+# (mime-db, es-object-atoms, get-intrinsic, ...) get dropped from the
+# packaged app.asar and the app crashes at launch with
+# "Cannot find module 'X'". Hoisted layout produces a real flat
+# node_modules — the same structure npm creates — which electron-builder
+# packs reliably.
+nodeLinker: hoisted
 
 # Native modules that need post-install lifecycle scripts. pnpm 11 blocks
 # arbitrary scripts by default; whitelist these explicitly.

@@ -1,6 +1,6 @@
 {
   "name": "verql",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": true,
   "description": "Verql — a fast, extensible desktop database client.",
   "license": "MIT",
@@ -109,10 +109,7 @@
     "afterPack": "./build/afterPack.cjs",
     "files": [
       "out/**/*",
-      "package.json",
-      "node_modules/**/*",
-      "!node_modules/**/{CHANGELOG.md,README.md,readme.md,*.markdown,test,tests,__tests__,docs,doc,example,examples,coverage,.nyc_output,*.d.ts.map,*.js.map,*.cjs.map,*.mjs.map}",
-      "!node_modules/**/{*.test.*,*.spec.*}"
+      "package.json"
     ],
     "mac": {
       "target": [
