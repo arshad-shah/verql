@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- [#48](https://github.com/arshad-shah/verql/pull/48) [`1293f54`](https://github.com/arshad-shah/verql/commit/1293f542ff4adbbb2ee63530927daa6a401b8859) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Added in-app update controls under Settings → General. When the running install is managed by Homebrew, you can check for a new version and trigger `brew upgrade --cask verql` from inside the app, then restart to apply. The mechanism is channel-pluggable — Mac App Store, Windows Store, Snap and APT can drop in later without changes to the UI or IPC layer.
+
+### Patch Changes
+
+- [#48](https://github.com/arshad-shah/verql/pull/48) [`1293f54`](https://github.com/arshad-shah/verql/commit/1293f542ff4adbbb2ee63530927daa6a401b8859) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Plugin deactivations now survive an app restart. Previously the choice was kept only in memory, so every boot re-activated every installed plugin and the disable toggle appeared to do nothing across sessions.
+
 ## 0.5.0
 
 ### Minor Changes
