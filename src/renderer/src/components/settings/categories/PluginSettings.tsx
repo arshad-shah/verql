@@ -138,6 +138,20 @@ export function PluginSettings() {
                   )}
                 </Flex>
                 <Text size="xs" color="secondary" className="mt-0.5">{plugin.description}</Text>
+                {plugin.contributions.length > 0 && (
+                  <Flex direction="row" wrap gap="xs" className="mt-1.5">
+                    {plugin.contributions.map((c) => (
+                      <Text
+                        key={c}
+                        size="xs"
+                        color="muted"
+                        className="bg-bg-tertiary border border-border-subtle px-1.5 py-0.5 rounded font-mono"
+                      >
+                        {c}
+                      </Text>
+                    ))}
+                  </Flex>
+                )}
                 {plugin.status.error && (
                   <Text size="xs" color="error" className="mt-1">{plugin.status.error}</Text>
                 )}

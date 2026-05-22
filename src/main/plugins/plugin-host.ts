@@ -366,6 +366,33 @@ export class PluginBootCoordinator {
       }
     }
 
+    if (c.exporters) {
+      for (const ex of c.exporters) {
+        // ctx.exporters.register namespaces ids as `${pluginName}:${id}` so
+        // multiple plugins can each contribute an exporter with the same
+        // short id (e.g. several drivers register their own "sql" exporter).
+        const namespacedId = `${plugin.manifest.name}:${ex.id}`
+        declared.push(`exporter:${ex.id}`)
+        if (this.deps.exporterRegistry.get(namespacedId)) {
+          registered.push(`exporter:${ex.id}`)
+        } else {
+          missing.push(`exporter:${ex.id}`)
+        }
+      }
+    }
+
+    if (c.importers) {
+      for (const im of c.importers) {
+        const namespacedId = `${plugin.manifest.name}:${im.id}`
+        declared.push(`importer:${im.id}`)
+        if (this.deps.importerRegistry.get(namespacedId)) {
+          registered.push(`importer:${im.id}`)
+        } else {
+          missing.push(`importer:${im.id}`)
+        }
+      }
+    }
+
     if (c.themes) {
       for (const t of c.themes) {
         declared.push(`theme:${t.id}`)
