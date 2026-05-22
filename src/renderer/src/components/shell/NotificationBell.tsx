@@ -12,7 +12,7 @@ export function NotificationBell() {
   return (
     <Box>
       <Tooltip content="Notifications" side="left">
-        <BadgeIndicator variant="number" count={unread}>
+        <BadgeIndicator variant="number" count={unread} side="top-left">
           <IconButton
             onClick={() => setSecondaryActivePanel('notifications')}
             variant={isActive ? 'outline' : 'ghost'}
