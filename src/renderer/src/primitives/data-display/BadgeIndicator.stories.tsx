@@ -37,6 +37,10 @@ const meta = {
       control: 'select',
       options: ['dot', 'number'],
     },
+    side: {
+      control: 'select',
+      options: ['top-right', 'top-left', 'bottom-right', 'bottom-left'],
+    },
     count: { control: 'number' },
     max: { control: 'number' },
     hidden: { control: 'boolean' },
@@ -130,6 +134,21 @@ export const OnAvatar: Story = {
         AS
       </span>
     </BadgeIndicator>
+  ),
+}
+
+export const Sides: Story = {
+  name: 'All four corners',
+  render: () => (
+    <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+      {(['top-right', 'top-left', 'bottom-right', 'bottom-left'] as const).map((side) => (
+        <BadgeIndicator key={side} variant="number" count={3} side={side}>
+          <IconButton>
+            <BellIcon />
+          </IconButton>
+        </BadgeIndicator>
+      ))}
+    </div>
   ),
 }
 

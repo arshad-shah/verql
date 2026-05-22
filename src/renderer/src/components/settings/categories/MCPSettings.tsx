@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -85,12 +85,9 @@ export function MCPSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>MCP Server</Heading>
-        <Text size="xs" color="muted" className="mt-1">
-          Expose your active database connection to external AI tools like Claude Code
-        </Text>
-      </div>
+      <Text size="xs" color="muted">
+        Expose your active database connection to external AI tools like Claude Code
+      </Text>
 
       <SettingRow label="Server Status" description={
         status.running

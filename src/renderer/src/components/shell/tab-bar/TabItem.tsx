@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { Flex, Text, Tooltip, ContextMenu, cn, IconButton } from '@/primitives'
 import { getTabIcon } from './tab-icons'
+import './tab-bar.css'
 
 interface TabItemProps {
   tab: Tab
@@ -47,14 +48,25 @@ export function TabItem({
         onClick={onActivate}
         onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); onClose() } }}
         className={cn(
-          'group relative px-2.5 py-1 cursor-pointer shrink-0 select-none rounded-lg transition-all duration-(--transition-fast)',
+          'group relative h-7.5 px-3 cursor-pointer shrink-0 select-none transition-colors duration-(--transition-fast)',
+          'rounded-t-[10px]',
           isActive
-            ? 'bg-bg-tertiary border border-border-subtle shadow-card'
-            : 'bg-transparent border border-transparent hover:bg-[rgba(255,255,255,0.04)] hover:border-border-subtle',
+            ? 'bg-tab-active-bg text-tab-active-fg'
+            : 'bg-transparent text-tab-inactive-fg hover:bg-tab-hover-bg',
           isDragged && 'opacity-50',
-          isDropTarget && 'before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-accent before:rounded-full',
+          isDropTarget && 'before:absolute before:left-0 before:top-1.5 before:bottom-2 before:w-0.5 before:bg-accent before:rounded-full before:z-10',
         )}
       >
+        {/* Active-tab skirt: concave fillets that visually attach the tab to
+            the workspace surface (Chrome-style). Rendered only for the active
+            tab so inactive tabs stay flat. */}
+        {isActive && (
+          <>
+            <span className="tab-skirt-left" aria-hidden="true" />
+            <span className="tab-skirt-right" aria-hidden="true" />
+          </>
+        )}
+
         <Icon size={14} className={cn(iconColor, 'shrink-0')} />
         <Tooltip content={tab.title} side="bottom" delay={600}>
           <Text

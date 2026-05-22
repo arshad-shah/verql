@@ -384,6 +384,27 @@ export interface IpcChannelMap {
     args: [requestId: string, approved: boolean]
     return: void
   }
+  'themes:list': {
+    args: []
+    return: {
+      id: string
+      name: string
+      type: 'dark' | 'light'
+      tokens?: Record<string, string>
+      css?: string
+      monaco?: {
+        base: 'vs' | 'vs-dark'
+        colors: Record<string, string>
+        rules: { token: string; foreground: string; background?: string; fontStyle?: string }[]
+      }
+      preview?: { bg: string; sidebar: string; text: string; accent: string }
+      source?: string
+    }[]
+  }
+  'plugins:drag-drop': {
+    args: [filePath: string]
+    return: { handled: boolean }
+  }
 }
 
 // ─── Central channel registry ───────────────────────────────────────────────
@@ -496,7 +517,11 @@ export const IPC_CHANNELS = {
   MCP_STATUS: 'mcp:status',
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
-  APP_RESTART: 'app:restart'
+  APP_RESTART: 'app:restart',
+  // ── Themes ──────────────────────────────────────────────────────────────
+  THEMES_LIST: 'themes:list',
+  // ── Drag and drop ──────────────────────────────────────────────────────
+  PLUGINS_DRAG_DROP: 'plugins:drag-drop'
 } as const satisfies Record<string, IpcChannel>
 
 // ─── Broadcast events (main → renderer push) ────────────────────────────────
@@ -522,6 +547,10 @@ export interface IpcEventMap {
   'plugins:ui:contributions-changed': []
   /** A setting changed; renderer mirrors should refresh. */
   'settings:changed': [payload: { keyPath: string; value: unknown }]
+  /** A plugin requested a toast notification. */
+  'notifications:show': [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
+  /** The set of registered themes changed. */
+  'themes:changed': []
 }
 
 export type IpcEvent = keyof IpcEventMap
@@ -534,5 +563,7 @@ export const IPC_EVENTS = {
   MENU_TOGGLE_COMMAND_PALETTE: 'menu:toggle-command-palette',
   PLUGINS_LIFECYCLE: 'plugins:lifecycle',
   PLUGINS_UI_CONTRIBUTIONS_CHANGED: 'plugins:ui:contributions-changed',
-  SETTINGS_CHANGED: 'settings:changed'
+  SETTINGS_CHANGED: 'settings:changed',
+  NOTIFICATIONS_SHOW: 'notifications:show',
+  THEMES_CHANGED: 'themes:changed'
 } as const satisfies Record<string, IpcEvent>

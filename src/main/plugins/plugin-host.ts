@@ -14,6 +14,7 @@ import type { UIRegistryImpl } from './sdk/ui-registry'
 import type { CompletionRegistryImpl } from './sdk/completion-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
+import { validateTheme } from './sdk/theme-registry'
 import type { DbAdapter } from '../db/adapter'
 import type { ConnectionProfile } from '@shared/types'
 
@@ -107,6 +108,9 @@ interface BootDeps {
   exporterRegistry: import('./sdk/exporter-registry').ExporterRegistry
   importerRegistry: import('./sdk/importer-registry').ImporterRegistry
   typeMapperRegistry: import('./sdk/type-mapper-registry').TypeMapperRegistry
+  themeRegistry: import('./sdk/theme-registry').ThemeRegistry
+  notificationBus: { show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void }
+  dragDropRegistry: import('./sdk/drag-drop-registry').DragDropRegistry
 }
 
 export class PluginBootCoordinator {
@@ -277,7 +281,10 @@ export class PluginBootCoordinator {
       services: this.deps.services,
       exporterRegistry: this.deps.exporterRegistry,
       importerRegistry: this.deps.importerRegistry,
-      typeMapperRegistry: this.deps.typeMapperRegistry
+      typeMapperRegistry: this.deps.typeMapperRegistry,
+      themeRegistry: this.deps.themeRegistry,
+      notificationBus: this.deps.notificationBus,
+      dragDropRegistry: this.deps.dragDropRegistry
     })
     plugin.context = context
 
@@ -356,6 +363,45 @@ export class PluginBootCoordinator {
         } else {
           missing.push(`middleware:${mw.id}`)
         }
+      }
+    }
+
+    if (c.themes) {
+      for (const t of c.themes) {
+        declared.push(`theme:${t.id}`)
+        const entry = this.deps.themeRegistry.get(t.id)
+        if (!entry) {
+          missing.push(`theme:${t.id}`)
+          continue
+        }
+        // Token-completeness check. We always attach the report so the
+        // renderer can badge the theme in the picker; required-token gaps
+        // additionally raise a toast and demote the theme to a missing
+        // contribution so the boot phase surfaces the problem.
+        const report = validateTheme(entry)
+        entry.validation = report
+
+        if (report.missingRequired.length > 0) {
+          this.deps.notificationBus.show({
+            kind: 'error',
+            title: `Theme "${entry.name}" is missing required tokens`,
+            message: `${plugin.manifest.name}: ${report.missingRequired.join(', ')}`,
+            durationMs: 8000,
+          })
+          missing.push(`theme:${t.id}`)
+          continue
+        }
+
+        if (report.missingRecommended.length > 0) {
+          this.deps.notificationBus.show({
+            kind: 'warning',
+            title: `Theme "${entry.name}" is missing recommended tokens`,
+            message: `${plugin.manifest.name}: ${report.missingRecommended.join(', ')}`,
+            durationMs: 6000,
+          })
+        }
+
+        registered.push(`theme:${t.id}`)
       }
     }
 

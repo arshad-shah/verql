@@ -1,0 +1,30 @@
+/*
+ * Browser-style tab "skirt" — the inverse-curved outside corners on the
+ * active tab that let it appear to attach to the workspace surface below.
+ *
+ * Each pseudo-element paints a workspace-coloured square in the tab strip's
+ * background and then masks out a quarter-circle so the visible result is a
+ * concave fillet. Pure CSS; no extra DOM and no SVG.
+ */
+.tab-skirt-left,
+.tab-skirt-right {
+  --skirt-size: 8px;
+  position: absolute;
+  bottom: 0;
+  width: var(--skirt-size);
+  height: var(--skirt-size);
+  background: var(--color-tab-active-bg);
+  pointer-events: none;
+}
+
+.tab-skirt-left {
+  left: calc(var(--skirt-size) * -1);
+  mask: radial-gradient(circle var(--skirt-size) at top left, transparent 98%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--skirt-size) at top left, transparent 98%, #000 100%);
+}
+
+.tab-skirt-right {
+  right: calc(var(--skirt-size) * -1);
+  mask: radial-gradient(circle var(--skirt-size) at top right, transparent 98%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--skirt-size) at top right, transparent 98%, #000 100%);
+}

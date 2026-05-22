@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <!--
+    Verql mark — brand-color V-bars. Frost gradient on the outer four bars,
+    mint accent on the central bar. Transparent background — drop on any
+    surface dark enough for the frost gradient to read.
+  -->
+  <defs>
+    <linearGradient id="verql-frost" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F3F6FB"/>
+      <stop offset="100%" stop-color="#9DB0CC"/>
+    </linearGradient>
+    <linearGradient id="verql-mint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5CE0BD"/>
+      <stop offset="100%" stop-color="#00C990"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect x="2"     y="4"  width="2.6" height="18" rx="0.6" fill="url(#verql-frost)"/>
+    <rect x="6.35"  y="10" width="2.6" height="12" rx="0.6" fill="url(#verql-frost)" opacity="0.82"/>
+    <rect x="10.7"  y="16" width="2.6" height="6"  rx="0.6" fill="url(#verql-mint)"/>
+    <rect x="15.05" y="10" width="2.6" height="12" rx="0.6" fill="url(#verql-frost)" opacity="0.82"/>
+    <rect x="19.4"  y="4"  width="2.6" height="18" rx="0.6" fill="url(#verql-frost)"/>
+  </g>
+</svg>

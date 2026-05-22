@@ -165,6 +165,7 @@
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-focus-glow: 0 0 0 3px rgba(43, 217, 163, 0.25);
+  --shadow-error-ring: 0 0 0 3px color-mix(in oklch, var(--color-error), transparent 75%);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -175,4 +176,23 @@
   --color-input-gradient-top: rgba(232, 236, 243, 0.03);
   --color-input-gradient-bottom: transparent;
   --color-button-highlight: rgba(232, 236, 243, 0.1);
+
+  /* Tab strip — browser-style tabs need the active tab to visually attach
+     to the workspace surface. Defaults derive from the theme's own
+     bg-primary / bg-secondary so any plugin theme works out of the box;
+     themes where those two surfaces are visually close can override
+     `--color-tab-bar-bg` to lift the strip away from the active tab. */
+  --color-tab-bar-bg: var(--color-bg-secondary);
+  --color-tab-active-bg: var(--color-bg-primary);
+  --color-tab-active-fg: var(--color-text-primary);
+  --color-tab-inactive-fg: var(--color-text-secondary);
+  --color-tab-hover-bg: color-mix(in oklab, var(--color-text-primary) 6%, transparent);
+
+  /* Skeleton — derived from text-primary so each theme (bundled or plugin)
+     gets a visible loading state for free. Themes can override these two
+     tokens explicitly if they want a different tone, but the color-mix()
+     defaults guarantee minimum contrast on any background by mixing the
+     theme's own foreground colour into transparency. */
+  --color-skeleton-base: color-mix(in oklab, var(--color-text-primary) 14%, transparent);
+  --color-skeleton-highlight: color-mix(in oklab, var(--color-text-primary) 28%, transparent);
 }

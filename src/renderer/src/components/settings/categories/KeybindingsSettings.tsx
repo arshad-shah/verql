@@ -1,12 +1,39 @@
-import { useState, useMemo } from 'react'
-import { Stack, Heading, Text, Divider } from '@/primitives'
+import { useState, useMemo, useEffect } from 'react'
+import { Stack, Text, Divider } from '@/primitives'
 import { SearchInput } from '@/primitives'
-import { Table, Kbd } from '@/primitives'
+import { Table, KbdGroup } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
+import { usePluginCommands } from '@/stores/plugin-commands'
 
 export function KeybindingsSettings() {
-  const keybindings = useSettingsStore((s) => s.settings.keybindings)
+  const builtinKeybindings = useSettingsStore((s) => s.settings.keybindings)
+  const pluginCommands = usePluginCommands((s) => s.commands)
+  const fetchPluginCommands = usePluginCommands((s) => s.fetch)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    fetchPluginCommands()
+  }, [fetchPluginCommands])
+
+  // Merge built-in and plugin keybindings into one display list. Plugin
+  // entries appear under "<Plugin name>" categories so they group together
+  // and don't collide with the built-in categories.
+  const keybindings = useMemo(() => {
+    const all: { id: string; label: string; keys: string[]; category: string; source?: string }[] = [
+      ...builtinKeybindings.map((kb) => ({ ...kb })),
+    ]
+    for (const pc of pluginCommands) {
+      if (!pc.keybinding) continue
+      all.push({
+        id: `${pc.pluginId}:${pc.commandId}`,
+        label: pc.title,
+        keys: [pc.keybinding],
+        category: pc.pluginDisplayName,
+        source: pc.pluginId
+      })
+    }
+    return all
+  }, [builtinKeybindings, pluginCommands])
 
   const filtered = useMemo(() => {
     if (!search) return keybindings
@@ -29,10 +56,7 @@ export function KeybindingsSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>Keybindings</Heading>
-        <Text size="xs" color="muted" className="mt-1">Keyboard shortcuts for common actions</Text>
-      </div>
+      <Text size="xs" color="muted">Keyboard shortcuts for common actions</Text>
 
       <SearchInput
         value={search}
@@ -64,7 +88,7 @@ export function KeybindingsSettings() {
                     {kb.keys
                       .filter((k) => isMac ? k.startsWith('Cmd') : k.startsWith('Ctrl'))
                       .map((k, i) => (
-                        <Kbd key={i}>{k}</Kbd>
+                        <KbdGroup key={i} accelerator={k} size="sm" />
                       ))}
                   </Table.Cell>
                 </Table.Row>

@@ -9,6 +9,8 @@ import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry
 import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
 import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
+import { ThemeRegistryImpl } from '../../src/main/plugins/sdk/theme-registry'
+import { DragDropRegistryImpl } from '../../src/main/plugins/sdk/drag-drop-registry'
 
 const noopKeyring = {
   store: async () => {},
@@ -42,7 +44,10 @@ describe('PluginBootCoordinator', () => {
       services: new ServiceRegistryImpl(),
       exporterRegistry: new ExporterRegistryImpl(),
       importerRegistry: new ImporterRegistryImpl(),
-      typeMapperRegistry: new TypeMapperRegistryImpl()
+      typeMapperRegistry: new TypeMapperRegistryImpl(),
+      themeRegistry: new ThemeRegistryImpl(),
+      notificationBus: { show: () => {} },
+      dragDropRegistry: new DragDropRegistryImpl()
     })
   })
 

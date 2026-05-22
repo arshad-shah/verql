@@ -48,6 +48,9 @@ export interface PluginContext {
   exporters: PluginExporterAccess
   importers: PluginImporterAccess
   typeMappers: PluginTypeMapperAccess
+  themes: PluginThemeAccess
+  notifications: PluginNotificationAccess
+  dragDrop: PluginDragDropAccess
   /** Bundled/trusted plugins occasionally need raw access to top-level app
    *  settings (e.g. `ai.activeProvider`) rather than their own namespaced
    *  scope under `plugins.<name>.*`. */
@@ -76,6 +79,23 @@ export interface PluginTypeMapperAccess {
     table: Record<string, import('./type-mapper-registry').TypeMappingEntry>,
     fallback?: import('./type-mapper-registry').TypeMappingFallback
   ): Disposable
+}
+
+export interface PluginThemeAccess {
+  register(theme: import('./theme-registry').RegisteredTheme): Disposable
+}
+
+export interface PluginNotificationAccess {
+  show(notification: {
+    kind?: 'info' | 'success' | 'warning' | 'error'
+    title: string
+    message?: string
+    durationMs?: number
+  }): void
+}
+
+export interface PluginDragDropAccess {
+  register(provider: import('./drag-drop-registry').DragDropProvider): Disposable
 }
 
 /** Lets a plugin own typed IPC channels in main → renderer direction. */

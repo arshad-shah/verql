@@ -1,13 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="currentColor" stroke="none" aria-hidden="true">
   <!--
-    Verql hero — empty-state / splash variant. The "V-bars" mark sized up,
-    framed by a soft concentric ring + tonal halo. Inherits `currentColor`;
-    opacity layers do the contrast lifting under masking.
+    Verql hero — empty-state / splash variant. The "V-bars" mark sized up.
+    Inherits `currentColor`; opacity layers do the contrast lifting under masking.
   -->
-
-  <!-- Outer breathing ring & halo -->
-  <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width="1" opacity="0.10"/>
-  <circle cx="100" cy="100" r="62" fill="currentColor" opacity="0.06"/>
 
   <!-- Bars (V shape, top edges descend toward middle) -->
   <g>

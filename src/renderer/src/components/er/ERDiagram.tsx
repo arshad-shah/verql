@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   ReactFlow,
   Background,
@@ -17,6 +17,12 @@ import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
 import { Flex, Text, Box, Button, Spinner } from '@/primitives'
+import { useTheme } from '@/primitives/theme/ThemeProvider'
+
+function readVar(name: string, fallback: string): string {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return v || fallback
+}
 
 const nodeTypes = { tableNode: TableNode }
 
@@ -31,6 +37,11 @@ export function ERDiagram({ connectionId, schema }: Props) {
   const [loading, setLoading] = useState(true)
   const [direction, setDirection] = useState<'LR' | 'TB'>('LR')
   const { fetchTables, fetchColumns } = useSchemaStore()
+  const { theme } = useTheme()
+  const { gridColor, accentColor } = useMemo(() => ({
+    gridColor: readVar('--color-border-default', '#2a2a3e'),
+    accentColor: readVar('--color-accent', '#7c6ff7'),
+  }), [theme])
 
   useEffect(() => {
     let cancelled = false
@@ -103,14 +114,14 @@ export function ERDiagram({ connectionId, schema }: Props) {
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#2a2a3e" gap={20} size={1} />
+        <Background color={gridColor} gap={20} size={1} />
         <Controls
           position="bottom-right"
           className="!bg-bg-secondary !border-border !shadow-lg [&>button]:!bg-bg-secondary [&>button]:!border-border [&>button]:!text-text-secondary [&>button:hover]:!bg-white/5"
         />
         <MiniMap
           position="bottom-left"
-          nodeColor={(n) => (n.data as TableNodeData)?.color ?? '#7c6ff7'}
+          nodeColor={(n) => (n.data as TableNodeData)?.color ?? accentColor}
           maskColor="rgba(0,0,0,0.7)"
           className="!bg-bg-secondary !border-border"
         />

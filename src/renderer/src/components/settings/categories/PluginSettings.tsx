@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Heading, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
 import { Spinner } from '@/primitives'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { SettingRow } from '../SettingRow'
@@ -120,10 +120,7 @@ export function PluginSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>Plugins</Heading>
-        <Text size="xs" color="muted" className="mt-1">Manage installed plugins</Text>
-      </div>
+      <Text size="xs" color="muted">Manage installed plugins</Text>
 
       {plugins.map((plugin) => {
         const bundle = pluginSettings[plugin.name]

@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Verql — tab bar explorations</title>
+<style>
+  :root {
+    /* Nightshift palette (matches src/renderer/src/primitives/theme/baseline.css) */
+    --bg-app:        #0B0F16;
+    --bg-secondary:  #131825;
+    --bg-tertiary:   #1A2030;
+    --bg-elevated:   #232B40;
+    --text-primary:  #E8ECF3;
+    --text-secondary:#B7BFCC;
+    --text-tertiary: #8A93A3;
+    --text-muted:    #8A93A3;
+    --border-subtle: rgba(232,236,243,0.04);
+    --border:        rgba(232,236,243,0.08);
+    --border-strong: rgba(232,236,243,0.16);
+    --accent:        #2bd9a3;
+    --accent-soft:   rgba(43,217,163,0.14);
+    --warning:       #FFB23D;
+    --error:         #ff5f57;
+    --shadow-card:   0 1px 3px rgba(0,0,0,0.3);
+    --shadow-glow:   0 0 0 1px rgba(43,217,163,0.4), 0 4px 12px rgba(0,0,0,0.4);
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1180px; margin: 0 auto; padding: 32px 28px 64px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { color: var(--text-tertiary); font-size: 12px; margin: 0 0 32px; }
+
+  .demo { margin-bottom: 36px; }
+  .demo-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .demo-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
+  .demo-note  { font-size: 11px; color: var(--text-tertiary); }
+
+  /* Common shell so each demo looks like it sits at the top of a workspace. */
+  .shell {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .body {
+    height: 90px;
+    background:
+      linear-gradient(to bottom, var(--bg-app) 0%, var(--bg-app) 100%);
+    border-top: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-tertiary); font-size: 11px;
+  }
+
+  /* lucide-style icons via inline svg snippets — kept tiny */
+  .ic { width: 14px; height: 14px; flex-shrink: 0; }
+  .ic-sm { width: 12px; height: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warning); flex-shrink: 0; }
+
+  /* ───────────────────────────────────────────────────────────
+     1. Current — rounded pill (baseline of what verql ships now)
+     ─────────────────────────────────────────────────────────── */
+  .bar-1 {
+    display: flex; align-items: center; gap: 4px;
+    height: 40px; padding: 0 6px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bar-1 .tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 28px; padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms, color 120ms;
+  }
+  .bar-1 .tab:hover { background: rgba(255,255,255,0.04); border-color: var(--border-subtle); }
+  .bar-1 .tab.active {
+    background: var(--bg-tertiary);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-card);
+    font-weight: 500;
+  }
+  .bar-1 .close { opacity: 0.6; padding: 2px; border-radius: 4px; }
+  .bar-1 .tab:hover .close { opacity: 1; }
+  .bar-1 .new { color: var(--text-tertiary); padding: 4px; border-radius: 4px; }
+
+  /* ───────────────────────────────────────────────────────────
+     2. Underline — flat, VSCode/Linear influence
+     ─────────────────────────────────────────────────────────── */
+  .bar-2 {
+    display: flex; align-items: stretch; gap: 0;
+    height: 40px;
+    background: var(--bg-secondary);
+    padding-left: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bar-2 .tab {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 14px;
+    color: var(--text-tertiary);
+    border-right: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: color 120ms, background 120ms;
+  }
+  .bar-2 .tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.02); }
+  .bar-2 .tab.active {
+    color: var(--text-primary);
+    background: var(--bg-app);
+  }
+  .bar-2 .tab.active::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 2px; background: var(--accent);
+  }
+  .bar-2 .tab.active::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0;
+    height: 1px; background: var(--bg-app);
+  }
+  .bar-2 .close { opacity: 0; padding: 2px; border-radius: 4px; }
+  .bar-2 .tab:hover .close, .bar-2 .tab.active .close { opacity: 0.7; }
+  .bar-2 .actions { margin-left: auto; display: flex; align-items: center; padding: 0 6px; }
+  .bar-2 .actions button { color: var(--text-tertiary); padding: 4px; border-radius: 4px; background: none; border: 0; }
+
+  /* ───────────────────────────────────────────────────────────
+     3. Chrome — trapezoidal, attached to body
+     ─────────────────────────────────────────────────────────── */
+  .bar-3 {
+    display: flex; align-items: flex-end; gap: 2px;
+    height: 40px; padding: 0 8px;
+    background: var(--bg-secondary);
+  }
+  .bar-3 .tab {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 14px;
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    transition: background 120ms;
+  }
+  .bar-3 .tab:hover { background: rgba(255,255,255,0.04); }
+  .bar-3 .tab.active {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .bar-3 .tab.active::before, .bar-3 .tab.active::after {
+    content: '';
+    position: absolute; bottom: 0;
+    width: 8px; height: 8px;
+    background: var(--bg-app);
+    pointer-events: none;
+  }
+  .bar-3 .tab.active::before { left: -8px; mask: radial-gradient(circle 8px at top left, transparent 98%, #000 100%); -webkit-mask: radial-gradient(circle 8px at top left, transparent 98%, #000 100%); }
+  .bar-3 .tab.active::after  { right: -8px; mask: radial-gradient(circle 8px at top right, transparent 98%, #000 100%); -webkit-mask: radial-gradient(circle 8px at top right, transparent 98%, #000 100%); }
+  .bar-3 .close { opacity: 0.5; padding: 2px; border-radius: 4px; }
+  .bar-3 .tab:hover .close, .bar-3 .tab.active .close { opacity: 1; }
+  .bar-3 .new { margin-left: 4px; color: var(--text-tertiary); padding: 6px; border-radius: 6px; align-self: center; }
+
+  /* ───────────────────────────────────────────────────────────
+     4. Segmented — single inset track, no per-tab borders
+     ─────────────────────────────────────────────────────────── */
+  .bar-4 {
+    display: flex; align-items: center; gap: 6px;
+    height: 44px; padding: 0 10px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bar-4 .track {
+    display: inline-flex; align-items: center; gap: 0;
+    height: 30px; padding: 3px;
+    background: var(--bg-app);
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .bar-4 .tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 10px;
+    border-radius: 7px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 120ms, background 120ms;
+  }
+  .bar-4 .tab:hover { color: var(--text-secondary); }
+  .bar-4 .tab.active {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.3);
+    font-weight: 500;
+  }
+  .bar-4 .close { opacity: 0; padding: 1px; border-radius: 3px; }
+  .bar-4 .tab:hover .close, .bar-4 .tab.active .close { opacity: 0.7; }
+  .bar-4 .actions { margin-left: auto; display: flex; gap: 4px; color: var(--text-tertiary); }
+
+  /* ───────────────────────────────────────────────────────────
+     5. Floating cards — strong elevation on active, accent edge
+     ─────────────────────────────────────────────────────────── */
+  .bar-5 {
+    display: flex; align-items: center; gap: 6px;
+    height: 44px; padding: 0 10px;
+    background: var(--bg-app);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bar-5 .tab {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 12px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 120ms, transform 120ms, box-shadow 120ms;
+  }
+  .bar-5 .tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .bar-5 .tab.active {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(43,217,163,0.15), 0 6px 16px rgba(0,0,0,0.45);
+    font-weight: 500;
+  }
+  .bar-5 .tab.active::before {
+    content: ''; position: absolute; left: 8px; right: 8px; top: -1px;
+    height: 2px; background: var(--accent); border-radius: 0 0 2px 2px;
+  }
+  .bar-5 .close { opacity: 0.5; padding: 2px; border-radius: 4px; }
+  .bar-5 .tab:hover .close, .bar-5 .tab.active .close { opacity: 1; }
+  .bar-5 .new { color: var(--text-tertiary); padding: 4px; border-radius: 4px; }
+
+  /* ───────────────────────────────────────────────────────────
+     6. Minimal — text-only, dotted divider, color-coded type
+     ─────────────────────────────────────────────────────────── */
+  .bar-6 {
+    display: flex; align-items: center; gap: 0;
+    height: 36px; padding: 0 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bar-6 .tab {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 14px;
+    height: 100%;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 120ms;
+  }
+  .bar-6 .tab:not(:last-child)::after {
+    content: ''; position: absolute; right: 0; top: 25%; bottom: 25%;
+    width: 1px; background: var(--border-subtle);
+  }
+  .bar-6 .tab:hover { color: var(--text-secondary); }
+  .bar-6 .tab.active { color: var(--text-primary); font-weight: 500; }
+  .bar-6 .tab .type-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-tertiary); transition: background 120ms;
+  }
+  .bar-6 .tab.active .type-dot { background: var(--accent); }
+  .bar-6 .tab.type-query .type-dot   { background: #2bd9a3; }
+  .bar-6 .tab.type-table .type-dot   { background: #61afef; }
+  .bar-6 .tab.type-er    .type-dot   { background: #c678dd; }
+  .bar-6 .tab.type-settings .type-dot{ background: #FFB23D; }
+  .bar-6 .close { opacity: 0; padding: 1px; border-radius: 3px; }
+  .bar-6 .tab:hover .close, .bar-6 .tab.active .close { opacity: 0.6; }
+  .bar-6 .new { margin-left: auto; color: var(--text-tertiary); padding: 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Verql — tab bar explorations</h1>
+  <p class="lede">Six directions for the workspace tab strip, all painted with the Nightshift palette. Active state shown on tab #2 in every demo. Dirty indicator (amber dot) shown on tab #3.</p>
+
+  <!-- 1. Current rounded-pill baseline -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">1 · Rounded pill (current)</span>
+      <span class="demo-note">soft card, subtle border, hover lift</span>
+    </div>
+    <div class="shell">
+      <div class="bar-1">
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>orders.sql</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab active">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <span>users</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>migration.sql</span>
+          <span class="dot"></span>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
+          <span>schema diagram</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <button class="new" aria-label="New tab" style="background:none;border:0;color:inherit;cursor:pointer;">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+  <!-- 2. Underline / VSCode / Linear -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">2 · Flat with accent underline</span>
+      <span class="demo-note">VSCode/Linear influence — active tab bleeds into body, accent stripe below</span>
+    </div>
+    <div class="shell">
+      <div class="bar-2">
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>orders.sql</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab active">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <span>users</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>migration.sql</span>
+          <span class="dot"></span>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>
+          <span>schema diagram</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="actions">
+          <button aria-label="New tab">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+  <!-- 3. Chrome / trapezoidal -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">3 · Browser-style (Chrome)</span>
+      <span class="demo-note">active tab attaches to the workspace surface, curved skirt corners</span>
+    </div>
+    <div class="shell">
+      <div class="bar-3">
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>orders.sql</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab active">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <span>users</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>migration.sql</span>
+          <span class="dot"></span>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          <span>schema diagram</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <button class="new" aria-label="New tab" style="background:none;border:0;color:inherit;cursor:pointer;">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+  <!-- 4. Segmented track -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">4 · Segmented control</span>
+      <span class="demo-note">all tabs share one inset track — feels like a Mac toolbar; great for ≤6 tabs</span>
+    </div>
+    <div class="shell">
+      <div class="bar-4">
+        <div class="track">
+          <div class="tab">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <span>orders.sql</span>
+          </div>
+          <div class="tab active">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+            <span>users</span>
+            <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+          </div>
+          <div class="tab">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <span>migration.sql</span>
+            <span class="dot"></span>
+          </div>
+          <div class="tab">
+            <svg class="ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <span>diagram</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button aria-label="New tab" style="background:none;border:0;color:inherit;cursor:pointer;padding:4px;border-radius:4px;">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+  <!-- 5. Floating cards -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">5 · Floating cards with accent edge</span>
+      <span class="demo-note">strong active state — accent stripe on top, glow + shadow lift</span>
+    </div>
+    <div class="shell">
+      <div class="bar-5">
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>orders.sql</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab active">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <span>users</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span>migration.sql</span>
+          <span class="dot"></span>
+        </div>
+        <div class="tab">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          <span>schema diagram</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <button class="new" aria-label="New tab" style="background:none;border:0;color:inherit;cursor:pointer;margin-left:4px;">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+  <!-- 6. Minimal w/ type-colored dot -->
+  <div class="demo">
+    <div class="demo-header">
+      <span class="demo-title">6 · Minimal · type-coded dot</span>
+      <span class="demo-note">text-first; colored dot encodes tab type (query/table/er/settings) without icons</span>
+    </div>
+    <div class="shell">
+      <div class="bar-6">
+        <div class="tab type-query">
+          <span class="type-dot"></span>
+          <span>orders.sql</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab type-table active">
+          <span class="type-dot"></span>
+          <span>users</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab type-query">
+          <span class="type-dot"></span>
+          <span>migration.sql</span>
+          <span class="dot"></span>
+        </div>
+        <div class="tab type-er">
+          <span class="type-dot"></span>
+          <span>schema diagram</span>
+          <svg class="ic-sm close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M6 18L18 6"/></svg>
+        </div>
+        <div class="tab type-settings">
+          <span class="type-dot"></span>
+          <span>settings</span>
+        </div>
+        <button class="new" aria-label="New tab" style="background:none;border:0;color:inherit;cursor:pointer;">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="body">workspace</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

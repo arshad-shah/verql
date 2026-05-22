@@ -1,16 +1,9 @@
-export const AVAILABLE_THEMES = [
-  'nightshift',
-  'lab',
-  'inkpaper',
-  'dark',
-  'light',
-  'midnight',
-  'dracula',
-  'nord',
-  'solarized',
-  'catppuccin',
-] as const
-export type Theme = (typeof AVAILABLE_THEMES)[number]
+/** Theme identifiers are now contributed by the bundled `core-themes` plugin
+ * (and any third-party plugin that registers more). The list lives in the
+ * theme registry; this type stays a permissive string so settings can hold
+ * any registered theme id without coupling the type system to the bundled
+ * set. The renderer's `useTheme()` hook returns the live list. */
+export type Theme = string
 
 export interface GeneralSettings {
   queryTimeout: number
@@ -24,8 +17,22 @@ export interface GeneralSettings {
   confirmDestructiveQueries: boolean
 }
 
+export type AppearanceMode = 'light' | 'dark' | 'system'
+
 export interface AppearanceSettings {
+  /** Theme id the user has explicitly picked. When `appearanceMode` is
+   *  `system`, the resolved theme is `lightTheme` or `darkTheme` based on
+   *  `prefers-color-scheme` and this field is ignored. */
   theme: Theme
+  /** Controls how the active theme is resolved:
+   *  - `light` → always render `lightTheme`
+   *  - `dark`  → always render `darkTheme`
+   *  - `system` → follow the OS color scheme, flipping between the two */
+  appearanceMode: AppearanceMode
+  /** Preferred theme id when the resolved mode is light. */
+  lightTheme: Theme
+  /** Preferred theme id when the resolved mode is dark. */
+  darkTheme: Theme
   uiDensity: 'compact' | 'comfortable' | 'spacious'
   sidebarPosition: 'left' | 'right'
   accentColor: string
@@ -125,6 +132,9 @@ export const defaultSettings: AppSettings = {
   },
   appearance: {
     theme: 'nightshift',
+    appearanceMode: 'dark',
+    lightTheme: 'lab',
+    darkTheme: 'nightshift',
     uiDensity: 'comfortable',
     sidebarPosition: 'left',
     // Empty means "follow the theme's accent". Setting any non-empty value

@@ -1,4 +1,4 @@
-import { Stack, Divider, Flex, Button, Heading, Text, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text, Switch } from '@/primitives'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -11,10 +11,7 @@ export function GeneralSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>General</Heading>
-        <Text size="xs" color="muted" className="mt-1">Basic application settings</Text>
-      </div>
+      <Text size="xs" color="muted">Basic application settings</Text>
 
       <SettingRow label="Query Timeout" description="Maximum time in seconds before a query is cancelled">
         <NumberInput

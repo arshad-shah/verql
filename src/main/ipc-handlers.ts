@@ -12,6 +12,9 @@ import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
 import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
+import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
+import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
+import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
@@ -24,6 +27,7 @@ import * as mysqlPlugin from './plugins/bundled/mysql'
 import * as sqlitePlugin from './plugins/bundled/sqlite'
 import * as aiPlugin from './plugins/bundled/ai'
 import * as coreFormatsPlugin from './plugins/bundled/core-formats'
+import * as coreThemesPlugin from './plugins/bundled/core-themes'
 
 import type { IpcContext } from './ipc/context'
 import { handle } from './ipc/context'
@@ -36,6 +40,7 @@ import { registerDialogHandlers } from './ipc/dialog'
 import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
 import { registerPluginHandlers } from './ipc/plugins'
+import { registerThemesHandlers } from './ipc/themes'
 import { registerAppHandlers } from './ipc/app'
 import { getSecretFieldKeys, SECRET_PLACEHOLDER } from './ipc/secrets'
 
@@ -60,6 +65,15 @@ export function registerIpcHandlers(): void {
   const exporterRegistry = new ExporterRegistryImpl()
   const importerRegistry = new ImporterRegistryImpl()
   const typeMapperRegistry = new TypeMapperRegistryImpl()
+  const themeRegistry = new ThemeRegistryImpl()
+  const dragDropRegistry = new DragDropRegistryImpl()
+  const notificationBus = {
+    show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) win.webContents.send('notifications:show', n)
+      }
+    }
+  }
 
   const connectionAccess = new ConnectionAccessImpl(
     (id) => ctx.activeAdapters.get(id),
@@ -97,12 +111,18 @@ export function registerIpcHandlers(): void {
     services,
     exporterRegistry,
     importerRegistry,
-    typeMapperRegistry
+    typeMapperRegistry,
+    themeRegistry,
+    notificationBus,
+    dragDropRegistry
   })
 
   // The AI plugin is registered first so its `ai` service is available
   // synchronously when other plugins (mongo, redis) register their AI tools.
   pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
+  // Core themes register before any window opens so the very first paint
+  // already has the active theme's tokens — no flash of unstyled content.
+  pluginCoordinator.registerBundledPlugin(coreThemesPlugin.manifest, coreThemesPlugin)
   // Core formats (CSV/JSON) before drivers so DB plugins can override defaults.
   pluginCoordinator.registerBundledPlugin(coreFormatsPlugin.manifest, coreFormatsPlugin)
   pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
@@ -138,5 +158,29 @@ export function registerIpcHandlers(): void {
     completionRegistry,
     commandRegistry,
     pluginCoordinator
+  })
+
+  registerThemesHandlers(handle, { themeRegistry })
+
+  // Broadcast `themes:changed` whenever the registry mutates (plugin
+  // activation / deactivation) so the renderer can refetch + reinject.
+  themeRegistry.onChange(() => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('themes:changed')
+    }
+  })
+
+  handle('plugins:drag-drop', async (filePath) => {
+    const ext = filePath.split('.').pop() ?? ''
+    const provider = dragDropRegistry.resolveByExtension(ext)
+    if (!provider) return { handled: false }
+    const name = filePath.split(/[\\/]/).pop() ?? filePath
+    try {
+      await provider.onDrop({ filePath, fileName: name, extension: ext.toLowerCase() })
+      return { handled: true }
+    } catch (err) {
+      console.error('[plugins] drag-drop handler failed:', err)
+      return { handled: false }
+    }
   })
 }

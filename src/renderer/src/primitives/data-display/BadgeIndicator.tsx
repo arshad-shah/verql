@@ -9,14 +9,25 @@ const indicatorVariants = cva(
       variant: {
         dot: 'h-2.5 w-2.5',
         number:
-          'min-w-[18px] h-[18px] px-1 text-[12px] font-bold leading-none text-white',
+          'min-w-[18px] h-[18px] px-1 text-[12px] font-bold leading-none text-text-inverse',
+      },
+      side: {
+        'top-right': 'top-0 right-0 -translate-y-1/3 translate-x-1/3',
+        'top-left': 'top-0 left-0 -translate-y-1/3 -translate-x-1/3',
+        'bottom-right': 'bottom-0 right-0 translate-y-1/3 translate-x-1/3',
+        'bottom-left': 'bottom-0 left-0 translate-y-1/3 -translate-x-1/3',
       },
     },
     defaultVariants: {
       variant: 'dot',
+      side: 'top-right',
     },
   }
 )
+
+export type BadgeIndicatorSide = NonNullable<
+  VariantProps<typeof indicatorVariants>['side']
+>
 
 export interface BadgeIndicatorProps
   extends VariantProps<typeof indicatorVariants> {
@@ -28,6 +39,8 @@ export interface BadgeIndicatorProps
   max?: number
   /** Hide the indicator */
   hidden?: boolean
+  /** Corner of the wrapped element to anchor the indicator to (default "top-right") */
+  side?: BadgeIndicatorSide
   /** Additional class name for the indicator dot/number */
   className?: string
 }
@@ -35,6 +48,7 @@ export interface BadgeIndicatorProps
 export function BadgeIndicator({
   children,
   variant = 'dot',
+  side = 'top-right',
   count,
   max = 99,
   hidden = false,
@@ -56,13 +70,7 @@ export function BadgeIndicator({
   return (
     <span className="relative inline-flex">
       {children}
-      <span
-        className={cn(
-          indicatorVariants({ variant }),
-          variant === 'dot' ? 'top-1 right' : 'top-0.5 right-0.5 -translate-y-1/3 translate-x-1/3',
-          className
-        )}
-      >
+      <span className={cn(indicatorVariants({ variant, side }), className)}>
         {displayCount}
       </span>
     </span>

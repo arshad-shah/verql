@@ -290,7 +290,7 @@ export function ColorPicker({
             className={cn(
               'flex-1 py-1 rounded text-xs font-medium uppercase transition-all duration-(--transition-fast)',
               format === f
-                ? 'bg-accent text-white'
+                ? 'bg-accent text-text-inverse'
                 : 'text-text-muted hover:text-text-primary hover:bg-hover'
             )}
           >

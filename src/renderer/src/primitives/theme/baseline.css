@@ -1,4 +1,20 @@
-/* Nightshift — modern dark, mint accent. The default. */
+/*
+ * Baseline theme — always loaded, never plugin-contributed.
+ *
+ * Even if the user disables the core-themes bundled plugin (or it errors out
+ * during boot), the app must still paint with sensible colours. This file
+ * defines the Nightshift palette directly on `:root` so every semantic
+ * variable resolves from first paint, and ALSO scopes it to
+ * `[data-theme="nightshift"]` so the plugin's later registration doesn't
+ * leave us with an unstyled state.
+ *
+ * The core-themes plugin re-registers Nightshift with the same id; because
+ * the plugin's <style data-theme-id> tag is appended AFTER this file, its
+ * declarations win when present, but if it's absent the baseline keeps the
+ * UI legible.
+ */
+
+:root,
 [data-theme="nightshift"] {
   --color-bg-primary: var(--raw-ink-900);
   --color-bg-secondary: var(--raw-ink-800);
@@ -9,6 +25,7 @@
   --color-text-secondary: var(--raw-ink-200);
   --color-text-tertiary: var(--raw-ink-300);
   --color-text-disabled: var(--raw-ink-400);
+  --color-text-inverse: var(--raw-ink-900);
 
   --color-border-default: rgba(232, 236, 243, 0.08);
   --color-border-subtle: rgba(232, 236, 243, 0.04);
@@ -34,8 +51,20 @@
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-focus-glow: 0 0 0 3px rgba(43, 217, 163, 0.25);
+  --shadow-error-ring: 0 0 0 3px color-mix(in oklch, var(--color-error), transparent 75%);
+
+  --color-skeleton-base: rgba(232, 236, 243, 0.10);
+  --color-skeleton-highlight: rgba(232, 236, 243, 0.22);
 
   --color-input-gradient-top: rgba(232, 236, 243, 0.03);
   --color-input-gradient-bottom: transparent;
   --color-button-highlight: rgba(232, 236, 243, 0.1);
+  --color-overlay-strong: rgba(0, 0, 0, 0.3);
+  --color-overlay-soft: rgba(0, 0, 0, 0.2);
+
+  --color-tab-bar-bg: var(--raw-ink-700);
+  --color-tab-active-bg: var(--raw-ink-900);
+  --color-tab-active-fg: var(--raw-ink-50);
+  --color-tab-inactive-fg: var(--raw-ink-200);
+  --color-tab-hover-bg: rgba(232, 236, 243, 0.06);
 }

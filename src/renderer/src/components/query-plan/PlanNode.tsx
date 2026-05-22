@@ -10,9 +10,9 @@ interface Props {
 }
 
 function costColor(ratio: number): string {
-  if (ratio < 0.3) return '#28c840'
-  if (ratio < 0.6) return '#e5c07b'
-  return '#ff5f57'
+  if (ratio < 0.3) return 'var(--color-success)'
+  if (ratio < 0.6) return 'var(--color-warning)'
+  return 'var(--color-error)'
 }
 
 export function PlanNodeView({ node, maxCost, depth = 0 }: Props) {

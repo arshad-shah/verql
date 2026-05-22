@@ -32,7 +32,9 @@ import { registerBuiltinStatementContributions } from '@/lib/statement-contribut
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
 registerBuiltinStatementContributions()
-import { IPC_EVENTS } from '@shared/ipc'
+import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
+import { usePluginCommands } from '@/stores/plugin-commands'
+import { matchesAccelerator } from '@/lib/accelerators'
 
 export function App() {
   const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
@@ -111,6 +113,48 @@ export function App() {
     }
     window.addEventListener('keydown', handleKeyDown)
 
+    // Plugin keybindings: any command contributed with a `keybinding` field
+    // becomes a global accelerator. We parse the binding string once per
+    // command and dispatch through the same IPC path the command palette uses
+    // (`plugins:ui:action`) so behaviour stays identical whether the user
+    // pressed the key or clicked the palette entry.
+    const pluginKeydown = (e: KeyboardEvent) => {
+      const { commands, execute } = usePluginCommands.getState()
+      for (const cmd of commands) {
+        if (!cmd.keybinding) continue
+        if (matchesAccelerator(e, cmd.keybinding)) {
+          e.preventDefault()
+          execute(cmd.pluginId, cmd.commandId).catch(() => {})
+          return
+        }
+      }
+    }
+    window.addEventListener('keydown', pluginKeydown)
+    usePluginCommands.getState().fetch()
+
+    // File drop → plugin drag-drop providers. We forward the dropped file
+    // paths to the main process which routes to the matching extension
+    // handler (e.g. `.sqlite` → sqlite plugin opens it). The renderer stays
+    // ignorant of which extensions are claimed; the registry decides.
+    const handleDragOver = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files')) {
+        e.preventDefault()
+      }
+    }
+    const handleDrop = (e: DragEvent) => {
+      if (!e.dataTransfer) return
+      const files = Array.from(e.dataTransfer.files)
+      if (files.length === 0) return
+      e.preventDefault()
+      for (const f of files) {
+        const path = (f as File & { path?: string }).path
+        if (!path) continue
+        window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_DRAG_DROP, path).catch(() => {})
+      }
+    }
+    window.addEventListener('dragover', handleDragOver)
+    window.addEventListener('drop', handleDrop)
+
     // Listen for native menu commands
     const cleanups = [
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => addQueryTab(activeConnectionId)),
@@ -123,6 +167,9 @@ export function App() {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keydown', pluginKeydown)
+      window.removeEventListener('dragover', handleDragOver)
+      window.removeEventListener('drop', handleDrop)
       window.removeEventListener('statusbar:new-connection', handleStatusBarNewConn)
       cleanups.forEach(cleanup => cleanup())
     }
@@ -210,9 +257,13 @@ export function App() {
 
   return (
     <Flex direction="column" className="h-screen bg-bg-primary text-text-primary">
-      <TitleBar />
+      <SectionErrorBoundary label="Title bar">
+        <TitleBar />
+      </SectionErrorBoundary>
       <Flex className="flex-1 overflow-hidden">
-        <ActivityBar />
+        <SectionErrorBoundary label="Activity bar">
+          <ActivityBar />
+        </SectionErrorBoundary>
         {sidebarVisible && sidebarPosition === 'left' && (
           <>
             <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
@@ -260,7 +311,11 @@ export function App() {
                   <SettingsLayout />
                 )}
               </SectionErrorBoundary>
-              {!activeTab && <WelcomeScreen />}
+              {!activeTab && (
+                <SectionErrorBoundary label="Welcome">
+                  <WelcomeScreen />
+                </SectionErrorBoundary>
+              )}
             </Box>
             {bottomDockVisible && hasBottomPanels && (
               <>
@@ -309,7 +364,9 @@ export function App() {
             </Flex>
           </>
         )}
-        <SecondaryActivityBar />
+        <SectionErrorBoundary label="Secondary activity bar">
+          <SecondaryActivityBar />
+        </SectionErrorBoundary>
       </Flex>
       {showStatusBar && (
         <SectionErrorBoundary label="Status bar">
@@ -317,9 +374,15 @@ export function App() {
         </SectionErrorBoundary>
       )}
       <ToastContainer />
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-      <MCPApprovalDialog />
-      <PluginRestartBanner />
+      <SectionErrorBoundary label="Command palette">
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary label="MCP approval">
+        <MCPApprovalDialog />
+      </SectionErrorBoundary>
+      <SectionErrorBoundary label="Plugin restart banner">
+        <PluginRestartBanner />
+      </SectionErrorBoundary>
       <ConfirmDialog
         open={pendingCloseId !== null}
         title="Unsaved changes"

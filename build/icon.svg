@@ -31,18 +31,19 @@
     <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
     <circle cx="512" cy="640" r="420" fill="url(#glow)"/>
 
-    <!-- Five V-bars. All bottoms at y=860; tops descend toward the middle. -->
+    <!-- Five V-bars. All bottoms at y=860; tops descend toward the middle.
+         Centered: outer bars at x=183 / x=735 leave equal 183px margins. -->
     <g>
       <!-- bar 1 (left, tallest, frost) -->
-      <rect x="216" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
+      <rect x="183" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
       <!-- bar 2 (frost, faded) -->
-      <rect x="354" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
+      <rect x="321" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
       <!-- bar 3 (middle, shortest — MINT, the brand accent) -->
-      <rect x="492" y="500" width="106" height="360" rx="22" fill="url(#mint)"/>
+      <rect x="459" y="500" width="106" height="360" rx="22" fill="url(#mint)"/>
       <!-- bar 4 (frost, faded, mirror) -->
-      <rect x="630" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
+      <rect x="597" y="340" width="106" height="520" rx="22" fill="url(#frost)" opacity="0.78"/>
       <!-- bar 5 (right, tallest, frost) -->
-      <rect x="768" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
+      <rect x="735" y="220" width="106" height="640" rx="22" fill="url(#frost)"/>
     </g>
   </g>
 </svg>

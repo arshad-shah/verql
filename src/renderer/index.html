@@ -4,8 +4,90 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Verql</title>
+    <style>
+      /* Pre-React boot splash. Lives entirely outside the bundle so it paints
+         on the very first frame — bridging the window-shown → JS-evaluated
+         gap that used to flash a white page. The React-side <SplashScreen>
+         takes over once the bundle mounts, then dismisses this element with
+         a short fade. */
+      html, body { margin: 0; padding: 0; background: #0B0F16; }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0B0F16;
+        color: #E8ECF3;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        opacity: 1;
+        transition: opacity 240ms ease-out;
+        -webkit-app-region: drag;
+      }
+      #boot-splash.boot-splash--leaving { opacity: 0; pointer-events: none; }
+      #boot-splash .boot-splash__stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      #boot-splash .boot-splash__mark {
+        width: 96px; height: 96px;
+        animation: boot-splash-breathe 2.4s ease-in-out infinite;
+      }
+      #boot-splash .boot-splash__spinner {
+        width: 18px; height: 18px;
+        border: 2px solid #2A3142;
+        border-top-color: #7EE7C4;
+        border-radius: 50%;
+        animation: boot-splash-spin 0.9s linear infinite;
+      }
+      #boot-splash .boot-splash__label {
+        font-size: 12px;
+        color: #8A93A6;
+        letter-spacing: 0.2px;
+      }
+      @keyframes boot-splash-spin { to { transform: rotate(360deg); } }
+      @keyframes boot-splash-breathe {
+        0%, 100% { opacity: 0.85; transform: scale(1); }
+        50%      { opacity: 1;    transform: scale(1.03); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .boot-splash__mark,
+        #boot-splash .boot-splash__spinner { animation: none; }
+      }
+    </style>
   </head>
   <body class="bg-bg-primary text-white overflow-hidden">
+    <div id="boot-splash" aria-label="Loading Verql">
+      <div class="boot-splash__stack">
+        <!-- Verql brand mark — kept in sync with assets/brand/verql-mark-color.svg.
+             Inlined because this splash paints before the React bundle (and Vite's
+             asset URLs) are available. Update both files together. -->
+        <svg class="boot-splash__mark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="verql-frost" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#F3F6FB"/>
+              <stop offset="100%" stop-color="#9DB0CC"/>
+            </linearGradient>
+            <linearGradient id="verql-mint" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5CE0BD"/>
+              <stop offset="100%" stop-color="#00C990"/>
+            </linearGradient>
+          </defs>
+          <g>
+            <rect x="2"     y="4"  width="2.6" height="18" rx="0.6" fill="url(#verql-frost)"/>
+            <rect x="6.35"  y="10" width="2.6" height="12" rx="0.6" fill="url(#verql-frost)" opacity="0.82"/>
+            <rect x="10.7"  y="16" width="2.6" height="6"  rx="0.6" fill="url(#verql-mint)"/>
+            <rect x="15.05" y="10" width="2.6" height="12" rx="0.6" fill="url(#verql-frost)" opacity="0.82"/>
+            <rect x="19.4"  y="4"  width="2.6" height="18" rx="0.6" fill="url(#verql-frost)"/>
+          </g>
+        </svg>
+        <div class="boot-splash__spinner"></div>
+        <div class="boot-splash__label">Starting Verql…</div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
   </body>

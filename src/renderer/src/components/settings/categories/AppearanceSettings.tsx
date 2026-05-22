@@ -1,59 +1,85 @@
-import { Check } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Button, Heading, Text, Box, Switch } from '@/primitives'
+import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
+import { Stack, Grid, Divider, Flex, Button, Text, Box, Switch } from '@/primitives'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
+import { useThemesStore } from '@/stores/themes'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
-import type { Theme } from '@shared/settings'
 import { SettingLabel } from '@/components/settings/SettingLabel'
 
-const themePreview: Record<string, { bg: string; sidebar: string; text: string; accent: string; label: string }> = {
-  // Primary trio — the curated identity directions.
-  nightshift: { bg: '#0B0F16', sidebar: '#131825', text: '#E8ECF3', accent: '#2bd9a3', label: 'Nightshift' },
-  lab:        { bg: '#FAFAF6', sidebar: '#F1F0EA', text: '#1A1A1C', accent: '#115E59', label: 'Lab' },
-  inkpaper:   { bg: '#F2EBDE', sidebar: '#ECE3D2', text: '#14110F', accent: '#9E3022', label: 'Ink & Paper' },
-  // Legacy & community themes
-  dark:       { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#b4befe', label: 'Dark' },
-  light:      { bg: '#eff1f5', sidebar: '#ccd0da', text: '#4c4f69', accent: '#7287fd', label: 'Light' },
-  midnight:   { bg: '#0d1117', sidebar: '#161b22', text: '#c9d1d9', accent: '#a78bfa', label: 'Midnight' },
-  dracula:    { bg: '#282a36', sidebar: '#44475a', text: '#f8f8f2', accent: '#bd93f9', label: 'Dracula' },
-  nord:       { bg: '#2e3440', sidebar: '#3b4252', text: '#eceff4', accent: '#88c0d0', label: 'Nord' },
-  solarized:  { bg: '#002b36', sidebar: '#073642', text: '#839496', accent: '#268bd2', label: 'Solarized' },
-  catppuccin: { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#f5c2e7', label: 'Catppuccin' },
+const FALLBACK_PREVIEW = { bg: '#0B0F16', sidebar: '#131825', text: '#E8ECF3', accent: '#2bd9a3' }
+
+const MODE_OPTIONS: { id: 'light' | 'dark' | 'system'; label: string; Icon: typeof Sun }[] = [
+  { id: 'light', label: 'Light', Icon: Sun },
+  { id: 'dark', label: 'Dark', Icon: Moon },
+  { id: 'system', label: 'System', Icon: Monitor },
+]
+
+type ThemeGridItem = {
+  id: string
+  name: string
+  preview?: { bg: string; sidebar: string; text: string; accent: string }
+  validation?: { ok: boolean; missingRequired: string[]; missingRecommended: string[] }
 }
 
-export function AppearanceSettings() {
-  const appearance = useSettingsStore((s) => s.settings.appearance)
-  const setSetting = useSettingsStore((s) => s.set)
-  const resetCategory = useSettingsStore((s) => s.resetCategory)
-  const { theme: currentTheme, setTheme } = useTheme()
-
+function ThemeGrid({
+  title,
+  list,
+  currentTheme,
+  setTheme,
+}: {
+  title: string
+  list: ThemeGridItem[]
+  currentTheme: string
+  setTheme: (id: string) => void
+}) {
+  if (list.length === 0) return null
   return (
-    <Stack gap="md">
-      <Box>
-        <Heading level={4}>Appearance</Heading>
-        <Text size="xs" color="muted" className="mt-1">Customize how verql looks and feels</Text>
-      </Box>
-
-      <Box>
-        <SettingLabel label="Theme" description="Choose a color theme for the application" />
-        <Grid columns={4} gap="sm">
-          {Object.entries(themePreview).map(([key, preview]) => (
+    <Box>
+      <SettingLabel label={title} description="" />
+      <Grid columns={4} gap="sm">
+        {list.map((t) => {
+          const preview = t.preview ?? FALLBACK_PREVIEW
+          const v = t.validation
+          const hasError = v && !v.ok
+          const hasWarning = v && v.ok && v.missingRecommended.length > 0
+          const badgeTooltip = hasError
+            ? `Missing required tokens: ${v!.missingRequired.join(', ')}`
+            : hasWarning
+              ? `Missing recommended tokens: ${v!.missingRecommended.join(', ')}`
+              : undefined
+          return (
             <Box
-              key={key}
+              key={t.id}
               as="button"
-              onClick={() => setTheme(key as Theme)}
-              className={`rounded-lg border-2 p-2.5 transition-colors cursor-pointer ${
-                currentTheme === key
+              onClick={() => setTheme(t.id)}
+              className={`relative rounded-lg border-2 p-2.5 transition-colors cursor-pointer ${
+                currentTheme === t.id
                   ? 'border-accent'
-                  : 'border-transparent hover:border-border-default'
+                  : hasError
+                    ? 'border-error/50 hover:border-error'
+                    : 'border-transparent hover:border-border-default'
               }`}
               style={{ background: preview.bg }}
+              title={badgeTooltip}
             >
+              {(hasError || hasWarning) && (
+                <span
+                  className={`absolute top-1.5 right-1.5 inline-flex items-center justify-center rounded-full p-0.5 ${
+                    hasError ? 'bg-error text-white' : 'bg-warning text-black/80'
+                  }`}
+                  aria-label={badgeTooltip}
+                >
+                  <AlertTriangle size={9} />
+                </span>
+              )}
               <Flex gap="xs" className="mb-2 h-1.5">
                 <div className="flex-1 rounded-sm" style={{ background: preview.sidebar }} />
-                <div className="flex-2 rounded-sm" style={{ background: preview.bg, border: `1px solid ${preview.sidebar}` }} />
+                <div
+                  className="flex-2 rounded-sm"
+                  style={{ background: preview.bg, border: `1px solid ${preview.sidebar}` }}
+                />
               </Flex>
               <Flex gap="xs" className="mb-1.5">
                 <div className="h-0.5 w-3 rounded-sm" style={{ background: preview.text }} />
@@ -64,12 +90,67 @@ export function AppearanceSettings() {
                 <div className="h-0.5 w-4 rounded-sm" style={{ background: preview.sidebar }} />
               </Flex>
               <Text size="xs" className="mt-2 text-center block" style={{ color: preview.text }}>
-                {preview.label} {currentTheme === key && <Check size={10} className="inline ml-0.5" />}
+                {t.name} {currentTheme === t.id && <Check size={10} className="inline ml-0.5" />}
               </Text>
             </Box>
+          )
+        })}
+      </Grid>
+    </Box>
+  )
+}
+
+export function AppearanceSettings() {
+  const appearance = useSettingsStore((s) => s.settings.appearance)
+  const setSetting = useSettingsStore((s) => s.set)
+  const resetCategory = useSettingsStore((s) => s.resetCategory)
+  const { theme: currentTheme, setTheme, mode, setMode } = useTheme()
+  const themes = useThemesStore((s) => s.themes)
+
+  const currentPreview = themes.find((t) => t.id === currentTheme)?.preview ?? FALLBACK_PREVIEW
+
+  // Split theme list by type so the picker groups dark + light. Picking
+  // a theme also pins it as the preference for its side, so flipping
+  // mode later still lands on the user's preferred theme for that mode.
+  const darkThemes = themes.filter((t) => t.type === 'dark')
+  const lightThemes = themes.filter((t) => t.type === 'light')
+
+  return (
+    <Stack gap="md">
+      <Text size="xs" color="muted">Customize how verql looks and feels</Text>
+
+      <Box>
+        <SettingLabel label="Color Mode" description="Light, dark, or follow the operating system" />
+        <Flex gap="xs">
+          {MODE_OPTIONS.map(({ id, label, Icon }) => (
+            <Box
+              key={id}
+              as="button"
+              onClick={() => setMode(id)}
+              className={`flex-1 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
+                mode === id
+                  ? 'border-accent bg-accent-muted text-text-primary'
+                  : 'border-border-default bg-transparent text-text-secondary hover:border-border-strong'
+              }`}
+            >
+              <Flex align="center" justify="center" gap="xs">
+                <Icon size={14} />
+                <Text size="sm">{label}</Text>
+              </Flex>
+            </Box>
           ))}
-        </Grid>
+        </Flex>
+        {mode === 'system' && (
+          <Text size="xs" color="muted" className="mt-2 block">
+            Following the OS — picking a theme below pins it as your preference for that side.
+          </Text>
+        )}
       </Box>
+
+      <Divider />
+
+      <ThemeGrid title="Dark themes" list={darkThemes} currentTheme={currentTheme} setTheme={setTheme} />
+      <ThemeGrid title="Light themes" list={lightThemes} currentTheme={currentTheme} setTheme={setTheme} />
 
       <Divider />
 
@@ -110,16 +191,12 @@ export function AppearanceSettings() {
       >
         <Flex gap="sm" align="center">
           <ColorInput
-            value={appearance.accentColor || themePreview[currentTheme]?.accent || '#2bd9a3'}
+            value={appearance.accentColor || currentPreview.accent}
             onChange={(v) => setSetting('appearance.accentColor', v)}
             size="sm"
           />
           {appearance.accentColor && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSetting('appearance.accentColor', '')}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSetting('appearance.accentColor', '')}>
               Use theme default
             </Button>
           )}

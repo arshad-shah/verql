@@ -1,59 +1,100 @@
 /**
  * Verql brand mark components.
  *
- * Geometry lives in `assets/brand/*.svg` — those files are the source of
- * truth. Edit the SVG, get the new shape everywhere.
+ * Geometry lives in `assets/brand/verql-mark-*.svg` — those files are the
+ * single source of truth. Edit the SVG, the change propagates to every
+ * consumer. The component just `<img>`s the right pre-tinted variant:
  *
- * We render the SVG via a CSS `mask-image` rather than inlining it. Tradeoffs:
- *   - ✓ One source SVG file. Edit it, every consumer updates.
- *   - ✓ Inherits theme color via `background-color: currentColor`, so the
- *     mark adapts to dark/light and accent slots without JS.
- *   - ✓ No `dangerouslySetInnerHTML`, no runtime sanitiser.
- *   - ✗ Opacity layers inside the SVG don't translate through the mask
- *     (a mask is binary alpha). The hero SVG uses opacity for the
- *     concentric rings — those render as solid silhouettes. That's an
- *     acceptable simplification: the mark still reads, and complexity
- *     inside the asset stays editable upstream.
+ *   color  — brand palette (frost + mint). Use on dark surfaces.
+ *   light  — frost (white-ish) silhouette. Use on dark surfaces.
+ *   dark   — midnight silhouette. Use on light surfaces.
+ *   auto   — picks light/dark from the active theme's `type` (default).
  *
- * If we ever need full-colour fidelity (e.g. multi-stop gradients) we can
- * switch a specific consumer to an `<img>` tag or a separate inline-SVG
- * component without changing this file's API.
+ * No CSS-mask hacks, no inlined SVG geometry. Just `<img>` + a real URL
+ * resolved by Vite at build time, so failures are loud and the icon
+ * either renders or 404s (rather than silently collapsing to a colored
+ * rectangle, like the mask approach did).
  */
 
 import type { CSSProperties } from 'react'
-// `?url` is a Vite primitive — imports the file's served URL at build time.
-import verqlMarkUrl from '@/assets/brand/verql-mark.svg?url'
-import verqlHeroUrl from '@/assets/brand/verql-hero.svg?url'
+import { useThemesStore } from '@/stores/themes'
+import { useTheme } from '@/primitives/theme/ThemeProvider'
+import colorUrl from '@/assets/brand/verql-mark-color.svg?url'
+import lightUrl from '@/assets/brand/verql-mark-mono-light.svg?url'
+import darkUrl from '@/assets/brand/verql-mark-mono-dark.svg?url'
+import heroUrl from '@/assets/brand/verql-hero.svg?url'
+
+type Variant = 'color' | 'light' | 'dark' | 'auto'
 
 interface MarkProps {
   size?: number
   className?: string
-  /** Force a contrast palette regardless of inherited color. */
-  tone?: 'light' | 'dark'
+  variant?: Variant
+  style?: CSSProperties
+  /** Set for decorative use to keep it out of the accessibility tree. */
+  alt?: string
 }
 
-function maskStyle(url: string, size: number, tone?: 'light' | 'dark'): CSSProperties {
-  const color = tone === 'light' ? '#f5f3ff' : tone === 'dark' ? '#1a1330' : 'currentColor'
-  return {
-    display: 'inline-block',
-    width: size,
-    height: size,
-    backgroundColor: color,
-    WebkitMaskImage: `url(${url})`,
-    maskImage: `url(${url})`,
-    WebkitMaskRepeat: 'no-repeat',
-    maskRepeat: 'no-repeat',
-    WebkitMaskSize: 'contain',
-    maskSize: 'contain',
-    WebkitMaskPosition: 'center',
-    maskPosition: 'center',
-  }
+const VARIANT_URL: Record<Exclude<Variant, 'auto'>, string> = {
+  color: colorUrl,
+  light: lightUrl,
+  dark: darkUrl,
 }
 
-export function VerqlMark({ size = 16, className, tone }: MarkProps) {
-  return <span className={className} style={maskStyle(verqlMarkUrl, size, tone)} aria-hidden="true" />
+function useResolvedVariant(variant: Variant): Exclude<Variant, 'auto'> {
+  const { theme } = useTheme()
+  const themes = useThemesStore((s) => s.themes)
+  if (variant !== 'auto') return variant
+  const active = themes.find((t) => t.id === theme)
+  return active?.type === 'light' ? 'dark' : 'light'
 }
 
-export function VerqlHero({ size = 120, className }: { size?: number; className?: string }) {
-  return <span className={className} style={maskStyle(verqlHeroUrl, size)} aria-hidden="true" />
+export function VerqlMark({
+  size = 16,
+  className,
+  variant = 'auto',
+  style,
+  alt = '',
+}: MarkProps) {
+  const resolved = useResolvedVariant(variant)
+  return (
+    <img
+      src={VARIANT_URL[resolved]}
+      width={size}
+      height={size}
+      alt={alt}
+      aria-hidden={alt === '' ? true : undefined}
+      className={className}
+      style={style}
+      draggable={false}
+    />
+  )
+}
+
+/**
+ * Hero variant — V-bars framed by a soft ring + tonal halo. Stays in
+ * `currentColor` since it's used inside themed surfaces (welcome page,
+ * empty states). Imported as a URL and consumed as `<img>` for the same
+ * "no tricks" reason as the mark.
+ */
+export function VerqlHero({
+  size = 120,
+  className,
+  alt = '',
+}: {
+  size?: number
+  className?: string
+  alt?: string
+}) {
+  return (
+    <img
+      src={heroUrl}
+      width={size}
+      height={size}
+      alt={alt}
+      aria-hidden={alt === '' ? true : undefined}
+      className={className}
+      draggable={false}
+    />
+  )
 }

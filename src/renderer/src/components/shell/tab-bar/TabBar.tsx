@@ -53,9 +53,9 @@ export function TabBar() {
 
   return (
     <Flex
-      align="center"
+      align="end"
       gap="xs"
-      className="h-10 shrink-0 bg-bg-secondary px-1.5 border-b border-border-subtle"
+      className="h-10 shrink-0 bg-tab-bar-bg px-2 pt-1.5"
     >
       {/* Scroll left arrow */}
       {canScrollLeft && (
@@ -76,9 +76,8 @@ export function TabBar() {
       <Flex
         ref={scrollRef}
         onWheel={onWheel}
-        align="center"
-        gap="xs"
-        className="flex-1 h-full overflow-x-hidden"
+        align="end"
+        className="flex-1 h-full overflow-x-hidden gap-0.5"
       >
         {tabs.map((tab, index) => (
           <TabItem

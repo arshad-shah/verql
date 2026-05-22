@@ -1,4 +1,4 @@
-import { Stack, Divider, Flex, Button, Heading, Text } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
@@ -11,14 +11,11 @@ export function ConnectionSettings() {
 
   return (
     <Stack gap="md">
-      <div>
-        <Heading level={4}>Connections</Heading>
-        <Text size="xs" color="muted" className="mt-1">
-          Defaults for new database connections. Per-driver settings (ports,
-          driver-specific options) live with the driver plugin and only show
-          here while that plugin is active.
-        </Text>
-      </div>
+      <Text size="xs" color="muted">
+        Defaults for new database connections. Per-driver settings (ports,
+        driver-specific options) live with the driver plugin and only show
+        here while that plugin is active.
+      </Text>
 
       <SettingRow label="Auto Reconnect" description="Automatically reconnect when a connection is lost">
         <Switch
