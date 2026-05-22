@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.5
+
+### Patch Changes
+
+- Fix `Cannot find module` crashes at launch by including the full transitive node_modules graph in the packaged `app.asar`. The previous `files: ["out/**/*"]` config left it to electron-builder's default dep-walker, which (under pnpm's symlinked layout) silently dropped many transitive deps — `mime-db`, `es-object-atoms`, `get-intrinsic`, `es-set-tostringtag`, and others all went missing. Switched to explicit `files` patterns that pull in `node_modules/**/*` with sensible excludes (changelogs, tests, docs, source maps).
+
+  Asar package count: 353 → 434.
+
 ## 0.3.4
 
 ### Patch Changes
