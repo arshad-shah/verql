@@ -1,4 +1,15 @@
-export const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
+export const AVAILABLE_THEMES = [
+  'nightshift',
+  'lab',
+  'inkpaper',
+  'dark',
+  'light',
+  'midnight',
+  'dracula',
+  'nord',
+  'solarized',
+  'catppuccin',
+] as const
 export type Theme = (typeof AVAILABLE_THEMES)[number]
 
 export interface GeneralSettings {
@@ -113,10 +124,10 @@ export const defaultSettings: AppSettings = {
     confirmDestructiveQueries: true,
   },
   appearance: {
-    theme: 'dark',
+    theme: 'nightshift',
     uiDensity: 'comfortable',
     sidebarPosition: 'left',
-    accentColor: '#7c6ff7',
+    accentColor: '#2bd9a3',
     sidebarWidth: 240,
     splitRatio: 50,
     showStatusBar: true,

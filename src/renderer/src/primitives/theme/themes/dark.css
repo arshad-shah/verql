@@ -1,4 +1,4 @@
-/* Dark theme — default, matches :root tokens in tokens.css */
+/* Dark — legacy purple-accent dark theme. Kept for users who want it. */
 [data-theme="dark"] {
   --color-bg-primary: var(--raw-neutral-900);
   --color-bg-secondary: var(--raw-neutral-850);

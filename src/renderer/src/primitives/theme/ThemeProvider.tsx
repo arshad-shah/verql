@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
 import { useSettingsStore } from '@/stores/settings'
-
-const AVAILABLE_THEMES = ['dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin'] as const
-type Theme = (typeof AVAILABLE_THEMES)[number]
+import { AVAILABLE_THEMES, type Theme } from '@shared/settings'
 
 interface ThemeContextValue {
   theme: Theme
@@ -16,6 +14,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useSettingsStore((s) => s.settings.appearance.theme)
   const uiDensity = useSettingsStore((s) => s.settings.appearance.uiDensity)
   const accentColor = useSettingsStore((s) => s.settings.appearance.accentColor)
+  const animations = useSettingsStore((s) => s.settings.appearance.animations)
   const setSetting = useSettingsStore((s) => s.set)
 
   useEffect(() => {
@@ -25,6 +24,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute('data-density', uiDensity)
   }, [uiDensity])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-animations', animations ? 'on' : 'off')
+  }, [animations])
 
   useEffect(() => {
     const root = document.documentElement

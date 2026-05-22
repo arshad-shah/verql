@@ -1,0 +1,41 @@
+/* Nightshift — modern dark, mint accent. The default. */
+[data-theme="nightshift"] {
+  --color-bg-primary: var(--raw-ink-900);
+  --color-bg-secondary: var(--raw-ink-800);
+  --color-bg-tertiary: var(--raw-ink-700);
+  --color-bg-elevated: var(--raw-ink-600);
+
+  --color-text-primary: var(--raw-ink-50);
+  --color-text-secondary: var(--raw-ink-200);
+  --color-text-tertiary: var(--raw-ink-300);
+  --color-text-disabled: var(--raw-ink-400);
+
+  --color-border-default: rgba(232, 236, 243, 0.08);
+  --color-border-subtle: rgba(232, 236, 243, 0.04);
+  --color-border-strong: rgba(232, 236, 243, 0.16);
+
+  --color-accent: var(--raw-mint-400);
+  --color-accent-hover: var(--raw-mint-300);
+  --color-accent-muted: var(--raw-mint-900);
+  --color-accent-emphasis: var(--raw-mint-500);
+
+  --color-success: var(--raw-mint-400);
+  --color-warning: var(--raw-amber-500);
+  --color-error: var(--raw-red-500);
+  --color-info: var(--raw-blue-500);
+
+  --color-hover: rgba(232, 236, 243, 0.05);
+  --color-active: rgba(232, 236, 243, 0.1);
+  --color-focus-ring: var(--raw-mint-400);
+  --color-disabled: var(--raw-ink-400);
+
+  --shadow-input-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-focus-glow: 0 0 0 3px rgba(43, 217, 163, 0.25);
+
+  --color-input-gradient-top: rgba(232, 236, 243, 0.03);
+  --color-input-gradient-bottom: transparent;
+  --color-button-highlight: rgba(232, 236, 243, 0.1);
+}

@@ -9,12 +9,17 @@ import type { Theme } from '@shared/settings'
 import { SettingLabel } from '@/components/settings/SettingLabel'
 
 const themePreview: Record<string, { bg: string; sidebar: string; text: string; accent: string; label: string }> = {
-  dark: { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#b4befe', label: 'Dark' },
-  light: { bg: '#eff1f5', sidebar: '#ccd0da', text: '#4c4f69', accent: '#7287fd', label: 'Light' },
-  midnight: { bg: '#0d1117', sidebar: '#161b22', text: '#c9d1d9', accent: '#a78bfa', label: 'Midnight' },
-  dracula: { bg: '#282a36', sidebar: '#44475a', text: '#f8f8f2', accent: '#bd93f9', label: 'Dracula' },
-  nord: { bg: '#2e3440', sidebar: '#3b4252', text: '#eceff4', accent: '#88c0d0', label: 'Nord' },
-  solarized: { bg: '#002b36', sidebar: '#073642', text: '#839496', accent: '#268bd2', label: 'Solarized' },
+  // Primary trio — the curated identity directions.
+  nightshift: { bg: '#0B0F16', sidebar: '#131825', text: '#E8ECF3', accent: '#2bd9a3', label: 'Nightshift' },
+  lab:        { bg: '#FAFAF6', sidebar: '#F1F0EA', text: '#1A1A1C', accent: '#115E59', label: 'Lab' },
+  inkpaper:   { bg: '#F2EBDE', sidebar: '#ECE3D2', text: '#14110F', accent: '#9E3022', label: 'Ink & Paper' },
+  // Legacy & community themes
+  dark:       { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#b4befe', label: 'Dark' },
+  light:      { bg: '#eff1f5', sidebar: '#ccd0da', text: '#4c4f69', accent: '#7287fd', label: 'Light' },
+  midnight:   { bg: '#0d1117', sidebar: '#161b22', text: '#c9d1d9', accent: '#a78bfa', label: 'Midnight' },
+  dracula:    { bg: '#282a36', sidebar: '#44475a', text: '#f8f8f2', accent: '#bd93f9', label: 'Dracula' },
+  nord:       { bg: '#2e3440', sidebar: '#3b4252', text: '#eceff4', accent: '#88c0d0', label: 'Nord' },
+  solarized:  { bg: '#002b36', sidebar: '#073642', text: '#839496', accent: '#268bd2', label: 'Solarized' },
   catppuccin: { bg: '#1e1e2e', sidebar: '#313244', text: '#cdd6f4', accent: '#f5c2e7', label: 'Catppuccin' },
 }
 

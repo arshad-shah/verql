@@ -5,6 +5,9 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=Cascadia+Code:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "../primitives/theme/tokens.css";
+@import "../primitives/theme/themes/nightshift.css";
+@import "../primitives/theme/themes/lab.css";
+@import "../primitives/theme/themes/inkpaper.css";
 @import "../primitives/theme/themes/dark.css";
 @import "../primitives/theme/themes/light.css";
 @import "../primitives/theme/themes/midnight.css";
@@ -155,3 +158,15 @@ dialog[open] { display: flex; flex-direction: column; }
 [data-density="spacious"] .py-2 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 [data-density="spacious"] .gap-sm { gap: 0.75rem; }
 [data-density="spacious"] .gap-md { gap: 1.125rem; }
+
+/* Honour the appearance.animations toggle. When off, kill all transitions/
+   animations app-wide so settings → UI is consistent. The exception list
+   covers things that aren't decoration: caret blink, loading spinners. */
+[data-animations="off"] *,
+[data-animations="off"] *::before,
+[data-animations="off"] *::after {
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}

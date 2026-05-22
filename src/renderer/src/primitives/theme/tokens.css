@@ -9,13 +9,36 @@
 /* ── Layer 1: Raw Scale ── */
 
 :root {
-  /* Purple */
+  /* Purple — legacy themes (dark/light/midnight original palette) */
   --raw-purple-400: #9b8fff;
   --raw-purple-500: #7c6ff7;
   --raw-purple-600: #6558d4;
   --raw-purple-900: #1a1533;
 
-  /* Neutral */
+  /* Mint — Nightshift accent */
+  --raw-mint-300: #5ce0bd;
+  --raw-mint-400: #2bd9a3;
+  --raw-mint-500: #00c990;
+  --raw-mint-900: #002d22;
+
+  /* Teal — Lab accent */
+  --raw-teal-400: #14716A;
+  --raw-teal-500: #115E59;
+  --raw-teal-600: #0E4F4A;
+  --raw-teal-900: #052623;
+
+  /* Rust — Ink & Paper accent */
+  --raw-rust-400: #B23A2A;
+  --raw-rust-500: #9E3022;
+  --raw-rust-600: #8A2719;
+  --raw-rust-900: #34110B;
+
+  /* Amber — warm secondary across themes */
+  --raw-amber-400: #FFC061;
+  --raw-amber-500: #FFB23D;
+  --raw-amber-600: #D9941F;
+
+  /* Neutral — legacy */
   --raw-neutral-50: #fafafa;
   --raw-neutral-100: #f0f0f0;
   --raw-neutral-200: #e0e0e0;
@@ -27,6 +50,37 @@
   --raw-neutral-800: #1a1a2e;
   --raw-neutral-850: #12121f;
   --raw-neutral-900: #0d0d1a;
+
+  /* Nightshift neutrals — cooler, slightly bluer */
+  --raw-ink-50: #E8ECF3;
+  --raw-ink-100: #B8C0D1;
+  --raw-ink-200: #7C8499;
+  --raw-ink-300: #4A5468;
+  --raw-ink-400: #2A3140;
+  --raw-ink-500: #1E2330;
+  --raw-ink-600: #161B26;
+  --raw-ink-700: #131825;
+  --raw-ink-800: #0E121B;
+  --raw-ink-900: #0B0F16;
+
+  /* Lab neutrals — warmer off-white */
+  --raw-paper-50: #FFFFFF;
+  --raw-paper-100: #FAFAF6;
+  --raw-paper-200: #F1F0EA;
+  --raw-paper-300: #E5E3DC;
+  --raw-paper-400: #BFBDB4;
+  --raw-paper-500: #6B6B68;
+  --raw-paper-900: #1A1A1C;
+
+  /* Ink & Paper neutrals — warm cream */
+  --raw-cream-50: #FBF6EA;
+  --raw-cream-100: #F8F2E5;
+  --raw-cream-200: #F2EBDE;
+  --raw-cream-300: #ECE3D2;
+  --raw-cream-400: #BFB29A;
+  --raw-cream-500: #6D6759;
+  --raw-cream-700: #2C2823;
+  --raw-cream-900: #14110F;
 
   /* Status */
   --raw-green-500: #28c840;
@@ -66,51 +120,51 @@
   --weight-bold: 700;
 }
 
-/* ── Layer 2: Semantic Tokens (default = dark) ── */
+/* ── Layer 2: Semantic Tokens (default = Nightshift) ── */
 
 :root {
   /* Backgrounds */
-  --color-bg-primary: var(--raw-neutral-900);
-  --color-bg-secondary: var(--raw-neutral-850);
-  --color-bg-tertiary: var(--raw-neutral-800);
-  --color-bg-elevated: var(--raw-neutral-700);
+  --color-bg-primary: var(--raw-ink-900);
+  --color-bg-secondary: var(--raw-ink-800);
+  --color-bg-tertiary: var(--raw-ink-700);
+  --color-bg-elevated: var(--raw-ink-600);
 
   /* Text */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: var(--raw-neutral-400);
-  --color-text-tertiary: var(--raw-neutral-500);
-  --color-text-disabled: var(--raw-neutral-600);
+  --color-text-primary: var(--raw-ink-50);
+  --color-text-secondary: var(--raw-ink-200);
+  --color-text-tertiary: var(--raw-ink-300);
+  --color-text-disabled: var(--raw-ink-400);
 
   /* Borders */
-  --color-border-default: rgba(255, 255, 255, 0.08);
-  --color-border-subtle: rgba(255, 255, 255, 0.04);
-  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-border-default: rgba(232, 236, 243, 0.08);
+  --color-border-subtle: rgba(232, 236, 243, 0.04);
+  --color-border-strong: rgba(232, 236, 243, 0.16);
 
-  /* Accent */
-  --color-accent: var(--raw-purple-500);
-  --color-accent-hover: var(--raw-purple-400);
-  --color-accent-muted: var(--raw-purple-900);
-  --color-accent-emphasis: color-mix(in oklch, var(--color-accent), black 20%);
+  /* Accent — Nightshift mint */
+  --color-accent: var(--raw-mint-400);
+  --color-accent-hover: var(--raw-mint-300);
+  --color-accent-muted: var(--raw-mint-900);
+  --color-accent-emphasis: var(--raw-mint-500);
 
   /* Status */
-  --color-success: var(--raw-green-500);
-  --color-warning: var(--raw-yellow-500);
+  --color-success: var(--raw-mint-400);
+  --color-warning: var(--raw-amber-500);
   --color-error: var(--raw-red-500);
   --color-error-emphasis: color-mix(in oklch, var(--color-error), black 25%);
   --color-info: var(--raw-blue-500);
 
   /* Interactive */
-  --color-hover: rgba(255, 255, 255, 0.05);
-  --color-active: rgba(255, 255, 255, 0.1);
-  --color-focus-ring: var(--raw-purple-500);
-  --color-disabled: var(--raw-neutral-600);
+  --color-hover: rgba(232, 236, 243, 0.05);
+  --color-active: rgba(232, 236, 243, 0.1);
+  --color-focus-ring: var(--raw-mint-400);
+  --color-disabled: var(--raw-ink-400);
 
   /* Shadows */
-  --shadow-input-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-focus-glow: 0 0 0 3px rgba(124, 111, 247, 0.25);
+  --shadow-input-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-focus-glow: 0 0 0 3px rgba(43, 217, 163, 0.25);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -118,7 +172,7 @@
   --transition-slow: 300ms ease;
 
   /* Gradients */
-  --color-input-gradient-top: rgba(255, 255, 255, 0.03);
+  --color-input-gradient-top: rgba(232, 236, 243, 0.03);
   --color-input-gradient-bottom: transparent;
-  --color-button-highlight: rgba(255, 255, 255, 0.1);
+  --color-button-highlight: rgba(232, 236, 243, 0.1);
 }
