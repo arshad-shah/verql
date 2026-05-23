@@ -53,9 +53,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Compute the effective theme based on appearance mode + OS preference.
   // Falls back to whatever `theme` is set to if the configured light/dark
   // theme id isn't in the registry yet (e.g. a plugin theme uninstalled).
+  // Also skips themes that the registry validated as broken — pointing the
+  // resolved theme at one would half-paint the app with no recovery.
   const resolvedTheme = useMemo<string>(() => {
-    const ids = new Set(themes.map((t) => t.id))
-    const safe = (id: string, fallback: string) => (ids.has(id) ? id : fallback)
+    const selectable = new Set(
+      themes.filter((t) => !t.validation || t.validation.ok).map((t) => t.id),
+    )
+    const safe = (id: string, fallback: string) => (selectable.has(id) ? id : fallback)
     if (appearanceMode === 'light') return safe(lightTheme, 'lab')
     if (appearanceMode === 'dark') return safe(darkTheme, 'nightshift')
     // system
@@ -107,6 +111,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // family the user just chose.
   const setTheme = (newTheme: Theme) => {
     const meta = themes.find((t) => t.id === newTheme)
+    // Refuse to land on a theme that's missing required tokens. A broken
+    // theme paints the app half-styled; the picker already disables these
+    // visually, but a programmatic call (URL handler, command palette,
+    // restored settings from a stale config) shouldn't be able to bypass
+    // that. The validation report comes from the registry, so absence
+    // means "not yet validated" (e.g. the baseline Nightshift entry) and
+    // is treated as selectable.
+    if (meta?.validation && !meta.validation.ok) {
+      console.warn(
+        `[themes] refusing to set '${newTheme}': missing required tokens ` +
+          meta.validation.missingRequired.join(', '),
+      )
+      return
+    }
     const side: 'lightTheme' | 'darkTheme' = meta?.type === 'light' ? 'lightTheme' : 'darkTheme'
     setSetting(`appearance.${side}`, newTheme)
     setSetting('appearance.theme', newTheme)

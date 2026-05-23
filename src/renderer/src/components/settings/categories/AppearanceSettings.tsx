@@ -7,6 +7,7 @@ import { useThemesStore } from '@/stores/themes'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 import { SettingLabel } from '@/components/settings/SettingLabel'
+import { isThemeSelectable } from './theme-utils'
 
 const FALLBACK_PREVIEW = { bg: '#0B0F16', sidebar: '#131825', text: '#E8ECF3', accent: '#2bd9a3' }
 
@@ -42,10 +43,11 @@ function ThemeGrid({
         {list.map((t) => {
           const preview = t.preview ?? FALLBACK_PREVIEW
           const v = t.validation
-          const hasError = v && !v.ok
-          const hasWarning = v && v.ok && v.missingRecommended.length > 0
-          const badgeTooltip = hasError
-            ? `Missing required tokens: ${v!.missingRequired.join(', ')}`
+          const selectable = isThemeSelectable(t)
+          const hasError = !selectable
+          const hasWarning = selectable && v && v.missingRecommended.length > 0
+          const tooltip = hasError
+            ? `This theme is missing required tokens — selecting it would break the UI. Missing: ${v!.missingRequired.join(', ')}`
             : hasWarning
               ? `Missing recommended tokens: ${v!.missingRecommended.join(', ')}`
               : undefined
@@ -53,23 +55,28 @@ function ThemeGrid({
             <Box
               key={t.id}
               as="button"
-              onClick={() => setTheme(t.id)}
-              className={`relative rounded-lg border-2 p-2.5 transition-colors cursor-pointer ${
-                currentTheme === t.id
-                  ? 'border-accent'
-                  : hasError
-                    ? 'border-error/50 hover:border-error'
-                    : 'border-transparent hover:border-border-default'
+              type="button"
+              onClick={() => { if (selectable) setTheme(t.id) }}
+              aria-disabled={!selectable}
+              disabled={!selectable}
+              className={`relative rounded-lg border-2 p-2.5 transition-colors ${
+                !selectable
+                  ? 'cursor-not-allowed opacity-50 border-error/40'
+                  : 'cursor-pointer ' + (
+                      currentTheme === t.id
+                        ? 'border-accent'
+                        : 'border-transparent hover:border-border-default'
+                    )
               }`}
               style={{ background: preview.bg }}
-              title={badgeTooltip}
+              title={tooltip}
             >
               {(hasError || hasWarning) && (
                 <span
                   className={`absolute top-1.5 right-1.5 inline-flex items-center justify-center rounded-full p-0.5 ${
                     hasError ? 'bg-error text-white' : 'bg-warning text-black/80'
                   }`}
-                  aria-label={badgeTooltip}
+                  aria-label={tooltip}
                 >
                   <AlertTriangle size={9} />
                 </span>

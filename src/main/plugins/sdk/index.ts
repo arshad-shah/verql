@@ -17,11 +17,11 @@ import { TypeMapperRegistryImpl, type TypeMapperRegistry } from './type-mapper-r
 import { ThemeRegistryImpl, type ThemeRegistry, type RegisteredTheme } from './theme-registry'
 import { DragDropRegistryImpl } from './drag-drop-registry'
 
+// ─── Registry implementations (most plugins don't need these directly,
+//     but driver authors writing tests against fake registries do) ─────────
 export { DriverRegistryImpl } from './driver-registry'
 export { ThemeRegistryImpl } from './theme-registry'
 export { DragDropRegistryImpl } from './drag-drop-registry'
-export type { RegisteredTheme, ThemeMonacoDef, ThemeMonacoRule, ThemePreview } from './theme-registry'
-export type { DragDropProvider, DragDropContext } from './drag-drop-registry'
 export { CommandRegistryImpl } from './command-registry'
 export { PanelRegistryImpl } from './panel-registry'
 export { UIRegistryImpl } from './ui-registry'
@@ -33,12 +33,53 @@ export { ServiceRegistryImpl } from './service-registry'
 export { ExporterRegistryImpl } from './exporter-registry'
 export { ImporterRegistryImpl } from './importer-registry'
 export { TypeMapperRegistryImpl } from './type-mapper-registry'
+
+// ─── Generic SQL helpers (parameterised on the driver's quote character)
+//     Drivers compose these to build their exporters/importers without
+//     touching anything in src/main/ outside src/main/plugins/. ────────────
+export { quoteIdentifier, validateIdentifier, IdentifierError } from './identifier'
+export {
+  formatSqlValue,
+  generateCreateTable,
+  generateInsertStatements,
+} from './sql-format'
+export { splitSqlStatements } from './sql-statements'
+export { importCsvToTable } from './csv-into-table'
 export { createRelationalGetTableData } from './relational-helpers'
+
+// ─── Theme registration helpers ────────────────────────────────────────
+// Plugin authors can run their own theme through the same validator the
+// host uses, so they get the exact same failure message a user would see.
+export {
+  validateTheme,
+  REQUIRED_THEME_TOKENS,
+  RECOMMENDED_THEME_TOKENS,
+} from './theme-registry'
+
+// ─── Error handling ────────────────────────────────────────────────────
 export { safeCall, ErrorBudget, PluginError } from './safe-call'
+
+// ─── Plugin author ergonomics ──────────────────────────────────────────
+// `definePlugin({ manifest, activate, deactivate? })` is a typed identity
+// helper: pins the shape so missing or mistyped fields fail at compile
+// time instead of at boot.
+export { definePlugin } from './define-plugin'
+export type { PluginModule } from './define-plugin'
+
+// ─── Types ─────────────────────────────────────────────────────────────
 export type * from './types'
+export type {
+  RegisteredTheme,
+  ThemeMonacoDef,
+  ThemeMonacoRule,
+  ThemePreview,
+  ThemeValidationReport,
+} from './theme-registry'
+export type { DragDropProvider, DragDropContext } from './drag-drop-registry'
 export type { RegisteredExporter, ExporterFn, ExporterOptions } from './exporter-registry'
 export type { RegisteredImporter, ImporterParseFn, ImporterOptions, ImporterResult } from './importer-registry'
 export type { TypeMapping, TypeMappingEntry, TypeMappingFallback } from './type-mapper-registry'
+export type { CsvIntoTableOptions } from './csv-into-table'
 
 interface ContextDeps {
   pluginName: string

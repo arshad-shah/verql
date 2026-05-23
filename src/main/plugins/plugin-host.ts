@@ -88,6 +88,31 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
       if (!s.type) return { valid: false, error: 'Setting contribution missing required field: type' }
     }
   }
+  if (c.themes) {
+    for (const t of c.themes) {
+      if (!t.id) return { valid: false, error: 'Theme contribution missing required field: id' }
+      if (!t.name) return { valid: false, error: 'Theme contribution missing required field: name' }
+      if (t.type !== 'dark' && t.type !== 'light') {
+        return { valid: false, error: `Theme contribution '${t.id}' has invalid type (expected 'dark' or 'light')` }
+      }
+    }
+  }
+  if (c.exporters) {
+    for (const e of c.exporters) {
+      if (!e.id) return { valid: false, error: 'Exporter contribution missing required field: id' }
+      if (!e.name) return { valid: false, error: 'Exporter contribution missing required field: name' }
+      if (!e.extension) return { valid: false, error: 'Exporter contribution missing required field: extension' }
+    }
+  }
+  if (c.importers) {
+    for (const i of c.importers) {
+      if (!i.id) return { valid: false, error: 'Importer contribution missing required field: id' }
+      if (!i.name) return { valid: false, error: 'Importer contribution missing required field: name' }
+      if (!i.extensions || i.extensions.length === 0) {
+        return { valid: false, error: 'Importer contribution missing required field: extensions' }
+      }
+    }
+  }
 
   return { valid: true }
 }
@@ -243,7 +268,24 @@ export class PluginBootCoordinator {
         continue
       }
 
-      const mainPath = path.join(plugin.path, plugin.manifest.main)
+      // Path-traversal guard: a hostile manifest can specify `main` as
+      // `../../../etc/anything.js` or as an absolute path. `require()` would
+      // happily load whichever file the joined path resolves to. We pin
+      // mainPath to the plugin's own directory by comparing the resolved
+      // absolute paths.
+      const pluginRoot = path.resolve(plugin.path)
+      const mainPath = path.resolve(pluginRoot, plugin.manifest.main)
+      const withinPlugin =
+        mainPath === pluginRoot ||
+        mainPath.startsWith(pluginRoot + path.sep)
+      if (!withinPlugin) {
+        plugin.status = {
+          state: 'error',
+          error: `Invalid main: '${plugin.manifest.main}' resolves outside the plugin directory`,
+          phase: 'validate',
+        }
+        continue
+      }
       if (!fs.existsSync(mainPath)) {
         plugin.status = { state: 'error', error: `main file not found: ${plugin.manifest.main}`, phase: 'validate' }
         continue
@@ -427,12 +469,11 @@ export class PluginBootCoordinator {
           missing.push(`theme:${t.id}`)
           continue
         }
-        // Token-completeness check. We always attach the report so the
-        // renderer can badge the theme in the picker; required-token gaps
-        // additionally raise a toast and demote the theme to a missing
-        // contribution so the boot phase surfaces the problem.
-        const report = validateTheme(entry)
-        entry.validation = report
+        // The registry has already run validateTheme() at register time
+        // (so the picker has an authoritative report). The boot phase
+        // additionally surfaces required-token gaps as a toast and
+        // demotes the theme to a missing contribution.
+        const report = entry.validation ?? validateTheme(entry)
 
         if (report.missingRequired.length > 0) {
           this.deps.notificationBus.show({
