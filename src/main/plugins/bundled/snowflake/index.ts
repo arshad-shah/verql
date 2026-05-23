@@ -4,6 +4,10 @@ import type { CompletionItem } from '@shared/plugin-ui-types'
 import { SnowflakeAdapter } from './snowflake-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { quoteIdentifier } from '../../sdk/identifier'
+import { generateCreateTable } from '../../sdk/sql-format'
+
+const SNOWFLAKE_QUOTE = '"' as const
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-snowflake',
@@ -181,6 +185,8 @@ export function activate(ctx: PluginContext): void {
   ctx.drivers.register('snowflake', {
     createAdapter: (config) => new SnowflakeAdapter(config),
     sqlDialect: 'snowflake',
+    quoteChar: SNOWFLAKE_QUOTE,
+    placeholder: () => '?',
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
@@ -205,7 +211,19 @@ export function activate(ctx: PluginContext): void {
       { key: 'database', label: 'Database', type: 'select', fetchable: true, step: 2 },
       { key: 'schema', label: 'Schema', type: 'select', fetchable: true, step: 2, default: 'PUBLIC' },
     ],
-    getTableData: createRelationalGetTableData('snowflake')
+    sampleQuery: (table, schema) => {
+      const qualified = schema
+        ? quoteIdentifier([schema, table], SNOWFLAKE_QUOTE)
+        : quoteIdentifier(table, SNOWFLAKE_QUOTE)
+      return `SELECT * FROM ${qualified} LIMIT 100;`
+    },
+    getTableData: createRelationalGetTableData(SNOWFLAKE_QUOTE),
+    generateMigrationDdl: (tableName, columns) =>
+      generateCreateTable(
+        tableName,
+        columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
+        SNOWFLAKE_QUOTE,
+      ),
   })
 
   // ── Declarative UI: Toolbar selectors (Snowsight-style Role + Warehouse) ──

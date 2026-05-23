@@ -1,0 +1,68 @@
+// Generic SQL DDL/DML emission helpers for plugin authors.
+//
+// Everything here is parameterised on the driver's `quoteChar`; the SDK has
+// no dialect map of its own. A driver builds its exporter on top of these
+// helpers and supplies its own dialect-specific quoting / value formatting
+// only when the defaults don't fit (e.g. dialect-specific BLOB literals).
+
+import type { SchemaColumn } from '@shared/types'
+import { quoteIdentifier } from './identifier'
+
+/**
+ * Render a value as a SQL literal — quoted strings get their single quotes
+ * doubled, numbers and booleans go in unquoted, objects are JSON-encoded
+ * and then string-escaped. Drivers that need richer rendering (e.g.
+ * Postgres bytea hex literals) should compose around or replace this
+ * function in their own exporter.
+ */
+export function formatSqlValue(value: unknown): string {
+  if (value === null || value === undefined) return 'NULL'
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE'
+  if (typeof value === 'object') return `'${JSON.stringify(value).replace(/'/g, "''")}'`
+  return `'${String(value).replace(/'/g, "''")}'`
+}
+
+/**
+ * Emit a basic `CREATE TABLE` for the given columns. Columns marked
+ * `isPrimaryKey` get `PRIMARY KEY`; non-nullable non-PK columns get
+ * `NOT NULL`; columns with a default value carry it through. Anything
+ * fancier (per-dialect type quirks, computed columns, etc.) is the
+ * driver's responsibility — call this for the common case, override
+ * for the rest.
+ */
+export function generateCreateTable(
+  tableName: string,
+  columns: SchemaColumn[],
+  quoteChar: string,
+): string {
+  const colDefs = columns.map(c => {
+    let def = `  ${quoteIdentifier(c.name, quoteChar)} ${c.dataType}`
+    if (c.isPrimaryKey) def += ' PRIMARY KEY'
+    if (!c.nullable && !c.isPrimaryKey) def += ' NOT NULL'
+    if (c.defaultValue) def += ` DEFAULT ${c.defaultValue}`
+    return def
+  })
+  return `CREATE TABLE ${quoteIdentifier(tableName, quoteChar)} (\n${colDefs.join(',\n')}\n);\n`
+}
+
+/**
+ * Emit a sequence of single-row INSERT statements. Empty `rows`
+ * produces a `-- No data` marker so the resulting SQL file makes
+ * the situation explicit instead of dropping the table silently.
+ */
+export function generateInsertStatements(
+  tableName: string,
+  columns: SchemaColumn[],
+  rows: Record<string, unknown>[],
+  quoteChar: string,
+): string {
+  if (rows.length === 0) return `-- No data in ${tableName}\n`
+  const colNames = columns.map(c => quoteIdentifier(c.name, quoteChar)).join(', ')
+  const qTable = quoteIdentifier(tableName, quoteChar)
+  const lines = rows.map(row => {
+    const values = columns.map(c => formatSqlValue(row[c.name])).join(', ')
+    return `INSERT INTO ${qTable} (${colNames}) VALUES (${values});`
+  })
+  return lines.join('\n') + '\n'
+}

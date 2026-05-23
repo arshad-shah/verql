@@ -1,10 +1,10 @@
 import type { RegisteredExporter } from '../../sdk/exporter-registry'
 import type { RegisteredImporter } from '../../sdk/importer-registry'
-import { quoteIdentifier } from '../../../db/identifier'
-import { splitSqlStatements } from '../../../import/sql-import'
-import { formatSqlValue, generateCreateTable } from '../../../export/sql-export'
+import { quoteIdentifier } from '../../sdk/identifier'
+import { splitSqlStatements } from '../../sdk/sql-statements'
+import { formatSqlValue, generateCreateTable } from '../../sdk/sql-format'
 
-const DIALECT = 'mysql' as const
+const MY_QUOTE = '`' as const
 
 export const sqlExporter: RegisteredExporter = {
   format: 'sql',
@@ -14,14 +14,14 @@ export const sqlExporter: RegisteredExporter = {
   execute(rows, columns, options) {
     let output = ''
     if (options.includeSchema) {
-      output += generateCreateTable(options.tableName, columns, 'mysql') + '\n'
+      output += generateCreateTable(options.tableName, columns, MY_QUOTE) + '\n'
     }
     if (rows.length === 0) {
       output += `-- No data in ${options.tableName}\n`
       return output
     }
-    const colNames = columns.map(c => quoteIdentifier(c.name, DIALECT)).join(', ')
-    const qTable = quoteIdentifier(options.tableName, DIALECT)
+    const colNames = columns.map(c => quoteIdentifier(c.name, MY_QUOTE)).join(', ')
+    const qTable = quoteIdentifier(options.tableName, MY_QUOTE)
     for (const row of rows) {
       const values = columns.map(c => formatSqlValue(row[c.name])).join(', ')
       output += `INSERT INTO ${qTable} (${colNames}) VALUES (${values});\n`

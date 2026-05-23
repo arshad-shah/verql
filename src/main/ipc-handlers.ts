@@ -18,16 +18,10 @@ import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
-import * as sshPlugin from './plugins/bundled/ssh-tunnel'
-import * as mongoPlugin from './plugins/bundled/mongodb'
-import * as redisPlugin from './plugins/bundled/redis'
-import * as snowflakePlugin from './plugins/bundled/snowflake'
-import * as postgresqlPlugin from './plugins/bundled/postgresql'
-import * as mysqlPlugin from './plugins/bundled/mysql'
-import * as sqlitePlugin from './plugins/bundled/sqlite'
-import * as aiPlugin from './plugins/bundled/ai'
-import * as coreFormatsPlugin from './plugins/bundled/core-formats'
-import * as coreThemesPlugin from './plugins/bundled/core-themes'
+// Single import that lists every bundled plugin. The orchestrator never
+// names individual drivers — that list lives in src/main/plugins/bundled/
+// where it belongs. Adding a driver does not change this file.
+import { bundledPlugins } from './plugins/bundled'
 
 import type { IpcContext } from './ipc/context'
 import { handle } from './ipc/context'
@@ -113,7 +107,7 @@ export function registerIpcHandlers(): void {
   // The migration IPC handler resolves type mappings through the registry,
   // so it needs visibility into what each driver plugin contributed.
   registerDialogHandlers(handle)
-  registerMigrationHandlers(handle, typeMapperRegistry)
+  registerMigrationHandlers(handle, typeMapperRegistry, ctx.driverRegistry)
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
 
@@ -154,21 +148,13 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  // The AI plugin is registered first so its `ai` service is available
-  // synchronously when other plugins (mongo, redis) register their AI tools.
-  pluginCoordinator.registerBundledPlugin(aiPlugin.manifest, aiPlugin)
-  // Core themes register before any window opens so the very first paint
-  // already has the active theme's tokens — no flash of unstyled content.
-  pluginCoordinator.registerBundledPlugin(coreThemesPlugin.manifest, coreThemesPlugin)
-  // Core formats (CSV/JSON) before drivers so DB plugins can override defaults.
-  pluginCoordinator.registerBundledPlugin(coreFormatsPlugin.manifest, coreFormatsPlugin)
-  pluginCoordinator.registerBundledPlugin(sshPlugin.manifest, sshPlugin)
-  pluginCoordinator.registerBundledPlugin(mongoPlugin.manifest, mongoPlugin)
-  pluginCoordinator.registerBundledPlugin(redisPlugin.manifest, redisPlugin)
-  pluginCoordinator.registerBundledPlugin(snowflakePlugin.manifest, snowflakePlugin)
-  pluginCoordinator.registerBundledPlugin(postgresqlPlugin.manifest, postgresqlPlugin)
-  pluginCoordinator.registerBundledPlugin(mysqlPlugin.manifest, mysqlPlugin)
-  pluginCoordinator.registerBundledPlugin(sqlitePlugin.manifest, sqlitePlugin)
+  // Register every bundled plugin in the order declared by the bundled
+  // entry-point. AI registers first because other plugins depend on its
+  // service; core-themes before the first paint to avoid flash of unstyled
+  // content; core-formats before drivers so drivers can override defaults.
+  for (const plugin of bundledPlugins) {
+    pluginCoordinator.registerBundledPlugin(plugin.manifest, plugin)
+  }
 
   pluginCoordinator.boot()
     .then(() => {

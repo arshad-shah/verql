@@ -4,7 +4,6 @@ import { createAdapter } from '../db/factory'
 import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import { getSecretFieldKeys, mergeIncomingProfile } from './secrets'
-import { quoteIdentifier } from '../db/identifier'
 import type { IpcContext, Handle } from './context'
 
 export function registerDbHandlers(
@@ -196,19 +195,16 @@ export function registerDbHandlers(
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) throw new Error('Unknown connection')
     const driver = ctx.driverRegistry.get(profile.type)
-    if (driver?.sampleQuery) return driver.sampleQuery(table, schema)
-    // SQL-dialect-aware fallback: only available for drivers that declare a
-    // dialect. Non-SQL drivers MUST provide their own sampleQuery — the
-    // orchestrator refuses to guess what a "sample" looks like in that case.
-    if (!driver?.sqlDialect) {
+    if (!driver?.sampleQuery) {
+      // Every driver — SQL or otherwise — must contribute its own
+      // sampleQuery(). The orchestrator never falls back to a fabricated
+      // SQL template, because that would re-introduce dialect knowledge
+      // into the main app.
       throw new Error(
-        `Driver '${profile.type}' does not provide a sampleQuery() and is not ` +
-        `a SQL dialect. Add a sampleQuery contribution to the driver plugin.`
+        `Driver '${profile.type}' does not contribute a sampleQuery(). ` +
+        `Add it to the driver plugin's registration.`
       )
     }
-    const qualified = schema
-      ? quoteIdentifier([schema, table], driver.sqlDialect)
-      : quoteIdentifier(table, driver.sqlDialect)
-    return `SELECT * FROM ${qualified} LIMIT 100;`
+    return driver.sampleQuery(table, schema)
   })
 }

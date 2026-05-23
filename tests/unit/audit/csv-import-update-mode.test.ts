@@ -9,7 +9,7 @@
 // per-dialect). That's the minimum to stop silent data loss.
 import { describe, it, expect } from 'vitest'
 import type { DbAdapter } from '../../../src/main/db/adapter'
-import { importCsvToTable } from '../../../src/main/import/csv-import'
+import { importCsvToTable } from '../../../src/main/plugins/sdk/csv-into-table'
 
 class StubAdapter implements DbAdapter {
   async connect() {}
@@ -37,7 +37,8 @@ describe('importCsvToTable — onConflict="update"', () => {
         tableName: 't',
         columnMapping: { id: 'id', name: 'name' },
         onConflict: 'update',
-        dialect: 'postgresql',
+        quoteChar: '"',
+        placeholder: (i) => `$${i}`,
       },
     )
 

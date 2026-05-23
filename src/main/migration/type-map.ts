@@ -1,6 +1,6 @@
 import type { DatabaseType } from '@shared/types'
 import type { TypeMapperRegistry } from '../plugins/sdk/type-mapper-registry'
-import { quoteIdentifier, type SqlDialect } from '../db/identifier'
+import type { DriverRegistryImpl } from '../plugins/sdk/driver-registry'
 
 export interface TypeMapping {
   source: string
@@ -34,45 +34,36 @@ export function mapType(
   }
 }
 
-/** Pick the SQL dialect used to emit DDL for the target database type. */
-function dialectFor(t: DatabaseType): SqlDialect | undefined {
-  if (t === 'postgresql') return 'postgresql'
-  if (t === 'mysql') return 'mysql'
-  if (t === 'sqlite') return 'sqlite'
-  if (t === 'snowflake') return 'snowflake'
-  return undefined
-}
-
 /**
- * Emit a CREATE TABLE statement for a migration. Identifier escaping goes
- * through the dialect-aware `quoteIdentifier`. SQLite's `INTEGER PRIMARY KEY`
- * idiom is the one cross-dialect quirk we still encode here; everything
- * else flows from the registry-resolved type mapping.
+ * Emit a CREATE TABLE statement for a migration. The target driver owns the
+ * dialect-specific quirks (SQLite's INTEGER PRIMARY KEY rowid alias,
+ * MySQL's storage clauses, …) via its `generateMigrationDdl` capability —
+ * the orchestrator just hands the resolved column types over and returns
+ * whatever DDL the driver produces.
  */
 export function generateMigrationDdl(
   registry: TypeMapperRegistry,
+  drivers: DriverRegistryImpl,
   tableName: string,
   columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
   from: DatabaseType,
   to: DatabaseType
 ): { ddl: string; mappings: TypeMapping[] } {
   const mappings = columns.map(c => mapType(registry, c.dataType, from, to))
-  const dialect = dialectFor(to) ?? 'postgresql'
-
-  const colDefs = columns.map((c, i) => {
-    let def: string
-    if (c.isPrimaryKey && to === 'sqlite') {
-      // SQLite's rowid alias only kicks in when the column is INTEGER PRIMARY
-      // KEY — anything else needs an explicit PRIMARY KEY clause.
-      def = `  ${quoteIdentifier(c.name, 'sqlite')} INTEGER PRIMARY KEY`
-    } else {
-      def = `  ${quoteIdentifier(c.name, dialect)} ${mappings[i].target}`
-      if (c.isPrimaryKey) def += ' PRIMARY KEY'
-    }
-    if (!c.nullable && !c.isPrimaryKey) def += ' NOT NULL'
-    return def
-  })
-
-  const ddl = `CREATE TABLE ${quoteIdentifier(tableName, dialect)} (\n${colDefs.join(',\n')}\n);\n`
+  const targetDriver = drivers.get(to)
+  if (!targetDriver?.generateMigrationDdl) {
+    throw new Error(
+      `Target driver '${to}' does not contribute generateMigrationDdl(). ` +
+      `Add it to the driver plugin's registration.`,
+    )
+  }
+  const ddlColumns = columns.map((c, i) => ({
+    name: c.name,
+    dataType: mappings[i].target,
+    nullable: c.nullable,
+    isPrimaryKey: c.isPrimaryKey,
+    defaultValue: c.defaultValue,
+  }))
+  const ddl = targetDriver.generateMigrationDdl(tableName, ddlColumns)
   return { ddl, mappings }
 }

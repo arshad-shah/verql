@@ -1,7 +1,9 @@
 import pg from 'pg'
 import type { DbAdapter } from '../../../db/adapter'
-import { quoteIdentifier } from '../../../db/identifier'
+import { quoteIdentifier } from '../../sdk/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, FieldInfo, TestConnectionResult } from '@shared/types'
+
+const PG_QUOTE = '"' as const
 
 export class PostgresAdapter implements DbAdapter {
   private pool: pg.Pool | null = null
@@ -44,7 +46,7 @@ export class PostgresAdapter implements DbAdapter {
 
   async setSchema(schema: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`SET search_path TO ${quoteIdentifier(schema, 'postgresql')}`)
+    await this.pool.query(`SET search_path TO ${quoteIdentifier(schema, PG_QUOTE)}`)
   }
 
   async switchDatabase(database: string): Promise<void> {
@@ -156,7 +158,7 @@ export class PostgresAdapter implements DbAdapter {
     if (!this.pool) throw new Error('Not connected')
     const s = schema ?? 'public'
     const result = await this.pool.query(
-      `SELECT count(*) as cnt FROM ${quoteIdentifier([s, table], 'postgresql')}`
+      `SELECT count(*) as cnt FROM ${quoteIdentifier([s, table], PG_QUOTE)}`
     )
     return parseInt(result.rows[0].cnt, 10)
   }

@@ -1,4 +1,10 @@
-import type { DbAdapter } from '../db/adapter'
+// Generic SQL statement splitter.
+//
+// Driver-agnostic enough to ship from the SDK: it tokenises the input,
+// honours both single- and double-quoted strings, both `--` and `/* */`
+// comment styles, and breaks at semicolons. Drivers with quirkier
+// statement boundaries (DELIMITER directives, dollar-quoted bodies)
+// should ship their own splitter and not call this one.
 
 export function splitSqlStatements(sql: string): string[] {
   const statements: string[] = []
@@ -54,24 +60,4 @@ export function splitSqlStatements(sql: string): string[] {
   if (last) statements.push(last)
 
   return statements
-}
-
-export async function executeSqlFile(
-  adapter: DbAdapter,
-  sql: string
-): Promise<{ executed: number; errors: string[] }> {
-  const statements = splitSqlStatements(sql)
-  let executed = 0
-  const errors: string[] = []
-
-  for (let i = 0; i < statements.length; i++) {
-    try {
-      await adapter.query(statements[i])
-      executed++
-    } catch (err) {
-      errors.push(`Statement ${i + 1}: ${(err as Error).message}`)
-    }
-  }
-
-  return { executed, errors }
 }

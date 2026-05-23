@@ -1,8 +1,7 @@
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
-import { exportToCsv } from '../../../export/csv-export'
-import { exportToJson } from '../../../export/json-export'
-import { parseCsvFile } from '../../../import/csv-import'
+import { exportToCsv, parseCsvFile } from './csv'
+import { exportToJson } from './json'
 
 /**
  * Core formats plugin.
@@ -11,6 +10,12 @@ import { parseCsvFile } from '../../../import/csv-import'
  * a specific SQL dialect. Dialect-specific formats (e.g. SQL DDL) are
  * contributed by individual driver plugins so that adding a new database type
  * doesn't require editing the main app.
+ *
+ * The CSV importer is "parse-only" by default — it just turns a file into
+ * rows. The orchestrator combines those rows with the target driver's
+ * `quoteChar` + `placeholder` capabilities to produce dialect-correct
+ * INSERT statements via {@link importCsvToTable}, which lives here too so
+ * the entire generic-CSV path is owned by one plugin.
  */
 export const manifest: PluginManifest = {
   name: 'verql-plugin-core-formats',

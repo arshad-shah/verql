@@ -4,11 +4,14 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { SqliteAdapter } from './sqlite-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { quoteIdentifier } from '../../sdk/identifier'
 import {
   PG_TO_SQLITE, pgToSqliteFallback,
   MYSQL_TO_SQLITE, mysqlToSqliteFallback,
   sqliteToMysqlFallback
 } from './type-maps'
+
+const SQLITE_QUOTE = '"' as const
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-sqlite',
@@ -126,12 +129,37 @@ export function activate(ctx: PluginContext): void {
   ctx.drivers.register('sqlite', {
     createAdapter: (config) => new SqliteAdapter(config),
     sqlDialect: 'sqlite',
+    quoteChar: SQLITE_QUOTE,
+    placeholder: () => '?',
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['main'],
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },
     ],
-    getTableData: createRelationalGetTableData('sqlite')
+    sampleQuery: (table, schema) => {
+      const qualified = schema && schema !== 'main'
+        ? quoteIdentifier([schema, table], SQLITE_QUOTE)
+        : quoteIdentifier(table, SQLITE_QUOTE)
+      return `SELECT * FROM ${qualified} LIMIT 100;`
+    },
+    getTableData: createRelationalGetTableData(SQLITE_QUOTE),
+    generateMigrationDdl: (tableName, columns) => {
+      // SQLite quirk: the rowid alias is only created when the column is
+      // declared exactly as `INTEGER PRIMARY KEY` (no NOT NULL needed —
+      // it's implied). Anything else needs an explicit PRIMARY KEY clause
+      // and loses the rowid optimisation. We special-case it here because
+      // generic DDL builders would emit the original column type.
+      const colDefs = columns.map(c => {
+        if (c.isPrimaryKey) {
+          return `  ${quoteIdentifier(c.name, SQLITE_QUOTE)} INTEGER PRIMARY KEY`
+        }
+        let def = `  ${quoteIdentifier(c.name, SQLITE_QUOTE)} ${c.dataType}`
+        if (!c.nullable) def += ' NOT NULL'
+        if (c.defaultValue) def += ` DEFAULT ${c.defaultValue}`
+        return def
+      })
+      return `CREATE TABLE ${quoteIdentifier(tableName, SQLITE_QUOTE)} (\n${colDefs.join(',\n')}\n);\n`
+    },
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

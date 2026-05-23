@@ -121,11 +121,22 @@ export interface DriverRegistry {
 export interface DriverFactory {
   createAdapter(config: Record<string, unknown>): DbAdapter
   connectionFields: ConnectionField[]
-  /** SQL dialect this driver speaks, if any. Lets shared SQL builders (e.g.
-   *  the CSV-into-table importer) pick the right identifier quoting and
-   *  placeholder syntax without the orchestrator hardcoding a type→dialect
-   *  table. Non-SQL drivers (mongo, redis) leave this undefined. */
-  sqlDialect?: 'postgresql' | 'mysql' | 'sqlite' | 'snowflake'
+  /** Free-form dialect tag — anything the driver wants to call itself. The
+   *  orchestrator never branches on this; consumers that previously did now
+   *  use the structural `quoteChar` / `placeholder` capabilities instead.
+   *  Kept around because some plugin contributions still want to badge
+   *  themselves ("SQL (PostgreSQL)") in their displayName. */
+  sqlDialect?: string
+  /** Identifier-quoting character for this driver's dialect. `"` for
+   *  Postgres / SQLite / Snowflake, `` ` `` for MySQL. SDK helpers like
+   *  `quoteIdentifier` and `generateCreateTable` take this verbatim so
+   *  the main app never has to know which driver uses which character. */
+  quoteChar?: string
+  /** Render a parameter placeholder for prepared statements. Postgres
+   *  numbers them (`$1`, `$2`); MySQL / SQLite use `?`. The generic
+   *  CSV-into-table importer asks the driver for the right shape
+   *  instead of hardcoding a dialect map. */
+  placeholder?(index: number): string
   /** Monaco editor language used for queries against this driver. Defaults to
    *  'sql' when omitted. The renderer never branches on connection type. */
   editorLanguage?: string
@@ -136,7 +147,10 @@ export interface DriverFactory {
    *  default. First match in the live schema list wins. Examples:
    *  postgres ⇒ ['public']; sqlite ⇒ ['main']; snowflake ⇒ ['PUBLIC', 'public']. */
   defaultSchemaCandidates?: string[]
-  /** Returns a sample/preview query for a table. Used by the explorer "Open in tab" action. */
+  /** Returns a sample/preview query for a table. REQUIRED for SQL drivers;
+   *  non-SQL drivers (mongo, redis) implement whatever "show me some
+   *  records" means for their model. The orchestrator no longer guesses
+   *  a fallback — drivers own this. */
   sampleQuery?(table: string, schema?: string): string
   /** Reads every row of a table/collection for export. The driver decides how
    *  (SQL SELECT, Mongo find, Redis SCAN, …); the orchestrator never assumes
@@ -146,6 +160,16 @@ export interface DriverFactory {
     rows: Record<string, unknown>[]
     columns: SchemaColumn[]
   }>
+  /** Emit a CREATE TABLE for a migration target. Lets the orchestrator route
+   *  the structural conversion to the receiving driver — Postgres / MySQL /
+   *  SQLite each have their own quirks (SQLite's INTEGER-PRIMARY-KEY rowid
+   *  alias, MySQL's storage-engine clauses, etc.) that no longer have to
+   *  be hardcoded in main/. Returns the DDL string; the orchestrator owns
+   *  the surrounding migration report. */
+  generateMigrationDdl?(
+    tableName: string,
+    columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
+  ): string
 }
 
 /** Serialisable subset of DriverFactory that the renderer can consume over

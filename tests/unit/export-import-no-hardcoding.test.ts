@@ -27,12 +27,15 @@ describe('Orchestrator has no hardcoded relational table', () => {
     expect(src).not.toMatch(/connectionType\s*===\s*['"]mongodb['"]/)
   })
 
-  it('db:sample-query handler delegates to driver.sqlDialect, not a hardcoded list', () => {
+  it('db:sample-query handler delegates to driver.sampleQuery, not a hardcoded fallback', () => {
     const src = fs.readFileSync(DB_FILE, 'utf-8')
     expect(src).not.toMatch(/FALLBACK_DIALECT_BY_TYPE/)
     expect(src).not.toMatch(/connectionType\s*===\s*['"]postgresql['"]/)
-    // Sanity: it must consult the driver.
-    expect(src).toMatch(/driver\?\.sqlDialect/)
+    // The orchestrator no longer fabricates `SELECT * FROM … LIMIT 100`
+    // when the driver doesn't ship a sampleQuery — it throws and forces
+    // the driver to contribute one.
+    expect(src).toMatch(/driver\?\.sampleQuery/)
+    expect(src).toMatch(/return driver\.sampleQuery/)
   })
 
   for (const file of [CMD_PALETTE, CONN_SELECTOR, QUERY_EDITOR]) {
