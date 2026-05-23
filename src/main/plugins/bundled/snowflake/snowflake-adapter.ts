@@ -1,8 +1,10 @@
 import snowflake from 'snowflake-sdk'
 import fs from 'fs/promises'
 import type { DbAdapter } from '../../../db/adapter'
-import { quoteIdentifier } from '../../../db/identifier'
+import { quoteIdentifier } from '../../sdk/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
+
+const SNOWFLAKE_QUOTE = '"' as const
 
 // Suppress SDK precision-loss warnings — we handle large numbers via fetchAsString on execute()
 snowflake.configure({ logLevel: 'ERROR' })
@@ -157,7 +159,7 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   private escapeIdentifier(name: string): string {
-    return quoteIdentifier(name, 'snowflake')
+    return quoteIdentifier(name, SNOWFLAKE_QUOTE)
   }
 
   cancelQuery(): void {

@@ -95,11 +95,16 @@ export class KeyringService {
     // file and rename it onto the keyring. A crash mid-write would
     // otherwise leave the file unparseable and we'd silently lose every
     // saved credential on next launch.
+    //
+    // mode 0o600 (owner read/write only) — the blob is encrypted via
+    // safeStorage, but encryption is not a substitute for filesystem ACLs
+    // on multi-user systems. A local attacker with shell access shouldn't
+    // be able to copy the file off and brute-force it offline.
     const dir = path.dirname(this.filePath)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const tmpPath = path.join(dir, `.${path.basename(this.filePath)}.${process.pid}.${Date.now()}.tmp`)
     try {
-      fs.writeFileSync(tmpPath, JSON.stringify(this.cache), 'utf-8')
+      fs.writeFileSync(tmpPath, JSON.stringify(this.cache), { encoding: 'utf-8', mode: 0o600 })
       fs.renameSync(tmpPath, this.filePath)
     } catch (err) {
       try { fs.unlinkSync(tmpPath) } catch { /* ignore — temp may not exist */ }

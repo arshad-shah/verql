@@ -55,6 +55,11 @@ interface TabsState {
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
+  /** Called when a connection profile is deleted. Query tabs lose their
+   *  pointer so the next execute lands in the "pick a connection" state
+   *  instead of failing silently against a gone profile. ER-diagram and
+   *  table tabs target one specific connection — they're closed outright. */
+  detachConnection: (connectionId: string) => void
 }
 
 export const useTabsStore = create<TabsState>((set, get) => ({
@@ -122,7 +127,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     set((s) => ({
       tabs: [],
       activeTabId: null,
-      recentlyClosed: [...s.tabs.reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
+      recentlyClosed: [...[...s.tabs].reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
     }))
   },
 
@@ -345,6 +350,33 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         tabs: [...s.tabs, tab],
         activeTabId: tab.id,
         recentlyClosed: rest
+      }
+    })
+  },
+
+  detachConnection: (connectionId) => {
+    set((s) => {
+      const nextTabs: Tab[] = []
+      for (const t of s.tabs) {
+        if (t.type === 'query') {
+          if (t.connectionId === connectionId) {
+            nextTabs.push({ ...t, connectionId: null, database: null, schema: null })
+          } else {
+            nextTabs.push(t)
+          }
+        } else if (t.type === 'er-diagram' || t.type === 'table') {
+          // These tabs only make sense in the context of one specific
+          // connection — drop them when that connection is gone.
+          if (t.connectionId === connectionId) continue
+          nextTabs.push(t)
+        } else {
+          nextTabs.push(t)
+        }
+      }
+      const activeStillThere = nextTabs.some(t => t.id === s.activeTabId)
+      return {
+        tabs: nextTabs,
+        activeTabId: activeStillThere ? s.activeTabId : (nextTabs[0]?.id ?? null),
       }
     })
   }

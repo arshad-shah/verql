@@ -88,6 +88,31 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
       if (!s.type) return { valid: false, error: 'Setting contribution missing required field: type' }
     }
   }
+  if (c.themes) {
+    for (const t of c.themes) {
+      if (!t.id) return { valid: false, error: 'Theme contribution missing required field: id' }
+      if (!t.name) return { valid: false, error: 'Theme contribution missing required field: name' }
+      if (t.type !== 'dark' && t.type !== 'light') {
+        return { valid: false, error: `Theme contribution '${t.id}' has invalid type (expected 'dark' or 'light')` }
+      }
+    }
+  }
+  if (c.exporters) {
+    for (const e of c.exporters) {
+      if (!e.id) return { valid: false, error: 'Exporter contribution missing required field: id' }
+      if (!e.name) return { valid: false, error: 'Exporter contribution missing required field: name' }
+      if (!e.extension) return { valid: false, error: 'Exporter contribution missing required field: extension' }
+    }
+  }
+  if (c.importers) {
+    for (const i of c.importers) {
+      if (!i.id) return { valid: false, error: 'Importer contribution missing required field: id' }
+      if (!i.name) return { valid: false, error: 'Importer contribution missing required field: name' }
+      if (!i.extensions || i.extensions.length === 0) {
+        return { valid: false, error: 'Importer contribution missing required field: extensions' }
+      }
+    }
+  }
 
   return { valid: true }
 }
@@ -165,6 +190,20 @@ export class PluginBootCoordinator {
 
         const manifest = this.parseManifest(pluginPath, entry)
         if (manifest) {
+          // Bundled plugins (built-in drivers, themes, etc.) are trusted code
+          // shipped with the app. A third-party plugin folder claiming the
+          // same `name` MUST NOT be allowed to overwrite it — otherwise a
+          // user-installed plugin called `verql-plugin-postgresql` could
+          // shadow the built-in postgres driver and intercept credentials
+          // for every postgres connection.
+          const existing = this.plugins.get(manifest.name)
+          if (existing && existing.path === '<bundled>') {
+            console.warn(
+              `[plugins] refusing to load ${manifest.name} from ${pluginPath}: ` +
+                `name collides with a bundled plugin`,
+            )
+            continue
+          }
           this.plugins.set(manifest.name, {
             manifest,
             path: pluginPath,
@@ -229,7 +268,24 @@ export class PluginBootCoordinator {
         continue
       }
 
-      const mainPath = path.join(plugin.path, plugin.manifest.main)
+      // Path-traversal guard: a hostile manifest can specify `main` as
+      // `../../../etc/anything.js` or as an absolute path. `require()` would
+      // happily load whichever file the joined path resolves to. We pin
+      // mainPath to the plugin's own directory by comparing the resolved
+      // absolute paths.
+      const pluginRoot = path.resolve(plugin.path)
+      const mainPath = path.resolve(pluginRoot, plugin.manifest.main)
+      const withinPlugin =
+        mainPath === pluginRoot ||
+        mainPath.startsWith(pluginRoot + path.sep)
+      if (!withinPlugin) {
+        plugin.status = {
+          state: 'error',
+          error: `Invalid main: '${plugin.manifest.main}' resolves outside the plugin directory`,
+          phase: 'validate',
+        }
+        continue
+      }
       if (!fs.existsSync(mainPath)) {
         plugin.status = { state: 'error', error: `main file not found: ${plugin.manifest.main}`, phase: 'validate' }
         continue
@@ -413,12 +469,11 @@ export class PluginBootCoordinator {
           missing.push(`theme:${t.id}`)
           continue
         }
-        // Token-completeness check. We always attach the report so the
-        // renderer can badge the theme in the picker; required-token gaps
-        // additionally raise a toast and demote the theme to a missing
-        // contribution so the boot phase surfaces the problem.
-        const report = validateTheme(entry)
-        entry.validation = report
+        // The registry has already run validateTheme() at register time
+        // (so the picker has an authoritative report). The boot phase
+        // additionally surfaces required-token gaps as a toast and
+        // demotes the theme to a missing contribution.
+        const report = entry.validation ?? validateTheme(entry)
 
         if (report.missingRequired.length > 0) {
           this.deps.notificationBus.show({
@@ -613,6 +668,15 @@ export class PluginBootCoordinator {
         name = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).name
       } else {
         return { success: false, error: 'No plugin-manifest.json or package.json found' }
+      }
+
+      // Same protection as discover(): refuse to install a plugin whose name
+      // collides with a bundled plugin. The user is asking to drop a folder
+      // onto disk, but we won't let it shadow the built-in driver of the
+      // same name even if discover() later runs.
+      const collidingBundled = this.plugins.get(name)
+      if (collidingBundled && collidingBundled.path === '<bundled>') {
+        return { success: false, error: `Cannot install: '${name}' is a bundled plugin name` }
       }
 
       const destDir = path.join(this.getPluginDir(), name)

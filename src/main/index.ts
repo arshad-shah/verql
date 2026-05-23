@@ -170,6 +170,22 @@ function createWindow(): BrowserWindow {
     }
   })
 
+  // Defense-in-depth against rogue navigation. Even with contextIsolation
+  // and sandbox: true, any link or script that calls window.open() will
+  // ask Electron to spawn a new BrowserWindow. We deny those outright —
+  // anything that needs to leave the app should open in the user's
+  // default browser via shell.openExternal, which the renderer doesn't
+  // have access to without an explicit IPC call. Same for in-window
+  // navigations to external URLs: we keep the renderer pinned to the
+  // bundled assets / dev server.
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', (event, url) => {
+    const allowed = isDev && process.env['ELECTRON_RENDERER_URL']
+      ? url.startsWith(process.env['ELECTRON_RENDERER_URL']!)
+      : url.startsWith('file://')
+    if (!allowed) event.preventDefault()
+  })
+
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {

@@ -3,7 +3,7 @@ import fs from 'fs'
 import type { SchemaColumn } from '@shared/types'
 import type { ExporterRegistry } from '../plugins/sdk/exporter-registry'
 import type { ImporterRegistry } from '../plugins/sdk/importer-registry'
-import { importCsvToTable } from '../import/csv-import'
+import { importCsvToTable } from '../plugins/sdk/csv-into-table'
 import type { IpcContext, Handle } from './context'
 
 interface RegistryDeps {
@@ -114,20 +114,25 @@ export function registerExportImportHandlers(
       tableName, connectionType, adapter, columnMapping, onConflict
     })
     if (!importer.driverExecutes) {
-      // Generic CSV-into-relational-table fallback. The driver tells us its
-      // dialect; if it has none, we can't generate INSERT statements, so the
-      // importer plugin must register with driverExecutes:true and handle
-      // insertion itself.
+      // Generic CSV-into-relational-table fallback. The orchestrator drives
+      // it using the driver's contributed `quoteChar` + `placeholder`, so no
+      // dialect knowledge has to live in this file. Drivers that need
+      // upserts or other dialect-specific behaviour should ship their own
+      // importer with driverExecutes:true.
       const driver = ctx.driverRegistry.get(connectionType)
-      if (!driver?.sqlDialect) {
+      if (!driver?.quoteChar || !driver?.placeholder) {
         throw new Error(
-          `Driver '${connectionType}' has no sqlDialect. The generic CSV → table ` +
-          `importer cannot be used; register a driverExecutes importer instead.`
+          `Driver '${connectionType}' did not contribute quoteChar + placeholder. ` +
+          `The generic CSV → table importer cannot be used; register a ` +
+          `driverExecutes importer instead.`
         )
       }
       return importCsvToTable(adapter, result.rows as Record<string, string>[], {
-        tableName, columnMapping, onConflict,
-        dialect: driver.sqlDialect
+        tableName,
+        columnMapping,
+        onConflict,
+        quoteChar: driver.quoteChar,
+        placeholder: driver.placeholder,
       })
     }
     return {

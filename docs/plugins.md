@@ -69,34 +69,55 @@ this repo (since the audit; see `tests/unit/plugin-boot.test.ts`).
 
 ### activate(ctx)
 
+The idiomatic shape uses `definePlugin` so the compiler pins every field
+against the SDK's `PluginModule` type. Missing fields, mistyped
+contributions, or a wrong `activate` signature fail at compile time
+instead of waiting for the boot pipeline to report a runtime error.
+
 ```ts
 // my-plugin/index.ts
-import type { PluginContext } from '@verql/plugin-sdk'
+import { definePlugin } from '@verql/plugin-sdk'
 import { CassandraAdapter } from './cassandra-adapter'
 
-export function activate(ctx: PluginContext): void {
-  ctx.drivers.register('cassandra', {
-    createAdapter: (config) => new CassandraAdapter(config),
-    sqlDialect: undefined,           // not SQL — keep this undefined
-    editorLanguage: 'cql',
-    defaultSchemaCandidates: ['system'],
-    connectionFields: [
-      { key: 'contactPoints', label: 'Contact Points', type: 'text', required: true },
-      { key: 'keyspace', label: 'Keyspace', type: 'text', required: true },
-      { key: 'username', label: 'Username', type: 'text' },
-      { key: 'password', label: 'Password', type: 'password' }
-    ],
-    getTableData: async (adapter, table, keyspace) => {
-      const result = await adapter.query(/* safely-escaped CQL */)
-      return { rows: result.rows, columns: /* … */ [] }
-    }
-  })
-}
+export default definePlugin({
+  manifest: {
+    name: 'verql-plugin-cassandra',
+    version: '1.0.0',
+    displayName: 'Cassandra',
+    description: 'Apache Cassandra driver',
+    main: 'index.js',
+    contributes: {
+      drivers: [{ id: 'cassandra', name: 'Cassandra' }],
+    },
+  },
 
-export function deactivate(): void {
-  // Optional. The SDK already tears down subscriptions tracked through
-  // ctx.* registries. Use this for anything else (timers, sockets, …).
-}
+  activate(ctx) {
+    ctx.drivers.register('cassandra', {
+      createAdapter: (config) => new CassandraAdapter(config),
+      sqlDialect: 'cassandra',         // free-form label, never branched on
+      quoteChar: '"',
+      placeholder: () => '?',
+      editorLanguage: 'cql',
+      defaultSchemaCandidates: ['system'],
+      connectionFields: [
+        { key: 'contactPoints', label: 'Contact Points', type: 'text', required: true },
+        { key: 'keyspace', label: 'Keyspace', type: 'text', required: true },
+        { key: 'username', label: 'Username', type: 'text' },
+        { key: 'password', label: 'Password', type: 'password' },
+      ],
+      sampleQuery: (table) => `SELECT * FROM ${table} LIMIT 100;`,
+      getTableData: async (adapter, table) => {
+        const result = await adapter.query(/* safely-escaped CQL */)
+        return { rows: result.rows, columns: /* … */ [] }
+      },
+    })
+  },
+
+  // Optional. The SDK tears down subscriptions tracked through ctx.*
+  // registries automatically. Use this hook only for things outside the
+  // SDK (raw timers, sockets, child processes).
+  deactivate() {},
+})
 ```
 
 `ctx` is a sandboxed view of the orchestrator. Everything a plugin can do
@@ -152,14 +173,51 @@ A driver makes a new database type available. It must implement the
 ctx.drivers.register('cassandra', {
   createAdapter: (config) => new CassandraAdapter(config),
   connectionFields: [...],
-  // Optional but recommended:
-  sqlDialect: 'postgresql' | 'mysql' | 'sqlite' | 'snowflake',
+
+  // Free-form badge — never branched on. Use it for displayNames like
+  // "SQL (Cassandra)".
+  sqlDialect: 'cassandra',
+
+  // Structural capabilities the generic helpers consume. Postgres uses
+  // `"`/`$1`; MySQL uses `` ` ``/`?`; SQLite/Snowflake use `"`/`?`.
+  // Setting both lets the generic CSV → table importer work without the
+  // orchestrator knowing your dialect by name.
+  quoteChar: '"',
+  placeholder: (i) => '?',
+
   editorLanguage: 'cql',                // Monaco language id
   defaultSchemaCandidates: ['system'],  // renderer picks first match
   defaultSchemaUseConnectionDatabase: false,
-  sampleQuery: (table) => `SELECT * FROM ${table} LIMIT 100;`,
-  getTableData: async (adapter, table, schema) => { ... }
+
+  // REQUIRED for every driver — the orchestrator refuses to fabricate a
+  // "SELECT * FROM table LIMIT 100" fallback.
+  sampleQuery: (table, schema) => `SELECT * FROM ${table} LIMIT 100;`,
+
+  // Reads all rows for export. Use `createRelationalGetTableData(quoteChar)`
+  // from the SDK if your driver speaks plain SELECT.
+  getTableData: async (adapter, table, schema) => { ... },
+
+  // Used by the migration tool when this driver is the *target* of a
+  // schema migration. Compose `generateCreateTable()` from the SDK or
+  // hand-roll for dialect-specific quirks (e.g. SQLite's INTEGER
+  // PRIMARY KEY rowid alias).
+  generateMigrationDdl: (tableName, columns) => /* DDL */
 })
+```
+
+The SDK exposes the helpers you'll need for the common case:
+
+```ts
+import {
+  quoteIdentifier,           // safe identifier escaping (takes quote char)
+  formatSqlValue,            // value → SQL literal
+  generateCreateTable,       // basic CREATE TABLE for a column list
+  generateInsertStatements,  // single-row INSERTs
+  splitSqlStatements,        // SQL file → statements
+  createRelationalGetTableData,
+  validateTheme,             // run-your-own-CI helper for themes
+  REQUIRED_THEME_TOKENS,
+} from '@verql/plugin-sdk'
 ```
 
 Look at any of the bundled drivers for a full example:
@@ -323,21 +381,57 @@ completion provider. See [postgresql/index.ts](../src/main/plugins/bundled/postg
 ### 7. Theme
 
 Themes are *raw token overrides*, layered on top of the design system's
-semantic tokens.
+semantic tokens. The registry validates each theme at registration time
+against `REQUIRED_THEME_TOKENS`. A theme that's missing required tokens
+is still loaded, but **the Appearance settings picker disables its
+tile** so the user can't accidentally land on a half-painted UI.
 
 **Manifest**
 
 ```json
 "contributes": {
-  "themes": [{ "id": "solarized-dark", "name": "Solarized Dark", "base": "dark" }]
+  "themes": [
+    { "id": "solarized-dark", "name": "Solarized Dark", "type": "dark" }
+  ]
 }
 ```
 
+`type` must be `'dark'` or `'light'` — the picker groups by it. The
+manifest validator rejects any other value.
+
 **Activation**
 
-The plugin contributes a token dictionary via the theme registry (see
-`src/renderer/src/primitives/theme/`). The renderer applies it by setting
-`data-theme=<id>` on the document root.
+```ts
+import { validateTheme, REQUIRED_THEME_TOKENS } from '@verql/plugin-sdk'
+
+const myTheme = {
+  id: 'solarized-dark',
+  name: 'Solarized Dark',
+  type: 'dark' as const,
+  css: `
+    [data-theme="solarized-dark"] {
+      --color-bg-primary: #002b36;
+      --color-bg-secondary: #073642;
+      /* …every token in REQUIRED_THEME_TOKENS… */
+    }
+  `,
+  preview: { bg: '#002b36', sidebar: '#073642', text: '#fdf6e3', accent: '#268bd2' },
+}
+
+// Validate in your own CI — fails fast with the exact list of missing
+// tokens before the plugin even ships.
+const report = validateTheme(myTheme)
+if (!report.ok) throw new Error(`Missing: ${report.missingRequired.join(', ')}`)
+
+ctx.themes.register(myTheme)
+// Or strict-register so the registry throws if your tokens regress:
+ctx.themes.register(myTheme, { strict: true })
+```
+
+**Required vs recommended tokens.** Missing one of `REQUIRED_THEME_TOKENS`
+makes the theme unselectable. Missing one of `RECOMMENDED_THEME_TOKENS`
+shows a warning badge but the theme stays selectable. The full lists
+live in `src/main/plugins/sdk/theme-registry.ts`.
 
 ### 8. Panel (UI surface)
 
@@ -486,16 +580,21 @@ src/main/plugins/bundled/<plugin-id>/
 
 To **add a new bundled plugin**:
 
-1. Create the directory under `src/main/plugins/bundled/<your-id>/`
-2. Export `manifest` and `activate` from `index.ts`
-3. Register it in [`src/main/ipc-handlers.ts`](../src/main/ipc-handlers.ts)
-   via `pluginCoordinator.registerBundledPlugin(yourPlugin.manifest, yourPlugin)`.
-   Order matters when one plugin consumes another's `service` — register
-   producers first (the AI plugin is registered first because mongo/redis
-   plugins consume its `ai` service at activate time).
+1. Create the directory under `src/main/plugins/bundled/<your-id>/`.
+2. Export `manifest` and `activate` from `index.ts`.
+3. Add it to the bundled-plugin list in
+   [`src/main/plugins/bundled/index.ts`](../src/main/plugins/bundled/index.ts).
+   The orchestrator iterates that list — it doesn't know individual driver
+   names. Order matters when one plugin consumes another's `service`:
+   register producers first (the AI plugin is registered first because
+   mongo/redis plugins consume its `ai` service at activate time).
 4. Write tests under `tests/unit/`. The pattern is in
    `tests/unit/bundled-plugins.test.ts` (single plugin) and
    `tests/unit/export-import-plugin-driven.test.ts` (cross-plugin).
+
+The architecture test in `tests/unit/audit/main-orchestrator-purity.test.ts`
+will refuse to merge if any file under `src/main/` outside `plugins/`
+references your driver by name. Keep dialect knowledge inside the plugin.
 
 To **add an external plugin** (third-party, installed by the user at
 runtime), package the directory as a zip and use the Plugins panel inside

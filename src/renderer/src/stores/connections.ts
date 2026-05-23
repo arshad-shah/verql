@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { ConnectionProfile } from '@shared/types'
 import { useNotificationsStore } from './notifications'
 import { useToastStore } from './toast'
+import { useSchemaStore } from './schema'
+import { useTabsStore } from './tabs'
 import { IPC_CHANNELS } from '@shared/ipc'
 
 interface ConnectionsState {
@@ -48,6 +50,12 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     await window.electronAPI.invoke(IPC_CHANNELS.CONNECTIONS_DELETE, id)
     const state = get()
     if (state.activeConnectionId === id) set({ activeConnectionId: null })
+    // The schema cache and any tabs anchored to this connection now point at
+    // a profile that no longer exists. Drop the cache entries and detach the
+    // tabs so the next query doesn't silently fail with a generic
+    // "Not connected" — the user gets a clear "pick a connection" state.
+    useSchemaStore.getState().clearCache(id)
+    useTabsStore.getState().detachConnection(id)
     await state.loadConnections()
   },
   connect: async (id) => {
@@ -105,6 +113,11 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     })
     await window.electronAPI.invoke(IPC_CHANNELS.DB_DISCONNECT, id)
     get().removeConnected(id)
+    // Drop the cached schema metadata so a re-connect re-fetches against the
+    // live server instead of serving stale tables/columns from the prior
+    // session — which becomes outright wrong if the user disconnected
+    // *because* they pointed the profile at a different database.
+    useSchemaStore.getState().clearCache(id)
     useNotificationsStore.getState().addNotification({
       type: 'info',
       title: 'Disconnected',

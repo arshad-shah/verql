@@ -3,7 +3,7 @@ import {
   quoteIdentifier,
   validateIdentifier,
   IdentifierError
-} from '../../src/main/db/identifier'
+} from '../../src/main/plugins/sdk/identifier'
 
 describe('validateIdentifier', () => {
   it('accepts ordinary table/column names', () => {
@@ -44,82 +44,59 @@ describe('validateIdentifier', () => {
   })
 })
 
-describe('quoteIdentifier - postgres dialect', () => {
+describe('quoteIdentifier — double-quote dialect (Postgres / SQLite / Snowflake)', () => {
   it('wraps in double quotes', () => {
-    expect(quoteIdentifier('users', 'postgresql')).toBe('"users"')
+    expect(quoteIdentifier('users', '"')).toBe('"users"')
   })
 
   it('escapes embedded double quotes', () => {
-    expect(quoteIdentifier('weird"name', 'postgresql')).toBe('"weird""name"')
+    expect(quoteIdentifier('weird"name', '"')).toBe('"weird""name"')
   })
 
   it('neutralizes injection: a close-quote in the name is escaped, not interpreted', () => {
-    const safe = quoteIdentifier('users"; DROP TABLE x; --', 'postgresql')
+    const safe = quoteIdentifier('users"; DROP TABLE x; --', '"')
     expect(safe).toBe('"users""; DROP TABLE x; --"')
   })
 
   it('still rejects null bytes / newlines after escaping', () => {
-    expect(() => quoteIdentifier('a\nb', 'postgresql')).toThrow(IdentifierError)
-    expect(() => quoteIdentifier('a\0b', 'postgresql')).toThrow(IdentifierError)
+    expect(() => quoteIdentifier('a\nb', '"')).toThrow(IdentifierError)
+    expect(() => quoteIdentifier('a\0b', '"')).toThrow(IdentifierError)
   })
 })
 
-describe('quoteIdentifier - mysql dialect', () => {
+describe('quoteIdentifier — backtick dialect (MySQL)', () => {
   it('wraps in backticks', () => {
-    expect(quoteIdentifier('users', 'mysql')).toBe('`users`')
+    expect(quoteIdentifier('users', '`')).toBe('`users`')
   })
 
   it('escapes embedded backticks', () => {
-    expect(quoteIdentifier('bad`name', 'mysql')).toBe('`bad``name`')
+    expect(quoteIdentifier('bad`name', '`')).toBe('`bad``name`')
   })
 
   it('neutralizes backtick injection attempt', () => {
-    const safe = quoteIdentifier('users`; DROP TABLE x; --', 'mysql')
+    const safe = quoteIdentifier('users`; DROP TABLE x; --', '`')
     expect(safe).toBe('`users``; DROP TABLE x; --`')
   })
 })
 
-describe('quoteIdentifier - sqlite dialect', () => {
-  it('wraps in double quotes (same as postgres)', () => {
-    expect(quoteIdentifier('users', 'sqlite')).toBe('"users"')
-  })
-
-  it('escapes embedded double quotes', () => {
-    expect(quoteIdentifier('foo"bar', 'sqlite')).toBe('"foo""bar"')
-  })
-})
-
-describe('quoteIdentifier - qualified names', () => {
+describe('quoteIdentifier — qualified names', () => {
   it('supports schema.table by quoting each part separately', () => {
-    expect(quoteIdentifier(['public', 'users'], 'postgresql'))
+    expect(quoteIdentifier(['public', 'users'], '"'))
       .toBe('"public"."users"')
-    expect(quoteIdentifier(['mydb', 'users'], 'mysql'))
+    expect(quoteIdentifier(['mydb', 'users'], '`'))
       .toBe('`mydb`.`users`')
   })
 
   it('validates every part', () => {
-    expect(() => quoteIdentifier(['public', 'a\nb'], 'postgresql'))
+    expect(() => quoteIdentifier(['public', 'a\nb'], '"'))
       .toThrow(IdentifierError)
   })
 })
 
-describe('quoteIdentifier - snowflake dialect', () => {
-  it('wraps in double quotes', () => {
-    expect(quoteIdentifier('users', 'snowflake')).toBe('"users"')
-  })
-
-  it('escapes embedded double quotes', () => {
-    expect(quoteIdentifier('a"b', 'snowflake')).toBe('"a""b"')
-  })
-
-  it('supports schema.table qualifying', () => {
-    expect(quoteIdentifier(['PUBLIC', 'USERS'], 'snowflake'))
-      .toBe('"PUBLIC"."USERS"')
-  })
-})
-
-describe('quoteIdentifier - unknown dialect', () => {
-  it('throws for unknown dialect rather than guessing', () => {
-    expect(() => quoteIdentifier('users', 'oracle' as never)).toThrow(IdentifierError)
+describe('quoteIdentifier — bad quoteChar argument', () => {
+  it('throws when quoteChar is not a single character', () => {
+    expect(() => quoteIdentifier('users', '')).toThrow(IdentifierError)
+    expect(() => quoteIdentifier('users', '""')).toThrow(IdentifierError)
+    expect(() => quoteIdentifier('users', 'xy')).toThrow(IdentifierError)
   })
 })

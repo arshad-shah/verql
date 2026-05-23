@@ -4,7 +4,11 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { MysqlAdapter } from './mysql-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { quoteIdentifier } from '../../sdk/identifier'
+import { generateCreateTable } from '../../sdk/sql-format'
 import { PG_TO_MYSQL, pgToMysqlFallback } from './type-maps'
+
+const MY_QUOTE = '`' as const
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-mysql',
@@ -122,6 +126,8 @@ export function activate(ctx: PluginContext): void {
   ctx.drivers.register('mysql', {
     createAdapter: (config) => new MysqlAdapter(config),
     sqlDialect: 'mysql',
+    quoteChar: MY_QUOTE,
+    placeholder: () => '?',
     editorLanguage: 'sql',
     defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
@@ -132,7 +138,19 @@ export function activate(ctx: PluginContext): void {
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
     ],
-    getTableData: createRelationalGetTableData('mysql')
+    sampleQuery: (table, schema) => {
+      const qualified = schema
+        ? quoteIdentifier([schema, table], MY_QUOTE)
+        : quoteIdentifier(table, MY_QUOTE)
+      return `SELECT * FROM ${qualified} LIMIT 100;`
+    },
+    getTableData: createRelationalGetTableData(MY_QUOTE),
+    generateMigrationDdl: (tableName, columns) =>
+      generateCreateTable(
+        tableName,
+        columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
+        MY_QUOTE,
+      ),
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

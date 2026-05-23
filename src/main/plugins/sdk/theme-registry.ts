@@ -130,8 +130,16 @@ export function validateTheme(theme: RegisteredTheme): ThemeValidationReport {
   }
 }
 
+export interface ThemeRegisterOptions {
+  /** Refuse to register the theme when any REQUIRED_THEME_TOKENS are missing.
+   *  Default `false` (lenient): the theme is accepted but its entry carries a
+   *  `validation.ok === false` so the renderer can disable it in the picker.
+   *  Set `true` for plugin-author CI checks where you want a hard failure. */
+  strict?: boolean
+}
+
 export interface ThemeRegistry {
-  register(theme: RegisteredTheme): Disposable
+  register(theme: RegisteredTheme, options?: ThemeRegisterOptions): Disposable
   getAll(): RegisteredTheme[]
   get(id: string): RegisteredTheme | undefined
   has(id: string): boolean
@@ -142,12 +150,23 @@ export class ThemeRegistryImpl implements ThemeRegistry {
   private themes = new Map<string, RegisteredTheme>()
   private listeners = new Set<() => void>()
 
-  register(theme: RegisteredTheme): Disposable {
+  register(theme: RegisteredTheme, options: ThemeRegisterOptions = {}): Disposable {
     if (!theme.id) throw new Error('Theme registration requires an id')
     if (this.themes.has(theme.id)) {
       throw new Error(`Theme '${theme.id}' is already registered`)
     }
-    this.themes.set(theme.id, theme)
+    // Run validation eagerly so the entry carries an authoritative report
+    // from the moment it lands in the registry. The picker can then disable
+    // broken themes without re-running validateTheme() on every render, and
+    // a strict caller can refuse to ship one that fails the required-token
+    // gate.
+    const validation = validateTheme(theme)
+    if (options.strict && !validation.ok) {
+      throw new Error(
+        `Theme '${theme.id}' is missing required tokens: ${validation.missingRequired.join(', ')}`,
+      )
+    }
+    this.themes.set(theme.id, { ...theme, validation })
     this.notify()
     return {
       dispose: () => {

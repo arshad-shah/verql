@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mapType, generateMigrationDdl } from '../../src/main/migration/type-map'
 import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
+import { DriverRegistryImpl } from '../../src/main/plugins/sdk/driver-registry'
 import {
   PG_TO_MYSQL, pgToMysqlFallback
 } from '../../src/main/plugins/bundled/mysql/type-maps'
@@ -12,6 +13,10 @@ import {
   MYSQL_TO_SQLITE, mysqlToSqliteFallback,
   sqliteToMysqlFallback
 } from '../../src/main/plugins/bundled/sqlite/type-maps'
+import type { DbAdapter } from '../../src/main/db/adapter'
+import type { DriverFactory } from '../../src/main/plugins/sdk/types'
+import { quoteIdentifier } from '../../src/main/plugins/sdk/identifier'
+import { generateCreateTable } from '../../src/main/plugins/sdk/sql-format'
 
 function buildRegistry(): TypeMapperRegistryImpl {
   const reg = new TypeMapperRegistryImpl()
@@ -21,6 +26,51 @@ function buildRegistry(): TypeMapperRegistryImpl {
   reg.register('mysql', 'sqlite', MYSQL_TO_SQLITE, mysqlToSqliteFallback)
   reg.register('sqlite', 'postgresql', {}, sqliteToPgFallback)
   reg.register('sqlite', 'mysql', {}, sqliteToMysqlFallback)
+  return reg
+}
+
+const noopAdapter: DriverFactory['createAdapter'] = () => ({} as DbAdapter)
+
+function buildDrivers(): DriverRegistryImpl {
+  const reg = new DriverRegistryImpl()
+  // Each driver contributes its own `generateMigrationDdl`. The orchestrator
+  // calls into the target driver, which keeps SQLite's INTEGER-PRIMARY-KEY
+  // quirk and MySQL's backtick quoting inside the driver plugin where they
+  // belong.
+  reg.register('mysql', {
+    createAdapter: noopAdapter,
+    connectionFields: [],
+    generateMigrationDdl: (tableName, columns) =>
+      generateCreateTable(
+        tableName,
+        columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
+        '`',
+      ),
+  })
+  reg.register('sqlite', {
+    createAdapter: noopAdapter,
+    connectionFields: [],
+    generateMigrationDdl: (tableName, columns) => {
+      const colDefs = columns.map(c => {
+        if (c.isPrimaryKey) return `  ${quoteIdentifier(c.name, '"')} INTEGER PRIMARY KEY`
+        let def = `  ${quoteIdentifier(c.name, '"')} ${c.dataType}`
+        if (!c.nullable) def += ' NOT NULL'
+        if (c.defaultValue) def += ` DEFAULT ${c.defaultValue}`
+        return def
+      })
+      return `CREATE TABLE ${quoteIdentifier(tableName, '"')} (\n${colDefs.join(',\n')}\n);\n`
+    },
+  })
+  reg.register('postgresql', {
+    createAdapter: noopAdapter,
+    connectionFields: [],
+    generateMigrationDdl: (tableName, columns) =>
+      generateCreateTable(
+        tableName,
+        columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
+        '"',
+      ),
+  })
   return reg
 }
 
@@ -81,7 +131,11 @@ describe('Type mapping', () => {
 
 describe('Migration DDL generation', () => {
   let registry: TypeMapperRegistryImpl
-  beforeEach(() => { registry = buildRegistry() })
+  let drivers: DriverRegistryImpl
+  beforeEach(() => {
+    registry = buildRegistry()
+    drivers = buildDrivers()
+  })
 
   it('generates CREATE TABLE with mapped types (PG → MySQL)', () => {
     const columns = [
@@ -89,7 +143,7 @@ describe('Migration DDL generation', () => {
       { name: 'name', dataType: 'character varying', nullable: false, isPrimaryKey: false, defaultValue: null },
       { name: 'data', dataType: 'jsonb', nullable: true, isPrimaryKey: false, defaultValue: null }
     ]
-    const { ddl, mappings } = generateMigrationDdl(registry, 'users', columns, 'postgresql', 'mysql')
+    const { ddl, mappings } = generateMigrationDdl(registry, drivers, 'users', columns, 'postgresql', 'mysql')
     expect(ddl).toContain('INT AUTO_INCREMENT')
     expect(ddl).toContain('VARCHAR(255)')
     expect(ddl).toContain('JSON')
@@ -102,8 +156,20 @@ describe('Migration DDL generation', () => {
       { name: 'id', dataType: 'serial', nullable: false, isPrimaryKey: true, defaultValue: null },
       { name: 'data', dataType: 'jsonb', nullable: true, isPrimaryKey: false, defaultValue: null }
     ]
-    const { ddl } = generateMigrationDdl(registry, 'users', columns, 'postgresql', 'sqlite')
+    const { ddl } = generateMigrationDdl(registry, drivers, 'users', columns, 'postgresql', 'sqlite')
     expect(ddl).toContain('INTEGER PRIMARY KEY')
     expect(ddl).toContain('"users"')   // SQLite double-quote identifier
+  })
+
+  it('refuses to emit DDL for a target driver with no generateMigrationDdl', () => {
+    const bareDrivers = new DriverRegistryImpl()
+    bareDrivers.register('postgresql', {
+      createAdapter: noopAdapter,
+      connectionFields: [],
+    })
+    const columns = [{ name: 'id', dataType: 'serial', nullable: false, isPrimaryKey: true, defaultValue: null }]
+    expect(() =>
+      generateMigrationDdl(registry, bareDrivers, 'users', columns, 'postgresql', 'mysql'),
+    ).toThrow(/generateMigrationDdl/)
   })
 })

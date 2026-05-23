@@ -1,7 +1,9 @@
 import pg from 'pg'
 import type { DbAdapter } from '../../../db/adapter'
-import { quoteIdentifier } from '../../../db/identifier'
+import { quoteIdentifier } from '../../sdk/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, FieldInfo, TestConnectionResult } from '@shared/types'
+
+const PG_QUOTE = '"' as const
 
 export class PostgresAdapter implements DbAdapter {
   private pool: pg.Pool | null = null
@@ -11,13 +13,20 @@ export class PostgresAdapter implements DbAdapter {
 
   constructor(config: Record<string, unknown>) {
     this.currentDatabase = config.database as string
+    // SSL verification is opt-out, not opt-in. Anything other than the explicit
+    // 'no-verify' mode keeps `rejectUnauthorized: true`, so a connection that
+    // claims to be encrypted actually verifies the server's certificate.
+    // The previous default silently disabled verification for every SSL
+    // connection, which let any on-path attacker intercept credentials with
+    // a self-signed cert.
+    const sslMode = config.sslMode as string | undefined
     this.config = {
       host: config.host as string,
       port: config.port as number,
       database: config.database as string,
       user: config.username as string | undefined,
       password: config.password as string | undefined,
-      ssl: config.ssl ? { rejectUnauthorized: false } : false,
+      ssl: config.ssl ? { rejectUnauthorized: sslMode !== 'no-verify' } : false,
       max: 5,
       idleTimeoutMillis: 30000
     }
@@ -37,7 +46,7 @@ export class PostgresAdapter implements DbAdapter {
 
   async setSchema(schema: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`SET search_path TO ${quoteIdentifier(schema, 'postgresql')}`)
+    await this.pool.query(`SET search_path TO ${quoteIdentifier(schema, PG_QUOTE)}`)
   }
 
   async switchDatabase(database: string): Promise<void> {
@@ -149,7 +158,7 @@ export class PostgresAdapter implements DbAdapter {
     if (!this.pool) throw new Error('Not connected')
     const s = schema ?? 'public'
     const result = await this.pool.query(
-      `SELECT count(*) as cnt FROM ${quoteIdentifier([s, table], 'postgresql')}`
+      `SELECT count(*) as cnt FROM ${quoteIdentifier([s, table], PG_QUOTE)}`
     )
     return parseInt(result.rows[0].cnt, 10)
   }

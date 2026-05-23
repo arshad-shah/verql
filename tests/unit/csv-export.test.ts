@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { exportToCsv } from '../../src/main/export/csv-export'
+import { exportToCsv } from '../../src/main/plugins/bundled/core-formats/csv'
 
 describe('CSV export', () => {
   it('generates CSV with headers and rows', () => {

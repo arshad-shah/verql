@@ -202,21 +202,23 @@ export const useSchemaStore = create<SchemaState>((set, get) => ({
       return
     }
     set((s) => {
+      // Cache keys are built as `${connectionId}:${...}` OR — for top-level
+      // schema/database lookups — as the bare connectionId. Either form
+      // belongs to this connection and must be dropped on invalidate.
+      const belongsTo = (k: string) =>
+        k === connectionId || k.startsWith(`${connectionId}:`)
       const filterMap = <T,>(m: Map<string, T>) => {
         const next = new Map<string, T>()
-        for (const [k, v] of m) if (!k.startsWith(connectionId)) next.set(k, v)
+        for (const [k, v] of m) if (!belongsTo(k)) next.set(k, v)
         return next
-      }
-      const nextSchemas = new Map(s.schemas)
-      for (const k of nextSchemas.keys()) {
-        if (k.startsWith(connectionId) && k !== connectionId) nextSchemas.delete(k)
       }
       return {
         tables: filterMap(s.tables),
         columns: filterMap(s.columns),
         indexes: filterMap(s.indexes),
         objects: filterMap(s.objects),
-        schemas: nextSchemas,
+        schemas: filterMap(s.schemas),
+        databases: filterMap(s.databases),
         rowCounts: filterMap(s.rowCounts),
         cacheVersion: s.cacheVersion + 1
       }

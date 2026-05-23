@@ -4,7 +4,11 @@ import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
+import { quoteIdentifier } from '../../sdk/identifier'
+import { generateCreateTable } from '../../sdk/sql-format'
 import { MYSQL_TO_PG, mysqlToPgFallback, sqliteToPgFallback } from './type-maps'
+
+const PG_QUOTE = '"' as const
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-postgresql',
@@ -109,6 +113,8 @@ export function activate(ctx: PluginContext): void {
   ctx.drivers.register('postgresql', {
     createAdapter: (config) => new PostgresAdapter(config),
     sqlDialect: 'postgresql',
+    quoteChar: PG_QUOTE,
+    placeholder: (i) => `$${i}`,
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['public'],
     connectionFields: [
@@ -118,8 +124,24 @@ export function activate(ctx: PluginContext): void {
       { key: 'username', label: 'Username', type: 'text' },
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
+      { key: 'sslMode', label: 'SSL Mode', type: 'select', default: 'verify-full', options: [
+        { value: 'verify-full', label: 'Verify (recommended)' },
+        { value: 'no-verify', label: 'Skip verification (insecure)' },
+      ]},
     ],
-    getTableData: createRelationalGetTableData('postgresql')
+    sampleQuery: (table, schema) => {
+      const qualified = schema
+        ? quoteIdentifier([schema, table], PG_QUOTE)
+        : quoteIdentifier(table, PG_QUOTE)
+      return `SELECT * FROM ${qualified} LIMIT 100;`
+    },
+    getTableData: createRelationalGetTableData(PG_QUOTE),
+    generateMigrationDdl: (tableName, columns) =>
+      generateCreateTable(
+        tableName,
+        columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
+        PG_QUOTE,
+      ),
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

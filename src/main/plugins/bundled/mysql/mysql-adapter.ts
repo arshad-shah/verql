@@ -1,7 +1,9 @@
 import mysql from 'mysql2/promise'
 import type { DbAdapter } from '../../../db/adapter'
-import { quoteIdentifier } from '../../../db/identifier'
+import { quoteIdentifier } from '../../sdk/identifier'
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, TestConnectionResult } from '@shared/types'
+
+const MY_QUOTE = '`' as const
 
 // MySQL FieldPacket flag bit 0 is NOT_NULL. The previous inline expression
 // `(f.flags ?? 0 & 1) === 0` parsed as `(f.flags ?? 0) === 0` because `&`
@@ -50,13 +52,13 @@ export class MysqlAdapter implements DbAdapter {
 
   async switchDatabase(database: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`USE ${quoteIdentifier(database, 'mysql')}`)
+    await this.pool.query(`USE ${quoteIdentifier(database, MY_QUOTE)}`)
     this.config = { ...this.config, database }
   }
 
   async setSchema(schema: string): Promise<void> {
     if (!this.pool) throw new Error('Not connected')
-    await this.pool.query(`USE ${quoteIdentifier(schema, 'mysql')}`)
+    await this.pool.query(`USE ${quoteIdentifier(schema, MY_QUOTE)}`)
   }
 
   async disconnect(): Promise<void> {
@@ -124,7 +126,7 @@ export class MysqlAdapter implements DbAdapter {
     if (!this.pool) throw new Error('Not connected')
     const db = (schema ?? this.config.database) as string
     const [rows] = await this.pool.query(
-      `SELECT count(*) as cnt FROM ${quoteIdentifier([db, table], 'mysql')}`
+      `SELECT count(*) as cnt FROM ${quoteIdentifier([db, table], MY_QUOTE)}`
     )
     return (rows as { cnt: number }[])[0].cnt
   }
