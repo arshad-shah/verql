@@ -7,10 +7,28 @@ export interface MCPToolContext {
   requestApproval: (sql: string) => Promise<boolean>
 }
 
-const WRITE_PATTERN = /^\s*(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|MERGE|GRANT|REVOKE)\b/i
+const WRITE_KEYWORDS_RE = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|MERGE|GRANT|REVOKE)\b/i
 
+/**
+ * Returns true if the SQL contains a write/DDL statement.
+ *
+ * The naive "match the first keyword" approach used to miss writes that hid
+ * behind a comment or a leading SELECT followed by a semicolon — both of
+ * which Postgres's simple-query protocol cheerfully runs as multiple
+ * statements. We strip SQL comments first, then look for any write keyword
+ * anywhere in the remaining text. This is intentionally conservative: a
+ * read query that *names* a table called "delete_log" will be flagged and
+ * surface an approval prompt, which is an acceptable false-positive cost
+ * for not silently letting `EXPLAIN SELECT 1; DROP TABLE users` slip
+ * through the MCP "read-only" tool.
+ */
 export function isWriteQuery(sql: string): boolean {
-  return WRITE_PATTERN.test(sql)
+  // /* ... */  block comments — non-greedy, multiline-aware
+  // -- ...    line comments to end of line
+  const stripped = sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--[^\n]*/g, ' ')
+  return WRITE_KEYWORDS_RE.test(stripped)
 }
 
 export function registerMCPTools(ctx: MCPToolContext) {

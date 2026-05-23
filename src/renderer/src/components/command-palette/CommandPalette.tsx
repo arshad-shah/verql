@@ -150,7 +150,14 @@ export function CommandPalette({ open, onClose }: Props) {
         category: pc.pluginDisplayName,
         keybinding: pc.keybinding,
         action: () => {
-          window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_UI_ACTION, pc.pluginId, pc.commandId, {}).catch(() => {})
+          window.electronAPI
+            .invoke(IPC_CHANNELS.PLUGINS_UI_ACTION, pc.pluginId, pc.commandId, {})
+            // Empty catches turn every plugin failure into invisible silence —
+            // the user wonders why the command did nothing. At minimum we
+            // log it so the developer console shows the failure.
+            .catch((err) => {
+              console.error(`[plugins] command ${pc.pluginId}:${pc.commandId} failed:`, err)
+            })
         }
       })
     }

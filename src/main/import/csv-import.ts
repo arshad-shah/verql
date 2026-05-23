@@ -59,6 +59,13 @@ export async function importCsvToTable(
         skipped++
       } else if (onConflict === 'error') {
         errors.push(`Row ${i + 1}: ${(err as Error).message}`)
+      } else {
+        // 'update' mode: dialect-specific upsert isn't implemented yet, so
+        // a conflict here is unrecoverable. Surface it via `errors[]`
+        // rather than silently dropping the row — the previous code had
+        // no branch for this case and made import look successful when
+        // every row had failed.
+        errors.push(`Row ${i + 1}: ${(err as Error).message}`)
       }
     }
   }

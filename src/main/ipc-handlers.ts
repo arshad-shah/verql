@@ -57,6 +57,24 @@ export function registerIpcHandlers(): void {
     activeAdapters: new Map<string, DbAdapter>()
   }
 
+  // Tear down database adapters (and any SSH tunnels they're using through
+  // connection middleware) before the process exits. Without this, the OS
+  // reclaims the sockets eventually, but background pools can hold the
+  // event loop open just long enough to delay quit, and SSH child
+  // processes don't always get the SIGTERM they need.
+  let shuttingDown = false
+  app.on('before-quit', (event) => {
+    if (shuttingDown || ctx.activeAdapters.size === 0) return
+    shuttingDown = true
+    event.preventDefault()
+    Promise.allSettled(
+      Array.from(ctx.activeAdapters.values()).map(a => a.disconnect()),
+    ).finally(() => {
+      ctx.activeAdapters.clear()
+      app.quit()
+    })
+  })
+
   setDriverRegistry(ctx.driverRegistry)
 
   const commandRegistry = new CommandRegistryImpl()

@@ -63,7 +63,10 @@ export function exportTableToSql(
   return output
 }
 
-function formatSqlValue(value: unknown): string {
+// Exported so dialect-specific exporters (e.g. the MySQL plugin) can reuse it
+// instead of copy-pasting the value-quoting rules; the previous duplicates
+// drifted apart on subtleties like boolean rendering and BLOB handling.
+export function formatSqlValue(value: unknown): string {
   if (value === null || value === undefined) return 'NULL'
   if (typeof value === 'number') return String(value)
   if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE'

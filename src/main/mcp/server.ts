@@ -117,6 +117,16 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       async ({ sql }) => {
         const adapter = ctx.getAdapter()
         if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
+        // The tool's contract is "read-only", but the supplied SQL is
+        // interpolated directly into `EXPLAIN ${sql}` and Postgres's simple-
+        // query protocol happily runs `EXPLAIN SELECT 1; DELETE FROM …` as
+        // two statements. Detect that and route through the same approval
+        // gate as the `query` tool so an LLM can't smuggle writes through
+        // a read-only label.
+        if (isWriteQuery(sql)) {
+          const approved = await requestApproval(sql)
+          if (!approved) return { content: [{ type: 'text', text: 'Query rejected by user in Verql' }], isError: true }
+        }
         try {
           const result = await adapter.query(`EXPLAIN ${sql}`)
           return { content: [{ type: 'text', text: JSON.stringify(result.rows, null, 2) }] }
@@ -205,9 +215,17 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
     // ─── HTTP Server ─────────────────────────────────────────────────────────
 
     httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
-      res.setHeader('Access-Control-Allow-Origin', '*')
+      // The MCP server binds to 127.0.0.1 and requires a bearer token, but
+      // CORS still matters: a malicious page in the user's browser can
+      // happily issue cross-origin POSTs to localhost. Wildcard ACAO would
+      // let that page READ the response if it ever obtained the token (via
+      // a separate XSS, the token in the URL, etc). Locking the header to
+      // null/none means even with a leaked token the browser blocks the
+      // read; legitimate MCP clients are CLI tools that don't enforce CORS
+      // at all and are unaffected.
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+      res.setHeader('Vary', 'Origin')
 
       if (req.method === 'OPTIONS') {
         res.writeHead(204)

@@ -67,11 +67,15 @@ export function registerDbHandlers(
     if (connectionAccess.getActiveConnectionId() === profileId) {
       connectionAccess.setActiveConnectionId(null)
     }
-    for (const { middleware } of ctx.driverRegistry.getMiddlewares()) {
+    for (const { middleware, pluginName } of ctx.driverRegistry.getMiddlewares()) {
       try {
         await middleware.onDisconnect(profileId)
-      } catch {
-        // Ignore middleware cleanup errors
+      } catch (err) {
+        // We don't re-throw — a broken SSH tunnel shouldn't prevent the
+        // adapter from being released — but we do log, so a leaking
+        // child process or socket is at least discoverable in the
+        // developer console instead of vanishing.
+        console.warn(`[plugins] ${pluginName}.onDisconnect(${profileId}) threw:`, err)
       }
     }
   })

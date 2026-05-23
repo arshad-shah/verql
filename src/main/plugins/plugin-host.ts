@@ -165,6 +165,20 @@ export class PluginBootCoordinator {
 
         const manifest = this.parseManifest(pluginPath, entry)
         if (manifest) {
+          // Bundled plugins (built-in drivers, themes, etc.) are trusted code
+          // shipped with the app. A third-party plugin folder claiming the
+          // same `name` MUST NOT be allowed to overwrite it — otherwise a
+          // user-installed plugin called `verql-plugin-postgresql` could
+          // shadow the built-in postgres driver and intercept credentials
+          // for every postgres connection.
+          const existing = this.plugins.get(manifest.name)
+          if (existing && existing.path === '<bundled>') {
+            console.warn(
+              `[plugins] refusing to load ${manifest.name} from ${pluginPath}: ` +
+                `name collides with a bundled plugin`,
+            )
+            continue
+          }
           this.plugins.set(manifest.name, {
             manifest,
             path: pluginPath,
@@ -613,6 +627,15 @@ export class PluginBootCoordinator {
         name = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).name
       } else {
         return { success: false, error: 'No plugin-manifest.json or package.json found' }
+      }
+
+      // Same protection as discover(): refuse to install a plugin whose name
+      // collides with a bundled plugin. The user is asking to drop a folder
+      // onto disk, but we won't let it shadow the built-in driver of the
+      // same name even if discover() later runs.
+      const collidingBundled = this.plugins.get(name)
+      if (collidingBundled && collidingBundled.path === '<bundled>') {
+        return { success: false, error: `Cannot install: '${name}' is a bundled plugin name` }
       }
 
       const destDir = path.join(this.getPluginDir(), name)

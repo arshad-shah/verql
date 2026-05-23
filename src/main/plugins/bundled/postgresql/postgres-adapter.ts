@@ -11,13 +11,20 @@ export class PostgresAdapter implements DbAdapter {
 
   constructor(config: Record<string, unknown>) {
     this.currentDatabase = config.database as string
+    // SSL verification is opt-out, not opt-in. Anything other than the explicit
+    // 'no-verify' mode keeps `rejectUnauthorized: true`, so a connection that
+    // claims to be encrypted actually verifies the server's certificate.
+    // The previous default silently disabled verification for every SSL
+    // connection, which let any on-path attacker intercept credentials with
+    // a self-signed cert.
+    const sslMode = config.sslMode as string | undefined
     this.config = {
       host: config.host as string,
       port: config.port as number,
       database: config.database as string,
       user: config.username as string | undefined,
       password: config.password as string | undefined,
-      ssl: config.ssl ? { rejectUnauthorized: false } : false,
+      ssl: config.ssl ? { rejectUnauthorized: sslMode !== 'no-verify' } : false,
       max: 5,
       idleTimeoutMillis: 30000
     }
