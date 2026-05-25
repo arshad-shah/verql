@@ -51,7 +51,6 @@ export function App() {
   const secondarySidebarVisible = useUiStore(s => s.secondarySidebarVisible)
   const setSecondarySidebarWidth = useUiStore(s => s.setSecondarySidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
-  const connections = useConnectionsStore(s => s.connections)
   const loadConnections = useConnectionsStore(s => s.loadConnections)
 
   // Bootstrap the connections store on first render. Previously the explorer's

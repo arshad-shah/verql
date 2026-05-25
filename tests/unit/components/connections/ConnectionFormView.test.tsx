@@ -102,7 +102,7 @@ describe('ConnectionFormView', () => {
   it('renders SSL switch for postgresql', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
     await waitFor(() => {
-      expect(screen.getByRole('switch')).toBeTruthy()
+      expect(screen.getByRole('switch', { name: /ssl/i })).toBeTruthy()
     })
   })
 
