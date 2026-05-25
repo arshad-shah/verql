@@ -33,6 +33,7 @@ export interface SessionOpts {
  *  narrow subset — it can only flip pre-existing fields, never add new
  *  capability kinds or change explain.format. */
 export interface RuntimeCapabilityOverlay {
+  // structural fields (rollbackKind, transactionLabel, savepoints, autoCommit) are set at factory time and never overridden at connect time
   session?: Partial<Pick<SessionCapability, 'manualTransactions' | 'isolationLevels' | 'readOnly'>>
   sessionInspection?: Partial<InspectionCapability>
 }

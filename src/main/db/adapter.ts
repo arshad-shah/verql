@@ -1,10 +1,11 @@
 import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, TestConnectionResult } from '@shared/types'
+import type { SessionOpts } from '@shared/driver-capabilities'
 
 export interface DbAdapter {
   connect(): Promise<void>
   disconnect(): Promise<void>
   testConnection(): Promise<TestConnectionResult>
-  query(sql: string, params?: unknown[]): Promise<QueryResult>
+  query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult>
   getTables(schema?: string): Promise<SchemaTable[]>
   getColumns(table: string, schema?: string): Promise<SchemaColumn[]>
   getIndexes(table: string, schema?: string): Promise<SchemaIndex[]>
@@ -24,4 +25,12 @@ export interface DbAdapter {
    * support a kind simply omit it; the renderer renders whatever it gets.
    */
   getSchemaObjects?(schema?: string): Promise<SchemaObject[]>
+  /** Pin a dedicated connection for this session (auto-commit off / manual txn). */
+  openSession?(sessionId: string, opts?: SessionOpts): Promise<void>
+  /** Release the pinned connection. Rolls back any open txn first. */
+  closeSession?(sessionId: string): Promise<void>
+  setAutoCommit?(sessionId: string, enabled: boolean): Promise<void>
+  beginTransaction?(sessionId: string, opts?: SessionOpts): Promise<void>
+  commit?(sessionId: string): Promise<void>
+  rollback?(sessionId: string): Promise<void>
 }

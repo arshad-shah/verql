@@ -4,6 +4,8 @@ import type { DbAdapter } from '../../db/adapter'
 import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
+import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
+export type { DriverCapabilities } from '@shared/driver-capabilities'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
@@ -170,18 +172,15 @@ export interface DriverFactory {
     tableName: string,
     columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
   ): string
-}
-
-/** Serialisable subset of DriverFactory that the renderer can consume over
- *  IPC. Functions are stripped — the renderer only needs the data-driven
- *  capability flags to make UI decisions. */
-export interface DriverCapabilities {
-  sqlDialect?: DriverFactory['sqlDialect']
-  editorLanguage?: string
-  defaultSchemaUseConnectionDatabase?: boolean
-  defaultSchemaCandidates?: string[]
-  hasSampleQuery: boolean
-  hasGetTableData: boolean
+  /** Transaction / auto-commit / read-only capabilities. Omit ⇒ no txn UI. */
+  session?: SessionCapability
+  /** Execution-plan capabilities. Omit ⇒ no Explain action. */
+  explain?: ExplainCapability
+  /** Active-session (process) inspection. Omit ⇒ no Sessions panel. */
+  sessionInspection?: InspectionCapability
+  /** Optional per-connection overlay resolved at connect time (e.g. Mongo
+   *  replica-set topology). SQL drivers omit it. */
+  getRuntimeCapabilities?(adapter: DbAdapter): Promise<RuntimeCapabilityOverlay>
 }
 
 export interface ConnectionField {
