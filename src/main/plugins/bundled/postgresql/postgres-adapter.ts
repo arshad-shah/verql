@@ -60,6 +60,12 @@ export class PostgresAdapter implements DbAdapter {
     try {
       await prev
       if (this.pool && this.currentDatabase === database) return
+      for (const [, s] of this.sessions) {
+        let rollbackErr: unknown
+        try { if (s.inTxn) await s.client.query('ROLLBACK') } catch (e) { rollbackErr = e }
+        s.client.release(rollbackErr as Error | undefined)
+      }
+      this.sessions.clear()
       await this.pool?.end()
       this.currentDatabase = database
       this.config = { ...this.config, database }
@@ -73,8 +79,9 @@ export class PostgresAdapter implements DbAdapter {
 
   async disconnect(): Promise<void> {
     for (const [, s] of this.sessions) {
-      try { if (s.inTxn) await s.client.query('ROLLBACK') } catch { /* ignore */ }
-      s.client.release()
+      let rollbackErr: unknown
+      try { if (s.inTxn) await s.client.query('ROLLBACK') } catch (e) { rollbackErr = e }
+      s.client.release(rollbackErr as Error | undefined)
     }
     this.sessions.clear()
     await this.pool?.end()
@@ -90,9 +97,10 @@ export class PostgresAdapter implements DbAdapter {
     return { rows: result.rows ?? [], fields, rowCount: result.rows?.length ?? 0, duration, affectedRows: result.rowCount ?? 0 }
   }
 
-  async query(sql: string, params?: unknown[], opts?: { sessionId?: string }): Promise<QueryResult> {
+  async query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult> {
     if (!this.pool) throw new Error('Not connected')
     const session = opts?.sessionId ? this.sessions.get(opts.sessionId) : undefined
+    if (opts?.sessionId && !session) throw new Error(`No open session '${opts.sessionId}'`)
     const start = performance.now()
     if (session) {
       if (!session.autoCommit && !session.inTxn) { await session.client.query('BEGIN'); session.inTxn = true }
@@ -113,7 +121,9 @@ export class PostgresAdapter implements DbAdapter {
   async closeSession(sessionId: string): Promise<void> {
     const s = this.sessions.get(sessionId)
     if (!s) return
-    try { if (s.inTxn) await s.client.query('ROLLBACK') } finally { s.client.release(); this.sessions.delete(sessionId) }
+    let rollbackErr: unknown
+    try { if (s.inTxn) await s.client.query('ROLLBACK') } catch (e) { rollbackErr = e }
+    finally { s.client.release(rollbackErr as Error | undefined); this.sessions.delete(sessionId) }
   }
 
   async setAutoCommit(sessionId: string, enabled: boolean): Promise<void> {

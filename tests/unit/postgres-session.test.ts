@@ -8,7 +8,7 @@ vi.mock('pg', () => ({ default: { Pool: class { connect = fakePool.connect; quer
 
 import { PostgresAdapter } from '../../src/main/plugins/bundled/postgresql/postgres-adapter'
 
-beforeEach(() => { clientQueries.length = 0; fakeClient.query.mockClear(); fakeClient.release.mockClear() })
+beforeEach(() => { clientQueries.length = 0; fakeClient.query.mockClear(); fakeClient.release.mockClear(); fakePool.connect.mockClear() })
 
 async function connected(): Promise<PostgresAdapter> {
   const a = new PostgresAdapter({ host: 'h', port: 5432, database: 'd' })
@@ -44,6 +44,35 @@ describe('PostgresAdapter sessions', () => {
     await a.commit('s1')
     await a.closeSession('s1')
     expect(clientQueries).toContain('COMMIT')
+    expect(fakeClient.release).toHaveBeenCalled()
+  })
+
+  it('an auto-commit (default) session does not inject BEGIN', async () => {
+    const a = await connected()
+    await a.openSession('s1') // autoCommit defaults true
+    await a.query('SELECT 1', undefined, { sessionId: 's1' })
+    expect(clientQueries).toEqual(['SELECT 1'])
+  })
+
+  it('rollback issues ROLLBACK and clears the transaction', async () => {
+    const a = await connected()
+    await a.openSession('s1', { autoCommit: false })
+    await a.query('INSERT INTO t VALUES (1)', undefined, { sessionId: 's1' })
+    await a.rollback('s1')
+    expect(clientQueries).toContain('ROLLBACK')
+  })
+
+  it('query with an unknown sessionId throws instead of using the pool', async () => {
+    const a = await connected()
+    await expect(a.query('SELECT 1', undefined, { sessionId: 'nope' })).rejects.toThrow(/no open session/i)
+  })
+
+  it('disconnect rolls back and releases pinned session clients', async () => {
+    const a = await connected()
+    await a.openSession('s1', { autoCommit: false })
+    await a.query('INSERT INTO t VALUES (1)', undefined, { sessionId: 's1' })
+    await a.disconnect()
+    expect(clientQueries).toContain('ROLLBACK')
     expect(fakeClient.release).toHaveBeenCalled()
   })
 })

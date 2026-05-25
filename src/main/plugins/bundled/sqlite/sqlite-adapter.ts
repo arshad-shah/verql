@@ -40,6 +40,7 @@ export class SqliteAdapter implements DbAdapter {
   async query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult> {
     if (!this.db) throw new Error('Not connected')
     const session = opts?.sessionId ? this.sessions.get(opts.sessionId) : undefined
+    if (opts?.sessionId && !session) throw new Error(`No open session '${opts.sessionId}'`)
     if (session && !session.autoCommit && !session.inTxn) {
       this.assertExclusiveTxn(opts!.sessionId!)
       this.db.prepare('BEGIN').run()

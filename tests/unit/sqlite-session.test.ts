@@ -69,4 +69,8 @@ describe('SqliteAdapter sessions', () => {
     await a.query("INSERT INTO t (v) VALUES ('z')", undefined, { sessionId: 's1' })
     await expect(a.disconnect()).resolves.toBeUndefined()
   })
+
+  it('query with an unknown sessionId throws', async () => {
+    await expect(a.query('SELECT 1', undefined, { sessionId: 'nope' })).rejects.toThrow(/no open session/i)
+  })
 })
