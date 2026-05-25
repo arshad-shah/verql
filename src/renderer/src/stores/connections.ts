@@ -5,6 +5,7 @@ import { useToastStore } from './toast'
 import { useSchemaStore } from './schema'
 import { useTabsStore } from './tabs'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useDriverCapabilitiesStore } from './driver-capabilities'
 
 interface ConnectionsState {
   connections: ConnectionProfile[]
@@ -74,6 +75,9 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     if (result.success) {
       get().addConnected(id)
       set({ activeConnectionId: id })
+      if (conn?.type) {
+        useDriverCapabilitiesStore.getState().fetchConnection(id, conn.type).catch(() => {})
+      }
       toast.updateToast(toastId, {
         type: 'success',
         title: `Connected to ${name}`,
@@ -113,6 +117,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     })
     await window.electronAPI.invoke(IPC_CHANNELS.DB_DISCONNECT, id)
     get().removeConnected(id)
+    useDriverCapabilitiesStore.getState().clearConnection(id)
     // Drop the cached schema metadata so a re-connect re-fetches against the
     // live server instead of serving stale tables/columns from the prior
     // session — which becomes outright wrong if the user disconnected
