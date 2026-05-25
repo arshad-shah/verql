@@ -343,6 +343,14 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   size="lg"
                 />
               </FormField>
+              <Flex direction="row" align="center" gap="md">
+                <Switch
+                  label="Auto-commit by default"
+                  checked={profile.defaultAutoCommit !== false}
+                  onChange={(e) => update({ defaultAutoCommit: e.target.checked })}
+                />
+                <Text size="lg" color="secondary">Auto-commit by default</Text>
+              </Flex>
             </Stack>
 
             {/* Connection fields — non-fetchable, non-grouped */}

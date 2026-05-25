@@ -1,6 +1,7 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType } from './types'
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage, AIApprovalRequest } from './ai-types'
+import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -12,7 +13,7 @@ export interface IpcChannelMap {
     return: void
   }
   'db:query': {
-    args: [profileId: string, sql: string, params?: unknown[]]
+    args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
   }
   'db:test-connection': {
@@ -89,17 +90,35 @@ export interface IpcChannelMap {
   }
   'db:driver-capabilities': {
     args: [type: string]
-    return: {
-      // Free-form dialect tag — the renderer treats this as a label, not a
-      // discriminator. Branching on the connection's `type` is forbidden;
-      // see tests/unit/export-import-no-hardcoding.test.ts.
-      sqlDialect?: string
-      editorLanguage?: string
-      defaultSchemaUseConnectionDatabase?: boolean
-      defaultSchemaCandidates?: string[]
-      hasSampleQuery: boolean
-      hasGetTableData: boolean
-    } | null
+    return: DriverCapabilities | null
+  }
+  'db:session:open': {
+    args: [profileId: string, sessionId: string, opts?: SessionOpts]
+    return: void
+  }
+  'db:session:close': {
+    args: [profileId: string, sessionId: string]
+    return: void
+  }
+  'db:session:set-autocommit': {
+    args: [profileId: string, sessionId: string, enabled: boolean]
+    return: void
+  }
+  'db:txn:begin': {
+    args: [profileId: string, sessionId: string, opts?: SessionOpts]
+    return: void
+  }
+  'db:txn:commit': {
+    args: [profileId: string, sessionId: string]
+    return: void
+  }
+  'db:txn:rollback': {
+    args: [profileId: string, sessionId: string]
+    return: void
+  }
+  'db:connection-capabilities': {
+    args: [profileId: string]
+    return: RuntimeCapabilityOverlay | null
   }
   'export:table': {
     args: [profileId: string, tableName: string, format: 'sql' | 'csv' | 'json', options?: { schema?: string; includeSchema?: boolean }]
@@ -472,6 +491,13 @@ export const IPC_CHANNELS = {
   DB_SWITCH_WAREHOUSE: 'db:switch-warehouse',
   DB_SWITCH_ROLE: 'db:switch-role',
   DB_SET_SCHEMA: 'db:set-schema',
+  DB_SESSION_OPEN: 'db:session:open',
+  DB_SESSION_CLOSE: 'db:session:close',
+  DB_SESSION_SET_AUTOCOMMIT: 'db:session:set-autocommit',
+  DB_TXN_BEGIN: 'db:txn:begin',
+  DB_TXN_COMMIT: 'db:txn:commit',
+  DB_TXN_ROLLBACK: 'db:txn:rollback',
+  DB_CONNECTION_CAPABILITIES: 'db:connection-capabilities',
   // ── Connection profiles ────────────────────────────────────────────────
   CONNECTIONS_LIST: 'connections:list',
   CONNECTIONS_SAVE: 'connections:save',

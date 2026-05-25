@@ -1,10 +1,20 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
 
 let tabCounter = 0
 
-function createQueryTab(connectionId: string | null, schema: string | null = null): QueryTab {
+/** Release any pinned DB session for a closed query tab. The main-process
+ *  handler is a tolerant no-op when the tab never opened a session, so this is
+ *  always safe. Fire-and-forget; cleanup must never block tab close. */
+function releaseTabSession(tab: Tab): void {
+  if (tab.type === 'query' && tab.connectionId) {
+    window.electronAPI?.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, tab.connectionId, tab.id).catch(() => {})
+  }
+}
+
+function createQueryTab(connectionId: string | null, schema: string | null = null, opts?: { autoCommit?: boolean }): QueryTab {
   tabCounter++
   return {
     id: `query-${tabCounter}-${Date.now()}`,
@@ -18,7 +28,8 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
     isExecuting: false,
     error: null,
     isDirty: false,
-    aiExplanation: null
+    aiExplanation: null,
+    txn: { autoCommit: opts?.autoCommit ?? true, status: 'none', readOnly: false },
   }
 }
 
@@ -28,7 +39,7 @@ interface TabsState {
   tabs: Tab[]
   activeTabId: string | null
   recentlyClosed: Tab[]
-  addQueryTab: (connectionId: string | null, schema?: string | null) => string
+  addQueryTab: (connectionId: string | null, schema?: string | null, opts?: { autoCommit?: boolean }) => string
   closeTab: (id: string) => void
   closeOtherTabs: (id: string) => void
   closeTabsToRight: (id: string) => void
@@ -47,6 +58,10 @@ interface TabsState {
   setTabResults: (id: string, results: QueryResult) => void
   setTabError: (id: string, error: string) => void
   setTabAiExplanation: (id: string, explanation: string | null) => void
+  setTabAutoCommit: (id: string, autoCommit: boolean) => void
+  setTabTxnStatus: (id: string, status: 'none' | 'active') => void
+  setTabIsolation: (id: string, isolationLevel: string) => void
+  setTabReadOnly: (id: string, readOnly: boolean) => void
   openErDiagram: (connectionId: string, schema: string) => string
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
@@ -67,8 +82,8 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   activeTabId: null,
   recentlyClosed: [],
 
-  addQueryTab: (connectionId, schema = null) => {
-    const tab = createQueryTab(connectionId, schema)
+  addQueryTab: (connectionId, schema = null, opts?) => {
+    const tab = createQueryTab(connectionId, schema, opts)
     set((s) => ({
       tabs: [...s.tabs, tab],
       activeTabId: tab.id
@@ -85,6 +100,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         const idx = s.tabs.findIndex(t => t.id === id)
         nextActive = remaining[Math.min(idx, remaining.length - 1)]?.id ?? null
       }
+      if (closedTab) releaseTabSession(closedTab)
       return {
         tabs: remaining,
         activeTabId: nextActive,
@@ -100,6 +116,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     set((s) => {
       const kept = s.tabs.filter(t => t.id === id)
       const closed = s.tabs.filter(t => t.id !== id)
+      for (const tab of closed) releaseTabSession(tab)
       return {
         tabs: kept,
         activeTabId: id,
@@ -114,6 +131,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       if (idx === -1) return s
       const kept = s.tabs.slice(0, idx + 1)
       const closed = s.tabs.slice(idx + 1)
+      for (const tab of closed) releaseTabSession(tab)
       const nextActive = kept.find(t => t.id === s.activeTabId) ? s.activeTabId : id
       return {
         tabs: kept,
@@ -124,11 +142,14 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   },
 
   closeAllTabs: () => {
-    set((s) => ({
-      tabs: [],
-      activeTabId: null,
-      recentlyClosed: [...[...s.tabs].reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
-    }))
+    set((s) => {
+      for (const tab of s.tabs) releaseTabSession(tab)
+      return {
+        tabs: [],
+        activeTabId: null,
+        recentlyClosed: [...[...s.tabs].reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
+      }
+    })
   },
 
   setActiveTab: (id) => set({ activeTabId: id }),
@@ -224,6 +245,22 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       )
     }))
   },
+
+  setTabAutoCommit: (id, autoCommit) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, autoCommit } } : t),
+  })),
+
+  setTabTxnStatus: (id, status) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, status } } : t),
+  })),
+
+  setTabIsolation: (id, isolationLevel) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, isolationLevel } } : t),
+  })),
+
+  setTabReadOnly: (id, readOnly) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, readOnly } } : t),
+  })),
 
   openErDiagram: (connectionId: string, schema: string) => {
     const id = `er-${connectionId}-${schema}`

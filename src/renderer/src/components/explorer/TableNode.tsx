@@ -3,7 +3,9 @@ import { ChevronRight, ChevronDown, Table2, ExternalLink, Play, Download } from 
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 import { useToastStore } from '@/stores/toast'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
@@ -57,6 +59,7 @@ export function TableNode({
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
   const addToast = useToastStore((s) => s.addToast)
   const pluginTableItems = usePluginContextMenuItems('table')
+  const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
 
   // Lazy-fetch when expanded
   useEffect(() => {
@@ -81,7 +84,7 @@ export function TableNode({
 
   async function openInQueryTab() {
     const query = await getSampleQuery()
-    const tabId = addQueryTab(connectionId, schema)
+    const tabId = addQueryTab(connectionId, schema, { autoCommit: initialAutoCommit(profile) })
     updateTabSql(tabId, query)
   }
 

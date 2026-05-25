@@ -10,7 +10,7 @@ import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
-import { Flex, Box, ResizeHandle } from '@/primitives'
+import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { tabActions, requestCloseTab as routeCloseTab, usePendingClose } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
@@ -28,6 +28,8 @@ import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { notifyError } from '@/lib/notify-error'
 
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
@@ -96,7 +98,8 @@ export function App() {
       }
       if (mod && e.key === 't' && !e.shiftKey) {
         e.preventDefault()
-        addQueryTab(activeConnectionId)
+        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
       }
       if (mod && e.shiftKey && e.key === 't') {
         e.preventDefault()
@@ -157,7 +160,10 @@ export function App() {
 
     // Listen for native menu commands
     const cleanups = [
-      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => addQueryTab(activeConnectionId)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => {
+        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
+      }),
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
       window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
     ]
@@ -383,24 +389,80 @@ export function App() {
       <SectionErrorBoundary label="Plugin restart banner">
         <PluginRestartBanner />
       </SectionErrorBoundary>
-      <ConfirmDialog
-        open={pendingCloseId !== null}
-        title="Unsaved changes"
-        message={(() => {
-          if (!pendingCloseId) return ''
-          const label = tabActions.get(pendingCloseId)?.label ?? 'this tab'
-          return `${label} has unsaved changes. Close anyway?`
-        })()}
-        confirmLabel="Discard changes"
-        cancelLabel="Keep editing"
-        variant="danger"
-        onCancel={clearPendingClose}
-        onConfirm={() => {
-          const id = pendingCloseId
-          clearPendingClose()
-          if (id) closeTab(id)
-        }}
-      />
+      {pendingCloseId !== null && tabActions.hasOpenTransaction(pendingCloseId) ? (
+        // Transaction close-guard: user must Commit or Rollback before the tab closes.
+        // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
+        <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
+          <Stack gap="md" className="p-4">
+            <Text size="sm" weight="semibold">Open transaction</Text>
+            <Text size="sm" color="secondary">
+              {`${tabActions.get(pendingCloseId)?.label ?? 'This tab'} has an open transaction. Commit or roll back before closing.`}
+            </Text>
+          </Stack>
+          <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+            <Button variant="outline" size="sm" onClick={clearPendingClose}>Cancel</Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={async () => {
+                const id = pendingCloseId
+                if (!id) return
+                try {
+                  await tabActions.rollbackTransaction(id)
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
+                }
+              }}
+            >
+              Rollback &amp; close
+            </Button>
+            <Button
+              variant="solid"
+              size="sm"
+              onClick={async () => {
+                const id = pendingCloseId
+                if (!id) return
+                try {
+                  await tabActions.commitTransaction(id)
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
+                }
+              }}
+            >
+              Commit &amp; close
+            </Button>
+          </Flex>
+        </Modal>
+      ) : (
+        <ConfirmDialog
+          open={pendingCloseId !== null}
+          title="Unsaved changes"
+          message={(() => {
+            if (!pendingCloseId) return ''
+            const label = tabActions.get(pendingCloseId)?.label ?? 'this tab'
+            return `${label} has unsaved changes. Close anyway?`
+          })()}
+          confirmLabel="Discard changes"
+          cancelLabel="Keep editing"
+          variant="danger"
+          onCancel={clearPendingClose}
+          onConfirm={() => {
+            const id = pendingCloseId
+            clearPendingClose()
+            if (id) closeTab(id)
+          }}
+        />
+      )}
     </Flex>
   )
 }

@@ -5,6 +5,7 @@ import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import { getSecretFieldKeys, mergeIncomingProfile } from './secrets'
 import type { IpcContext, Handle } from './context'
+import { serializeStaticCapabilities } from '../plugins/sdk/capabilities'
 
 export function registerDbHandlers(
   ctx: IpcContext,
@@ -79,8 +80,8 @@ export function registerDbHandlers(
     }
   })
 
-  handle('db:query', async (profileId: string, sql: string, params?: unknown[]) =>
-    requireAdapter(profileId).query(sql, params)
+  handle('db:query', async (profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }) =>
+    requireAdapter(profileId).query(sql, params, opts)
   )
 
   const resolveProfile = (profile: ConnectionProfile): ConnectionProfile => {
@@ -178,17 +179,49 @@ export function registerDbHandlers(
     if (adapter?.cancelQuery) adapter.cancelQuery()
   })
 
+  handle('db:session:open', async (profileId, sessionId, opts) => {
+    const adapter = requireAdapter(profileId)
+    if (adapter.openSession) await adapter.openSession(sessionId, opts)
+  })
+
+  handle('db:session:close', async (profileId, sessionId) => {
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (adapter?.closeSession) await adapter.closeSession(sessionId)
+  })
+
+  handle('db:session:set-autocommit', async (profileId, sessionId, enabled) => {
+    const adapter = requireAdapter(profileId)
+    if (adapter.setAutoCommit) await adapter.setAutoCommit(sessionId, enabled)
+  })
+
+  handle('db:txn:begin', async (profileId, sessionId, opts) => {
+    const adapter = requireAdapter(profileId)
+    if (adapter.beginTransaction) await adapter.beginTransaction(sessionId, opts)
+  })
+
+  handle('db:txn:commit', async (profileId, sessionId) => {
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (adapter?.commit) await adapter.commit(sessionId)
+  })
+
+  handle('db:txn:rollback', async (profileId, sessionId) => {
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (adapter?.rollback) await adapter.rollback(sessionId)
+  })
+
+  handle('db:connection-capabilities', async (profileId) => {
+    const profile = ctx.configStore.getConnection(profileId)
+    if (!profile) return null
+    const driver = ctx.driverRegistry.get(profile.type)
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (!driver?.getRuntimeCapabilities || !adapter) return null
+    return driver.getRuntimeCapabilities(adapter)
+  })
+
   handle('db:driver-capabilities', async (type: string) => {
     const driver = ctx.driverRegistry.get(type)
     if (!driver) return null
-    return {
-      sqlDialect: driver.sqlDialect,
-      editorLanguage: driver.editorLanguage,
-      defaultSchemaUseConnectionDatabase: driver.defaultSchemaUseConnectionDatabase,
-      defaultSchemaCandidates: driver.defaultSchemaCandidates,
-      hasSampleQuery: typeof driver.sampleQuery === 'function',
-      hasGetTableData: typeof driver.getTableData === 'function'
-    }
+    return serializeStaticCapabilities(driver)
   })
 
   handle('db:sample-query', async (profileId, table, schema) => {

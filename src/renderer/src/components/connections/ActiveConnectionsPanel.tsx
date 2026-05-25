@@ -3,6 +3,7 @@ import { Box, Flex, IconButton, Stack, Text, Tooltip, EmptyState } from '@/primi
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { notifyError } from '@/lib/notify-error'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ConnectionListItem } from './ConnectionListItem'
 
 /**
@@ -99,7 +100,7 @@ export function ActiveConnectionsPanel() {
               onDisconnect={() => void disconnect(c.id)}
               onOpenQueryTab={() => {
                 setActiveConnection(c.id)
-                addQueryTab(c.id)
+                addQueryTab(c.id, null, { autoCommit: initialAutoCommit(c) })
               }}
             />
           ))}
@@ -123,7 +124,7 @@ export function ActiveConnectionsPanel() {
               onDisconnect={() => void disconnect(c.id)}
               onOpenQueryTab={() => {
                 setActiveConnection(c.id)
-                addQueryTab(c.id)
+                addQueryTab(c.id, null, { autoCommit: initialAutoCommit(c) })
               }}
             />
           ))}

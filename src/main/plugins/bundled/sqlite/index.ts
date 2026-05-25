@@ -160,6 +160,12 @@ export function activate(ctx: PluginContext): void {
       })
       return `CREATE TABLE ${quoteIdentifier(tableName, SQLITE_QUOTE)} (\n${colDefs.join(',\n')}\n);\n`
     },
+    session: {
+      autoCommit: true,
+      manualTransactions: true,
+      transactionLabel: 'Transaction',
+      rollbackKind: 'full',
+    },
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

@@ -8,6 +8,7 @@ import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Input, ScrollArea, Text, KbdGroup, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
@@ -68,7 +69,7 @@ export function CommandPalette({ open, onClose }: Props) {
 
   const commands = useMemo<Command[]>(() => {
     const cmds: Command[] = [
-      { id: 'new-query', title: 'New Query Tab', category: 'Query', keybinding: 'Cmd+N', action: () => addQueryTab(activeConnectionId) },
+      { id: 'new-query', title: 'New Query Tab', category: 'Query', keybinding: 'Cmd+N', action: () => addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(conn ?? null) }) },
       { id: 'explorer', title: 'Show Explorer', category: 'View', action: () => setActivePanel('explorer') },
       { id: 'show-schema', title: 'Show Schema', category: 'View', action: () => setActivePanel('schema') },
       { id: 'show-plugins', title: 'Show Plugins', category: 'View', action: () => setActivePanel('plugins') },

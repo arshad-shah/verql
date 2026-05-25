@@ -142,6 +142,14 @@ export function activate(ctx: PluginContext): void {
         columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),
         PG_QUOTE,
       ),
+    session: {
+      autoCommit: true,
+      manualTransactions: true,
+      isolationLevels: ['READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'],
+      readOnly: true,
+      transactionLabel: 'Transaction',
+      rollbackKind: 'full',
+    },
   })
 
   ctx.completions.register(async (connectionId: string, context: CompletionContext): Promise<CompletionItem[]> => {

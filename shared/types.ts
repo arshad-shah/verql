@@ -14,6 +14,7 @@ export interface ConnectionProfile {
   group?: string
   queryTimeout?: number
   readOnly?: boolean
+  defaultAutoCommit?: boolean
 }
 
 export interface FieldInfo {
@@ -82,6 +83,13 @@ export interface TestConnectionResult {
   details?: Record<string, string>
 }
 
+export interface QueryTabTxnState {
+  autoCommit: boolean
+  status: 'none' | 'active'
+  isolationLevel?: string
+  readOnly: boolean
+}
+
 export interface QueryTab {
   id: string
   type: 'query'
@@ -99,6 +107,7 @@ export interface QueryTab {
   savedQueryId?: string
   /** Last saved SQL content. `isDirty` is true iff sql !== savedSnapshot. */
   savedSnapshot?: string
+  txn?: QueryTabTxnState
 }
 
 export interface TableTab {
