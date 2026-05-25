@@ -35,4 +35,38 @@ describe('SqliteAdapter sessions', () => {
     const res = await a.query('SELECT count(*) AS c FROM t')
     expect((res.rows[0] as { c: number }).c).toBe(0)
   })
+
+  it('re-begins a new transaction after commit within the same session', async () => {
+    await a.openSession('s1', { autoCommit: false })
+    await a.query("INSERT INTO t (v) VALUES ('a')", undefined, { sessionId: 's1' })
+    await a.commit('s1')
+    // next query in the same auto-commit-off session must implicitly BEGIN again
+    await a.query("INSERT INTO t (v) VALUES ('b')", undefined, { sessionId: 's1' })
+    await a.rollback('s1')
+    const res = await a.query('SELECT count(*) AS c FROM t')
+    expect((res.rows[0] as { c: number }).c).toBe(1) // 'a' persisted, 'b' rolled back
+  })
+
+  it('setAutoCommit(true) commits the pending transaction', async () => {
+    await a.openSession('s1', { autoCommit: false })
+    await a.query("INSERT INTO t (v) VALUES ('p')", undefined, { sessionId: 's1' })
+    await a.setAutoCommit('s1', true)
+    const res = await a.query('SELECT count(*) AS c FROM t')
+    expect((res.rows[0] as { c: number }).c).toBe(1) // committed by the toggle
+  })
+
+  it('throws a legible error when a second session opens a concurrent transaction', async () => {
+    await a.openSession('s1', { autoCommit: false })
+    await a.query("INSERT INTO t (v) VALUES ('x')", undefined, { sessionId: 's1' }) // s1 holds the txn
+    await a.openSession('s2', { autoCommit: false })
+    await expect(
+      a.query("INSERT INTO t (v) VALUES ('y')", undefined, { sessionId: 's2' })
+    ).rejects.toThrow(/one active transaction/i)
+  })
+
+  it('disconnect with an open transaction does not throw', async () => {
+    await a.openSession('s1', { autoCommit: false })
+    await a.query("INSERT INTO t (v) VALUES ('z')", undefined, { sessionId: 's1' })
+    await expect(a.disconnect()).resolves.toBeUndefined()
+  })
 })

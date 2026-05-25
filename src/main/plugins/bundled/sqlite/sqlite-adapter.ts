@@ -41,6 +41,7 @@ export class SqliteAdapter implements DbAdapter {
     if (!this.db) throw new Error('Not connected')
     const session = opts?.sessionId ? this.sessions.get(opts.sessionId) : undefined
     if (session && !session.autoCommit && !session.inTxn) {
+      this.assertExclusiveTxn(opts!.sessionId!)
       this.db.prepare('BEGIN').run()
       session.inTxn = true
     }
@@ -90,6 +91,7 @@ export class SqliteAdapter implements DbAdapter {
   async beginTransaction(sessionId: string): Promise<void> {
     const s = this.requireSession(sessionId)
     if (s.inTxn || !this.db) return
+    this.assertExclusiveTxn(sessionId)
     this.db.prepare('BEGIN').run()
     s.inTxn = true
   }
@@ -108,6 +110,17 @@ export class SqliteAdapter implements DbAdapter {
     const s = this.sessions.get(sessionId)
     if (!s) throw new Error(`No open session '${sessionId}'`)
     return s
+  }
+
+  /** SQLite shares one connection — only one transaction can be open at a time.
+   *  Surfaces a legible error instead of an opaque "cannot start a transaction
+   *  within a transaction" when another session/tab already holds one. */
+  private assertExclusiveTxn(sessionId: string): void {
+    for (const [id, s] of this.sessions) {
+      if (id !== sessionId && s.inTxn) {
+        throw new Error('SQLite allows only one active transaction at a time; another session has an open transaction. Commit or roll it back first.')
+      }
+    }
   }
 
   async getTables(schema?: string): Promise<SchemaTable[]> {
