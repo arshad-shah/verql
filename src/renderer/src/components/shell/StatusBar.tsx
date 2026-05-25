@@ -1,109 +1,25 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Flex } from '@/primitives'
 import { useConnectionsStore } from '@/stores/connections'
-import { useTabsStore } from '@/stores/tabs'
-import { useNotificationsStore } from '@/stores/notifications'
-import { ArrowLeftRight } from 'lucide-react'
-import { Flex, Spinner, Text } from '@/primitives'
-import { cn } from '@/primitives/utils/cn'
-import { ConnectionCard } from './ConnectionCard'
-import { ConnectionSwitcher } from './ConnectionSwitcher'
-
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
-import type { QueryTab } from '@shared/types'
-import { IPC_CHANNELS } from '@shared/ipc'
-
-interface PluginStatus {
-  total: number
-  active: number
-  failed: number
-  loading: boolean
-}
-
-const isDev = import.meta.env.DEV
+import {
+  ConnectionSegment,
+  SchemaSegment,
+  MultiConnectionSegment,
+  PluginStatusSegment,
+  DevSegment,
+} from './status-bar'
 
 export function StatusBar() {
   const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
-  const { tabs, activeTabId } = useTabsStore()
-  const addNotification = useNotificationsStore((s) => s.addNotification)
   const active = connections.find((c) => c.id === activeConnectionId)
   const isConnected = activeConnectionId ? connectedIds.has(activeConnectionId) : false
-  const activeTab = tabs.find((t) => t.id === activeTabId)
-  const queryTab = activeTab?.type === 'query' ? (activeTab as QueryTab) : null
 
-  const [pluginStatus, setPluginStatus] = useState<PluginStatus>({
-    total: 0,
-    active: 0,
-    failed: 0,
-    loading: true,
-  })
-  const [switcherOpen, setSwitcherOpen] = useState(false)
   const [showNewConnection, setShowNewConnection] = useState(false)
-  const pluginFailNotified = useRef(false)
+  const handleNewConnection = useCallback(() => setShowNewConnection(true), [])
 
-  const statusBarContributions = usePluginUIStore(selectContributions('statusBar'))
-
-  useEffect(() => {
-    usePluginUIStore.getState().fetchContributions('statusBar')
-  }, [])
-
-  // Plugin polling (same logic as before, with notification on failure)
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const list = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_LIST)
-        const activating = list.some(
-          (p: { status: { state: string } }) =>
-            p.status.state === 'activating' ||
-            p.status.state === 'discovered' ||
-            p.status.state === 'validated' ||
-            p.status.state === 'resolved'
-        )
-        const activeCount = list.filter(
-          (p: { status: { state: string } }) =>
-            p.status.state === 'active' || p.status.state === 'degraded'
-        ).length
-        const failedCount = list.filter(
-          (p: { status: { state: string } }) => p.status.state === 'error'
-        ).length
-
-        setPluginStatus({
-          total: list.length,
-          active: activeCount,
-          failed: failedCount,
-          loading: activating,
-        })
-
-        // Notify once when plugin failures are detected
-        if (failedCount > 0 && !pluginFailNotified.current) {
-          pluginFailNotified.current = true
-          addNotification({
-            type: 'warning',
-            title: 'Plugin load failure',
-            message: `${failedCount} plugin(s) failed to load`,
-            source: { type: 'plugin', id: 'system', label: 'Plugin system' },
-          })
-        }
-      } catch {
-        setPluginStatus({ total: 0, active: 0, failed: 0, loading: false })
-      }
-    }
-
-    check()
-    const interval = setInterval(check, 2000)
-    const timeout = setTimeout(() => clearInterval(interval), 15000)
-    return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
-    }
-  }, [addNotification])
-
-  // Close switcher when new-connection form is needed
-  const handleNewConnection = useCallback(() => {
-    setShowNewConnection(true)
-  }, [])
-
-  // Emit event for App.tsx to handle new connection form
+  // Emit event for App.tsx to handle new connection form (unchanged contract)
   useEffect(() => {
     if (showNewConnection) {
       window.dispatchEvent(new CustomEvent('statusbar:new-connection'))
@@ -111,90 +27,46 @@ export function StatusBar() {
     }
   }, [showNewConnection])
 
-  const connectionCount = connectedIds.size
+  const statusBarContributions = usePluginUIStore(selectContributions('statusBar'))
+  useEffect(() => {
+    usePluginUIStore.getState().fetchContributions('statusBar')
+  }, [])
+
+  // Schema and multi-connection segments dispatch a window event that ConnectionSegment listens for,
+  // so they open the same switcher dropdown without prop-drilling.
+  const openSwitcher = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('statusbar:open-switcher'))
+  }, [])
 
   return (
     <Flex
       align="center"
-      className="relative h-8 shrink-0 select-none border-t border-border-default bg-bg-primary px-3"
+      className="relative h-7 shrink-0 select-none border-t border-border-default bg-bg-primary"
     >
-      {/* Left zone */}
-      <Flex align="center" gap="xs" className="mr-auto">
-        <div className="relative">
-          <ConnectionCard
-            isConnected={isConnected}
-            isError={false}
-            dbType={active?.type ?? null}
-            dbName={active?.name ?? null}
-            schema={queryTab?.schema ?? null}
-            isOpen={switcherOpen}
-            onClick={() => setSwitcherOpen((prev) => !prev)}
-          />
-          <ConnectionSwitcher
-            isOpen={switcherOpen}
-            onClose={() => setSwitcherOpen(false)}
-            onNewConnection={handleNewConnection}
-          />
-        </div>
-
-        {/* Connection count badge */}
-        {connectionCount > 1 && (
-          <Flex align="center" gap="xs" className="rounded-[5px] border border-accent/15 bg-accent/8 px-1.5 py-0.5">
-            <ArrowLeftRight size={10} className="text-accent" />
-            <Text size="xs" color="accent" className="text-[10px]">
-              {connectionCount}
-            </Text>
-          </Flex>
-        )}
-
+      {/* Left cluster */}
+      <Flex align="stretch" className="h-full">
+        <ConnectionSegment onNewConnection={handleNewConnection} />
+        <SchemaSegment onClick={openSwitcher} />
+        <MultiConnectionSegment onClick={openSwitcher} />
       </Flex>
 
-      {/* Right zone — tools */}
-      <Flex align="center" gap="xs" className="ml-auto">
-        {/* Plugin-contributed status bar widgets (right zone) — only for active connection's driver */}
-        {isConnected && statusBarContributions
-          .filter((c) => c.meta.zone === 'right'
-            && active?.type && c.pluginId.includes(active.type))
-          .map((c) => (
-            <WidgetRenderer key={c.contributionId} widgets={c.widgets} pluginId={c.pluginId} />
-          ))}
+      <div className="flex-1" />
 
-        {/* Plugin status */}
-        <Flex
-          align="center"
-          gap="xs"
-          className="rounded-md border border-border-default bg-bg-tertiary px-2 py-1"
-        >
-          {pluginStatus.loading ? (
-            <>
-              <Spinner size="xs" label="Loading plugins" />
-              <Text size="xs" color="secondary" className="text-[10px]">
-                Loading...
-              </Text>
-            </>
-          ) : (
-            <>
-              <div
-                className={cn(
-                  'h-1.5 w-1.5 rounded-full',
-                  pluginStatus.failed > 0 ? 'bg-warning' : 'bg-success'
-                )}
-              />
-              <Text size="xs" color="secondary" className="text-[10px]">
-                {pluginStatus.failed > 0
-                  ? `${pluginStatus.active}/${pluginStatus.total} plugins`
-                  : `${pluginStatus.active} plugins`}
-              </Text>
-            </>
-          )}
-        </Flex>
-
-        {/* DEV badge */}
-        {isDev && (
-          <Text as="span" weight="semibold" className="rounded-md bg-accent px-1.5 py-1 text-[9px] text-white">
-            DEV
-          </Text>
-        )}
+      {/* Right cluster */}
+      <Flex align="stretch" className="h-full">
+        {isConnected &&
+          statusBarContributions
+            .filter(
+              (c) =>
+                c.meta.zone === 'right' && active?.type && c.pluginId.includes(active.type)
+            )
+            .map((c) => (
+              <div key={c.contributionId} className="flex items-center border-l border-border-default px-2">
+                <WidgetRenderer widgets={c.widgets} pluginId={c.pluginId} />
+              </div>
+            ))}
+        <PluginStatusSegment />
+        <DevSegment />
       </Flex>
     </Flex>
   )
