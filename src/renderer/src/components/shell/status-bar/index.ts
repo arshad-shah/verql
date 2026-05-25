@@ -1,2 +1,7 @@
 export { StatusBarSegment } from './StatusBarSegment'
 export type { StatusBarSegmentProps } from './StatusBarSegment'
+export { ConnectionSegment } from './ConnectionSegment'
+export { SchemaSegment } from './SchemaSegment'
+export { MultiConnectionSegment } from './MultiConnectionSegment'
+export { usePluginStatus } from './usePluginStatus'
+export type { PluginStatus } from './usePluginStatus'

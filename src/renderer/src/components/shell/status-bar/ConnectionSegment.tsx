@@ -1,0 +1,72 @@
+import { useState } from 'react'
+import { useConnectionsStore } from '@/stores/connections'
+import { ConnectionSwitcher } from '../ConnectionSwitcher'
+import { StatusBarSegment } from './StatusBarSegment'
+import { cn } from '@/primitives/utils/cn'
+
+const DB_ABBREVIATIONS: Record<string, string> = {
+  postgresql: 'PG',
+  mysql: 'MY',
+  sqlite: 'SL',
+  mongodb: 'MG',
+  redis: 'RD',
+}
+
+interface Props {
+  onNewConnection: () => void
+}
+
+export function ConnectionSegment({ onNewConnection }: Props) {
+  const [open, setOpen] = useState(false)
+  const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
+  const active = connections.find((c) => c.id === activeConnectionId)
+  const isConnected = activeConnectionId ? connectedIds.has(activeConnectionId) : false
+  const driver = active?.type
+    ? (DB_ABBREVIATIONS[active.type] ?? active.type.slice(0, 2).toUpperCase())
+    : null
+
+  return (
+    <div className="relative h-full">
+      <StatusBarSegment
+        as="button"
+        tone={isConnected ? 'primary' : 'muted'}
+        side="left"
+        interactive
+        onClick={() => setOpen((p) => !p)}
+        aria-expanded={open}
+        aria-label="Toggle connection switcher"
+      >
+        <span
+          className={cn(
+            'h-1.5 w-1.5 rounded-full',
+            isConnected
+              ? 'bg-success shadow-[0_0_0_2px_rgba(40,200,64,0.25)]'
+              : 'bg-text-tertiary'
+          )}
+        />
+        {isConnected && active ? (
+          <>
+            <span>{active.name}</span>
+            {driver && (
+              <span className="rounded-sm bg-white/18 px-1 py-px text-[9.5px] font-medium">
+                {driver}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <span>No connection</span>
+            <span className="rounded-sm bg-white/8 px-1 py-px text-[9.5px] font-medium opacity-80">
+              click to connect
+            </span>
+          </>
+        )}
+      </StatusBarSegment>
+      <ConnectionSwitcher
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onNewConnection={onNewConnection}
+      />
+    </div>
+  )
+}
