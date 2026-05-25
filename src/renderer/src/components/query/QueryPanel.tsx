@@ -264,22 +264,6 @@ export function QueryPanel({ tab }: Props) {
     setSaveDialogOpen(false)
   }, [saveDialogName, dbType, markTabSaved, tab.id])
 
-  // Publish this tab's save + dirty handlers to the registry. The global
-  // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
-  // so save works no matter what type of tab is in front — and the close
-  // button can ask `tabActions.isDirty(id)` to decide whether to confirm.
-  useEffect(() => {
-    tabActions.register(tab.id, {
-      onSave: handleSave,
-      isDirty: () => {
-        const t = useTabsStore.getState().tabs.find(t => t.id === tab.id && t.type === 'query')
-        return Boolean(t && (t as { isDirty?: boolean }).isDirty)
-      },
-      label: tab.title,
-    })
-    return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave])
-
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
     const sql = (sqlOverride?.trim() || editorRegistry.getSelectedSql() || tab.sql).trim()
