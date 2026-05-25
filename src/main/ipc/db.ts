@@ -200,13 +200,13 @@ export function registerDbHandlers(
   })
 
   handle('db:txn:commit', async (profileId, sessionId) => {
-    const adapter = requireAdapter(profileId)
-    if (adapter.commit) await adapter.commit(sessionId)
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (adapter?.commit) await adapter.commit(sessionId)
   })
 
   handle('db:txn:rollback', async (profileId, sessionId) => {
-    const adapter = requireAdapter(profileId)
-    if (adapter.rollback) await adapter.rollback(sessionId)
+    const adapter = ctx.activeAdapters.get(profileId)
+    if (adapter?.rollback) await adapter.rollback(sessionId)
   })
 
   handle('db:connection-capabilities', async (profileId) => {
