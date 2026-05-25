@@ -10,6 +10,8 @@ export class PostgresAdapter implements DbAdapter {
   private config: pg.PoolConfig
   private currentDatabase: string
   private switchLock: Promise<void> = Promise.resolve()
+  private sessions = new Map<string, { client: pg.PoolClient; autoCommit: boolean; inTxn: boolean }>()
+  private static ISOLATION = new Set(['READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'])
 
   constructor(config: Record<string, unknown>) {
     this.currentDatabase = config.database as string
@@ -70,6 +72,11 @@ export class PostgresAdapter implements DbAdapter {
   }
 
   async disconnect(): Promise<void> {
+    for (const [, s] of this.sessions) {
+      try { if (s.inTxn) await s.client.query('ROLLBACK') } catch { /* ignore */ }
+      s.client.release()
+    }
+    this.sessions.clear()
     await this.pool?.end()
     this.pool = null
   }
@@ -78,23 +85,70 @@ export class PostgresAdapter implements DbAdapter {
     return this.pool !== null
   }
 
-  async query(sql: string, params?: unknown[]): Promise<QueryResult> {
+  private shape(result: { rows?: Record<string, unknown>[]; fields?: { name: string; dataTypeID?: number }[]; rowCount?: number }, duration: number): QueryResult {
+    const fields: FieldInfo[] = (result.fields ?? []).map((f) => ({ name: f.name, dataType: String(f.dataTypeID ?? ''), nullable: true }))
+    return { rows: result.rows ?? [], fields, rowCount: result.rows?.length ?? 0, duration, affectedRows: result.rowCount ?? 0 }
+  }
+
+  async query(sql: string, params?: unknown[], opts?: { sessionId?: string }): Promise<QueryResult> {
     if (!this.pool) throw new Error('Not connected')
+    const session = opts?.sessionId ? this.sessions.get(opts.sessionId) : undefined
     const start = performance.now()
-    const result = await this.pool.query(sql, params)
-    const duration = Math.round(performance.now() - start)
-    const fields: FieldInfo[] = (result.fields ?? []).map(f => ({
-      name: f.name,
-      dataType: String(f.dataTypeID),
-      nullable: true
-    }))
-    return {
-      rows: result.rows ?? [],
-      fields,
-      rowCount: result.rows?.length ?? 0,
-      duration,
-      affectedRows: result.rowCount ?? 0
+    if (session) {
+      if (!session.autoCommit && !session.inTxn) { await session.client.query('BEGIN'); session.inTxn = true }
+      const result = await session.client.query(sql, params)
+      return this.shape(result, Math.round(performance.now() - start))
     }
+    const result = await this.pool.query(sql, params)
+    return this.shape(result, Math.round(performance.now() - start))
+  }
+
+  async openSession(sessionId: string, opts?: { autoCommit?: boolean }): Promise<void> {
+    if (!this.pool) throw new Error('Not connected')
+    if (this.sessions.has(sessionId)) return
+    const client = await this.pool.connect()
+    this.sessions.set(sessionId, { client, autoCommit: opts?.autoCommit ?? true, inTxn: false })
+  }
+
+  async closeSession(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    try { if (s.inTxn) await s.client.query('ROLLBACK') } finally { s.client.release(); this.sessions.delete(sessionId) }
+  }
+
+  async setAutoCommit(sessionId: string, enabled: boolean): Promise<void> {
+    const s = this.requireSession(sessionId)
+    if (enabled && s.inTxn) { await s.client.query('COMMIT'); s.inTxn = false }
+    s.autoCommit = enabled
+  }
+
+  async beginTransaction(sessionId: string, opts?: { isolationLevel?: string; readOnly?: boolean }): Promise<void> {
+    const s = this.requireSession(sessionId)
+    if (s.inTxn) return
+    let stmt = 'BEGIN'
+    if (opts?.isolationLevel) {
+      if (!PostgresAdapter.ISOLATION.has(opts.isolationLevel)) throw new Error(`Unsupported isolation level: ${opts.isolationLevel}`)
+      stmt += ` ISOLATION LEVEL ${opts.isolationLevel}`
+    }
+    if (opts?.readOnly) stmt += ' READ ONLY'
+    await s.client.query(stmt)
+    s.inTxn = true
+  }
+
+  async commit(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (s?.inTxn) { await s.client.query('COMMIT'); s.inTxn = false }
+  }
+
+  async rollback(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (s?.inTxn) { await s.client.query('ROLLBACK'); s.inTxn = false }
+  }
+
+  private requireSession(sessionId: string): { client: pg.PoolClient; autoCommit: boolean; inTxn: boolean } {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`No open session '${sessionId}'`)
+    return s
   }
 
   async getTables(schema?: string): Promise<SchemaTable[]> {
