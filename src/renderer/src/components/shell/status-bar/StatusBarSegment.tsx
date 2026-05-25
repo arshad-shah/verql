@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import type React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/primitives/utils/cn'
 
@@ -28,7 +29,6 @@ const segmentVariants = cva(
       { tone: 'primary', interactive: true, className: 'hover:bg-accent-emphasis' },
       { tone: 'schema', interactive: true, className: 'hover:bg-accent/20' },
       { tone: 'muted', interactive: true, className: 'hover:bg-hover' },
-      { tone: 'dev', interactive: true, className: 'hover:bg-accent' },
     ],
     defaultVariants: {
       tone: 'default',
@@ -38,14 +38,26 @@ const segmentVariants = cva(
   }
 )
 
-type SegmentBaseProps = VariantProps<typeof segmentVariants> & {
+type SegmentBaseProps = Omit<VariantProps<typeof segmentVariants>, 'interactive'> & {
   children: ReactNode
   className?: string
 }
 
 export type StatusBarSegmentProps =
-  | (SegmentBaseProps & { as?: 'div' } & Omit<React.HTMLAttributes<HTMLDivElement>, 'children'>)
-  | (SegmentBaseProps & { as: 'button' } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>)
+  // Interactive: must be a button
+  | (SegmentBaseProps & {
+      interactive: true
+      as: 'button'
+    } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>)
+  // Non-interactive: div (default) or button
+  | (SegmentBaseProps & {
+      interactive?: false
+      as?: 'div'
+    } & Omit<React.HTMLAttributes<HTMLDivElement>, 'children'>)
+  | (SegmentBaseProps & {
+      interactive?: false
+      as: 'button'
+    } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>)
 
 export const StatusBarSegment = forwardRef<HTMLElement, StatusBarSegmentProps>(
   ({ tone, side, interactive, className, children, as = 'div', ...rest }, ref) => {
