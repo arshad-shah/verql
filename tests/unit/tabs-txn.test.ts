@@ -26,4 +26,16 @@ describe('tabs store transaction state', () => {
     useTabsStore.getState().setTabTxnStatus(id, 'active')
     expect(activeQueryTab().txn).toMatchObject({ autoCommit: false, status: 'active' })
   })
+
+  it('setTabIsolation stores the isolation level', () => {
+    const id = useTabsStore.getState().addQueryTab('conn1')
+    useTabsStore.getState().setTabIsolation(id, 'SERIALIZABLE')
+    expect(activeQueryTab().txn?.isolationLevel).toBe('SERIALIZABLE')
+  })
+
+  it('setTabReadOnly toggles the read-only flag', () => {
+    const id = useTabsStore.getState().addQueryTab('conn1')
+    useTabsStore.getState().setTabReadOnly(id, true)
+    expect(activeQueryTab().txn?.readOnly).toBe(true)
+  })
 })
