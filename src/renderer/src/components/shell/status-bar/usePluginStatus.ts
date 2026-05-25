@@ -13,7 +13,6 @@ const TRANSITIONAL = new Set(['activating', 'discovered', 'validated', 'resolved
 const HEALTHY = new Set(['active', 'degraded'])
 
 export function usePluginStatus(): PluginStatus {
-  const addNotification = useNotificationsStore((s) => s.addNotification)
   const [status, setStatus] = useState<PluginStatus>({
     total: 0, active: 0, failed: 0, loading: true,
   })
@@ -35,7 +34,7 @@ export function usePluginStatus(): PluginStatus {
 
         if (failed > 0 && !notifiedRef.current) {
           notifiedRef.current = true
-          addNotification({
+          useNotificationsStore.getState().addNotification({
             type: 'warning',
             title: 'Plugin load failure',
             message: `${failed} plugin(s) failed to load`,
@@ -55,7 +54,7 @@ export function usePluginStatus(): PluginStatus {
       clearInterval(interval)
       clearTimeout(timeout)
     }
-  }, [addNotification])
+  }, [])
 
   return status
 }

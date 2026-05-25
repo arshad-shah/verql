@@ -17,7 +17,7 @@ function mockInvoke(rows: PluginRow[]) {
 }
 
 beforeEach(() => {
-  useNotificationsStore.setState({ notifications: [], unreadCount: 0 } as never)
+  useNotificationsStore.setState((s) => ({ ...s, notifications: [] }))
 })
 afterEach(() => vi.restoreAllMocks())
 
@@ -45,12 +45,23 @@ describe('usePluginStatus', () => {
     expect(result.current.loading).toBe(true)
   })
 
-  it('fires a single notification when failures are detected', async () => {
+  it('fires a single notification across multiple poll ticks', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     mockInvoke([{ status: { state: 'error' } }])
-    const add = vi.spyOn(useNotificationsStore.getState(), 'addNotification')
-    const { rerender } = renderHook(() => usePluginStatus())
-    await waitFor(() => expect(add).toHaveBeenCalledTimes(1))
-    rerender()
-    expect(add).toHaveBeenCalledTimes(1)
+    const { unmount } = renderHook(() => usePluginStatus())
+
+    // First poll fires immediately on mount
+    await vi.waitFor(() =>
+      expect(useNotificationsStore.getState().notifications).toHaveLength(1)
+    )
+
+    // Advance past two more poll intervals
+    await vi.advanceTimersByTimeAsync(4500)
+
+    // Still exactly one notification despite repeated failures
+    expect(useNotificationsStore.getState().notifications).toHaveLength(1)
+
+    unmount()
+    vi.useRealTimers()
   })
 })
