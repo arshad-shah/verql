@@ -8,6 +8,7 @@ const SQLITE_QUOTE = '"' as const
 export class SqliteAdapter implements DbAdapter {
   private db: Database.Database | null = null
   private dbPath: string
+  private sessions = new Map<string, { autoCommit: boolean; inTxn: boolean }>()
 
   constructor(config: Record<string, unknown>) {
     this.dbPath = config.database as string
@@ -26,6 +27,8 @@ export class SqliteAdapter implements DbAdapter {
   }
 
   async disconnect(): Promise<void> {
+    for (const [, s] of this.sessions) { if (s.inTxn && this.db) this.db.prepare('ROLLBACK').run() }
+    this.sessions.clear()
     this.db?.close()
     this.db = null
   }
@@ -34,8 +37,13 @@ export class SqliteAdapter implements DbAdapter {
     return this.db !== null
   }
 
-  async query(sql: string, params?: unknown[]): Promise<QueryResult> {
+  async query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult> {
     if (!this.db) throw new Error('Not connected')
+    const session = opts?.sessionId ? this.sessions.get(opts.sessionId) : undefined
+    if (session && !session.autoCommit && !session.inTxn) {
+      this.db.prepare('BEGIN').run()
+      session.inTxn = true
+    }
 
     const start = performance.now()
     const trimmed = sql.trim().toUpperCase()
@@ -58,6 +66,48 @@ export class SqliteAdapter implements DbAdapter {
       const duration = Math.round(performance.now() - start)
       return { rows: [], fields: [], rowCount: 0, duration, affectedRows: info.changes }
     }
+  }
+
+  async openSession(sessionId: string, opts?: { autoCommit?: boolean }): Promise<void> {
+    if (!this.db) throw new Error('Not connected')
+    if (this.sessions.has(sessionId)) return
+    this.sessions.set(sessionId, { autoCommit: opts?.autoCommit ?? true, inTxn: false })
+  }
+
+  async closeSession(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (s?.inTxn && this.db) this.db.prepare('ROLLBACK').run()
+    this.sessions.delete(sessionId)
+  }
+
+  async setAutoCommit(sessionId: string, enabled: boolean): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (!s) return
+    if (enabled && s.inTxn && this.db) { this.db.prepare('COMMIT').run(); s.inTxn = false }
+    s.autoCommit = enabled
+  }
+
+  async beginTransaction(sessionId: string): Promise<void> {
+    const s = this.requireSession(sessionId)
+    if (s.inTxn || !this.db) return
+    this.db.prepare('BEGIN').run()
+    s.inTxn = true
+  }
+
+  async commit(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (s?.inTxn && this.db) { this.db.prepare('COMMIT').run(); s.inTxn = false }
+  }
+
+  async rollback(sessionId: string): Promise<void> {
+    const s = this.sessions.get(sessionId)
+    if (s?.inTxn && this.db) { this.db.prepare('ROLLBACK').run(); s.inTxn = false }
+  }
+
+  private requireSession(sessionId: string): { autoCommit: boolean; inTxn: boolean } {
+    const s = this.sessions.get(sessionId)
+    if (!s) throw new Error(`No open session '${sessionId}'`)
+    return s
   }
 
   async getTables(schema?: string): Promise<SchemaTable[]> {
