@@ -302,10 +302,12 @@ export function QueryPanel({ tab }: Props) {
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
 
-  // Publish this tab's save + dirty + lens handlers to the registry. The global
+  // Publish this tab's save + dirty + lens + txn handlers to the registry. The global
   // Cmd/Ctrl+S handler in App.tsx pulls the active tab's handler from here,
   // and the CodeLens dispatcher routes run/explain through tabActions so the
   // editor library stays decoupled from React.
+  // txnStatus reads from the store directly (not from the `tab` prop closure)
+  // so it reflects the latest transaction state even if this effect doesn't re-run.
   useEffect(() => {
     tabActions.register(tab.id, {
       onSave: handleSave,
@@ -316,9 +318,15 @@ export function QueryPanel({ tab }: Props) {
       label: tab.title,
       runStatement: (sql) => { void runSql(sql) },
       explainStatement: (sql) => { void explainSql(sql) },
+      txnStatus: () => {
+        const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
+        return (t?.type === 'query' ? t.txn?.status : undefined) ?? 'none'
+      },
+      commitTransaction: onCommit,
+      rollbackTransaction: onRollback,
     })
     return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave, runSql, explainSql])
+  }, [tab.id, tab.title, handleSave, runSql, explainSql, onCommit, onRollback])
 
   return (
     <Flex direction="column" className="h-full">

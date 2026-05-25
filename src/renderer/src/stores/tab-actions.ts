@@ -28,6 +28,10 @@ export interface TabActions {
   runStatement?: (sql: string) => void
   /** Show EXPLAIN ANALYZE plan for a single statement (CodeLens "Explain"). */
   explainStatement?: (sql: string) => void
+  /** Returns 'active' when the tab has an open, uncommitted transaction. */
+  txnStatus?: () => 'none' | 'active'
+  commitTransaction?: () => void | Promise<void>
+  rollbackTransaction?: () => void | Promise<void>
 }
 
 const handlers = new Map<string, TabActions>()
@@ -59,7 +63,17 @@ export const tabActions = {
   },
   explainStatement(tabId: string, sql: string): void {
     handlers.get(tabId)?.explainStatement?.(sql)
-  }
+  },
+
+  hasOpenTransaction(tabId: string): boolean {
+    return handlers.get(tabId)?.txnStatus?.() === 'active'
+  },
+  async commitTransaction(tabId: string): Promise<void> {
+    await handlers.get(tabId)?.commitTransaction?.()
+  },
+  async rollbackTransaction(tabId: string): Promise<void> {
+    await handlers.get(tabId)?.rollbackTransaction?.()
+  },
 }
 
 interface PendingCloseState {
@@ -87,7 +101,7 @@ export const usePendingClose = create<PendingCloseState>((set) => ({
  * the tabs store (which would otherwise create an import cycle).
  */
 export function requestCloseTab(tabId: string, actuallyClose: (id: string) => void): void {
-  if (tabActions.isDirty(tabId)) {
+  if (tabActions.isDirty(tabId) || tabActions.hasOpenTransaction(tabId)) {
     usePendingClose.getState().request(tabId)
   } else {
     actuallyClose(tabId)
