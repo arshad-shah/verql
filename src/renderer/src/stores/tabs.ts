@@ -1,10 +1,10 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
 import { useSelectionStore } from './selection'
 
 let tabCounter = 0
 
-function createQueryTab(connectionId: string | null, schema: string | null = null): QueryTab {
+function createQueryTab(connectionId: string | null, schema: string | null = null, opts?: { autoCommit?: boolean }): QueryTab {
   tabCounter++
   return {
     id: `query-${tabCounter}-${Date.now()}`,
@@ -18,7 +18,8 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
     isExecuting: false,
     error: null,
     isDirty: false,
-    aiExplanation: null
+    aiExplanation: null,
+    txn: { autoCommit: opts?.autoCommit ?? true, status: 'none', readOnly: false },
   }
 }
 
@@ -28,7 +29,7 @@ interface TabsState {
   tabs: Tab[]
   activeTabId: string | null
   recentlyClosed: Tab[]
-  addQueryTab: (connectionId: string | null, schema?: string | null) => string
+  addQueryTab: (connectionId: string | null, schema?: string | null, opts?: { autoCommit?: boolean }) => string
   closeTab: (id: string) => void
   closeOtherTabs: (id: string) => void
   closeTabsToRight: (id: string) => void
@@ -47,6 +48,10 @@ interface TabsState {
   setTabResults: (id: string, results: QueryResult) => void
   setTabError: (id: string, error: string) => void
   setTabAiExplanation: (id: string, explanation: string | null) => void
+  setTabAutoCommit: (id: string, autoCommit: boolean) => void
+  setTabTxnStatus: (id: string, status: 'none' | 'active') => void
+  setTabIsolation: (id: string, isolationLevel: string) => void
+  setTabReadOnly: (id: string, readOnly: boolean) => void
   openErDiagram: (connectionId: string, schema: string) => string
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
@@ -67,8 +72,8 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   activeTabId: null,
   recentlyClosed: [],
 
-  addQueryTab: (connectionId, schema = null) => {
-    const tab = createQueryTab(connectionId, schema)
+  addQueryTab: (connectionId, schema = null, opts?) => {
+    const tab = createQueryTab(connectionId, schema, opts)
     set((s) => ({
       tabs: [...s.tabs, tab],
       activeTabId: tab.id
@@ -224,6 +229,22 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       )
     }))
   },
+
+  setTabAutoCommit: (id, autoCommit) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, autoCommit } } : t),
+  })),
+
+  setTabTxnStatus: (id, status) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, status } } : t),
+  })),
+
+  setTabIsolation: (id, isolationLevel) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, isolationLevel } } : t),
+  })),
+
+  setTabReadOnly: (id, readOnly) => set((s) => ({
+    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, readOnly } } : t),
+  })),
 
   openErDiagram: (connectionId: string, schema: string) => {
     const id = `er-${connectionId}-${schema}`
