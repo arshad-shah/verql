@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionSwitcher } from '../ConnectionSwitcher'
 import { StatusBarSegment } from './StatusBarSegment'
@@ -18,6 +18,11 @@ interface Props {
 
 export function ConnectionSegment({ onNewConnection }: Props) {
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const handler = () => setOpen(true)
+    window.addEventListener('statusbar:open-switcher', handler)
+    return () => window.removeEventListener('statusbar:open-switcher', handler)
+  }, [])
   const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
   const active = connections.find((c) => c.id === activeConnectionId)
   const isConnected = activeConnectionId ? connectedIds.has(activeConnectionId) : false

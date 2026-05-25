@@ -94,6 +94,15 @@ export const WithNotifications: Story = {
   ],
 }
 
+export const NoSchema: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => { seed({ schema: null }) }, [])
+      return <Story />
+    },
+  ],
+}
+
 export const MultipleConnections: Story = {
   decorators: [
     (Story) => {
