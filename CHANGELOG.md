@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- [#54](https://github.com/arshad-shah/verql/pull/54) [`d2e6c88`](https://github.com/arshad-shah/verql/commit/d2e6c8894dac9735305078cbc52de601aa816373) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Added transaction controls for PostgreSQL and SQLite connections. Each query tab can now turn off auto-commit and run statements inside a transaction, with Commit/Rollback, isolation level, and read-only mode in a new transaction toolbar. A connection can default to manual-commit via a per-connection "Auto-commit by default" setting, and closing a tab with an open transaction prompts you to commit or roll back first.
+
+  Under the hood, drivers declare these capabilities through a new plugin-SDK session/transaction surface, so the UI stays database-agnostic — future drivers (MySQL, Snowflake, MongoDB, Redis) light up the same controls just by declaring support.
+
+- [#54](https://github.com/arshad-shah/verql/pull/54) [`d2e6c88`](https://github.com/arshad-shah/verql/commit/d2e6c8894dac9735305078cbc52de601aa816373) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Redesigned the status bar as a VS Code-style segmented bar. Connection, database, and plugin status are now shown as discrete segments along the bar, replacing the previous ConnectionCard layout.
+
 ## 0.7.0
 
 ### Minor Changes
