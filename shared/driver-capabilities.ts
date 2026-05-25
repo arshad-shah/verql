@@ -40,6 +40,9 @@ export interface RuntimeCapabilityOverlay {
 
 /** Serializable, function-free capabilities the renderer consumes. */
 export interface DriverCapabilities {
+  /** Free-form dialect tag — the renderer treats this as a label, not a
+   *  discriminator. Branching on the connection's `type` is forbidden;
+   *  see tests/unit/export-import-no-hardcoding.test.ts. */
   sqlDialect?: string
   editorLanguage?: string
   defaultSchemaUseConnectionDatabase?: boolean
