@@ -199,29 +199,33 @@ export function QueryPanel({ tab }: Props) {
     }
   }, [tab.connectionId, tab.id, tab.title, tab.txn?.status, setTabAutoCommit, setTabTxnStatus])
 
-  const onCommit = useCallback(async () => {
+  // Raw: performs the IPC + status reset and PROPAGATES errors (re-throws).
+  // Used by the close-guard (App.tsx) so a failed commit/rollback keeps the
+  // dialog open and does NOT close the tab, preventing an orphaned server txn.
+  const doCommit = useCallback(async () => {
     if (!tab.connectionId) return
-    try {
-      await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
-      setTabTxnStatus(tab.id, 'none')
-    } catch (err) {
-      notifyError(err, {
-        source: { type: 'tab', id: tab.id, label: tab.title },
-      })
+    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
+    setTabTxnStatus(tab.id, 'none')
+  }, [tab.connectionId, tab.id, setTabTxnStatus])
+
+  const doRollback = useCallback(async () => {
+    if (!tab.connectionId) return
+    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_ROLLBACK, tab.connectionId, tab.id)
+    setTabTxnStatus(tab.id, 'none')
+  }, [tab.connectionId, tab.id, setTabTxnStatus])
+
+  // Toolbar handlers: wrap raw ops with the error notifier (swallow for inline use).
+  const onCommit = useCallback(async () => {
+    try { await doCommit() } catch (err) {
+      notifyError(err, { source: { type: 'tab', id: tab.id, label: tab.title } })
     }
-  }, [tab.connectionId, tab.id, tab.title, setTabTxnStatus])
+  }, [doCommit, tab.id, tab.title])
 
   const onRollback = useCallback(async () => {
-    if (!tab.connectionId) return
-    try {
-      await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_ROLLBACK, tab.connectionId, tab.id)
-      setTabTxnStatus(tab.id, 'none')
-    } catch (err) {
-      notifyError(err, {
-        source: { type: 'tab', id: tab.id, label: tab.title },
-      })
+    try { await doRollback() } catch (err) {
+      notifyError(err, { source: { type: 'tab', id: tab.id, label: tab.title } })
     }
-  }, [tab.connectionId, tab.id, tab.title, setTabTxnStatus])
+  }, [doRollback, tab.id, tab.title])
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveDialogName, setSaveDialogName] = useState('')
@@ -306,11 +310,13 @@ export function QueryPanel({ tab }: Props) {
         const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
         return (t?.type === 'query' ? t.txn?.status : undefined) ?? 'none'
       },
-      commitTransaction: onCommit,
-      rollbackTransaction: onRollback,
+      // Raw throwing variants: the close-guard in App.tsx uses these so a
+      // failed commit/rollback propagates the error and keeps the dialog open.
+      commitTransaction: doCommit,
+      rollbackTransaction: doRollback,
     })
     return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave, runSql, explainSql, onCommit, onRollback])
+  }, [tab.id, tab.title, handleSave, runSql, explainSql, doCommit, doRollback])
 
   return (
     <Flex direction="column" className="h-full">

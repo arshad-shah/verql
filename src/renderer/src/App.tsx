@@ -29,6 +29,7 @@ import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { notifyError } from '@/lib/notify-error'
 
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
@@ -405,15 +406,22 @@ export function App() {
               size="sm"
               onClick={async () => {
                 const id = pendingCloseId
-                clearPendingClose()
                 if (!id) return
-                await tabActions.rollbackTransaction(id)
-                const tab = useTabsStore.getState().tabs.find(t => t.id === id)
-                const connectionId = tab?.type === 'query' ? tab.connectionId : null
-                if (connectionId) {
-                  window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
+                try {
+                  await tabActions.rollbackTransaction(id)
+                  const tab = useTabsStore.getState().tabs.find(t => t.id === id)
+                  const connectionId = tab?.type === 'query' ? tab.connectionId : null
+                  if (connectionId) {
+                    window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
+                  }
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
                 }
-                closeTab(id)
               }}
             >
               Rollback &amp; close
@@ -423,15 +431,22 @@ export function App() {
               size="sm"
               onClick={async () => {
                 const id = pendingCloseId
-                clearPendingClose()
                 if (!id) return
-                await tabActions.commitTransaction(id)
-                const tab = useTabsStore.getState().tabs.find(t => t.id === id)
-                const connectionId = tab?.type === 'query' ? tab.connectionId : null
-                if (connectionId) {
-                  window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
+                try {
+                  await tabActions.commitTransaction(id)
+                  const tab = useTabsStore.getState().tabs.find(t => t.id === id)
+                  const connectionId = tab?.type === 'query' ? tab.connectionId : null
+                  if (connectionId) {
+                    window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
+                  }
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
                 }
-                closeTab(id)
               }}
             >
               Commit &amp; close
