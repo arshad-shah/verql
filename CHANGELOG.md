@@ -1,5 +1,66 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- [#51](https://github.com/arshad-shah/verql/pull/51) [`876f08e`](https://github.com/arshad-shah/verql/commit/876f08e153e05f9b8d4b4aa5a860d8ac99783f73) Thanks [@arshad-shah](https://github.com/arshad-shah)! - The main app is now a pure orchestrator: every line of database-specific logic lives inside its driver plugin. Adding a new database (Cassandra, ClickHouse, DuckDB, anything else) no longer requires editing the main process or the renderer's hot paths.
+
+  What changed for the user-facing app:
+
+  - Each driver now contributes its own identifier-quote character, prepared-statement placeholder, sample query, and migration DDL builder. The orchestrator routes through these structural capabilities; the previous hardcoded "for these four dialects" table is gone.
+  - The CSV-into-table importer is fully generic — it asks the active driver for its quoting + placeholder shape, so the same import path works for every relational driver (bundled or third-party).
+  - SQLite's `INTEGER PRIMARY KEY` rowid quirk during migration moved into the SQLite plugin where it belongs. The migration tool no longer special-cases it.
+  - The `db:sample-query` IPC handler no longer fabricates a `SELECT * FROM table LIMIT 100` fallback. Every driver, SQL or otherwise, ships its own sample-query implementation.
+  - Bundled drivers are now wired through a single `src/main/plugins/bundled/index.ts` list. The orchestrator iterates that list — it doesn't reference individual driver names anywhere else.
+
+  What changed for plugin authors: see the SDK release notes below — the helpers driver plugins compose (`quoteIdentifier`, `generateCreateTable`, `splitSqlStatements`, `importCsvToTable`, `createRelationalGetTableData`) now live in the public SDK barrel and take the driver's quote character as a parameter, so a new driver plugin never has to hardcode a dialect name.
+
+  A regression test now scans every file under `src/main/` outside `plugins/` and fails the build if any of `'postgresql'`, `'mysql'`, `'sqlite'`, `'mongodb'`, `'redis'`, `'snowflake'` re-appears in core code.
+
+- [#51](https://github.com/arshad-shah/verql/pull/51) [`876f08e`](https://github.com/arshad-shah/verql/commit/876f08e153e05f9b8d4b4aa5a860d8ac99783f73) Thanks [@arshad-shah](https://github.com/arshad-shah)! - The plugin SDK is now a complete, documented surface for third-party plugin authors, and themes are validated end-to-end so a partial theme can never half-paint the app.
+
+  **Plugin SDK additions**
+
+  - `definePlugin({ manifest, activate, deactivate? })` — typed identity helper that pins the plugin shape at compile time. Missing fields or mistyped contributions fail at compile time instead of at boot.
+  - SQL helpers exposed in the public barrel: `quoteIdentifier`, `validateIdentifier`, `formatSqlValue`, `generateCreateTable`, `generateInsertStatements`, `splitSqlStatements`, `importCsvToTable`, `createRelationalGetTableData`. All take the driver's `quoteChar` as a parameter — no dialect enum.
+  - Theme helpers exposed: `validateTheme`, `REQUIRED_THEME_TOKENS`, `RECOMMENDED_THEME_TOKENS`. Plugin authors can run the same validator the host runs and fail their own CI before shipping a broken theme.
+  - Manifest validator now covers `themes`, `exporters`, and `importers` contributions (previously silently accepted any shape and failed later at activation time).
+
+  **Theme validation**
+
+  - The theme registry validates every theme at registration time and stores the report on the entry. The picker reads it once instead of re-running validation per render.
+  - Optional `register(theme, { strict: true })` throws on missing required tokens — useful inside a plugin author's CI build.
+  - The Appearance settings theme grid now **disables** tiles for themes missing required tokens — they're greyed out, non-clickable, and show a tooltip listing the missing tokens. Themes that only miss _recommended_ tokens still work and show the existing warning badge.
+  - `setTheme()` refuses to land on a broken theme even when called programmatically (URL handler, command palette, restored settings), and the resolved-theme fallback skips broken themes when picking the effective theme for the active mode.
+  - The 9 bundled themes (Lab, Ink & Paper, Dark, Light, Midnight, Dracula, Nord, Solarized, Catppuccin) are pinned by a unit test against the required-token list, so a future palette tweak can't silently break one.
+
+  **Documentation**
+
+  `docs/plugins.md` has been updated for the new SDK surface: `definePlugin`, the driver capability flags (`quoteChar`, `placeholder`, `sampleQuery`, `generateMigrationDdl`), the theme-token contract, and the bundled-plugins/index.ts wiring file.
+
+### Patch Changes
+
+- [#51](https://github.com/arshad-shah/verql/pull/51) [`876f08e`](https://github.com/arshad-shah/verql/commit/876f08e153e05f9b8d4b4aa5a860d8ac99783f73) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Round of correctness fixes surfaced by a full-codebase audit:
+
+  - **Schema cache is cleared on disconnect.** Reconnecting a profile no longer surfaces stale tables/columns from the previous session, which would otherwise cause confusing autocomplete and the occasional "table doesn't exist" against the live server.
+  - **Tabs detach cleanly when their connection is deleted.** Query tabs lose their dead `connectionId` and land in the "pick a connection" state; ER-diagram and table tabs close outright instead of dangling against a profile that no longer exists.
+  - **CSV import "update on conflict"** no longer silently drops every conflicting row. Per-row failures now surface in the importer's `errors[]` so the user can see what failed, instead of seeing a successful import that didn't actually write anything.
+  - **Adapters disconnect cleanly on app quit.** A new `before-quit` handler awaits every active adapter's `disconnect()`, so SSH tunnels and database pools close before the process exits rather than getting reaped abruptly.
+  - **`Close all tabs` no longer reverses the open tab list** for any subscriber still holding the prior reference. The action now copies the array before reversing it.
+  - **Disconnect middleware errors are logged** instead of being swallowed by an empty `catch {}`, so a leaking SSH tunnel or socket is discoverable in the developer console instead of vanishing.
+  - **Command-palette plugin actions** log their errors instead of disappearing into a no-op `.catch(() => {})`.
+
+- [#51](https://github.com/arshad-shah/verql/pull/51) [`876f08e`](https://github.com/arshad-shah/verql/commit/876f08e153e05f9b8d4b4aa5a860d8ac99783f73) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Security hardening across connection, IPC, and plugin loading paths:
+
+  - **PostgreSQL SSL** now verifies the server certificate by default whenever SSL is enabled, instead of silently disabling verification on every encrypted connection. The connection form gains an explicit _SSL Mode_ selector — pick "Verify (recommended)" or "Skip verification (insecure)" — so opt-out is deliberate, not a hidden default.
+  - **MCP server** no longer returns `Access-Control-Allow-Origin: *`. The bearer-token check still gates every request, but removing the wildcard means even a leaked token can't be read by a malicious page in the user's browser.
+  - **MCP `explain_query` tool** now routes through the same write-approval gate as `query`. Statements that hide DML behind a comment or after a semicolon (`EXPLAIN SELECT 1; DELETE FROM users`) can no longer be smuggled through the "read-only" label.
+  - **Bundled plugins can no longer be shadowed.** A third-party plugin claiming the name `verql-plugin-postgresql` (or any other bundled name) is now rejected at discover and install time instead of silently overriding the built-in driver and intercepting credentials.
+  - **Plugin `main` path traversal** is rejected at the validate phase. A manifest declaring `main: '../../../etc/passwd.js'` (or any absolute path) can no longer escape the plugin directory and load arbitrary files via `require()`.
+  - **Encrypted credentials file** (`credentials.enc`) is now written with mode `0o600` so it isn't world-readable on shared systems.
+  - **Main window** declares `setWindowOpenHandler` (denies all `window.open` requests) and a `will-navigate` guard pinned to the bundled assets / dev server, so the renderer can never be steered to an external URL.
+
 ## 0.6.0
 
 ### Minor Changes
