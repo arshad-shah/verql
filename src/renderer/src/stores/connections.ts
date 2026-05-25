@@ -57,6 +57,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     // "Not connected" — the user gets a clear "pick a connection" state.
     useSchemaStore.getState().clearCache(id)
     useTabsStore.getState().detachConnection(id)
+    useDriverCapabilitiesStore.getState().clearConnection(id)
     await state.loadConnections()
   },
   connect: async (id) => {

@@ -25,6 +25,13 @@ describe('resolveCapabilities', () => {
     expect(caps?.session?.manualTransactions).toBe(true)
   })
 
+  it('resolves static caps with a null profileId (no overlay applied)', async () => {
+    invoke.mockResolvedValueOnce({ hasSampleQuery: true, hasGetTableData: false, session: { autoCommit: true, manualTransactions: true } })
+    await useDriverCapabilitiesStore.getState().fetch('sqlite')
+    const caps = useDriverCapabilitiesStore.getState().resolveCapabilities(null, 'sqlite')
+    expect(caps?.session?.manualTransactions).toBe(true)
+  })
+
   it('clears the connection overlay on disconnect', () => {
     useDriverCapabilitiesStore.setState({ byConnection: { conn1: { session: { manualTransactions: true } } } })
     useDriverCapabilitiesStore.getState().clearConnection('conn1')
