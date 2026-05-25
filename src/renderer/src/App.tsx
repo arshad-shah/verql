@@ -28,6 +28,7 @@ import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
@@ -50,6 +51,7 @@ export function App() {
   const secondarySidebarVisible = useUiStore(s => s.secondarySidebarVisible)
   const setSecondarySidebarWidth = useUiStore(s => s.setSecondarySidebarWidth)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
+  const connections = useConnectionsStore(s => s.connections)
   const loadConnections = useConnectionsStore(s => s.loadConnections)
 
   // Bootstrap the connections store on first render. Previously the explorer's
@@ -96,7 +98,8 @@ export function App() {
       }
       if (mod && e.key === 't' && !e.shiftKey) {
         e.preventDefault()
-        addQueryTab(activeConnectionId)
+        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
       }
       if (mod && e.shiftKey && e.key === 't') {
         e.preventDefault()
@@ -157,7 +160,10 @@ export function App() {
 
     // Listen for native menu commands
     const cleanups = [
-      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => addQueryTab(activeConnectionId)),
+      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => {
+        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
+      }),
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
       window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
     ]

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { requestCloseTab } from '@/stores/tab-actions'
 import { useConnectionsStore } from '@/stores/connections'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Flex, IconButton, Tooltip, cn } from '@/primitives'
 import { TabItem } from './TabItem'
 import { useTabScroll } from './useTabScroll'
@@ -21,7 +22,8 @@ export function TabBar() {
     reorderTabs,
     duplicateTab,
   } = useTabsStore()
-  const { activeConnectionId } = useConnectionsStore()
+  const { activeConnectionId, connections } = useConnectionsStore()
+  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
 
   const { scrollRef, canScrollLeft, canScrollRight, scrollLeft, scrollRight, scrollIntoView, onWheel } =
     useTabScroll()
@@ -118,7 +120,7 @@ export function TabBar() {
           label="New Query Tab"
           size="xs"
           variant="ghost"
-          onClick={() => addQueryTab(activeConnectionId)}
+          onClick={() => addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })}
           className="shrink-0 text-text-tertiary hover:text-text-primary"
         >
           <Plus size={14} />

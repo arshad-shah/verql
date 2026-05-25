@@ -2,7 +2,9 @@ import { ChevronRight, ChevronDown, Eye, ExternalLink } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 import { useToastStore } from '@/stores/toast'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { ColumnRow } from './ColumnRow'
@@ -25,6 +27,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
   const addToast = useToastStore((s) => s.addToast)
+  const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
 
   const nodeKey = `view:${connectionId}:${schema}:${viewName}`
   const colCacheKey = `${connectionId}:${schema}:${viewName}`
@@ -48,7 +51,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
 
   async function handleOpenInTab() {
     const query = await getSampleQuery()
-    const tabId = addQueryTab(connectionId, schema)
+    const tabId = addQueryTab(connectionId, schema, { autoCommit: initialAutoCommit(profile) })
     updateTabSql(tabId, query)
   }
 

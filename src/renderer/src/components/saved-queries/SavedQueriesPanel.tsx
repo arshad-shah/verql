@@ -2,6 +2,7 @@ import { useState, useSyncExternalStore } from 'react'
 import { Search, Play, Trash2, Clock } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input } from '@/primitives'
 
 interface SavedQuery {
@@ -45,14 +46,15 @@ export function SavedQueriesPanel() {
   const [search, setSearch] = useState('')
   const queries = useSavedQueries()
   const { addQueryTab } = useTabsStore()
-  const { activeConnectionId } = useConnectionsStore()
+  const { activeConnectionId, connections } = useConnectionsStore()
+  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
 
   const filtered = search.trim()
     ? queries.filter(q => q.name.toLowerCase().includes(search.toLowerCase()) || q.sql.toLowerCase().includes(search.toLowerCase()))
     : queries
 
   const handleOpenQuery = (query: SavedQuery) => {
-    const tabId = addQueryTab(activeConnectionId)
+    const tabId = addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
     useTabsStore.setState((s) => ({
       tabs: s.tabs.map(t => t.id === tabId ? { ...t, sql: query.sql, title: query.name } : t)
     }))
