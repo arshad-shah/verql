@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { QueryEditor } from './QueryEditor'
 import { QueryToolbar } from './QueryToolbar'
+import { TransactionToolbar } from './TransactionToolbar'
 import { ConnectionSelector } from './ConnectionSelector'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { saveQuery } from '@/components/saved-queries/SavedQueriesPanel'
@@ -14,6 +15,7 @@ import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
 import { useSchemaStore } from '@/stores/schema'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -44,13 +46,23 @@ function destructiveReason(sql: string): string | null {
 }
 
 export function QueryPanel({ tab }: Props) {
-  const { updateTabSql, setTabExecuting, setTabResults, setTabError, markTabSaved } = useTabsStore()
+  const { updateTabSql, setTabExecuting, setTabResults, setTabError, markTabSaved,
+    setTabAutoCommit, setTabTxnStatus, setTabIsolation, setTabReadOnly } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
   const queryTimeout = useSettingsStore(s => s.settings.general.queryTimeout)
   const confirmDestructive = useSettingsStore(s => s.settings.general.confirmDestructiveQueries)
   const dbType = tab.connectionId ? connections.find(c => c.id === tab.connectionId)?.type : undefined
 
-  const executeWithSchema = useCallback(async (sql: string) => {
+  // Capabilities: resolve + ensure fetched for this driver type
+  const fetchCaps = useDriverCapabilitiesStore(s => s.fetch)
+  const caps = useDriverCapabilitiesStore(s =>
+    dbType ? s.resolveCapabilities(tab.connectionId, dbType) : null
+  )
+  useEffect(() => {
+    if (dbType) fetchCaps(dbType).catch(() => {})
+  }, [dbType, fetchCaps])
+
+  const executeWithSchema = useCallback(async (sql: string, txnOpts?: { sessionId?: string }) => {
     if (!tab.connectionId) return
     // Set database context before executing if selected
     if (tab.database) {
@@ -68,7 +80,7 @@ export function QueryPanel({ tab }: Props) {
         // ignore — some adapters don't support setSchema
       }
     }
-    return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql)
+    return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql, undefined, txnOpts)
   }, [tab.connectionId, tab.database, tab.schema])
 
   /**
@@ -89,11 +101,16 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, true)
     try {
       const timeoutMs = queryTimeout * 1000
-      const queryPromise = executeWithSchema(sql)
+      // When auto-commit is off, route query through the per-tab session so it
+      // participates in the open transaction. Even a SELECT opens an implicit
+      // txn in this mode, so we mark the txn active after any query.
+      const txnOpts = tab.txn && !tab.txn.autoCommit ? { sessionId: tab.id } : undefined
+      const queryPromise = executeWithSchema(sql, txnOpts)
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`Query timed out after ${queryTimeout}s`)), timeoutMs)
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
+      if (txnOpts) setTabTxnStatus(tab.id, 'active')
       if (result) setTabResults(tab.id, result)
       if (isSchemaMutatingSql(sql) && tab.connectionId) {
         useSchemaStore.getState().clearCache(tab.connectionId)
@@ -116,7 +133,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus])
 
   const handleExecute = useCallback(() => runSql(), [runSql])
 
@@ -129,6 +146,31 @@ export function QueryPanel({ tab }: Props) {
     }
     setTabExecuting(tab.id, false)
   }, [tab.id, tab.connectionId, setTabExecuting])
+
+  // Transaction handlers — open/close sessions and commit/rollback
+  const onToggleAutoCommit = useCallback(async (enabled: boolean) => {
+    if (!tab.connectionId) return
+    if (!enabled) {
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_OPEN, tab.connectionId, tab.id, { autoCommit: false })
+    } else {
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_SET_AUTOCOMMIT, tab.connectionId, tab.id, true)
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, tab.connectionId, tab.id)
+      setTabTxnStatus(tab.id, 'none')
+    }
+    setTabAutoCommit(tab.id, enabled)
+  }, [tab.connectionId, tab.id, setTabAutoCommit, setTabTxnStatus])
+
+  const onCommit = useCallback(async () => {
+    if (!tab.connectionId) return
+    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
+    setTabTxnStatus(tab.id, 'none')
+  }, [tab.connectionId, tab.id, setTabTxnStatus])
+
+  const onRollback = useCallback(async () => {
+    if (!tab.connectionId) return
+    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_ROLLBACK, tab.connectionId, tab.id)
+    setTabTxnStatus(tab.id, 'none')
+  }, [tab.connectionId, tab.id, setTabTxnStatus])
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveDialogName, setSaveDialogName] = useState('')
@@ -230,16 +272,34 @@ export function QueryPanel({ tab }: Props) {
   return (
     <Flex direction="column" className="h-full">
       {/* Connection + schema selector + toolbar */}
-      <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
-        <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} database={tab.database} schema={tab.schema} />
-        <Divider orientation="vertical" className="h-4" />
-        <QueryToolbar
-          onExecute={handleExecute}
-          onCancel={handleCancel}
-          onExplain={handleExplain}
-          isExecuting={tab.isExecuting}
-          connectionType={dbType}
-        />
+      <Flex direction="column" className="border-b border-border bg-bg-secondary shrink-0">
+        <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5">
+          <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} database={tab.database} schema={tab.schema} />
+          <Divider orientation="vertical" className="h-4" />
+          <QueryToolbar
+            onExecute={handleExecute}
+            onCancel={handleCancel}
+            onExplain={handleExplain}
+            isExecuting={tab.isExecuting}
+            connectionType={dbType}
+          />
+        </Flex>
+        {/* Transaction toolbar — only shown when driver reports session capabilities.
+            TransactionToolbar self-hides when caps.autoCommit and caps.manualTransactions
+            are both absent, but we skip the wrapper row entirely to avoid an empty strip. */}
+        {caps?.session && (
+          <Flex direction="row" align="center" gap="sm" className="px-3 pb-1.5 flex-wrap">
+            <TransactionToolbar
+              caps={caps.session}
+              txn={tab.txn ?? { autoCommit: true, status: 'none', readOnly: false }}
+              onToggleAutoCommit={onToggleAutoCommit}
+              onCommit={onCommit}
+              onRollback={onRollback}
+              onIsolationChange={(lvl) => setTabIsolation(tab.id, lvl)}
+              onReadOnlyChange={(ro) => setTabReadOnly(tab.id, ro)}
+            />
+          </Flex>
+        )}
       </Flex>
 
       {/* Plugin-contributed surfaces (e.g. AI NL-to-SQL bar). Nothing renders
