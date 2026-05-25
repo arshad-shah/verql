@@ -101,16 +101,40 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, true)
     try {
       const timeoutMs = queryTimeout * 1000
-      // When auto-commit is off, route query through the per-tab session so it
-      // participates in the open transaction. Even a SELECT opens an implicit
-      // txn in this mode, so we mark the txn active after any query.
-      const txnOpts = tab.txn && !tab.txn.autoCommit ? { sessionId: tab.id } : undefined
+      // Transactional queries are routed through a per-tab session so they
+      // participate in an explicit transaction (with isolation level + read-only
+      // applied via an explicit BEGIN). The session is opened lazily here on the
+      // first query rather than on toggle, so tabs that START with auto-commit
+      // off (connection profile default) still get a session before their first
+      // statement — previously such tabs would send sessionId with no open
+      // session, causing the adapter to throw "No open session".
+      //
+      // DEFERRED: switching a tab's connection while a transaction is open does
+      // not release the old session. The next query will throw a legible "No
+      // open session" from the old connection's adapter. Tracked as a follow-up.
+      const useSession = !!(tab.txn && !tab.txn.autoCommit && tab.connectionId)
+      if (useSession) {
+        // db:session:open is idempotent (no-op if already open) — safe to call every time.
+        await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_OPEN, tab.connectionId!, tab.id, { autoCommit: false })
+        if (tab.txn!.status !== 'active') {
+          // Explicit BEGIN applies isolation level + read-only so those settings
+          // actually reach the database. The implicit BEGIN used previously
+          // silently ignored both. Status is set BEFORE the query so that a
+          // query timeout/error leaves status as 'active' (the server txn IS
+          // open), rather than leaving it as 'none' which is incorrect.
+          await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_BEGIN, tab.connectionId!, tab.id, {
+            isolationLevel: tab.txn!.isolationLevel,
+            readOnly: tab.txn!.readOnly,
+          })
+          setTabTxnStatus(tab.id, 'active')
+        }
+      }
+      const txnOpts = useSession ? { sessionId: tab.id } : undefined
       const queryPromise = executeWithSchema(sql, txnOpts)
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`Query timed out after ${queryTimeout}s`)), timeoutMs)
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
-      if (txnOpts) setTabTxnStatus(tab.id, 'active')
       if (result) setTabResults(tab.id, result)
       if (isSchemaMutatingSql(sql) && tab.connectionId) {
         useSchemaStore.getState().clearCache(tab.connectionId)
@@ -147,30 +171,57 @@ export function QueryPanel({ tab }: Props) {
     setTabExecuting(tab.id, false)
   }, [tab.id, tab.connectionId, setTabExecuting])
 
-  // Transaction handlers — open/close sessions and commit/rollback
+  // Transaction handlers — open/close sessions and commit/rollback.
+  // All three handlers are wrapped in try/catch so IPC failures surface as
+  // toasts + bell notifications (via notifyError) rather than silently failing.
   const onToggleAutoCommit = useCallback(async (enabled: boolean) => {
     if (!tab.connectionId) return
-    if (!enabled) {
-      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_OPEN, tab.connectionId, tab.id, { autoCommit: false })
-    } else {
-      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_SET_AUTOCOMMIT, tab.connectionId, tab.id, true)
-      await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, tab.connectionId, tab.id)
-      setTabTxnStatus(tab.id, 'none')
+    try {
+      if (enabled) {
+        // Turning auto-commit ON: commit any open txn to avoid leaving the server
+        // in a dangling transaction, then release the session. Opening a new
+        // session is deferred lazily to the next query (see runSql prelude).
+        if (tab.txn?.status === 'active') {
+          await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
+        }
+        // DB_SESSION_CLOSE is a tolerant no-op when no session is open, so this
+        // is safe even if the user toggles OFF then immediately back ON without
+        // ever running a query (i.e. no session was ever opened).
+        await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, tab.connectionId, tab.id)
+        setTabTxnStatus(tab.id, 'none')
+      }
+      // Turning OFF is lazy — no IPC here; the session opens on the next query.
+      setTabAutoCommit(tab.id, enabled)
+    } catch (err) {
+      notifyError(err, {
+        source: { type: 'tab', id: tab.id, label: tab.title },
+      })
     }
-    setTabAutoCommit(tab.id, enabled)
-  }, [tab.connectionId, tab.id, setTabAutoCommit, setTabTxnStatus])
+  }, [tab.connectionId, tab.id, tab.title, tab.txn?.status, setTabAutoCommit, setTabTxnStatus])
 
   const onCommit = useCallback(async () => {
     if (!tab.connectionId) return
-    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
-    setTabTxnStatus(tab.id, 'none')
-  }, [tab.connectionId, tab.id, setTabTxnStatus])
+    try {
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_COMMIT, tab.connectionId, tab.id)
+      setTabTxnStatus(tab.id, 'none')
+    } catch (err) {
+      notifyError(err, {
+        source: { type: 'tab', id: tab.id, label: tab.title },
+      })
+    }
+  }, [tab.connectionId, tab.id, tab.title, setTabTxnStatus])
 
   const onRollback = useCallback(async () => {
     if (!tab.connectionId) return
-    await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_ROLLBACK, tab.connectionId, tab.id)
-    setTabTxnStatus(tab.id, 'none')
-  }, [tab.connectionId, tab.id, setTabTxnStatus])
+    try {
+      await window.electronAPI.invoke(IPC_CHANNELS.DB_TXN_ROLLBACK, tab.connectionId, tab.id)
+      setTabTxnStatus(tab.id, 'none')
+    } catch (err) {
+      notifyError(err, {
+        source: { type: 'tab', id: tab.id, label: tab.title },
+      })
+    }
+  }, [tab.connectionId, tab.id, tab.title, setTabTxnStatus])
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [saveDialogName, setSaveDialogName] = useState('')
