@@ -112,6 +112,12 @@ export function QueryPanel({ tab }: Props) {
       // DEFERRED: switching a tab's connection while a transaction is open does
       // not release the old session. The next query will throw a legible "No
       // open session" from the old connection's adapter. Tracked as a follow-up.
+      //
+      // DEFERRED (I2): a tab whose remembered `database` differs from the freshly-
+      // connected pool's default can throw "No open session" on its FIRST
+      // transactional query because the per-query DB switch (DB_SWITCH_DATABASE)
+      // rebuilds the pool and clears sessions; it self-corrects on retry.
+      // Tracked as a follow-up.
       const useSession = !!(tab.txn && !tab.txn.autoCommit && tab.connectionId)
       if (useSession) {
         // db:session:open is idempotent (no-op if already open) — safe to call every time.

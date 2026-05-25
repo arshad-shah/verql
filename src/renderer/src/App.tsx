@@ -409,11 +409,6 @@ export function App() {
                 if (!id) return
                 try {
                   await tabActions.rollbackTransaction(id)
-                  const tab = useTabsStore.getState().tabs.find(t => t.id === id)
-                  const connectionId = tab?.type === 'query' ? tab.connectionId : null
-                  if (connectionId) {
-                    window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
-                  }
                   clearPendingClose()
                   closeTab(id)
                 } catch (err) {
@@ -434,11 +429,6 @@ export function App() {
                 if (!id) return
                 try {
                   await tabActions.commitTransaction(id)
-                  const tab = useTabsStore.getState().tabs.find(t => t.id === id)
-                  const connectionId = tab?.type === 'query' ? tab.connectionId : null
-                  if (connectionId) {
-                    window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, id).catch(() => {})
-                  }
                   clearPendingClose()
                   closeTab(id)
                 } catch (err) {

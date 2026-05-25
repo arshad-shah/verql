@@ -1,8 +1,18 @@
 import { create } from 'zustand'
 import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
 
 let tabCounter = 0
+
+/** Release any pinned DB session for a closed query tab. The main-process
+ *  handler is a tolerant no-op when the tab never opened a session, so this is
+ *  always safe. Fire-and-forget; cleanup must never block tab close. */
+function releaseTabSession(tab: Tab): void {
+  if (tab.type === 'query' && tab.connectionId) {
+    window.electronAPI?.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, tab.connectionId, tab.id).catch(() => {})
+  }
+}
 
 function createQueryTab(connectionId: string | null, schema: string | null = null, opts?: { autoCommit?: boolean }): QueryTab {
   tabCounter++
@@ -90,6 +100,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         const idx = s.tabs.findIndex(t => t.id === id)
         nextActive = remaining[Math.min(idx, remaining.length - 1)]?.id ?? null
       }
+      if (closedTab) releaseTabSession(closedTab)
       return {
         tabs: remaining,
         activeTabId: nextActive,
@@ -105,6 +116,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     set((s) => {
       const kept = s.tabs.filter(t => t.id === id)
       const closed = s.tabs.filter(t => t.id !== id)
+      for (const tab of closed) releaseTabSession(tab)
       return {
         tabs: kept,
         activeTabId: id,
@@ -119,6 +131,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       if (idx === -1) return s
       const kept = s.tabs.slice(0, idx + 1)
       const closed = s.tabs.slice(idx + 1)
+      for (const tab of closed) releaseTabSession(tab)
       const nextActive = kept.find(t => t.id === s.activeTabId) ? s.activeTabId : id
       return {
         tabs: kept,
@@ -129,11 +142,14 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   },
 
   closeAllTabs: () => {
-    set((s) => ({
-      tabs: [],
-      activeTabId: null,
-      recentlyClosed: [...[...s.tabs].reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
-    }))
+    set((s) => {
+      for (const tab of s.tabs) releaseTabSession(tab)
+      return {
+        tabs: [],
+        activeTabId: null,
+        recentlyClosed: [...[...s.tabs].reverse(), ...s.recentlyClosed].slice(0, MAX_RECENTLY_CLOSED)
+      }
+    })
   },
 
   setActiveTab: (id) => set({ activeTabId: id }),

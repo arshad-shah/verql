@@ -60,7 +60,9 @@ export function TransactionToolbar({
         </label>
       )}
 
-      {/* Isolation level select */}
+      {/* Isolation level select — disabled while a transaction is active because
+          the setting only takes effect at the next BEGIN; changing it mid-txn
+          would silently no-op and mislead the user. */}
       {isolationOptions.length > 0 && (
         <Select
           aria-label="Isolation level"
@@ -69,16 +71,19 @@ export function TransactionToolbar({
           options={isolationOptions}
           size="xs"
           className="w-44"
+          disabled={isActive}
         />
       )}
 
-      {/* Read-only toggle */}
+      {/* Read-only toggle — disabled while a transaction is active for the same
+          reason: it only applies at the next BEGIN. */}
       {caps.readOnly && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
             label="Read-only"
             checked={txn.readOnly}
             onChange={(e) => onReadOnlyChange?.(e.target.checked)}
+            disabled={isActive}
           />
           <span className="text-xs text-text-secondary">Read-only</span>
         </label>
