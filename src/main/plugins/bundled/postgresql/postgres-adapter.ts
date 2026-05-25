@@ -92,7 +92,7 @@ export class PostgresAdapter implements DbAdapter {
     return this.pool !== null
   }
 
-  private shape(result: { rows?: Record<string, unknown>[]; fields?: { name: string; dataTypeID?: number }[]; rowCount?: number }, duration: number): QueryResult {
+  private shape(result: { rows?: Record<string, unknown>[]; fields?: { name: string; dataTypeID?: number }[]; rowCount?: number | null }, duration: number): QueryResult {
     const fields: FieldInfo[] = (result.fields ?? []).map((f) => ({ name: f.name, dataType: String(f.dataTypeID ?? ''), nullable: true }))
     return { rows: result.rows ?? [], fields, rowCount: result.rows?.length ?? 0, duration, affectedRows: result.rowCount ?? 0 }
   }
