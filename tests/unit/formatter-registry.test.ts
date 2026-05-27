@@ -1,28 +1,41 @@
 import { describe, it, expect } from 'vitest'
 import { FormatterRegistryImpl } from '../../src/main/plugins/sdk/formatter-registry'
 import { formatSql } from '../../src/main/plugins/sdk/sql-format'
+import { formatJson } from '../../src/main/plugins/sdk/format-json'
 
 describe('FormatterRegistryImpl', () => {
-  it('prefers a dialect-specific formatter over the generic fallback', () => {
+  it('prefers a connection-specific formatter over the language fallback', () => {
     const reg = new FormatterRegistryImpl()
-    reg.register('generic', { displayName: 'SQL (generic)', format: (s) => `generic:${s}` })
-    reg.register('pg', { displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => `pg:${s}` })
+    reg.register('sql-generic', { language: 'sql', displayName: 'SQL (generic)', format: (s) => `generic:${s}` })
+    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => `pg:${s}` })
 
-    expect(reg.resolve('postgresql')?.format('x')).toBe('pg:x')
-    // No dialect match → generic fallback.
-    expect(reg.resolve('mongodb')?.format('x')).toBe('generic:x')
+    expect(reg.resolve('sql', 'postgresql')?.format('x')).toBe('pg:x')
+    // No dialect-specific match → language-wide fallback.
+    expect(reg.resolve('sql', 'mongodb')?.format('x')).toBe('generic:x')
   })
 
-  it('returns undefined when nothing matches and there is no fallback', () => {
+  it('never crosses languages (a SQL fallback can\'t apply to JSON)', () => {
     const reg = new FormatterRegistryImpl()
-    reg.register('pg', { displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => s })
-    expect(reg.resolve('mysql')).toBeUndefined()
+    reg.register('sql-generic', { language: 'sql', displayName: 'SQL (generic)', format: (s) => s })
+    reg.register('mongo', { language: 'json', displayName: 'JSON (Mongo)', appliesTo: (t) => t === 'mongodb', format: (s) => `json:${s}` })
+
+    expect(reg.resolve('json', 'mongodb')?.format('x')).toBe('json:x')
+    // A plaintext editor has no formatter — must not fall back to the SQL one.
+    expect(reg.resolve('plaintext', 'redis')).toBeUndefined()
+    // A JSON editor on a non-mongo connection: no language fallback registered.
+    expect(reg.resolve('json', 'someother')).toBeUndefined()
+  })
+
+  it('returns undefined when nothing matches and there is no language fallback', () => {
+    const reg = new FormatterRegistryImpl()
+    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => s })
+    expect(reg.resolve('sql', 'mysql')).toBeUndefined()
   })
 
   it('rejects duplicate ids', () => {
     const reg = new FormatterRegistryImpl()
-    reg.register('a', { displayName: 'A', format: (s) => s })
-    expect(() => reg.register('a', { displayName: 'A2', format: (s) => s })).toThrow(/already registered/)
+    reg.register('a', { language: 'sql', displayName: 'A', format: (s) => s })
+    expect(() => reg.register('a', { language: 'sql', displayName: 'A2', format: (s) => s })).toThrow(/already registered/)
   })
 })
 
@@ -35,8 +48,17 @@ describe('formatSql', () => {
   })
 
   it('returns the input unchanged when it cannot be parsed', () => {
-    const garbage = '!!! not ; valid (((sql'
-    // Must never throw and must never lose the user's text.
-    expect(typeof formatSql(garbage, 'postgresql')).toBe('string')
+    expect(typeof formatSql('!!! not ; valid (((sql', 'postgresql')).toBe('string')
+  })
+})
+
+describe('formatJson', () => {
+  it('pretty-prints valid JSON', () => {
+    expect(formatJson('{"a":1,"b":[2,3]}')).toBe('{\n  "a": 1,\n  "b": [\n    2,\n    3\n  ]\n}')
+  })
+
+  it('returns the input unchanged when it is not valid JSON', () => {
+    const shellQuery = 'db.users.find({ a: 1 })'
+    expect(formatJson(shellQuery)).toBe(shellQuery)
   })
 })

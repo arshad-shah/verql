@@ -109,6 +109,7 @@ export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
   ctx.formatters.register('sql', {
+    language: 'sql',
     displayName: 'SQL (PostgreSQL)',
     appliesTo: (t) => t === 'postgresql',
     format: (sql) => formatSql(sql, 'postgresql')

@@ -109,9 +109,10 @@ registered or the plugin lands in a `degraded` state.
 
 Contribution surfaces include drivers, exporters, importers, formatters, type
 mappers, themes, panels, commands, AI providers, connection middleware, and
-connection fields. (SQL formatting is plugin-owned: each driver registers a
-dialect formatter via the shared `formatSql` helper, with a generic fallback in
-`core-formats`; the main app only resolves and invokes them over `db:format-sql`.) The SDK (`plugins/sdk/`) provides the registries (`DriverRegistry`,
+connection fields. (Query formatting is plugin-owned and keyed by editor
+language: SQL drivers register a dialect formatter via the shared `formatSql`
+helper, MongoDB a JSON one via `formatJson`, Redis tidies its plaintext command
+buffer; the main app only resolves and invokes them over `db:format-query`.) The SDK (`plugins/sdk/`) provides the registries (`DriverRegistry`,
 `ToolRegistry`, `CommandRegistry`, `PanelRegistry`, …) and access objects
 (`SchemaAccess`, `ConnectionAccess`, `PluginSettings`) via the `PluginContext`.
 Bundled plugins live in `plugins/bundled/` (`sqlite`, `postgresql`, `mysql`,

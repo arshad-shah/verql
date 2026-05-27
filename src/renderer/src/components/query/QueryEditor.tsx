@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
-import { registerCompletionProvider, registerSqlFormattingProvider, updateCompletionItems } from '@/lib/monaco-sql'
+import { registerCompletionProvider, registerQueryFormattingProvider, updateCompletionItems } from '@/lib/monaco-sql'
 import { registerAIInlineCompletionProvider, setAICompletionContext } from '@/lib/monaco-ai-completion'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
 import { installCodeLensCommand, registerCodeLensProviderForLanguage } from '@/lib/monaco-codelens'
@@ -106,9 +106,11 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
 
     if (!registeredLanguages.has(language)) {
       registerCompletionProvider(monaco, language)
+      // Formatting is language-agnostic: the provider resolves a plugin-owned
+      // formatter for the model's language + connection, and no-ops when none.
+      registerQueryFormattingProvider(monaco, language)
       if (language === 'sql') {
         registerAIInlineCompletionProvider(monaco, language)
-        registerSqlFormattingProvider(monaco, language)
       }
       registeredLanguages.add(language)
     }

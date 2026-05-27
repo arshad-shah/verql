@@ -112,15 +112,16 @@ export function registerIpcHandlers(): void {
   registerDbHandlers(ctx, handle, connectionAccess)
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
 
-  // SQL formatting is plugin-owned: drivers contribute a dialect formatter and
-  // core-formats a generic fallback. This handler is pure glue — resolve by
-  // connection type and run it. Never throws on bad SQL (the formatter returns
-  // the input unchanged), so the editor buffer is always safe.
-  handle(IPC_CHANNELS.DB_FORMAT_SQL, async (connectionType, sql) => {
-    const formatter = formatterRegistry.resolve(connectionType)
-    if (!formatter) return { formatted: sql, changed: false }
-    const formatted = await formatter.format(sql)
-    return { formatted, changed: formatted !== sql }
+  // Query formatting is plugin-owned: each driver contributes a formatter for
+  // its editor language (SQL drivers a dialect one, core-formats a generic SQL
+  // fallback, MongoDB a JSON one, …). This handler is pure glue — resolve by
+  // (language, connection type) and run it. Returns the input unchanged when no
+  // formatter matches or the source can't be parsed, so the buffer is safe.
+  handle(IPC_CHANNELS.DB_FORMAT_QUERY, async (language, connectionType, source) => {
+    const formatter = formatterRegistry.resolve(language, connectionType)
+    if (!formatter) return { formatted: source, changed: false }
+    const formatted = await formatter.format(source)
+    return { formatted, changed: formatted !== source }
   })
   // The migration IPC handler resolves type mappings through the registry,
   // so it needs visibility into what each driver plugin contributed.

@@ -183,6 +183,7 @@ export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
   ctx.formatters.register('sql', {
+    language: 'sql',
     displayName: 'SQL (Snowflake)',
     appliesTo: (t) => t === 'snowflake',
     format: (sql) => formatSql(sql, 'snowflake')

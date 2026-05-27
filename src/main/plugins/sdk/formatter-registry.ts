@@ -1,17 +1,25 @@
 import type { Disposable } from './types'
 
 /**
- * A registered source formatter. Plugins own the actual formatting logic; the
- * main app only resolves and invokes them. SQL drivers register a
- * dialect-specific formatter (via the shared {@link formatSql} helper), while
- * `core-formats` registers a generic SQL fallback with no `appliesTo`. A new
- * database plugin can register whatever formatter suits its query language.
+ * A registered source formatter. Plugins own the formatting logic; the main app
+ * only resolves and invokes them. A formatter handles one editor `language`
+ * (the driver's `editorLanguage`, e.g. 'sql', 'json', 'plaintext'). Within a
+ * language, a driver may register a connection-type-specific formatter
+ * (`appliesTo`) that wins over a language-wide fallback (no `appliesTo`).
+ *
+ * Examples: SQL drivers register `{ language: 'sql', appliesTo: pg }` (via the
+ * shared {@link formatSql} helper); `core-formats` registers a generic
+ * `{ language: 'sql' }` fallback; MongoDB registers `{ language: 'json' }`;
+ * Redis `{ language: 'plaintext' }`. Future plugins do the same for their own
+ * query language.
  */
 export interface RegisteredFormatter {
+  /** Editor language this formats (matches the driver's `editorLanguage`). */
+  language: string
   /** Human label, e.g. "SQL (PostgreSQL)". */
   displayName: string
-  /** Restrict to matching connection types; omit for a generic fallback that
-   *  applies when no dialect-specific formatter matches. */
+  /** Restrict to matching connection types; omit for a language-wide fallback
+   *  used when no connection-specific formatter matches. */
   appliesTo?: (connectionType: string) => boolean
   /** Pretty-print the source. Must return the input unchanged on failure so a
    *  formatting error never destroys the user's buffer. */
@@ -21,10 +29,12 @@ export interface RegisteredFormatter {
 export interface FormatterRegistry {
   register(id: string, formatter: RegisteredFormatter): Disposable
   get(id: string): RegisteredFormatter | undefined
-  /** Resolve the best formatter for a connection type: a dialect-specific one
-   *  (its `appliesTo` accepts the type) wins over a generic fallback. */
-  resolve(connectionType: string): RegisteredFormatter | undefined
-  list(connectionType?: string): RegisteredFormatter[]
+  /** Resolve the best formatter for an editor language + connection type: a
+   *  connection-specific formatter (its `appliesTo` accepts the type) wins over
+   *  a language-wide fallback. Never crosses languages, so a SQL fallback can't
+   *  apply to a JSON/plaintext editor. */
+  resolve(language: string, connectionType: string): RegisteredFormatter | undefined
+  list(): RegisteredFormatter[]
 }
 
 export class FormatterRegistryImpl implements FormatterRegistry {
@@ -42,19 +52,17 @@ export class FormatterRegistryImpl implements FormatterRegistry {
     return this.byId.get(id)
   }
 
-  resolve(connectionType: string): RegisteredFormatter | undefined {
+  resolve(language: string, connectionType: string): RegisteredFormatter | undefined {
     for (const f of this.byId.values()) {
-      if (f.appliesTo && f.appliesTo(connectionType)) return f
+      if (f.language === language && f.appliesTo && f.appliesTo(connectionType)) return f
     }
     for (const f of this.byId.values()) {
-      if (!f.appliesTo) return f
+      if (f.language === language && !f.appliesTo) return f
     }
     return undefined
   }
 
-  list(connectionType?: string): RegisteredFormatter[] {
-    const all = [...this.byId.values()]
-    if (!connectionType) return all
-    return all.filter(f => !f.appliesTo || f.appliesTo(connectionType))
+  list(): RegisteredFormatter[] {
+    return [...this.byId.values()]
   }
 }

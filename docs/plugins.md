@@ -302,9 +302,11 @@ SQL scripts that need to be executed statement-by-statement.
 
 ### 4. Formatter
 
-Pretty-print the query buffer for the driver's dialect. The main app only
-resolves and invokes formatters (`db:format-sql` glue, the editor's "Format
-Document", the `format-editor` app action); the logic is yours.
+Pretty-print the query buffer. Formatters are keyed by **editor language** (your
+driver's `editorLanguage` — `sql`, `json`, `plaintext`, …), so any database can
+format its own query language, not just SQL. The main app only resolves and
+invokes formatters (`db:format-query` glue, the editor's "Format Document", the
+`format-editor` app action); the logic is yours.
 
 **Manifest**
 
@@ -320,19 +322,30 @@ Document", the `format-editor` app action); the logic is yours.
 import { formatSql } from '../../sdk/sql-format'
 
 ctx.formatters.register('sql', {
+  language: 'sql',                          // the editor language this formats
   displayName: 'SQL (Cassandra)',
-  appliesTo: (t) => t === 'cassandra',
+  appliesTo: (t) => t === 'cassandra',      // omit for a language-wide fallback
   format: (sql) => formatSql(sql, 'sql'),   // or your own CQL formatter
 })
 ```
 
-`formatSql(sql, dialect)` is a shared SDK helper (backed by `sql-formatter`) so
-SQL drivers contribute a formatter in one line — just pass your dialect
-(`'postgresql' | 'mysql' | 'sqlite' | 'snowflake' | 'sql'`). It returns the
-input unchanged on a parse error, so formatting never destroys the buffer.
-Omit `appliesTo` to register a generic fallback (the `core-formats` plugin does
-this for SQL); a driver-specific formatter whose `appliesTo` matches wins over
-the fallback. A non-SQL plugin can register any `format(source)` it likes.
+**Resolution.** For a given (editor language, connection type), a formatter whose
+`appliesTo` matches the connection wins; otherwise a language-wide fallback (no
+`appliesTo`) is used; otherwise nothing (a clean no-op). Resolution never crosses
+languages, so a SQL fallback can't touch a JSON or plaintext editor.
+
+**Shared SDK helpers** (so bundled plugins don't duplicate logic):
+
+- `formatSql(sql, dialect)` — `sql-formatter`-backed; pass your dialect
+  (`'postgresql' | 'mysql' | 'sqlite' | 'snowflake' | 'sql'`). SQL drivers
+  register a dialect formatter in one line; `core-formats` registers the
+  language-wide `sql` fallback.
+- `formatJson(source)` — pretty-prints JSON (MongoDB uses it for its `json`
+  editor).
+
+Both return the input unchanged on a parse error, so formatting never destroys
+the buffer. A plugin with bespoke needs (e.g. Redis tidies its `plaintext`
+command buffer) just provides its own `format(source)`.
 
 ### 5. Type mapper
 

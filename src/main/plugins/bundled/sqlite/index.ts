@@ -125,6 +125,7 @@ export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
   ctx.formatters.register('sql', {
+    language: 'sql',
     displayName: 'SQL (SQLite)',
     appliesTo: (t) => t === 'sqlite',
     format: (sql) => formatSql(sql, 'sqlite')

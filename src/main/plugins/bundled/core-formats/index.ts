@@ -68,11 +68,13 @@ export function activate(ctx: PluginContext): void {
     }
   })
 
-  // Generic SQL formatter fallback (no `appliesTo`): used when the active
-  // connection's driver hasn't registered a dialect-specific formatter, or when
-  // formatting with no connection. Dialect-specific formatters in the driver
-  // plugins take precedence.
+  // Generic SQL formatter fallback for the `sql` editor language (no
+  // `appliesTo`): used when the active connection's driver hasn't registered a
+  // dialect-specific formatter, or when formatting with no connection. Scoped to
+  // `language: 'sql'`, so it never applies to JSON/plaintext editors. Driver
+  // dialect formatters take precedence.
   ctx.formatters.register('sql', {
+    language: 'sql',
     displayName: 'SQL (generic)',
     format: (sql) => formatSql(sql)
   })

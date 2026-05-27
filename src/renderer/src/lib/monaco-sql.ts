@@ -61,18 +61,20 @@ function connectionTypeForModel(model: editor.ITextModel): string {
 
 /**
  * Registers a document-formatting provider so "Format Document" (Shift+Alt+F /
- * right-click) pretty-prints SQL. The formatting itself is plugin-owned: this
- * just calls the `db:format-sql` glue, which resolves the connection's dialect
- * formatter. Register only for the `sql` language.
+ * right-click) pretty-prints the buffer. Language-agnostic: the formatting is
+ * plugin-owned, so this just calls the `db:format-query` glue with the model's
+ * language + connection type. If no formatter matches (changed === false) it's
+ * a clean no-op, so it's safe to register for any editor language.
  */
-export function registerSqlFormattingProvider(monaco: Monaco, language: string): void {
+export function registerQueryFormattingProvider(monaco: Monaco, language: string): void {
   monaco.languages.registerDocumentFormattingEditProvider(language, {
     async provideDocumentFormattingEdits(model: editor.ITextModel) {
       const text = model.getValue()
       if (!text.trim()) return []
       try {
         const { formatted, changed } = await window.electronAPI.invoke(
-          IPC_CHANNELS.DB_FORMAT_SQL,
+          IPC_CHANNELS.DB_FORMAT_QUERY,
+          model.getLanguageId(),
           connectionTypeForModel(model),
           text
         )

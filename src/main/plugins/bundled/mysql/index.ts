@@ -123,6 +123,7 @@ export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
   ctx.formatters.register('sql', {
+    language: 'sql',
     displayName: 'SQL (MySQL)',
     appliesTo: (t) => t === 'mysql',
     format: (sql) => formatSql(sql, 'mysql')

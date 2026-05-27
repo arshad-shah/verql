@@ -132,24 +132,26 @@ const BUILTINS: AppAction[] = [
   },
   {
     id: 'format-editor',
-    title: 'Format SQL',
-    description: "Pretty-print the SQL in the active editor using the connection's dialect formatter. Reformats the whole buffer; runs nothing.",
+    title: 'Format Document',
+    description: "Pretty-print the active editor's buffer using the connection's formatter (SQL dialect, JSON for document stores, etc.). Reformats the whole buffer; runs nothing. No-ops when the connection has no formatter.",
     kind: 'navigation',
     run: async () => {
       const reg = editorRegistry.get()
-      if (!reg) throw new Error('No active SQL editor. Open or focus a query tab first.')
+      if (!reg) throw new Error('No active editor. Open or focus a query tab first.')
       const model = reg.editor.getModel()
-      if (!model || model.getLanguageId() !== 'sql') throw new Error('Formatting is only available for SQL editors.')
-      const sql = model.getValue()
-      if (!sql.trim()) return
+      if (!model) throw new Error('No editor content to format.')
+      const source = model.getValue()
+      if (!source.trim()) return
       const { tabs } = useTabsStore.getState()
       const tab = tabs.find((t) => t.id === reg.tabId)
       const { activeConnectionId, connections } = useConnectionsStore.getState()
       const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
       const connType = connections.find((c) => c.id === connId)?.type ?? ''
-      const { formatted, changed } = await window.electronAPI.invoke(IPC_CHANNELS.DB_FORMAT_SQL, connType, sql)
+      const { formatted, changed } = await window.electronAPI.invoke(
+        IPC_CHANNELS.DB_FORMAT_QUERY, model.getLanguageId(), connType, source
+      )
       if (!changed) return
-      reg.editor.executeEdits('format-sql', [{ range: model.getFullModelRange(), text: formatted }])
+      reg.editor.executeEdits('format-document', [{ range: model.getFullModelRange(), text: formatted }])
       reg.editor.focus()
     }
   },
