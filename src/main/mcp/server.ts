@@ -22,6 +22,13 @@ export interface MCPServerInstance {
   getStatus: () => MCPServerStatus
   resolveApproval: (requestId: string, approved: boolean) => void
   getActivity: () => MCPActivityEntry[]
+  /** Mint a fresh bearer token (in-memory + persisted) so getStatus reflects it
+   *  even while stopped. A running server picks it up immediately — the auth
+   *  check reads the live token, so existing clients are dropped on next call. */
+  regenerateToken: () => void
+  /** Rebuild the exposed tool set against current settings (readOnly,
+   *  disabledTools) by restarting if running; no-op when stopped. */
+  reload: () => Promise<void>
 }
 
 // ─── Pure decision helpers (unit-tested) ─────────────────────────────────────
@@ -195,5 +202,14 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
     return { running: httpServer !== null, port: boundPort, clients: clientCount, token, autoSelectedPort }
   }
 
-  return { start, stop, getStatus, resolveApproval, getActivity: () => [...activity] }
+  function regenerateToken(): void {
+    token = generateToken()
+    deps.settingsStore.set('mcp.token', token)
+  }
+
+  async function reload(): Promise<void> {
+    if (httpServer) { await stop(); await start() }
+  }
+
+  return { start, stop, getStatus, resolveApproval, getActivity: () => [...activity], regenerateToken, reload }
 }

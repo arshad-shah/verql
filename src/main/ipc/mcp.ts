@@ -2,7 +2,6 @@ import { createMCPServer, type MCPServerInstance } from '../mcp/server'
 import type { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import type { ToolRegistry } from '../plugins/sdk/types'
 import type { MCPToolInfo } from '@shared/mcp'
-import { generateToken } from '../mcp/auth'
 import type { IpcContext, Handle } from './context'
 
 export interface SettingsStoreFacade {
@@ -49,18 +48,16 @@ export function registerMcpHandlers(
     if (enabled) disabled.delete(toolId)
     else disabled.add(toolId)
     ctx.configStore.setSetting('mcp.disabledTools', [...disabled])
-    if (mcpServer.getStatus().running) { await mcpServer.stop(); await mcpServer.start() }
+    // Rebuild the exposed tool set so the change takes effect on a live server.
+    await mcpServer.reload()
   })
 
   handle('mcp:activity', async () => mcpServer.getActivity())
 
   handle('mcp:regenerate-token', async () => {
-    const wasRunning = mcpServer.getStatus().running
-    if (wasRunning) await mcpServer.stop()
-    // Mint a fresh token; the server persists it on next start, but set it now
-    // so a stopped server also reflects the new token immediately.
-    ctx.configStore.setSetting('mcp.token', generateToken())
-    if (wasRunning) await mcpServer.start()
+    // Mints + persists a fresh token and updates the in-memory token, so the
+    // returned status reflects it whether the server is running or stopped.
+    mcpServer.regenerateToken()
     return mcpServer.getStatus()
   })
 

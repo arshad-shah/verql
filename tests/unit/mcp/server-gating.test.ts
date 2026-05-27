@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
-import { selectExposedTools, needsApprovalForCall, summarizeParams } from '../../../src/main/mcp/server'
+import { selectExposedTools, needsApprovalForCall, summarizeParams, createMCPServer } from '../../../src/main/mcp/server'
+import { ToolRegistryImpl } from '../../../src/main/plugins/sdk/tool-registry'
 import type { Tool } from '../../../src/main/plugins/sdk/types'
 
 function tool(id: string, permission: 'read' | 'write'): Tool {
@@ -32,5 +33,21 @@ describe('needsApprovalForCall', () => {
 describe('summarizeParams', () => {
   it('truncates long params for the activity log', () => {
     expect(summarizeParams({ sql: 'x'.repeat(200) }).length).toBeLessThanOrEqual(120)
+  })
+})
+
+describe('createMCPServer.regenerateToken', () => {
+  it('mints + persists a fresh token reflected in status while stopped', () => {
+    const store = new Map<string, unknown>()
+    const server = createMCPServer({
+      toolRegistry: new ToolRegistryImpl(),
+      getActiveConnectionId: () => null,
+      settingsStore: { get: (k) => store.get(k), set: (k, v) => { store.set(k, v) } },
+    })
+    expect(server.getStatus().token).toBe('')
+    server.regenerateToken()
+    const token = server.getStatus().token
+    expect(token).toMatch(/\S/)            // non-empty
+    expect(store.get('mcp.token')).toBe(token) // persisted, matches status
   })
 })
