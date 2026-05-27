@@ -8,7 +8,7 @@
 // that any write detected anywhere in the supplied SQL has to go through the
 // same approval gate as the `query` tool.
 import { describe, it, expect } from 'vitest'
-import { isWriteQuery } from '../../../src/main/mcp/tools'
+import { isWriteQuery } from '../../../src/main/plugins/sdk/tool-schema'
 
 describe('isWriteQuery — detects writes embedded in EXPLAIN payloads', () => {
   it('treats plain SELECTs as read-only', () => {

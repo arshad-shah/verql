@@ -1,0 +1,36 @@
+import { describe, it, expect } from 'vitest'
+import { z } from 'zod'
+import { selectExposedTools, needsApprovalForCall, summarizeParams } from '../../../src/main/mcp/server'
+import type { Tool } from '../../../src/main/plugins/sdk/types'
+
+function tool(id: string, permission: 'read' | 'write'): Tool {
+  return { id, name: id, description: id, inputSchema: z.object({ sql: z.string().optional() }), permission, async execute() { return { success: true, data: null } } }
+}
+
+describe('selectExposedTools', () => {
+  const all = [tool('query', 'write'), tool('list_tables', 'read')]
+  it('hides disabled tools', () => {
+    expect(selectExposedTools(all, { disabledTools: ['query'], readOnly: false }).map(t => t.id)).toEqual(['list_tables'])
+  })
+  it('hides write tools in read-only mode', () => {
+    expect(selectExposedTools(all, { disabledTools: [], readOnly: true }).map(t => t.id)).toEqual(['list_tables'])
+  })
+})
+
+describe('needsApprovalForCall', () => {
+  it('requires approval for write-permission tools', () => {
+    expect(needsApprovalForCall(tool('query', 'write'), {})).toBe(true)
+  })
+  it('requires approval when a read tool is handed write SQL', () => {
+    expect(needsApprovalForCall(tool('explain_query', 'read'), { sql: 'SELECT 1; DROP TABLE t' })).toBe(true)
+  })
+  it('does not require approval for a pure read', () => {
+    expect(needsApprovalForCall(tool('list_tables', 'read'), {})).toBe(false)
+  })
+})
+
+describe('summarizeParams', () => {
+  it('truncates long params for the activity log', () => {
+    expect(summarizeParams({ sql: 'x'.repeat(200) }).length).toBeLessThanOrEqual(120)
+  })
+})
