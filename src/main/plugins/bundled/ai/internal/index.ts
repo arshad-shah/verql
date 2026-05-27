@@ -6,13 +6,12 @@
 import { randomUUID } from 'crypto'
 import type { AIStreamEvent } from '@shared/ai-types'
 import { AIProviderRegistry } from './provider-registry'
-import { AIToolRegistry } from './tool-registry'
 import { PermissionManager } from './permission-manager'
 import { ConversationManager } from './conversation-manager'
 import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
-import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess } from '../../../sdk/types'
+import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess, ToolRegistry } from '../../../sdk/types'
 import { createAIEnhancements } from './enhancements'
 
 const AI_KEYRING_NS = '__ai__'
@@ -24,17 +23,17 @@ export interface AIDeps {
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   ipc: PluginIpc
   broadcast: BroadcastFn
+  toolRegistry: ToolRegistry
 }
 
 export interface AIService {
-  registerTool: AIToolRegistry['register']
   registerProvider: AIProviderRegistry['register']
   registerContextProvider: ConversationManager['registerContextProvider']
 }
 
 export interface AIModule {
   providerRegistry: AIProviderRegistry
-  toolRegistry: AIToolRegistry
+  toolRegistry: ToolRegistry
   permissionManager: PermissionManager
   conversationManager: ConversationManager
   enhancements: ReturnType<typeof createAIEnhancements>
@@ -45,7 +44,7 @@ export interface AIModule {
 
 export function startAIModule(deps: AIDeps): AIModule {
   const providerRegistry = new AIProviderRegistry()
-  const toolRegistry = new AIToolRegistry()
+  const toolRegistry = deps.toolRegistry
   const permissionManager = new PermissionManager()
 
   // One-time migration: move legacy plaintext keys from settings.json into the keyring.
@@ -231,7 +230,6 @@ export function startAIModule(deps: AIDeps): AIModule {
   )
 
   const service: AIService = {
-    registerTool: (tool) => toolRegistry.register(tool),
     registerProvider: (provider) => providerRegistry.register(provider),
     registerContextProvider: (provider) => conversationManager.registerContextProvider(provider)
   }

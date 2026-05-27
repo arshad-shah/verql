@@ -326,6 +326,39 @@ describe('PluginBootCoordinator', () => {
       expect(disabled.list()).toEqual([])
     })
 
+    it('boot() activates an essential plugin even if it is on the disabled list', async () => {
+      // db-tools must always be active so the MCP server always has tools,
+      // independent of the AI plugin. A stale disabled flag must not keep it off.
+      const disabled = makeDisabledStore(['verql-plugin-db-tools'])
+      const c = makeCoordinator(disabled.store)
+      const activate = vi.fn()
+      c.registerBundledPlugin(manifest('verql-plugin-db-tools'), { activate })
+      c.validateAll()
+      c.resolveAll()
+      await c.boot()
+      expect(activate).toHaveBeenCalledOnce()
+      expect(c.getPlugin('verql-plugin-db-tools')?.status.state).toBe('active')
+      // activation clears the stale flag
+      expect(disabled.list()).toEqual([])
+    })
+
+    it('refuses user-initiated deactivation of an essential plugin', async () => {
+      const disabled = makeDisabledStore()
+      const c = makeCoordinator(disabled.store)
+      const plugin = {
+        manifest: manifest('verql-plugin-db-tools'),
+        path: '<bundled>',
+        status: { state: 'validated' as const },
+        module: { activate: vi.fn(), deactivate: vi.fn() }
+      }
+      await c.activatePlugin(plugin)
+      await c.deactivatePlugin(plugin, { persist: true })
+      // still active, never marked disabled
+      expect(plugin.status.state).toBe('active')
+      expect(disabled.list()).toEqual([])
+      expect(plugin.module.deactivate).not.toHaveBeenCalled()
+    })
+
     it('disabled flag survives a deactivate → boot cycle (the original bug)', async () => {
       const disabled = makeDisabledStore()
 

@@ -1,5 +1,7 @@
-import { createMCPServer } from '../mcp/server'
+import { createMCPServer, type MCPServerInstance } from '../mcp/server'
 import type { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
+import type { ToolRegistry } from '../plugins/sdk/types'
+import type { MCPToolInfo } from '@shared/mcp'
 import type { IpcContext, Handle } from './context'
 
 export interface SettingsStoreFacade {
@@ -11,26 +13,17 @@ export function registerMcpHandlers(
   ctx: IpcContext,
   handle: Handle,
   connectionAccess: ConnectionAccessImpl,
-  settingsStore: SettingsStoreFacade
-) {
+  settingsStore: SettingsStoreFacade,
+  toolRegistry: ToolRegistry
+): MCPServerInstance {
   const mcpServer = createMCPServer({
-    toolContext: {
-      getAdapter: () => {
-        const activeId = connectionAccess.getActiveConnectionId()
-        return activeId ? ctx.activeAdapters.get(activeId) : undefined
-      },
-      getProfile: () => {
-        const activeId = connectionAccess.getActiveConnectionId()
-        return activeId ? ctx.configStore.getConnection(activeId) : undefined
-      },
-      requestApproval: async () => true
-    },
-    settingsStore
+    toolRegistry,
+    getActiveConnectionId: () => connectionAccess.getActiveConnectionId(),
+    settingsStore,
   })
 
   handle('mcp:start', async () => {
-    const port = (ctx.configStore.getSetting('mcp.port') as number) || 3100
-    const result = await mcpServer.start(port)
+    const result = await mcpServer.start()
     ctx.configStore.setSetting('mcp.enabled', true)
     return result
   })
@@ -42,14 +35,42 @@ export function registerMcpHandlers(
 
   handle('mcp:status', async () => mcpServer.getStatus())
 
+  handle('mcp:tools', async (): Promise<MCPToolInfo[]> => {
+    const disabled = (ctx.configStore.getSetting('mcp.disabledTools') as string[]) ?? []
+    return toolRegistry.list().map(t => ({
+      id: t.id, name: t.name, description: t.description, permission: t.permission,
+      enabled: !disabled.includes(t.id),
+    }))
+  })
+
+  handle('mcp:set-tool-enabled', async (toolId, enabled) => {
+    const disabled = new Set((ctx.configStore.getSetting('mcp.disabledTools') as string[]) ?? [])
+    if (enabled) disabled.delete(toolId)
+    else disabled.add(toolId)
+    ctx.configStore.setSetting('mcp.disabledTools', [...disabled])
+    // Rebuild the exposed tool set so the change takes effect on a live server.
+    await mcpServer.reload()
+  })
+
+  handle('mcp:activity', async () => mcpServer.getActivity())
+
+  handle('mcp:regenerate-token', async () => {
+    // Mints + persists a fresh token and updates the in-memory token, so the
+    // returned status reflects it whether the server is running or stopped.
+    mcpServer.regenerateToken()
+    return mcpServer.getStatus()
+  })
+
+  // Rebuild the exposed tool set against current settings (e.g. after the
+  // read-only toggle changes). No-op when the server is stopped.
+  handle('mcp:reload', async () => {
+    await mcpServer.reload()
+    return mcpServer.getStatus()
+  })
+
   handle('mcp:approval-response', async (requestId, approved) => {
     mcpServer.resolveApproval(requestId, approved)
   })
-
-  if (ctx.configStore.getSetting('mcp.enabled') as boolean) {
-    const mcpPort = (ctx.configStore.getSetting('mcp.port') as number) || 3100
-    mcpServer.start(mcpPort).catch(err => console.error('[mcp] Auto-start failed:', err))
-  }
 
   return mcpServer
 }

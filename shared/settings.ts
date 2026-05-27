@@ -107,6 +107,14 @@ export interface MCPSettings {
   enabled: boolean
   port: number
   token: string
+  /** When the preferred port is busy, bind the next free port instead of failing. */
+  autoPort: boolean
+  /** Hide write-permission tools from MCP clients entirely. */
+  readOnly: boolean
+  /** Row cap applied to the query tool's returned rows. */
+  maxRows: number
+  /** Tool ids the user has disabled (not exposed to MCP clients). */
+  disabledTools: string[]
 }
 
 export interface AppSettings {
@@ -192,6 +200,10 @@ export const defaultSettings: AppSettings = {
     enabled: false,
     port: 3100,
     token: '',
+    autoPort: true,
+    readOnly: false,
+    maxRows: 500,
+    disabledTools: [],
   },
   keybindings: [
     { id: 'execute-query', label: 'Execute Query', keys: ['Ctrl+Enter', 'Cmd+Enter'], category: 'Query Execution' },

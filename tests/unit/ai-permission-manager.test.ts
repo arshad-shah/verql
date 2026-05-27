@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { z } from 'zod'
 import { PermissionManager } from '../../src/main/plugins/bundled/ai/internal/permission-manager'
-import type { AITool } from '../../src/main/plugins/bundled/ai/internal/types'
+import type { Tool } from '../../src/main/plugins/sdk/types'
 
-function makeTool(id: string, permission: 'read' | 'write'): AITool {
+function makeTool(id: string, permission: 'read' | 'write'): Tool {
   return {
-    id, name: id, description: '', parameters: {},
+    id, name: id, description: '', inputSchema: z.object({}),
     permission,
     execute: vi.fn(async () => ({ success: true, data: null }))
   }

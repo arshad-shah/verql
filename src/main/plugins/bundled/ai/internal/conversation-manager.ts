@@ -3,12 +3,12 @@ import { randomUUID } from 'crypto'
 import type { AIChatMessage, AIStreamEvent, AIToolCallRequest } from '@shared/ai-types'
 import type { AIContextProvider } from './types'
 import type { AIProviderRegistry } from './provider-registry'
-import type { AIToolRegistry } from './tool-registry'
+import type { ToolRegistry } from '../../../sdk/types'
 import type { PermissionManager } from './permission-manager'
 
 interface ConversationManagerDeps {
   providerRegistry: AIProviderRegistry
-  toolRegistry: AIToolRegistry
+  toolRegistry: ToolRegistry
   permissionManager: PermissionManager
   getSchemaContext: (connectionId: string) => Promise<string>
   getConnectionId: () => string | null

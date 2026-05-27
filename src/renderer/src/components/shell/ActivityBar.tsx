@@ -6,6 +6,7 @@ import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { IPC_CHANNELS } from '@shared/ipc'
+import type { MCPServerStatus } from '@shared/mcp'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
   { id: 'explorer', icon: Database, label: 'Explorer' },
@@ -30,7 +31,7 @@ export function ActivityBar() {
   useEffect(() => {
     const checkMcp = async () => {
       try {
-        const status = await window.electronAPI.invoke(IPC_CHANNELS.MCP_STATUS) as { running: boolean; clients: number }
+        const status = await window.electronAPI.invoke(IPC_CHANNELS.MCP_STATUS) as MCPServerStatus
         setMcpRunning(status.running)
         setMcpClients(status.clients)
       } catch { /* */ }

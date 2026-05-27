@@ -6,6 +6,7 @@ import type {
   AIApprovalRequest,
   AIStreamEvent
 } from '@shared/ai-types'
+import type { MCPApprovalRequest } from '@shared/mcp'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { parseAppError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
@@ -28,7 +29,7 @@ interface AIState {
   panelOpen: boolean
   pendingApproval: AIApprovalRequest | null
   currentStreamId: string | null
-  mcpPendingApproval: { requestId: string; sql: string } | null
+  mcpPendingApproval: MCPApprovalRequest | null
   sessionStats: SessionStats
 
   // Actions
@@ -283,7 +284,6 @@ if (typeof window !== 'undefined' && window.electronAPI) {
 
   // MCP approval requests
   window.electronAPI.on(IPC_EVENTS.MCP_APPROVAL_REQUEST, (request: unknown) => {
-    const req = request as { requestId: string; sql: string }
-    useAIStore.setState({ mcpPendingApproval: req })
+    useAIStore.setState({ mcpPendingApproval: request as MCPApprovalRequest })
   })
 }

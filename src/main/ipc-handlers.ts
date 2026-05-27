@@ -5,6 +5,7 @@ import { setDriverRegistry } from './db/factory'
 import type { DbAdapter } from './db/adapter'
 import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
+import { ToolRegistryImpl } from './plugins/sdk/tool-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
@@ -72,6 +73,9 @@ export function registerIpcHandlers(): void {
   setDriverRegistry(ctx.driverRegistry)
 
   const commandRegistry = new CommandRegistryImpl()
+  // Shared across the plugin host (ctx.tools) and the MCP server so tools
+  // registered by the db-tools plugin are exposed to both consumers.
+  const toolRegistry = new ToolRegistryImpl()
   const panelRegistry = new PanelRegistryImpl()
   const uiRegistry = new UIRegistryImpl()
   const completionRegistry = new CompletionRegistryImpl()
@@ -111,11 +115,12 @@ export function registerIpcHandlers(): void {
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
 
-  registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
+  const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry)
 
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry: ctx.driverRegistry,
     commandRegistry,
+    toolRegistry,
     panelRegistry,
     uiRegistry,
     completionRegistry,
@@ -158,6 +163,13 @@ export function registerIpcHandlers(): void {
 
   pluginCoordinator.boot()
     .then(() => {
+      // Auto-start the MCP server only after plugin boot completes, so the
+      // db-tools bundled plugin has registered its tools into the shared
+      // registry. Starting earlier (at handler-registration time) would expose
+      // an empty tool set.
+      if (ctx.configStore.getSetting('mcp.enabled') as boolean) {
+        mcpServer.start().catch(err => console.error('[mcp] Auto-start failed:', err))
+      }
       // One-time inline-secrets migration: pre-encryption builds wrote passwords
       // directly into config.json. Sweep them into the keyring so config.json
       // no longer holds any secrets. This is safe to run on every startup —

@@ -25,3 +25,6 @@ export { List } from './List'
 
 export { TreeItem } from './TreeItem'
 export type { TreeItemProps } from './TreeItem'
+
+export { CodeView } from './CodeView'
+export type { CodeViewProps } from './CodeView'

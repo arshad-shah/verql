@@ -2,318 +2,214 @@ import { createServer, type Server as HttpServer, type IncomingMessage, type Ser
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { BrowserWindow } from 'electron'
-import { z } from 'zod'
 import { generateToken, validateAuth } from './auth'
-import type { MCPToolContext } from './tools'
-import { isWriteQuery } from './tools'
+import { findFreePort } from './find-port'
+import { isWriteQuery } from '../plugins/sdk/tool-schema'
+import type { Tool, ToolRegistry } from '../plugins/sdk/types'
+import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
+
+interface MCPGate { disabledTools: string[]; readOnly: boolean }
 
 interface MCPServerDeps {
-  toolContext: MCPToolContext
+  toolRegistry: ToolRegistry
+  getActiveConnectionId: () => string | null
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
 }
 
 export interface MCPServerInstance {
-  start: (port: number) => Promise<{ port: number; token: string }>
+  start: () => Promise<MCPStartResult>
   stop: () => Promise<void>
-  getStatus: () => { running: boolean; port: number; clients: number; token: string }
+  getStatus: () => MCPServerStatus
   resolveApproval: (requestId: string, approved: boolean) => void
+  getActivity: () => MCPActivityEntry[]
+  /** Mint a fresh bearer token (in-memory + persisted) so getStatus reflects it
+   *  even while stopped. A running server picks it up immediately — the auth
+   *  check reads the live token, so existing clients are dropped on next call. */
+  regenerateToken: () => void
+  /** Rebuild the exposed tool set against current settings (readOnly,
+   *  disabledTools) by restarting if running; no-op when stopped. */
+  reload: () => Promise<void>
 }
+
+// ─── Pure decision helpers (unit-tested) ─────────────────────────────────────
+
+export function selectExposedTools(tools: Tool[], gate: MCPGate): Tool[] {
+  return tools.filter(t =>
+    !gate.disabledTools.includes(t.id) &&
+    !(gate.readOnly && t.permission === 'write')
+  )
+}
+
+export function needsApprovalForCall(tool: Tool, params: Record<string, unknown>): boolean {
+  if (tool.permission === 'write') return true
+  const sql = typeof params.sql === 'string' ? params.sql : ''
+  return sql ? isWriteQuery(sql) : false
+}
+
+export function summarizeParams(params: Record<string, unknown>): string {
+  const s = JSON.stringify(params)
+  return s.length > 120 ? s.slice(0, 117) + '…' : s
+}
+
+// ─── Server ──────────────────────────────────────────────────────────────────
 
 export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
   let httpServer: HttpServer | null = null
   let mcpServer: McpServer | null = null
   let token = ''
-  let currentPort = 0
+  let boundPort = 0
+  let autoSelectedPort = false
   let transport: SSEServerTransport | null = null
   let clientCount = 0
-
-  // Approval flow
+  const activity: MCPActivityEntry[] = []
   const pendingApprovals = new Map<string, (approved: boolean) => void>()
 
-  function requestApproval(sql: string): Promise<boolean> {
+  function gate(): MCPGate {
+    return {
+      disabledTools: (deps.settingsStore.get('mcp.disabledTools') as string[]) ?? [],
+      readOnly: (deps.settingsStore.get('mcp.readOnly') as boolean) ?? false,
+    }
+  }
+
+  function record(entry: MCPActivityEntry): void {
+    activity.push(entry)
+    if (activity.length > 100) activity.shift()
+    BrowserWindow.getAllWindows()[0]?.webContents.send('mcp:activity-event', entry)
+  }
+
+  function requestApproval(tool: Tool, params: Record<string, unknown>): Promise<boolean> {
     return new Promise((resolve) => {
       const requestId = crypto.randomUUID()
       pendingApprovals.set(requestId, resolve)
-
       const win = BrowserWindow.getAllWindows()[0]
-      if (win) {
-        win.webContents.send('mcp:approval-request', { requestId, sql, source: 'mcp' })
-      } else {
-        resolve(false)
-        pendingApprovals.delete(requestId)
+      if (!win) { pendingApprovals.delete(requestId); resolve(false); return }
+      const req: MCPApprovalRequest = {
+        requestId, toolId: tool.id, toolName: tool.name,
+        sql: typeof params.sql === 'string' ? params.sql : JSON.stringify(params, null, 2),
+        permission: tool.permission,
       }
-
+      win.webContents.send('mcp:approval-request', req)
       setTimeout(() => {
-        if (pendingApprovals.has(requestId)) {
-          pendingApprovals.delete(requestId)
-          resolve(false)
-        }
+        if (pendingApprovals.delete(requestId)) resolve(false)
       }, 5 * 60 * 1000)
     })
   }
 
   function resolveApproval(requestId: string, approved: boolean): void {
     const resolver = pendingApprovals.get(requestId)
-    if (resolver) {
-      resolver(approved)
-      pendingApprovals.delete(requestId)
-    }
+    if (resolver) { resolver(approved); pendingApprovals.delete(requestId) }
   }
 
-  async function start(port: number): Promise<{ port: number; token: string }> {
+  function buildMcpServer(): McpServer {
+    const server = new McpServer({ name: 'verql', version: '0.1.0' }, { capabilities: { tools: {} } })
+    const exposed = selectExposedTools(deps.toolRegistry.list(), gate())
+    for (const tool of exposed) {
+      server.tool(tool.id, tool.description, tool.inputSchema.shape, async (args: Record<string, unknown>) => {
+        const startedAt = Date.now()
+        const connectionId = deps.getActiveConnectionId()
+        if (!connectionId) {
+          record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: 'error', durationMs: 0 })
+          return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
+        }
+        if (needsApprovalForCall(tool, args)) {
+          const approved = await requestApproval(tool, args)
+          if (!approved) {
+            record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: 'rejected', durationMs: Date.now() - startedAt })
+            return { content: [{ type: 'text', text: 'Query rejected by user in Verql' }], isError: true }
+          }
+        }
+        try {
+          const result = await tool.execute(args, { connectionId, abortSignal: new AbortController().signal })
+          record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: result.success ? 'ok' : 'error', durationMs: Date.now() - startedAt })
+          return { content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }], isError: !result.success }
+        } catch (err) {
+          record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: 'error', durationMs: Date.now() - startedAt })
+          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
+        }
+      })
+    }
+    return server
+  }
+
+  async function start(): Promise<MCPStartResult> {
     if (httpServer) await stop()
 
-    const savedToken = deps.settingsStore.get('mcp.token') as string
-    if (savedToken) {
-      token = savedToken
-    } else {
-      token = generateToken()
-      deps.settingsStore.set('mcp.token', token)
+    const saved = deps.settingsStore.get('mcp.token') as string
+    token = saved || generateToken()
+    if (!saved) deps.settingsStore.set('mcp.token', token)
+
+    const requestedPort = (deps.settingsStore.get('mcp.port') as number) || 3100
+    const autoPort = (deps.settingsStore.get('mcp.autoPort') as boolean) ?? true
+    let portToBind = requestedPort
+    autoSelectedPort = false
+    if (autoPort) {
+      portToBind = await findFreePort(requestedPort, 20)
+      autoSelectedPort = portToBind !== requestedPort
     }
 
-    currentPort = port
-    const ctx = deps.toolContext
-
-    mcpServer = new McpServer(
-      { name: 'verql', version: '0.1.0' },
-      { capabilities: { tools: {} } }
-    )
-
-    // ─── Register tools with Zod schemas ─────────────────────────────────────
-
-    mcpServer.tool(
-      'query',
-      'Execute a SQL query against the active database connection. Use this to read data, insert, update, or delete records.',
-      { sql: z.string().describe('The SQL query to execute') },
-      async ({ sql }) => {
-        const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-
-        if (isWriteQuery(sql)) {
-          const approved = await requestApproval(sql)
-          if (!approved) return { content: [{ type: 'text', text: 'Query rejected by user in Verql' }], isError: true }
-        }
-
-        try {
-          const result = await adapter.query(sql)
-          const text = JSON.stringify({
-            rows: result.rows.slice(0, 500),
-            rowCount: result.rowCount,
-            fields: result.fields.map(f => ({ name: f.name, dataType: f.dataType })),
-            duration: result.duration,
-            affectedRows: result.affectedRows
-          }, null, 2)
-          return { content: [{ type: 'text', text }] }
-        } catch (err) {
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
-        }
-      }
-    )
-
-    mcpServer.tool(
-      'explain_query',
-      'Run EXPLAIN on a SQL query to show its execution plan. Read-only.',
-      { sql: z.string().describe('The SQL query to explain') },
-      async ({ sql }) => {
-        const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-        // The tool's contract is "read-only", but the supplied SQL is
-        // interpolated directly into `EXPLAIN ${sql}` and Postgres's simple-
-        // query protocol happily runs `EXPLAIN SELECT 1; DELETE FROM …` as
-        // two statements. Detect that and route through the same approval
-        // gate as the `query` tool so an LLM can't smuggle writes through
-        // a read-only label.
-        if (isWriteQuery(sql)) {
-          const approved = await requestApproval(sql)
-          if (!approved) return { content: [{ type: 'text', text: 'Query rejected by user in Verql' }], isError: true }
-        }
-        try {
-          const result = await adapter.query(`EXPLAIN ${sql}`)
-          return { content: [{ type: 'text', text: JSON.stringify(result.rows, null, 2) }] }
-        } catch (err) {
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
-        }
-      }
-    )
-
-    mcpServer.tool(
-      'list_tables',
-      'List all tables in the current database schema.',
-      { schema: z.string().optional().describe('Schema name (optional, uses default if omitted)') },
-      async ({ schema }) => {
-        const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-        try {
-          const tables = await adapter.getTables(schema)
-          const text = JSON.stringify(tables.map(t => ({ name: t.name, type: t.type, rowCount: t.rowCount })), null, 2)
-          return { content: [{ type: 'text', text }] }
-        } catch (err) {
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
-        }
-      }
-    )
-
-    mcpServer.tool(
-      'describe_table',
-      'Get detailed information about a table including columns, types, indexes, and foreign key relationships.',
-      {
-        table: z.string().describe('Table name to describe'),
-        schema: z.string().optional().describe('Schema name (optional)')
-      },
-      async ({ table, schema }) => {
-        const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-        try {
-          const [columns, indexes] = await Promise.all([
-            adapter.getColumns(table, schema),
-            adapter.getIndexes(table, schema)
-          ])
-          return { content: [{ type: 'text', text: JSON.stringify({ columns, indexes }, null, 2) }] }
-        } catch (err) {
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
-        }
-      }
-    )
-
-    mcpServer.tool(
-      'get_schemas',
-      'List all available schemas or databases on the current connection.',
-      {},
-      async () => {
-        const adapter = ctx.getAdapter()
-        if (!adapter) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-        try {
-          let schemas: string[] = []
-          try { schemas = await adapter.getSchemas() } catch { /* */ }
-          let databases: string[] = []
-          try { databases = await adapter.getDatabases() } catch { /* */ }
-          return { content: [{ type: 'text', text: JSON.stringify({ schemas, databases }, null, 2) }] }
-        } catch (err) {
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
-        }
-      }
-    )
-
-    mcpServer.tool(
-      'connection_info',
-      'Get information about the currently active database connection including type, host, and database name.',
-      {},
-      async () => {
-        const profile = ctx.getProfile()
-        if (!profile) return { content: [{ type: 'text', text: 'Error: No active database connection in Verql' }], isError: true }
-        const text = JSON.stringify({
-          type: profile.type,
-          host: profile.host,
-          port: profile.port,
-          database: profile.database,
-          name: profile.name
-        }, null, 2)
-        return { content: [{ type: 'text', text }] }
-      }
-    )
-
-    // ─── HTTP Server ─────────────────────────────────────────────────────────
+    mcpServer = buildMcpServer()
 
     httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
-      // The MCP server binds to 127.0.0.1 and requires a bearer token, but
-      // CORS still matters: a malicious page in the user's browser can
-      // happily issue cross-origin POSTs to localhost. Wildcard ACAO would
-      // let that page READ the response if it ever obtained the token (via
-      // a separate XSS, the token in the URL, etc). Locking the header to
-      // null/none means even with a leaked token the browser blocks the
-      // read; legitimate MCP clients are CLI tools that don't enforce CORS
-      // at all and are unaffected.
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
       res.setHeader('Vary', 'Origin')
-
-      if (req.method === 'OPTIONS') {
-        res.writeHead(204)
-        res.end()
-        return
-      }
-
+      if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
       if (!validateAuth(req, token, res)) return
-
-      const url = new URL(req.url ?? '/', `http://localhost:${currentPort}`)
-
+      const url = new URL(req.url ?? '/', `http://localhost:${boundPort}`)
       if (url.pathname === '/sse' && req.method === 'GET') {
         transport = new SSEServerTransport('/messages', res)
         clientCount++
-
-        transport.onclose = () => {
-          clientCount = Math.max(0, clientCount - 1)
-          transport = null
-        }
-
-        mcpServer!.connect(transport).catch((err) => {
-          console.error('[mcp] SSE connection error:', err)
-        })
+        transport.onclose = () => { clientCount = Math.max(0, clientCount - 1); transport = null }
+        mcpServer!.connect(transport).catch((err) => console.error('[mcp] SSE connection error:', err))
         return
       }
-
       if (url.pathname === '/messages' && req.method === 'POST') {
-        if (!transport) {
-          res.writeHead(503, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: 'No active SSE connection' }))
-          return
-        }
-
+        if (!transport) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'No active SSE connection' })); return }
         let body = ''
         req.on('data', (chunk: Buffer) => { body += chunk.toString() })
         req.on('end', () => {
-          try {
-            const parsed = JSON.parse(body)
-            transport!.handlePostMessage(req, res, parsed)
-          } catch {
-            res.writeHead(400, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ error: 'Invalid JSON' }))
-          }
+          try { transport!.handlePostMessage(req, res, JSON.parse(body)) }
+          catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Invalid JSON' })) }
         })
         return
       }
-
-      if (url.pathname === '/health') {
-        res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ status: 'ok', name: 'verql-mcp' }))
-        return
-      }
-
-      res.writeHead(404)
-      res.end('Not found')
+      if (url.pathname === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ status: 'ok', name: 'verql-mcp' })); return }
+      res.writeHead(404); res.end('Not found')
     })
 
-    return new Promise((resolve, reject) => {
-      httpServer!.listen(currentPort, '127.0.0.1', () => {
-        console.log(`[mcp] Server started on http://127.0.0.1:${currentPort}`)
-        resolve({ port: currentPort, token })
+    return new Promise<MCPStartResult>((resolve, reject) => {
+      httpServer!.once('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') reject(Object.assign(new Error(`Port ${portToBind} is already in use`), { code: 'EADDRINUSE', port: portToBind }))
+        else reject(err)
       })
-      httpServer!.on('error', reject)
+      httpServer!.listen(portToBind, '127.0.0.1', () => {
+        boundPort = portToBind
+        console.log(`[mcp] Server started on http://127.0.0.1:${boundPort}`)
+        resolve({ port: boundPort, token, autoSelectedPort })
+      })
     })
   }
 
   async function stop(): Promise<void> {
-    if (transport) {
-      try { await transport.close() } catch { /* */ }
-      transport = null
-    }
-    if (mcpServer) {
-      try { await mcpServer.close() } catch { /* */ }
-      mcpServer = null
-    }
-    if (httpServer) {
-      await new Promise<void>((resolve) => {
-        httpServer!.close(() => resolve())
-      })
-      httpServer = null
-    }
+    if (transport) { try { await transport.close() } catch { /* */ } transport = null }
+    if (mcpServer) { try { await mcpServer.close() } catch { /* */ } mcpServer = null }
+    if (httpServer) { await new Promise<void>((r) => httpServer!.close(() => r())); httpServer = null }
     clientCount = 0
     console.log('[mcp] Server stopped')
   }
 
-  function getStatus() {
-    return { running: httpServer !== null, port: currentPort, clients: clientCount, token }
+  function getStatus(): MCPServerStatus {
+    return { running: httpServer !== null, port: boundPort, clients: clientCount, token, autoSelectedPort }
   }
 
-  return { start, stop, getStatus, resolveApproval }
+  function regenerateToken(): void {
+    token = generateToken()
+    deps.settingsStore.set('mcp.token', token)
+  }
+
+  async function reload(): Promise<void> {
+    if (httpServer) { await stop(); await start() }
+  }
+
+  return { start, stop, getStatus, resolveApproval, getActivity: () => [...activity], regenerateToken, reload }
 }

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import type {
-  AITool,
-  AIToolContext,
-  AIToolExecutionResult,
   AIContextProvider,
   AIProvider,
   AIProviderModel,
@@ -10,91 +7,6 @@ import type {
   AIProviderChatRequest,
   AIToolDefinition
 } from '../../src/main/plugins/bundled/ai/internal/types'
-
-describe('AITool', () => {
-  it('can construct a read-only tool that satisfies the interface', async () => {
-    const tool: AITool = {
-      id: 'list-tables',
-      name: 'list_tables',
-      description: 'Lists all tables in the connected database',
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: []
-      },
-      permission: 'read',
-      async execute(params, context): Promise<AIToolExecutionResult> {
-        expect(params).toBeDefined()
-        expect(context.connectionId).toBe('conn-1')
-        expect(context.abortSignal).toBeInstanceOf(AbortSignal)
-        return { success: true, data: ['users', 'orders'], display: 'Found 2 tables' }
-      }
-    }
-
-    const ctx: AIToolContext = {
-      connectionId: 'conn-1',
-      abortSignal: new AbortController().signal
-    }
-
-    const result = await tool.execute({}, ctx)
-    expect(result.success).toBe(true)
-    expect(result.data).toEqual(['users', 'orders'])
-    expect(result.display).toBe('Found 2 tables')
-  })
-
-  it('can construct a write tool that satisfies the interface', async () => {
-    const tool: AITool = {
-      id: 'run-query',
-      name: 'run_query',
-      description: 'Executes an arbitrary SQL query',
-      parameters: {
-        type: 'object',
-        properties: {
-          sql: { type: 'string' }
-        },
-        required: ['sql']
-      },
-      permission: 'write',
-      async execute(params): Promise<AIToolExecutionResult> {
-        return { success: false, data: null, display: `Would run: ${params['sql']}` }
-      }
-    }
-
-    expect(tool.permission).toBe('write')
-    const result = await tool.execute({ sql: 'DROP TABLE users' }, {
-      connectionId: null,
-      abortSignal: new AbortController().signal
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('supports null connectionId in AIToolContext', () => {
-    const ctx: AIToolContext = {
-      connectionId: null,
-      abortSignal: new AbortController().signal
-    }
-    expect(ctx.connectionId).toBeNull()
-  })
-
-  it('AIToolExecutionResult display field is optional', async () => {
-    const tool: AITool = {
-      id: 'noop',
-      name: 'noop',
-      description: 'Does nothing',
-      parameters: {},
-      permission: 'read',
-      async execute(): Promise<AIToolExecutionResult> {
-        return { success: true, data: null }
-      }
-    }
-
-    const result = await tool.execute({}, {
-      connectionId: null,
-      abortSignal: new AbortController().signal
-    })
-    expect(result.display).toBeUndefined()
-  })
-})
 
 describe('AIContextProvider', () => {
   it('can construct a context provider that satisfies the interface', async () => {
