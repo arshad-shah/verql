@@ -198,6 +198,58 @@ describe('ConversationManager', () => {
     expect(execute.mock.calls[0][1]).toMatchObject({ connectionId: 'conn-2' })
   })
 
+  it('setMessages replaces the in-memory history', () => {
+    manager.addUserMessage('first')
+    manager.setMessages([
+      { id: 'a', role: 'user', content: 'loaded one', timestamp: 1 },
+      { id: 'b', role: 'assistant', content: 'loaded two', timestamp: 2 }
+    ])
+    const msgs = manager.getMessages()
+    expect(msgs).toHaveLength(2)
+    expect(msgs[0].content).toBe('loaded one')
+  })
+
+  it('trims old history to the context budget before sending', async () => {
+    // A tiny budget so all but the most recent turns are dropped from the request.
+    const small = new ConversationManager({
+      providerRegistry, toolRegistry, permissionManager,
+      getSchemaContext: async () => '',
+      getConnectionId: () => null,
+      maxContextTokens: 2100 // floored to the 2000-token minimum history window
+    })
+
+    let seen: AIChatMessage[] = []
+    const provider: AIProvider = {
+      id: 'mock', name: 'Mock', supportsToolCalling: false,
+      models: async () => [{ id: 'mock-1', name: 'Mock', contextWindow: 4096, capabilities: ['chat'] as const }],
+      async *chat(req: { messages: AIChatMessage[] }) {
+        seen = req.messages
+        yield { type: 'done' } as never
+      }
+    }
+    providerRegistry.register(provider)
+    providerRegistry.setActive('mock')
+    providerRegistry.setActiveModel('mock-1')
+
+    // Seed a long transcript: 20 user/assistant turns of ~500 tokens each.
+    const big: AIChatMessage[] = []
+    for (let i = 0; i < 20; i++) {
+      big.push({ id: `u${i}`, role: 'user', content: 'u'.repeat(2000), timestamp: i })
+      big.push({ id: `a${i}`, role: 'assistant', content: 'a'.repeat(2000), timestamp: i })
+    }
+    small.setMessages(big)
+
+    for await (const _ of small.chat()) { /* consume */ }
+
+    // System message is always first; the rest is the trimmed history.
+    expect(seen[0].role).toBe('system')
+    const history = seen.slice(1)
+    expect(history.length).toBeLessThan(big.length)
+    expect(history[0].role).toBe('user')
+    // The most recent turn is always retained.
+    expect(history.at(-1)?.id).toBe('a19')
+  })
+
   it('throws when no active provider', async () => {
     manager.addUserMessage('Hi')
     await expect(async () => {

@@ -21,6 +21,15 @@ interface SessionStats {
   toolCallCount: number
 }
 
+export interface Conversation {
+  id: string
+  title: string
+  messages: AIChatMessage[]
+  stats: SessionStats
+  createdAt: number
+  updatedAt: number
+}
+
 interface AIState {
   messages: AIChatMessage[]
   isStreaming: boolean
@@ -34,12 +43,19 @@ interface AIState {
   currentStreamId: string | null
   mcpPendingApproval: MCPApprovalRequest | null
   sessionStats: SessionStats
+  conversations: Conversation[]
+  activeConversationId: string | null
 
   // Actions
   togglePanel: () => void
   openPanel: () => void
   sendMessage: (message: string, connectionId?: string, connectionMeta?: { type: string; driverName: string }) => Promise<void>
   clearMessages: () => Promise<void>
+  newConversation: () => void
+  switchConversation: (id: string) => Promise<void>
+  deleteConversation: (id: string) => Promise<void>
+  renameConversation: (id: string, title: string) => void
+  branchConversation: (fromMessageId: string) => Promise<void>
   retryLast: () => void
   abort: () => Promise<void>
   loadProviders: () => Promise<void>
@@ -54,8 +70,75 @@ interface AIState {
 
 const EMPTY_STATS: SessionStats = { totalInputTokens: 0, totalOutputTokens: 0, toolCallCount: 0 }
 
+const CONV_STORAGE_KEY = 'verql:ai-conversations'
+const DEFAULT_TITLE = 'New chat'
+
+function createConversation(): Conversation {
+  const now = Date.now()
+  return { id: crypto.randomUUID(), title: DEFAULT_TITLE, messages: [], stats: { ...EMPTY_STATS }, createdAt: now, updatedAt: now }
+}
+
+/** Title a conversation from its first user message (single line, capped). */
+function deriveTitle(content: string): string {
+  const firstLine = content.trim().split('\n')[0].trim()
+  if (!firstLine) return DEFAULT_TITLE
+  return firstLine.length > 48 ? `${firstLine.slice(0, 47)}…` : firstLine
+}
+
+function loadConversations(): { conversations: Conversation[]; activeConversationId: string | null } {
+  try {
+    if (typeof localStorage === 'undefined') return { conversations: [], activeConversationId: null }
+    const raw = localStorage.getItem(CONV_STORAGE_KEY)
+    if (!raw) return { conversations: [], activeConversationId: null }
+    const parsed = JSON.parse(raw) as { conversations?: Conversation[]; activeConversationId?: string | null }
+    return {
+      conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
+      activeConversationId: parsed.activeConversationId ?? null
+    }
+  } catch {
+    return { conversations: [], activeConversationId: null }
+  }
+}
+
+function persistConversations(conversations: Conversation[], activeConversationId: string | null): void {
+  try {
+    if (typeof localStorage === 'undefined') return
+    localStorage.setItem(CONV_STORAGE_KEY, JSON.stringify({ conversations, activeConversationId }))
+  } catch {
+    // storage quota or unavailable — in-memory state remains the source of truth
+  }
+}
+
+function initConversations(): {
+  conversations: Conversation[]
+  activeConversationId: string
+  messages: AIChatMessage[]
+  sessionStats: SessionStats
+} {
+  const loaded = loadConversations()
+  let conversations = loaded.conversations
+  let activeId = loaded.activeConversationId
+  if (conversations.length === 0) {
+    const c = createConversation()
+    conversations = [c]
+    activeId = c.id
+  }
+  if (!activeId || !conversations.some((c) => c.id === activeId)) {
+    activeId = conversations[0].id
+  }
+  const active = conversations.find((c) => c.id === activeId)!
+  return {
+    conversations,
+    activeConversationId: activeId,
+    messages: active.messages,
+    sessionStats: { ...active.stats }
+  }
+}
+
+const initialConversations = initConversations()
+
 export const useAIStore = create<AIState>((set, get) => ({
-  messages: [],
+  messages: initialConversations.messages,
   isStreaming: false,
   streamingContent: '',
   activeProvider: null,
@@ -66,7 +149,9 @@ export const useAIStore = create<AIState>((set, get) => ({
   pendingApproval: null,
   currentStreamId: null,
   mcpPendingApproval: null,
-  sessionStats: { ...EMPTY_STATS },
+  sessionStats: initialConversations.sessionStats,
+  conversations: initialConversations.conversations,
+  activeConversationId: initialConversations.activeConversationId,
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -124,6 +209,100 @@ export const useAIStore = create<AIState>((set, get) => ({
   clearMessages: async () => {
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_CLEAR)
     set({ messages: [], sessionStats: { ...EMPTY_STATS } })
+  },
+
+  newConversation: () => {
+    const { isStreaming, abort } = get()
+    if (isStreaming) void abort()
+    const c = createConversation()
+    set((s) => ({
+      conversations: [c, ...s.conversations],
+      activeConversationId: c.id,
+      messages: [],
+      sessionStats: { ...EMPTY_STATS },
+      streamingContent: '',
+      pendingApproval: null
+    }))
+    void window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_CLEAR)
+    persistConversations(get().conversations, c.id)
+  },
+
+  switchConversation: async (id) => {
+    const { activeConversationId, conversations, isStreaming, abort } = get()
+    if (id === activeConversationId) return
+    const target = conversations.find((c) => c.id === id)
+    if (!target) return
+    if (isStreaming) await abort()
+    set({
+      activeConversationId: id,
+      messages: target.messages,
+      sessionStats: { ...target.stats },
+      streamingContent: '',
+      pendingApproval: null
+    })
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, target.messages)
+    persistConversations(get().conversations, id)
+  },
+
+  deleteConversation: async (id) => {
+    let next = get().conversations.filter((c) => c.id !== id)
+    if (next.length === 0) next = [createConversation()]
+    set({ conversations: next })
+    if (get().activeConversationId === id) {
+      if (get().isStreaming) await get().abort()
+      const fallback = next[0]
+      set({
+        activeConversationId: fallback.id,
+        messages: fallback.messages,
+        sessionStats: { ...fallback.stats },
+        streamingContent: '',
+        pendingApproval: null
+      })
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, fallback.messages)
+    }
+    persistConversations(get().conversations, get().activeConversationId)
+  },
+
+  renameConversation: (id, title) => {
+    const trimmed = title.trim()
+    const next = get().conversations.map((c) =>
+      c.id === id ? { ...c, title: trimmed || c.title, updatedAt: Date.now() } : c
+    )
+    set({ conversations: next })
+    persistConversations(next, get().activeConversationId)
+  },
+
+  branchConversation: async (fromMessageId) => {
+    const { messages, conversations, activeConversationId, isStreaming, abort } = get()
+    const idx = messages.findIndex((m) => m.id === fromMessageId)
+    if (idx < 0) return
+    if (isStreaming) await abort()
+    // History up to and including the branch point; the user continues from here
+    // in a separate conversation, leaving the original untouched.
+    const prefix = messages.slice(0, idx + 1).map((m) => ({ ...m }))
+    const active = conversations.find((c) => c.id === activeConversationId)
+    const base = active && active.title !== DEFAULT_TITLE
+      ? active.title
+      : deriveTitle(messages.find((m) => m.role === 'user')?.content ?? DEFAULT_TITLE)
+    const now = Date.now()
+    const branched: Conversation = {
+      id: crypto.randomUUID(),
+      title: `${base} (branch)`,
+      messages: prefix,
+      stats: { ...EMPTY_STATS },
+      createdAt: now,
+      updatedAt: now
+    }
+    set((s) => ({
+      conversations: [branched, ...s.conversations],
+      activeConversationId: branched.id,
+      messages: prefix,
+      sessionStats: { ...EMPTY_STATS },
+      streamingContent: '',
+      pendingApproval: null
+    }))
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, prefix)
+    persistConversations(get().conversations, branched.id)
   },
 
   retryLast: () => {
@@ -310,6 +489,27 @@ export const useAIStore = create<AIState>((set, get) => ({
   }
 }))
 
+// Keep the active conversation in sync with the live message/stat state and
+// persist. Reacts only to message/stat changes (not streaming chunks), and only
+// writes `conversations`, so it never re-triggers itself.
+useAIStore.subscribe((state, prev) => {
+  if (state.messages === prev.messages && state.sessionStats === prev.sessionStats) return
+  const { conversations, activeConversationId, messages, sessionStats } = state
+  if (!activeConversationId) return
+  const idx = conversations.findIndex((c) => c.id === activeConversationId)
+  if (idx < 0) return
+  const existing = conversations[idx]
+  let title = existing.title
+  if (title === DEFAULT_TITLE) {
+    const firstUser = messages.find((m) => m.role === 'user')
+    if (firstUser) title = deriveTitle(firstUser.content)
+  }
+  const next = [...conversations]
+  next[idx] = { ...existing, title, messages, stats: sessionStats, updatedAt: Date.now() }
+  useAIStore.setState({ conversations: next })
+  persistConversations(next, activeConversationId)
+})
+
 // Set up IPC listeners
 if (typeof window !== 'undefined' && window.electronAPI) {
   window.electronAPI.on(IPC_EVENTS.AI_CHAT_EVENT, (streamId: unknown, event: unknown) => {
@@ -323,4 +523,11 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   window.electronAPI.on(IPC_EVENTS.MCP_APPROVAL_REQUEST, (request: unknown) => {
     useAIStore.setState({ mcpPendingApproval: request as MCPApprovalRequest })
   })
+
+  // The main process starts each launch with no chat history. Seed it with the
+  // restored active conversation so continuing it after a restart keeps full
+  // context (otherwise only the next message would be sent).
+  if (initialConversations.messages.length > 0) {
+    void window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, initialConversations.messages)
+  }
 }

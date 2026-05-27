@@ -281,6 +281,9 @@ export function startAIModule(deps: AIDeps): AIModule {
   h('ai:models:get-active', async () => providerRegistry.getActiveModel())
   h('ai:messages:list', async () => conversationManager.getMessages())
   h('ai:messages:clear', async () => { conversationManager.clearMessages() })
+  h('ai:messages:set', async (messages: Parameters<ConversationManager['setMessages']>[0]) => {
+    conversationManager.setMessages(messages)
+  })
 
   h('ai:keys:has', async (provider: 'openai' | 'anthropic') => deps.keyring.has(AI_KEYRING_NS, provider))
   h('ai:keys:set', async (provider: 'openai' | 'anthropic', value: string) => {

@@ -339,6 +339,10 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  'ai:messages:set': {
+    args: [messages: AIChatMessage[]]
+    return: void
+  }
   'ai:tools:list': {
     args: []
     return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
@@ -580,6 +584,7 @@ export const IPC_CHANNELS = {
   AI_MODELS_GET_ACTIVE: 'ai:models:get-active',
   AI_MESSAGES_LIST: 'ai:messages:list',
   AI_MESSAGES_CLEAR: 'ai:messages:clear',
+  AI_MESSAGES_SET: 'ai:messages:set',
   AI_TOOLS_LIST: 'ai:tools:list',
   AI_KEYS_HAS: 'ai:keys:has',
   AI_KEYS_SET: 'ai:keys:set',

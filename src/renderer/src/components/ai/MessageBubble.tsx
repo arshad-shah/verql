@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, Copy, Check, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Sparkles, Copy, Check, RotateCcw, AlertTriangle, GitBranch } from 'lucide-react'
 import type { AIChatMessage } from '@shared/ai-types'
 import { Text } from '@/primitives/typography/Text'
 import { IconButton } from '@/primitives/forms/Button'
@@ -10,6 +10,22 @@ import { isWideMessageContent } from './message-content-width'
 
 interface MessageBubbleProps {
   message: AIChatMessage
+}
+
+function BranchButton({ messageId }: { messageId: string }) {
+  const branchConversation = useAIStore((s) => s.branchConversation)
+  const isStreaming = useAIStore((s) => s.isStreaming)
+  return (
+    <IconButton
+      label="Branch a new conversation from here"
+      variant="ghost"
+      size="xs"
+      disabled={isStreaming}
+      onClick={() => void branchConversation(messageId)}
+    >
+      <GitBranch className="h-3 w-3" />
+    </IconButton>
+  )
 }
 
 function CopyButton({ content }: { content: string }) {
@@ -45,6 +61,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             <Text size="sm" className="text-white whitespace-pre-wrap">{message.content}</Text>
           </div>
           <div className="flex justify-end gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <BranchButton messageId={message.id} />
             <CopyButton content={message.content} />
           </div>
         </div>
@@ -81,6 +98,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           <IconButton label="Retry" variant="ghost" size="xs" disabled={isStreaming} onClick={retryLast}>
             <RotateCcw className="h-3 w-3" />
           </IconButton>
+          {!isError && <BranchButton messageId={message.id} />}
         </div>
       </div>
     </div>

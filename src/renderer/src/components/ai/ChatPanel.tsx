@@ -4,6 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { MessageThread } from './MessageThread'
 import { ChatInput } from './ChatInput'
 import { SessionInfo } from './SessionInfo'
+import { ConversationMenu } from './ConversationMenu'
 
 export function ChatPanel() {
   const panelOpen = useUiStore(
@@ -20,6 +21,7 @@ export function ChatPanel() {
 
   return (
     <div className="flex flex-col h-full bg-bg-primary">
+      <ConversationMenu />
       <SessionInfo />
       <MessageThread />
       <ChatInput />

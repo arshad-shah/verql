@@ -5,6 +5,7 @@ import type { AIContextProvider } from './types'
 import type { AIProviderRegistry } from './provider-registry'
 import type { ToolRegistry } from '../../../sdk/types'
 import type { PermissionManager } from './permission-manager'
+import { estimateTokens, trimMessagesToBudget } from './token-estimate'
 
 interface ConversationManagerDeps {
   providerRegistry: AIProviderRegistry
@@ -12,7 +13,17 @@ interface ConversationManagerDeps {
   permissionManager: PermissionManager
   getSchemaContext: (connectionId: string) => Promise<string>
   getConnectionId: () => string | null
+  /** Token budget for the history sent each round (system prompt excluded from
+   *  this cap, but its size is subtracted from the available window). Keeps a
+   *  long conversation from growing the request unboundedly. */
+  maxContextTokens?: number
 }
+
+/** Default ceiling for the request payload. Comfortably below the smallest
+ *  models we target, and trimming only ever drops the oldest turns. */
+const DEFAULT_MAX_CONTEXT_TOKENS = 24000
+/** Always leave room for at least this much recent history after the system prompt. */
+const MIN_HISTORY_TOKENS = 2000
 
 export class ConversationManager {
   private messages: AIChatMessage[] = []
@@ -41,6 +52,13 @@ export class ConversationManager {
 
   clearMessages(): void {
     this.messages = []
+  }
+
+  /** Replace the in-memory history wholesale. Used when the renderer switches to
+   *  or branches a persisted conversation, so the next `chat()` round runs
+   *  against that conversation's turns rather than the previous one's. */
+  setMessages(messages: AIChatMessage[]): void {
+    this.messages = [...messages]
   }
 
   registerContextProvider(provider: AIContextProvider): void {
@@ -161,9 +179,16 @@ ${appActionsCatalog}`)
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       if (this.abortController.signal.aborted) break
 
+      // Send the system prompt plus as much recent history as fits the budget.
+      // The full history stays in `this.messages` for display/persistence; only
+      // the request payload is trimmed, so the model never sees an unbounded
+      // (and increasingly expensive) transcript.
+      const maxContext = this.deps.maxContextTokens ?? DEFAULT_MAX_CONTEXT_TOKENS
+      const historyBudget = Math.max(MIN_HISTORY_TOKENS, maxContext - estimateTokens(systemMessage))
+      const history = trimMessagesToBudget(this.messages, historyBudget)
       const allMessages: AIChatMessage[] = [
         { id: 'system', role: 'system', content: systemMessage, timestamp: 0 },
-        ...this.messages
+        ...history
       ]
 
       const stream = provider.chat({

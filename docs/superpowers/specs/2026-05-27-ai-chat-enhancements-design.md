@@ -162,9 +162,25 @@ All are `navigation` kind (no data mutation), so they run agentically.
 
 ---
 
+## Conversation history & orchestration efficiency (built)
+
+Originally out of scope, now implemented:
+
+- **Multi-conversation history + branching.** The renderer (`stores/ai.ts`) owns a
+  localStorage-persisted list of conversations (id, title, messages, per-conversation
+  token/stat totals). `ConversationMenu` switches/creates/renames/deletes them and a
+  per-message "branch" button forks a new conversation from any point. Conversations are
+  auto-titled from their first user message. On switch/branch/restart the renderer pushes
+  the target history to main via a new `ai:messages:set` IPC so the orchestrator runs
+  against the right turns (`ConversationManager.setMessages`).
+- **Token-budgeted context.** `token-estimate.ts` gives a cheap chars/4 estimate;
+  `ConversationManager.chat()` trims the per-round request to a token budget (keeping the
+  system prompt + most recent turns, never orphaning a tool result), so a long conversation
+  can't grow the request — and cost — without bound. Full history is still kept for display
+  and persistence; only the sent payload is trimmed.
+
 ## Out of scope (YAGNI)
 
 - A dedicated "capability discovery" UI surface (user opted for guidance via chips + empty-state suggestions instead).
 - Auto-executing mutating actions without approval.
-- Multi-conversation history/persistence, conversation branching.
 - Reworking provider/model management.
