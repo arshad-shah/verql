@@ -1,6 +1,6 @@
 import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType } from './types'
 import type { AppSettings } from './settings'
-import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage, AIApprovalRequest } from './ai-types'
+import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
 
 export interface IpcChannelMap {
@@ -413,7 +413,7 @@ export interface IpcChannelMap {
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
     args: []
-    return: { port: number; token: string }
+    return: import('./mcp').MCPStartResult
   }
   'mcp:stop': {
     args: []
@@ -421,7 +421,23 @@ export interface IpcChannelMap {
   }
   'mcp:status': {
     args: []
-    return: { running: boolean; port: number; clients: number; token: string }
+    return: import('./mcp').MCPServerStatus
+  }
+  'mcp:tools': {
+    args: []
+    return: import('./mcp').MCPToolInfo[]
+  }
+  'mcp:set-tool-enabled': {
+    args: [toolId: string, enabled: boolean]
+    return: void
+  }
+  'mcp:activity': {
+    args: []
+    return: import('./mcp').MCPActivityEntry[]
+  }
+  'mcp:regenerate-token': {
+    args: []
+    return: import('./mcp').MCPServerStatus
   }
   'mcp:approval-response': {
     args: [requestId: string, approved: boolean]
@@ -565,6 +581,10 @@ export const IPC_CHANNELS = {
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',
   MCP_STATUS: 'mcp:status',
+  MCP_TOOLS: 'mcp:tools',
+  MCP_SET_TOOL_ENABLED: 'mcp:set-tool-enabled',
+  MCP_ACTIVITY: 'mcp:activity',
+  MCP_REGENERATE_TOKEN: 'mcp:regenerate-token',
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',
@@ -588,7 +608,9 @@ export interface IpcEventMap {
   /** Stream events for an in-flight AI chat (delta tokens, tool calls, …). */
   'ai:chat:event': [event: AIStreamEvent]
   /** MCP server requested user approval for a sensitive action. */
-  'mcp:approval-request': [request: AIApprovalRequest]
+  'mcp:approval-request': [request: import('./mcp').MCPApprovalRequest]
+  /** MCP server recorded a tool call. */
+  'mcp:activity-event': [entry: import('./mcp').MCPActivityEntry]
   /** App menu accelerator: focus / create a new query tab. */
   'menu:new-query-tab': []
   /** App menu accelerator: open the new-connection form. */
@@ -621,6 +643,7 @@ export type IpcEvent = keyof IpcEventMap
 export const IPC_EVENTS = {
   AI_CHAT_EVENT: 'ai:chat:event',
   MCP_APPROVAL_REQUEST: 'mcp:approval-request',
+  MCP_ACTIVITY_EVENT: 'mcp:activity-event',
   MENU_NEW_QUERY_TAB: 'menu:new-query-tab',
   MENU_NEW_CONNECTION: 'menu:new-connection',
   MENU_TOGGLE_COMMAND_PALETTE: 'menu:toggle-command-palette',
