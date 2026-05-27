@@ -218,7 +218,7 @@ MCP client → POST /messages (Bearer token)
 - `sdk/tool-registry.ts` (new) — `ToolRegistry` impl.
 - `sdk/types.ts` — `Tool`, `ToolContext`, `ToolResult`, `ToolRegistry`; add `tools` to `PluginContext`.
 - `sdk/sql-statements.ts` — host `isWriteQuery` + `toJsonSchema` helper (or a small `sdk/tool-schema.ts`).
-- `sdk/ai-access.ts` — drop `registerTool` (tools now via `ctx.tools`); keep provider/context-provider.
+- `sdk/ai-access.ts` — **remove `registerTool` outright** (clean break, no deprecated shim — tools are registered only via `ctx.tools.register`); keep `registerProvider`/`registerContextProvider`. The `AIService` interface and any callers are updated to match.
 
 **Plugins**
 - `bundled/db-tools/` (new) — manifest + tool registrations (migrated logic).
