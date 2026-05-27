@@ -439,6 +439,10 @@ export interface IpcChannelMap {
     args: []
     return: import('./mcp').MCPServerStatus
   }
+  'mcp:reload': {
+    args: []
+    return: import('./mcp').MCPServerStatus
+  }
   'mcp:approval-response': {
     args: [requestId: string, approved: boolean]
     return: void
@@ -585,6 +589,7 @@ export const IPC_CHANNELS = {
   MCP_SET_TOOL_ENABLED: 'mcp:set-tool-enabled',
   MCP_ACTIVITY: 'mcp:activity',
   MCP_REGENERATE_TOKEN: 'mcp:regenerate-token',
+  MCP_RELOAD: 'mcp:reload',
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',

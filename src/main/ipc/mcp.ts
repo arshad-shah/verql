@@ -61,6 +61,13 @@ export function registerMcpHandlers(
     return mcpServer.getStatus()
   })
 
+  // Rebuild the exposed tool set against current settings (e.g. after the
+  // read-only toggle changes). No-op when the server is stopped.
+  handle('mcp:reload', async () => {
+    await mcpServer.reload()
+    return mcpServer.getStatus()
+  })
+
   handle('mcp:approval-response', async (requestId, approved) => {
     mcpServer.resolveApproval(requestId, approved)
   })
