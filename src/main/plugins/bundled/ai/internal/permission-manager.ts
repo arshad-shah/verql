@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { AITool } from './types'
+import type { Tool } from '../../../sdk/types'
 
 interface PendingApproval {
   requestId: string
@@ -13,7 +13,7 @@ export class PermissionManager {
   private overrides = new Map<string, 'read' | 'write'>()
   private pending = new Map<string, PendingApproval>()
 
-  needsApproval(tool: AITool): boolean {
+  needsApproval(tool: Tool): boolean {
     const effective = this.overrides.get(tool.id) ?? tool.permission
     return effective === 'write'
   }

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ConversationManager } from '../../src/main/plugins/bundled/ai/internal/conversation-manager'
 import type { AIProvider } from '../../src/main/plugins/bundled/ai/internal/types'
 import { AIProviderRegistry } from '../../src/main/plugins/bundled/ai/internal/provider-registry'
-import { AIToolRegistry } from '../../src/main/plugins/bundled/ai/internal/tool-registry'
+import { ToolRegistryImpl } from '../../src/main/plugins/sdk/tool-registry'
 import { PermissionManager } from '../../src/main/plugins/bundled/ai/internal/permission-manager'
 import type { AIChatMessage, AIStreamEvent } from '@shared/ai-types'
 
@@ -23,13 +23,13 @@ function createMockProvider(chunks: Array<{ type: string; content?: string }>): 
 
 describe('ConversationManager', () => {
   let providerRegistry: AIProviderRegistry
-  let toolRegistry: AIToolRegistry
+  let toolRegistry: ToolRegistryImpl
   let permissionManager: PermissionManager
   let manager: ConversationManager
 
   beforeEach(() => {
     providerRegistry = new AIProviderRegistry()
-    toolRegistry = new AIToolRegistry()
+    toolRegistry = new ToolRegistryImpl()
     permissionManager = new PermissionManager()
     manager = new ConversationManager({
       providerRegistry,

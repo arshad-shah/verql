@@ -41,28 +41,6 @@ export interface AIProviderChunk {
   usage?: { inputTokens: number; outputTokens: number }
 }
 
-// ─── Tool ────────────────────────────────────────────────────────────────────
-
-export interface AITool {
-  id: string
-  name: string
-  description: string
-  parameters: Record<string, unknown> // JSON Schema
-  permission: 'read' | 'write'
-  execute(params: Record<string, unknown>, context: AIToolContext): Promise<AIToolExecutionResult>
-}
-
-export interface AIToolContext {
-  connectionId: string | null
-  abortSignal: AbortSignal
-}
-
-export interface AIToolExecutionResult {
-  success: boolean
-  data: unknown
-  display?: string
-}
-
 // ─── Context Provider ────────────────────────────────────────────────────────
 
 export interface AIContextProvider {
