@@ -1,5 +1,6 @@
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
+import { formatSql } from '../../sdk/sql-format'
 import { exportToCsv, parseCsvFile } from './csv'
 import { exportToJson } from './json'
 
@@ -30,6 +31,9 @@ export const manifest: PluginManifest = {
     ],
     importers: [
       { id: 'csv', name: 'CSV', extensions: ['csv', 'tsv'] }
+    ],
+    formatters: [
+      { id: 'sql', name: 'SQL (generic)' }
     ]
   }
 }
@@ -62,6 +66,17 @@ export function activate(ctx: PluginContext): void {
       const { rows, headers } = parseCsvFile(text)
       return { rows, columns: headers }
     }
+  })
+
+  // Generic SQL formatter fallback for the `sql` editor language (no
+  // `appliesTo`): used when the active connection's driver hasn't registered a
+  // dialect-specific formatter, or when formatting with no connection. Scoped to
+  // `language: 'sql'`, so it never applies to JSON/plaintext editors. Driver
+  // dialect formatters take precedence.
+  ctx.formatters.register('sql', {
+    language: 'sql',
+    displayName: 'SQL (generic)',
+    format: (sql) => formatSql(sql)
   })
 }
 

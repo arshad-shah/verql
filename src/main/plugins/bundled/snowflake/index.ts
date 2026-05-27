@@ -5,7 +5,7 @@ import { SnowflakeAdapter } from './snowflake-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 import { quoteIdentifier } from '../../sdk/identifier'
-import { generateCreateTable } from '../../sdk/sql-format'
+import { generateCreateTable, formatSql } from '../../sdk/sql-format'
 
 const SNOWFLAKE_QUOTE = '"' as const
 
@@ -19,6 +19,7 @@ export const manifest: PluginManifest = {
     drivers: [{ id: 'snowflake', name: 'Snowflake' }],
     exporters: [{ id: 'sql', name: 'SQL (Snowflake)', extension: 'sql' }],
     importers: [{ id: 'sql', name: 'SQL (Snowflake)', extensions: ['sql'] }],
+    formatters: [{ id: 'sql', name: 'SQL (Snowflake)' }],
     toolbar: [
       { id: 'snowflake-context', zone: 'right' }
     ],
@@ -181,6 +182,12 @@ const STATIC_COMPLETIONS: CompletionItem[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.formatters.register('sql', {
+    language: 'sql',
+    displayName: 'SQL (Snowflake)',
+    appliesTo: (t) => t === 'snowflake',
+    format: (sql) => formatSql(sql, 'snowflake')
+  })
 
   ctx.drivers.register('snowflake', {
     createAdapter: (config) => new SnowflakeAdapter(config),

@@ -2,6 +2,7 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
 import { MongoAdapter } from './mongo-adapter'
+import { formatJson } from '../../sdk/format-json'
 import { getTableData, jsonLinesExporter, bsonArrayExporter, jsonLinesImporter } from './data-format'
 
 export const manifest: PluginManifest = {
@@ -44,6 +45,9 @@ export const manifest: PluginManifest = {
     ],
     importers: [
       { id: 'jsonl', name: 'JSON Lines', extensions: ['jsonl', 'ndjson'] }
+    ],
+    formatters: [
+      { id: 'json', name: 'JSON (MongoDB)' }
     ]
   }
 }
@@ -179,6 +183,14 @@ export function activate(ctx: PluginContext): void {
   ctx.exporters.register('jsonl', jsonLinesExporter)
   ctx.exporters.register('json-array', bsonArrayExporter)
   ctx.importers.register('jsonl', jsonLinesImporter)
+  // MongoDB's editor language is JSON; format the query document with the shared
+  // SDK helper (a no-op on shell-style/partial input).
+  ctx.formatters.register('json', {
+    language: 'json',
+    displayName: 'JSON (MongoDB)',
+    appliesTo: (t) => t === 'mongodb',
+    format: (src) => formatJson(src)
+  })
 
   // ── AI context provider ────────────────────────────────────────────────────
   // Tells the AI assistant how to format queries for MongoDB connections.

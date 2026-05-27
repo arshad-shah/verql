@@ -186,7 +186,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     fn: (...args: A) => R | Promise<R>
   ) => { deps.ipc.handle(channel, fn as never) }
 
-  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string }) => {
+  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string; notificationsSummary?: string }) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     activeStreams.set(streamId, controller)
@@ -199,7 +199,8 @@ export function startAIModule(deps: AIDeps): AIModule {
           ...(request.connectionId ? { connectionId: request.connectionId } : {}),
           ...(request.connectionMeta ? { connectionMeta: request.connectionMeta } : {}),
           ...(request.appActionsCatalog ? { appActionsCatalog: request.appActionsCatalog } : {}),
-          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {})
+          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {}),
+          ...(request.notificationsSummary ? { notificationsSummary: request.notificationsSummary } : {})
         })) {
           deps.broadcast('ai:chat:event', streamId, event)
         }
@@ -280,6 +281,9 @@ export function startAIModule(deps: AIDeps): AIModule {
   h('ai:models:get-active', async () => providerRegistry.getActiveModel())
   h('ai:messages:list', async () => conversationManager.getMessages())
   h('ai:messages:clear', async () => { conversationManager.clearMessages() })
+  h('ai:messages:set', async (messages: Parameters<ConversationManager['setMessages']>[0]) => {
+    conversationManager.setMessages(messages)
+  })
 
   h('ai:keys:has', async (provider: 'openai' | 'anthropic') => deps.keyring.has(AI_KEYRING_NS, provider))
   h('ai:keys:set', async (provider: 'openai' | 'anthropic', value: string) => {

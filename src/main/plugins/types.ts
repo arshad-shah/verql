@@ -15,6 +15,7 @@ export interface PluginManifest {
     commands?: CommandContribution[]
     exporters?: ExporterContribution[]
     importers?: ImporterContribution[]
+    formatters?: FormatterContribution[]
     connectionMiddleware?: { id: string }[]
     connectionFields?: ConnectionFieldContribution[]
     panels?: PanelContributionManifest[]
@@ -61,6 +62,11 @@ export interface ImporterContribution {
   id: string
   name: string
   extensions: string[]
+}
+
+export interface FormatterContribution {
+  id: string
+  name: string
 }
 
 export interface ConnectionFieldContribution {

@@ -12,6 +12,8 @@ import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
+import { FormatterRegistryImpl } from './plugins/sdk/formatter-registry'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
@@ -82,6 +84,7 @@ export function registerIpcHandlers(): void {
   const services = new ServiceRegistryImpl()
   const exporterRegistry = new ExporterRegistryImpl()
   const importerRegistry = new ImporterRegistryImpl()
+  const formatterRegistry = new FormatterRegistryImpl()
   const typeMapperRegistry = new TypeMapperRegistryImpl()
   const themeRegistry = new ThemeRegistryImpl()
   const dragDropRegistry = new DragDropRegistryImpl()
@@ -108,6 +111,18 @@ export function registerIpcHandlers(): void {
   registerKeyringHandlers(ctx, handle)
   registerDbHandlers(ctx, handle, connectionAccess)
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
+
+  // Query formatting is plugin-owned: each driver contributes a formatter for
+  // its editor language (SQL drivers a dialect one, core-formats a generic SQL
+  // fallback, MongoDB a JSON one, …). This handler is pure glue — resolve by
+  // (language, connection type) and run it. Returns the input unchanged when no
+  // formatter matches or the source can't be parsed, so the buffer is safe.
+  handle(IPC_CHANNELS.DB_FORMAT_QUERY, async (language, connectionType, source) => {
+    const formatter = formatterRegistry.resolve(language, connectionType)
+    if (!formatter) return { formatted: source, changed: false }
+    const formatted = await formatter.format(source)
+    return { formatted, changed: formatted !== source }
+  })
   // The migration IPC handler resolves type mappings through the registry,
   // so it needs visibility into what each driver plugin contributed.
   registerDialogHandlers(handle)
@@ -131,6 +146,7 @@ export function registerIpcHandlers(): void {
     services,
     exporterRegistry,
     importerRegistry,
+    formatterRegistry,
     typeMapperRegistry,
     themeRegistry,
     notificationBus,

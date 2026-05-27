@@ -43,8 +43,26 @@ export const manifest: PluginManifest = {
         description: 'Abort a command if Redis does not respond within this window.'
       }
     ],
-    exporters: [{ id: 'json', name: 'JSON (Redis key/value)', extension: 'json' }]
+    exporters: [{ id: 'json', name: 'JSON (Redis key/value)', extension: 'json' }],
+    formatters: [{ id: 'commands', name: 'Redis commands' }]
   }
+}
+
+/**
+ * Tidy a Redis command buffer: trim each line and upper-case the command verb
+ * (Redis command names are case-insensitive). Argument text — including spacing
+ * inside quoted values — is left untouched, so it can never corrupt a value.
+ */
+function tidyRedisCommands(src: string): string {
+  return src
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return ''
+      const m = /^(\S+)(\s[\s\S]*)?$/.exec(trimmed)
+      return m ? m[1].toUpperCase() + (m[2] ?? '') : trimmed
+    })
+    .join('\n')
 }
 
 // ─── Static completion data ──────────────────────────────────────────────────
@@ -166,6 +184,14 @@ const REDIS_COMMANDS: CompletionItem[] = [
 export function activate(ctx: PluginContext): void {
   // ── Export contributions ───────────────────────────────────────────────────
   ctx.exporters.register('json', jsonExporter)
+
+  // ── Formatter (plaintext command buffer) ────────────────────────────────────
+  ctx.formatters.register('commands', {
+    language: 'plaintext',
+    displayName: 'Redis commands',
+    appliesTo: (t) => t === 'redis',
+    format: tidyRedisCommands
+  })
 
   // ── AI context provider ────────────────────────────────────────────────────
   ctx.ai.registerContextProvider({

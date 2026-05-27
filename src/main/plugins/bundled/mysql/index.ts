@@ -5,7 +5,7 @@ import { MysqlAdapter } from './mysql-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 import { quoteIdentifier } from '../../sdk/identifier'
-import { generateCreateTable } from '../../sdk/sql-format'
+import { generateCreateTable, formatSql } from '../../sdk/sql-format'
 import { PG_TO_MYSQL, pgToMysqlFallback } from './type-maps'
 
 const MY_QUOTE = '`' as const
@@ -19,7 +19,8 @@ export const manifest: PluginManifest = {
   contributes: {
     drivers: [{ id: 'mysql', name: 'MySQL' }],
     exporters: [{ id: 'sql', name: 'SQL (MySQL)', extension: 'sql' }],
-    importers: [{ id: 'sql', name: 'SQL (MySQL)', extensions: ['sql'] }]
+    importers: [{ id: 'sql', name: 'SQL (MySQL)', extensions: ['sql'] }],
+    formatters: [{ id: 'sql', name: 'SQL (MySQL)' }]
   }
 }
 
@@ -121,6 +122,12 @@ const MYSQL_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.formatters.register('sql', {
+    language: 'sql',
+    displayName: 'SQL (MySQL)',
+    appliesTo: (t) => t === 'mysql',
+    format: (sql) => formatSql(sql, 'mysql')
+  })
   ctx.typeMappers.register('postgresql', 'mysql', PG_TO_MYSQL, pgToMysqlFallback)
 
   ctx.drivers.register('mysql', {

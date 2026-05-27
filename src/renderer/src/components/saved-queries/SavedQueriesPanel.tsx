@@ -45,20 +45,11 @@ export function useSavedQueries(): SavedQuery[] {
 export function SavedQueriesPanel() {
   const [search, setSearch] = useState('')
   const queries = useSavedQueries()
-  const { addQueryTab } = useTabsStore()
-  const { activeConnectionId, connections } = useConnectionsStore()
-  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
-
   const filtered = search.trim()
     ? queries.filter(q => q.name.toLowerCase().includes(search.toLowerCase()) || q.sql.toLowerCase().includes(search.toLowerCase()))
     : queries
 
-  const handleOpenQuery = (query: SavedQuery) => {
-    const tabId = addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
-    useTabsStore.setState((s) => ({
-      tabs: s.tabs.map(t => t.id === tabId ? { ...t, sql: query.sql, title: query.name } : t)
-    }))
-  }
+  const handleOpenQuery = (query: SavedQuery) => { openSavedQuery(query) }
 
   const handleDelete = (id: string) => {
     savedQueries = savedQueries.filter(q => q.id !== id)
@@ -157,5 +148,25 @@ export function saveQuery(opts: {
 
 export function findSavedQueryByName(name: string): SavedQuery | undefined {
   return savedQueries.find(q => q.name === name)
+}
+
+/** Resolve a saved query by id or (case-insensitive) name. */
+export function findSavedQuery(idOrName: string): SavedQuery | undefined {
+  const needle = idOrName.trim()
+  if (!needle) return undefined
+  return savedQueries.find(q => q.id === needle)
+    ?? savedQueries.find(q => q.name.toLowerCase() === needle.toLowerCase())
+}
+
+/** Open a saved query in a new query tab, pre-filled but not executed. */
+export function openSavedQuery(query: SavedQuery): void {
+  const { activeConnectionId, connections } = useConnectionsStore.getState()
+  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
+  const tabId = useTabsStore.getState().addQueryTab(activeConnectionId, null, {
+    autoCommit: initialAutoCommit(activeProfile)
+  })
+  useTabsStore.setState((s) => ({
+    tabs: s.tabs.map(t => t.id === tabId ? { ...t, sql: query.sql, title: query.name } : t)
+  }))
 }
 

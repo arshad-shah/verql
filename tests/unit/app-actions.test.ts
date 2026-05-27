@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { parseActionHref } from '../../src/renderer/src/lib/app-actions/parse'
 import { AppActionRegistry } from '../../src/renderer/src/lib/app-actions/registry'
+import { resolveConnection } from '../../src/renderer/src/lib/app-actions/resolve'
 import type { AppAction } from '../../src/renderer/src/lib/app-actions/types'
+import type { ConnectionProfile } from '../../shared/types'
 
 describe('parseActionHref', () => {
   it('parses an action href with params', () => {
@@ -70,5 +72,34 @@ describe('AppActionRegistry', () => {
     const text = registry.describeForPrompt()
     expect(text).toContain('open-settings')
     expect(text).toContain('Open settings')
+  })
+})
+
+describe('resolveConnection', () => {
+  const conns = [
+    { id: 'c1', name: 'Prod', type: 'postgres', database: 'app' },
+    { id: 'c2', name: 'Local Dev', type: 'sqlite', database: 'dev.db' }
+  ] as unknown as ConnectionProfile[]
+
+  it('matches by id', () => {
+    expect(resolveConnection(conns, 'c2')).toBe(conns[1])
+  })
+
+  it('matches by name, case-insensitively', () => {
+    expect(resolveConnection(conns, 'local dev')).toBe(conns[1])
+  })
+
+  it('prefers an id match over a name match', () => {
+    const collide = [
+      { id: 'Prod', name: 'Other', type: 'mysql', database: 'x' },
+      { id: 'c9', name: 'Prod', type: 'postgres', database: 'y' }
+    ] as unknown as ConnectionProfile[]
+    expect(resolveConnection(collide, 'Prod')).toBe(collide[0])
+  })
+
+  it('returns undefined for no match or empty input', () => {
+    expect(resolveConnection(conns, 'nope')).toBeUndefined()
+    expect(resolveConnection(conns, undefined)).toBeUndefined()
+    expect(resolveConnection(conns, '   ')).toBeUndefined()
   })
 })

@@ -137,23 +137,50 @@ New: `app-actions` registry + `ActionChip` (renderer); `app:action:perform` IPC 
 
 ---
 
-## What else we could allow the AI to do (roadmap, not built here)
+## What else we could allow the AI to do (now built on the registry)
 
-Documented per the original ask; each is a future `AppAction`/tool once the registry exists:
+These were originally a roadmap; they are now implemented as built-in `AppAction`s in
+`src/renderer/src/lib/app-actions/builtins.ts`. Each is automatically a system-prompt
+catalog entry, an agentic `perform_app_action` target, and a user-clickable deep-link chip.
+All are `navigation` kind (no data mutation), so they run agentically.
 
-- **Connection lifecycle:** trigger connect/disconnect, switch active connection (today the AI only guides the user there).
-- **Schema authoring:** scaffold `CREATE TABLE`/migrations into a query tab; never auto-run.
-- **Result actions:** export current results (CSV/JSON via existing exporters), open a chart panel for the active result set.
-- **Navigation deep links:** jump to a specific table/column in the explorer, open a saved query, open the ER diagram focused on a table.
-- **Editor assist (beyond inline completion):** insert/replace selection in the active Monaco editor, format buffer.
-- **Settings & plugins:** open a specific settings category, surface a plugin install/enable destination.
-- **Diagnostics:** summarize the last error/notification and link to the relevant panel.
+- **Connection lifecycle:** `connect-database`, `disconnect-database`, `switch-connection`
+  (resolve a saved connection by name or id via `app-actions/resolve.ts`).
+- **Schema authoring:** `new-query-tab` scaffolds `CREATE TABLE`/migration DDL into a tab;
+  nothing auto-runs.
+- **Result actions:** `export-results` (CSV/JSON via the existing `export:query-result`
+  exporter), `open-chart` (chart panel for the active result set).
+- **Navigation deep links:** `focus-table` (reveal a table/column in the explorer),
+  `open-saved-query`, and `open-er-diagram` (now takes an optional `table` to select it).
+- **Editor assist (beyond inline completion):** `insert-into-editor` inserts at the cursor /
+  replaces the current selection in the active Monaco editor. (A "format buffer" action is
+  still pending — no SQL document-formatting provider is registered yet.)
+- **Settings & plugins:** `open-settings` (category, incl. `plugins` to enable/configure),
+  `open-install-plugin`.
+- **Diagnostics:** a `notificationsSummary` of recent errors/warnings is threaded into the
+  chat request and system prompt, and `open-notifications` links the user to the panel.
 
 ---
+
+## Conversation history & orchestration efficiency (built)
+
+Originally out of scope, now implemented:
+
+- **Multi-conversation history + branching.** The renderer (`stores/ai.ts`) owns a
+  localStorage-persisted list of conversations (id, title, messages, per-conversation
+  token/stat totals). `ConversationMenu` switches/creates/renames/deletes them and a
+  per-message "branch" button forks a new conversation from any point. Conversations are
+  auto-titled from their first user message. On switch/branch/restart the renderer pushes
+  the target history to main via a new `ai:messages:set` IPC so the orchestrator runs
+  against the right turns (`ConversationManager.setMessages`).
+- **Token-budgeted context.** `token-estimate.ts` gives a cheap chars/4 estimate;
+  `ConversationManager.chat()` trims the per-round request to a token budget (keeping the
+  system prompt + most recent turns, never orphaning a tool result), so a long conversation
+  can't grow the request — and cost — without bound. Full history is still kept for display
+  and persistence; only the sent payload is trimmed.
 
 ## Out of scope (YAGNI)
 
 - A dedicated "capability discovery" UI surface (user opted for guidance via chips + empty-state suggestions instead).
 - Auto-executing mutating actions without approval.
-- Multi-conversation history/persistence, conversation branching.
 - Reworking provider/model management.

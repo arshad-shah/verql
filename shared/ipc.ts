@@ -16,6 +16,10 @@ export interface IpcChannelMap {
     args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
   }
+  'db:format-query': {
+    args: [language: string, connectionType: string, source: string]
+    return: { formatted: string; changed: boolean }
+  }
   'db:test-connection': {
     args: [profile: ConnectionProfile]
     return: { success: boolean; error?: string; version?: string; details?: Record<string, string> }
@@ -339,6 +343,10 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  'ai:messages:set': {
+    args: [messages: AIChatMessage[]]
+    return: void
+  }
   'ai:tools:list': {
     args: []
     return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
@@ -497,6 +505,7 @@ export const IPC_CHANNELS = {
   DB_CONNECT: 'db:connect',
   DB_DISCONNECT: 'db:disconnect',
   DB_QUERY: 'db:query',
+  DB_FORMAT_QUERY: 'db:format-query',
   DB_TEST_CONNECTION: 'db:test-connection',
   DB_CONNECTION_OPTIONS: 'db:connection-options',
   DB_CANCEL_QUERY: 'db:cancel-query',
@@ -580,6 +589,7 @@ export const IPC_CHANNELS = {
   AI_MODELS_GET_ACTIVE: 'ai:models:get-active',
   AI_MESSAGES_LIST: 'ai:messages:list',
   AI_MESSAGES_CLEAR: 'ai:messages:clear',
+  AI_MESSAGES_SET: 'ai:messages:set',
   AI_TOOLS_LIST: 'ai:tools:list',
   AI_KEYS_HAS: 'ai:keys:has',
   AI_KEYS_SET: 'ai:keys:set',

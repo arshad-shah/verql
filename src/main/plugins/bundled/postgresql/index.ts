@@ -5,7 +5,7 @@ import { PostgresAdapter } from './postgres-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 import { quoteIdentifier } from '../../sdk/identifier'
-import { generateCreateTable } from '../../sdk/sql-format'
+import { generateCreateTable, formatSql } from '../../sdk/sql-format'
 import { MYSQL_TO_PG, mysqlToPgFallback, sqliteToPgFallback } from './type-maps'
 
 const PG_QUOTE = '"' as const
@@ -19,7 +19,8 @@ export const manifest: PluginManifest = {
   contributes: {
     drivers: [{ id: 'postgresql', name: 'PostgreSQL' }],
     exporters: [{ id: 'sql', name: 'SQL (PostgreSQL)', extension: 'sql' }],
-    importers: [{ id: 'sql', name: 'SQL (PostgreSQL)', extensions: ['sql'] }]
+    importers: [{ id: 'sql', name: 'SQL (PostgreSQL)', extensions: ['sql'] }],
+    formatters: [{ id: 'sql', name: 'SQL (PostgreSQL)' }]
   }
 }
 
@@ -107,6 +108,12 @@ const PG_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.formatters.register('sql', {
+    language: 'sql',
+    displayName: 'SQL (PostgreSQL)',
+    appliesTo: (t) => t === 'postgresql',
+    format: (sql) => formatSql(sql, 'postgresql')
+  })
   ctx.typeMappers.register('mysql', 'postgresql', MYSQL_TO_PG, mysqlToPgFallback)
   ctx.typeMappers.register('sqlite', 'postgresql', {}, sqliteToPgFallback)
 

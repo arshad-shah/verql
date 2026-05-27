@@ -51,6 +51,7 @@ export interface PluginContext {
   services: import('./service-registry').ServiceRegistry
   exporters: PluginExporterAccess
   importers: PluginImporterAccess
+  formatters: PluginFormatterAccess
   typeMappers: PluginTypeMapperAccess
   themes: PluginThemeAccess
   notifications: PluginNotificationAccess
@@ -73,6 +74,13 @@ export interface PluginImporterAccess {
   register(
     id: string,
     importer: import('./importer-registry').RegisteredImporter
+  ): Disposable
+}
+
+export interface PluginFormatterAccess {
+  register(
+    id: string,
+    formatter: import('./formatter-registry').RegisteredFormatter
   ): Disposable
 }
 
