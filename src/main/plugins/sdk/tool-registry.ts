@@ -5,6 +5,12 @@ export class ToolRegistryImpl implements ToolRegistry {
   private tools = new Map<string, Tool>()
   private changeListeners = new Set<() => void>()
 
+  /**
+   * Registers a tool. Tool ids are a flat, un-namespaced space (the id is the
+   * literal name an MCP client / LLM calls, e.g. `query`), so registering an id
+   * that already exists is last-wins: the newer tool replaces the older one
+   * rather than throwing. Callers that need uniqueness must coordinate ids.
+   */
   register(tool: Tool): Disposable {
     this.tools.set(tool.id, tool)
     this.emitChange()

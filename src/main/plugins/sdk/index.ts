@@ -1,6 +1,6 @@
 // src/main/plugins/sdk/index.ts
 import { ipcMain, BrowserWindow } from 'electron'
-import type { PluginContext, Disposable, PluginIpc, BroadcastFn } from './types'
+import type { PluginContext, Disposable, PluginIpc, BroadcastFn, ToolRegistry } from './types'
 import { DriverRegistryImpl } from './driver-registry'
 import { CommandRegistryImpl } from './command-registry'
 import { PanelRegistryImpl } from './panel-registry'
@@ -300,10 +300,34 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  // Scoped view of the shared tool registry. `register`/`onChange` disposables
+  // are tracked as plugin subscriptions so a plugin's tools are removed when it
+  // deactivates — third-party AI plugins get this cleanup for free, without
+  // having to remember to push to `ctx.subscriptions` themselves. The other
+  // methods read straight through to the single shared instance the MCP server
+  // also consumes, so both sides see the same tools.
+  const tools: ToolRegistry = {
+    register(tool) {
+      const d = deps.toolRegistry.register(tool)
+      subscriptions.push(d)
+      return d
+    },
+    unregister: (id) => deps.toolRegistry.unregister(id),
+    get: (id) => deps.toolRegistry.get(id),
+    list: () => deps.toolRegistry.list(),
+    getToolDefinitions: () => deps.toolRegistry.getToolDefinitions(),
+    execute: (id, params, toolCtx) => deps.toolRegistry.execute(id, params, toolCtx),
+    onChange(cb) {
+      const d = deps.toolRegistry.onChange(cb)
+      subscriptions.push(d)
+      return d
+    }
+  }
+
   return {
     drivers,
     commands,
-    tools: deps.toolRegistry,
+    tools,
     panels,
     ui,
     completions,
