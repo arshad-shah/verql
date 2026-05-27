@@ -4,6 +4,7 @@
 // activation time. Nothing in this module talks to Electron's `ipcMain`
 // directly — the plugin's PluginContext provides ipc.handle + broadcast.
 import { randomUUID } from 'crypto'
+import { z } from 'zod'
 import type { AIStreamEvent } from '@shared/ai-types'
 import { AIProviderRegistry } from './provider-registry'
 import { PermissionManager } from './permission-manager'
@@ -123,6 +124,29 @@ export function startAIModule(deps: AIDeps): AIModule {
     conversationManager
   })
 
+  // Generic agentic UI-action tool. Lets the AI invoke any registered renderer
+  // app action (built-in or plugin-contributed) by id — the renderer enforces
+  // that only safe navigation actions run agentically. AI surface only, so the
+  // headless MCP server (which has no renderer) never sees it.
+  const appActionTool = toolRegistry.register({
+    id: 'perform_app_action',
+    name: 'Perform App Action',
+    description: 'Navigate or open something in the Verql UI by action id (see the action catalog). Use for safe navigation/open actions. For anything that changes data, do NOT use this — instead offer a markdown link with a verql://action/<id> href so the user confirms.',
+    inputSchema: z.object({
+      actionId: z.string(),
+      params: z.record(z.string(), z.unknown()).optional()
+    }),
+    permission: 'read',
+    surfaces: ['ai'],
+    execute: async (params) => {
+      const actionId = typeof params.actionId === 'string' ? params.actionId : ''
+      if (!actionId) return { success: false, data: null, display: 'No actionId provided' }
+      const actionParams = (params.params as Record<string, unknown> | undefined) ?? {}
+      deps.broadcast('app:action:perform', { actionId, params: actionParams })
+      return { success: true, data: { actionId }, display: `Requested: ${actionId}` }
+    }
+  })
+
   // ── IPC handlers via PluginContext.ipc ──────────────────────────────────────
   // ctx.ipc.handle already tracks each registration on ctx.subscriptions, so we
   // don't store the disposables here — the plugin host removes the handlers on
@@ -133,7 +157,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     fn: (...args: A) => R | Promise<R>
   ) => { deps.ipc.handle(channel, fn as never) }
 
-  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string } }) => {
+  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string }) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     activeStreams.set(streamId, controller)
@@ -144,7 +168,9 @@ export function startAIModule(deps: AIDeps): AIModule {
       try {
         for await (const event of conversationManager.chat({
           ...(request.connectionId ? { connectionId: request.connectionId } : {}),
-          ...(request.connectionMeta ? { connectionMeta: request.connectionMeta } : {})
+          ...(request.connectionMeta ? { connectionMeta: request.connectionMeta } : {}),
+          ...(request.appActionsCatalog ? { appActionsCatalog: request.appActionsCatalog } : {}),
+          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {})
         })) {
           deps.broadcast('ai:chat:event', streamId, event)
         }
@@ -239,6 +265,7 @@ export function startAIModule(deps: AIDeps): AIModule {
 
   const dispose: Disposable = {
     dispose: () => {
+      appActionTool.dispose()
       for (const ctrl of activeStreams.values()) {
         try { ctrl.abort() } catch { /* ignore */ }
       }

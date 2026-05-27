@@ -1,0 +1,80 @@
+import { useState, type ReactNode } from 'react'
+import {
+  ArrowUpRight, Settings, Plus, PanelLeft, SquarePlus, Network, AlertTriangle, type LucideIcon
+} from 'lucide-react'
+import { appActions } from '@/lib/app-actions/registry'
+import { useToastStore } from '@/stores/toast'
+
+// Per-action icons (lucide only — no emoji). Unknown ids fall back to a generic
+// "jump to" arrow so any plugin-registered action still renders sensibly.
+const ICONS: Record<string, LucideIcon> = {
+  'open-settings': Settings,
+  'new-connection': Plus,
+  'open-explorer': PanelLeft,
+  'open-secondary-panel': PanelLeft,
+  'new-query-tab': SquarePlus,
+  'open-er-diagram': Network
+}
+
+interface Props {
+  actionId: string
+  params: Record<string, string>
+  /** The markdown link text the AI wrote; used as the chip label. */
+  children?: ReactNode
+}
+
+export function ActionChip({ actionId, params, children }: Props) {
+  const [busy, setBusy] = useState(false)
+  const action = appActions.get(actionId)
+
+  // Unknown / unavailable action — render a disabled, non-actionable chip so the
+  // user isn't left with a dead link that silently does nothing.
+  if (!action) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-border-default px-2 py-0.5 text-xs text-text-muted align-baseline"
+        title="This action isn't available in this version"
+      >
+        <AlertTriangle className="h-3 w-3" />
+        {children ?? actionId}
+      </span>
+    )
+  }
+
+  const Icon = ICONS[actionId] ?? ArrowUpRight
+  const label = children ?? action.title
+  const isMutating = action.kind === 'mutating'
+
+  const handleClick = async () => {
+    if (busy) return
+    if (isMutating && !window.confirm(`Run "${action.title}"? This can change data.`)) return
+    setBusy(true)
+    try {
+      await appActions.run(actionId, params)
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: 'error',
+        title: 'Action failed',
+        message: err instanceof Error ? err.message : String(err)
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={busy}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium align-baseline transition-colors disabled:opacity-60 ${
+        isMutating
+          ? 'border-warning/40 text-warning hover:bg-warning/10'
+          : 'border-accent/50 text-accent hover:bg-accent/10'
+      }`}
+    >
+      <Icon className="h-3 w-3 shrink-0" />
+      {label}
+    </button>
+  )
+}

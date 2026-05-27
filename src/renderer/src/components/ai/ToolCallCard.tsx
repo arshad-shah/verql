@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, XCircle, ShieldQuestion, Loade
 import type { AIChatMessage } from '@shared/ai-types'
 import { useAIStore } from '@/stores/ai'
 import { Text } from '@/primitives/typography/Text'
+import { appActions } from '@/lib/app-actions/registry'
 import { CodeBlock } from './CodeBlock'
 
 interface ToolCallCardProps {
@@ -49,7 +50,18 @@ function parseToolResult(content: string): { success: boolean; summary: string; 
   }
 }
 
-function getToolLabel(name: string): string {
+function getToolLabel(name: string, args: string): string {
+  // Resolve agentic UI actions to their friendly title (e.g. "Open ER Diagram")
+  // rather than showing the raw tool/action id.
+  if (name === 'perform_app_action') {
+    try {
+      const actionId = (JSON.parse(args) as { actionId?: string }).actionId
+      const title = actionId ? appActions.get(actionId)?.title : undefined
+      return title ?? 'App Action'
+    } catch {
+      return 'App Action'
+    }
+  }
   if (name.includes('execute') || name.includes('query')) return 'Query Execution'
   if (name.includes('explain')) return 'Query Explain'
   if (name.includes('schema') || name.includes('table') || name.includes('list')) return 'Schema Lookup'
@@ -64,7 +76,7 @@ export function ToolCallCard({ message, result }: ToolCallCardProps) {
   const pendingApproval = useAIStore(s => s.pendingApproval)
 
   const query = extractQuery(toolCall.arguments)
-  const label = getToolLabel(toolCall.name)
+  const label = getToolLabel(toolCall.name, toolCall.arguments)
   const parsed = result ? parseToolResult(result.content) : null
   const isWaitingApproval = !result && pendingApproval !== null
   const isExecuting = !result && pendingApproval === null
@@ -115,7 +127,7 @@ export function ToolCallCard({ message, result }: ToolCallCardProps) {
       {parsed && (
         <div className="px-3 py-2">
           <Text size="xs" color={parsed.success ? 'secondary' : 'error'}>
-            {parsed.summary}
+            {toolCall.name === 'perform_app_action' && parsed.success ? label : parsed.summary}
           </Text>
         </div>
       )}

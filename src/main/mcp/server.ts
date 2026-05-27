@@ -36,7 +36,8 @@ export interface MCPServerInstance {
 export function selectExposedTools(tools: Tool[], gate: MCPGate): Tool[] {
   return tools.filter(t =>
     !gate.disabledTools.includes(t.id) &&
-    !(gate.readOnly && t.permission === 'write')
+    !(gate.readOnly && t.permission === 'write') &&
+    (t.surfaces === undefined || t.surfaces.includes('mcp'))
   )
 }
 

@@ -64,6 +64,20 @@ describe('ConversationManager', () => {
     expect(context).toContain('Tables: users, orders')
   })
 
+  it('includes the app-action catalog and deep-link guidance in the system message', async () => {
+    const catalog = '- new-connection() [navigation]: Open the new-connection form'
+    const msg = await manager.assembleSystemMessage(undefined, 'conn-1', catalog)
+    expect(msg).toContain('new-connection')
+    expect(msg).toContain('verql://action/')
+  })
+
+  it('includes the saved-connections summary so the AI can tell existing from new', async () => {
+    const summary = '- Prod (postgres) — not connected\n- Local (sqlite) — connected, active'
+    const msg = await manager.assembleSystemMessage(undefined, 'conn-1', undefined, summary)
+    expect(msg).toContain('Saved connections')
+    expect(msg).toContain('Prod (postgres)')
+  })
+
   it('streams a simple text response', async () => {
     const provider = createMockProvider([
       { type: 'text', content: 'Hello' },

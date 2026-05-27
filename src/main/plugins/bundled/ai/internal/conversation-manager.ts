@@ -68,7 +68,9 @@ export class ConversationManager {
 
   async assembleSystemMessage(
     connectionMeta?: { type: string; driverName: string },
-    connectionIdOverride?: string | null
+    connectionIdOverride?: string | null,
+    appActionsCatalog?: string,
+    connectionsSummary?: string
   ): Promise<string> {
     const parts: string[] = [
       `You are a concise database assistant inside a desktop database client. Help users with schemas, queries, analysis, and debugging.
@@ -109,12 +111,25 @@ Rules:
       }
     }
 
+    if (connectionsSummary && connectionsSummary.trim()) {
+      parts.push(`Saved connections (use these to tell an existing connection from one to create):\n${connectionsSummary}`)
+    }
+
+    if (appActionsCatalog && appActionsCatalog.trim()) {
+      parts.push(`You can point the user to places in the app using deep links written as markdown links with a verql://action/<id> href, e.g. [Add a connection](verql://action/new-connection). These render as clickable buttons. Always use the action's human title (shown below) as the visible link text — never the raw id. When you cannot do something yourself (such as creating a connection), briefly say so, then give the deep link to where the user can do it and what to do there.
+
+Available actions:
+${appActionsCatalog}`)
+    }
+
     return parts.join('\n\n')
   }
 
   async *chat(opts?: {
     connectionId?: string
     connectionMeta?: { type: string; driverName: string }
+    appActionsCatalog?: string
+    connectionsSummary?: string
   }): AsyncIterable<AIStreamEvent> {
     const provider = this.deps.providerRegistry.getActive()
     if (!provider) throw new Error('No active AI provider')
@@ -127,7 +142,7 @@ Rules:
     const connectionId = opts?.connectionId ?? this.deps.getConnectionId()
 
     this.abortController = new AbortController()
-    const systemMessage = await this.assembleSystemMessage(opts?.connectionMeta, connectionId)
+    const systemMessage = await this.assembleSystemMessage(opts?.connectionMeta, connectionId, opts?.appActionsCatalog, opts?.connectionsSummary)
 
     const tools = provider.supportsToolCalling
       ? this.deps.toolRegistry.getToolDefinitions()

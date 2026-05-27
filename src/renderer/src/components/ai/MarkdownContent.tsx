@@ -2,6 +2,8 @@ import { type ReactNode, Children, isValidElement } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CodeBlock } from './CodeBlock'
+import { ActionChip } from './ActionChip'
+import { parseActionHref } from '@/lib/app-actions/parse'
 
 function extractText(node: ReactNode): string {
   if (typeof node === 'string') return node
@@ -71,11 +73,20 @@ export function MarkdownContent({ content }: Props) {
         ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
         li: ({ children }) => <li className="mb-0.5">{children}</li>,
         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-        a: ({ href, children }) => (
-          <a href={href} className="text-[var(--color-accent)] underline" target="_blank" rel="noopener noreferrer">
-            {children}
-          </a>
-        ),
+        a: ({ href, children }) => {
+          // `verql://action/<id>` links are in-app deep links — render them as
+          // clickable action chips routed through the App-Action registry
+          // instead of opening a browser.
+          const action = href ? parseActionHref(href) : null
+          if (action) {
+            return <ActionChip actionId={action.id} params={action.params}>{children}</ActionChip>
+          }
+          return (
+            <a href={href} className="text-[var(--color-accent)] underline" target="_blank" rel="noopener noreferrer">
+              {children}
+            </a>
+          )
+        },
       }}
     >
       {content}

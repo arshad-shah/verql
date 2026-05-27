@@ -23,6 +23,8 @@ const avatarVariants = cva(
 export interface AvatarProps extends VariantProps<typeof avatarVariants> {
   name: string
   src?: string
+  /** Render an icon (e.g. a lucide glyph) instead of initials. `src` wins over this. */
+  icon?: React.ReactNode
   className?: string
 }
 
@@ -34,11 +36,13 @@ function getInitials(name: string): string {
     .join('')
 }
 
-export function Avatar({ name, src, size, className }: AvatarProps) {
+export function Avatar({ name, src, icon, size, className }: AvatarProps) {
   return (
-    <span className={cn(avatarVariants({ size }), className)}>
+    <span className={cn(avatarVariants({ size }), className)} aria-label={name}>
       {src ? (
         <img src={src} alt={name} className="h-full w-full rounded-full object-cover" />
+      ) : icon ? (
+        icon
       ) : (
         getInitials(name)
       )}

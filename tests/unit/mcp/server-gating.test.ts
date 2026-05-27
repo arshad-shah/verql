@@ -16,6 +16,12 @@ describe('selectExposedTools', () => {
   it('hides write tools in read-only mode', () => {
     expect(selectExposedTools(all, { disabledTools: [], readOnly: true }).map(t => t.id)).toEqual(['list_tables'])
   })
+  it('hides tools not exposed to the mcp surface', () => {
+    const aiOnly: Tool = { ...tool('perform_app_action', 'read'), surfaces: ['ai'] }
+    const exposed = selectExposedTools([...all, aiOnly], { disabledTools: [], readOnly: false }).map(t => t.id)
+    expect(exposed).not.toContain('perform_app_action')
+    expect(exposed).toContain('query')
+  })
 })
 
 describe('needsApprovalForCall', () => {

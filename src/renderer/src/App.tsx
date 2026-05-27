@@ -28,12 +28,18 @@ import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
 import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
+import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
+import { initAppActionBridge } from '@/lib/app-actions/bridge'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { notifyError } from '@/lib/notify-error'
 
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
 registerBuiltinStatementContributions()
+// Register built-in app actions (deep-link / agentic action targets) once, and
+// wire the main-process agentic action bridge to the renderer registry.
+registerBuiltinAppActions()
+initAppActionBridge()
 import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { matchesAccelerator } from '@/lib/accelerators'

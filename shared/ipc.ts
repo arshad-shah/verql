@@ -632,6 +632,8 @@ export interface IpcEventMap {
   'notifications:show': [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
   /** The set of registered themes changed. */
   'themes:changed': []
+  /** The AI asked to perform an in-app action; the renderer runs it. */
+  'app:action:perform': [payload: { actionId: string; params: Record<string, unknown> }]
   /** Progress update for an in-flight `updater:update` install. */
   'updater:progress': [payload:
     | { phase: 'idle' }
@@ -657,5 +659,6 @@ export const IPC_EVENTS = {
   SETTINGS_CHANGED: 'settings:changed',
   NOTIFICATIONS_SHOW: 'notifications:show',
   THEMES_CHANGED: 'themes:changed',
-  UPDATER_PROGRESS: 'updater:progress'
+  UPDATER_PROGRESS: 'updater:progress',
+  APP_ACTION_PERFORM: 'app:action:perform'
 } as const satisfies Record<string, IpcEvent>
