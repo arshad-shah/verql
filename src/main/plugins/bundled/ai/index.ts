@@ -68,13 +68,13 @@ export function activate(ctx: PluginContext): void {
   //    mechanism. (Tools now live in the shared ctx.tools registry, not here.)
   ctx.services.provide(AI_SERVICE_ID, ai.service)
 
-  // 4. Declare the chat sidebar panel. The renderer mounts <ChatPanel/> when it
+  // 3. Declare the chat sidebar panel. The renderer mounts <ChatPanel/> when it
   //    sees the contribution; removing the plugin removes the contribution.
   ctx.ui.registerPanel('ai-chat', [
     { id: 'ai-chat-root', type: 'host-component', componentId: 'ai-chat-panel' }
   ])
 
-  // 4b. Plug into named slots in the host shell. The host doesn't know these
+  // 3b. Plug into named slots in the host shell. The host doesn't know these
   //     widgets are AI — it just renders whatever's contributed. Disabling
   //     this plugin disposes the registrations and the slots empty out.
   ctx.ui.registerSlot('app.secondaryActivityBar.top', [
@@ -87,13 +87,13 @@ export function activate(ctx: PluginContext): void {
     { id: 'ai-explain', type: 'host-component', componentId: 'ai-explain' }
   ])
 
-  // 5. Commands that future renderer surfaces invoke via the command palette.
+  // 4. Commands that future renderer surfaces invoke via the command palette.
   ctx.commands.register('explain-table', async () => { /* renderer opens chat with context */ })
   ctx.commands.register('suggest-queries', async () => { /* renderer opens chat */ })
   ctx.commands.register('explain-query', async () => { /* renderer opens chat */ })
   ctx.commands.register('optimize-query', async () => { /* renderer opens chat */ })
 
-  // 6. Tear-down on plugin deactivation: abort streams, remove IPC handlers.
+  // 5. Tear-down on plugin deactivation: abort streams, remove IPC handlers.
   ctx.subscriptions.push(ai.dispose)
 }
 
