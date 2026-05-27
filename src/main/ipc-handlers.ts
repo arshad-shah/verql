@@ -115,7 +115,7 @@ export function registerIpcHandlers(): void {
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
 
-  registerMcpHandlers(ctx, handle, connectionAccess, settingsStore)
+  const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry)
 
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry: ctx.driverRegistry,
@@ -163,6 +163,13 @@ export function registerIpcHandlers(): void {
 
   pluginCoordinator.boot()
     .then(() => {
+      // Auto-start the MCP server only after plugin boot completes, so the
+      // db-tools bundled plugin has registered its tools into the shared
+      // registry. Starting earlier (at handler-registration time) would expose
+      // an empty tool set.
+      if (ctx.configStore.getSetting('mcp.enabled') as boolean) {
+        mcpServer.start().catch(err => console.error('[mcp] Auto-start failed:', err))
+      }
       // One-time inline-secrets migration: pre-encryption builds wrote passwords
       // directly into config.json. Sweep them into the keyring so config.json
       // no longer holds any secrets. This is safe to run on every startup —
