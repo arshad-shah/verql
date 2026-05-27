@@ -11,6 +11,8 @@ import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { parseAppError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useUiStore } from './ui'
+import { useConnectionsStore } from './connections'
+import { appActions } from '@/lib/app-actions/registry'
 
 interface SessionStats {
   totalInputTokens: number
@@ -37,6 +39,7 @@ interface AIState {
   openPanel: () => void
   sendMessage: (message: string, connectionId?: string, connectionMeta?: { type: string; driverName: string }) => Promise<void>
   clearMessages: () => Promise<void>
+  retryLast: () => void
   abort: () => Promise<void>
   loadProviders: () => Promise<void>
   loadConfiguredProviders: () => Promise<void>
@@ -90,10 +93,21 @@ export const useAIStore = create<AIState>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, userMsg] }))
 
+    const appActionsCatalog = appActions.describeForPrompt()
+    const { connections, connectedIds, activeConnectionId } = useConnectionsStore.getState()
+    const connectionsSummary = connections
+      .map((c) => {
+        const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
+        const active = c.id === activeConnectionId ? ', active' : ''
+        return `- ${c.name} (${c.type}) — ${state}${active}`
+      })
+      .join('\n')
     const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_START, {
       message,
       ...(connectionId ? { connectionId } : {}),
       ...(connectionMeta ? { connectionMeta } : {}),
+      ...(appActionsCatalog ? { appActionsCatalog } : {}),
+      ...(connectionsSummary ? { connectionsSummary } : {}),
     }) as { streamId: string }
 
     set({ isStreaming: true, currentStreamId: result.streamId, streamingContent: '' })
@@ -102,6 +116,17 @@ export const useAIStore = create<AIState>((set, get) => ({
   clearMessages: async () => {
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_CLEAR)
     set({ messages: [], sessionStats: { ...EMPTY_STATS } })
+  },
+
+  retryLast: () => {
+    const { messages, isStreaming, sendMessage } = get()
+    if (isStreaming) return
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+    if (!lastUser) return
+    const { activeConnectionId, connections } = useConnectionsStore.getState()
+    const conn = activeConnectionId ? connections.find((c) => c.id === activeConnectionId) : undefined
+    const meta = conn ? { type: conn.type, driverName: conn.type } : undefined
+    sendMessage(lastUser.content, activeConnectionId ?? undefined, meta)
   },
 
   abort: async () => {
@@ -146,9 +171,12 @@ export const useAIStore = create<AIState>((set, get) => ({
       await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_SET_ACTIVE, provider.id)
     }
     set({ activeProvider: provider })
-    // Reload models for the new provider
+    // Reload models for the new provider, then mirror the active model main
+    // chose (it defaults to the vendor's cheapest when switching providers).
     const models = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_LIST) as AIModelInfo[]
     set({ models })
+    const activeModel = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_GET_ACTIVE) as string | null
+    set({ activeModel })
   },
 
   setActiveModel: async (model) => {
@@ -254,7 +282,8 @@ export const useAIStore = create<AIState>((set, get) => ({
         const errorMsg: AIChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `⚠ ${friendly}`,
+          content: friendly,
+          isError: true,
           timestamp: Date.now()
         }
         set((s) => ({

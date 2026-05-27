@@ -223,6 +223,12 @@ export interface Tool {
   description: string
   inputSchema: z.ZodObject<z.ZodRawShape>
   permission: 'read' | 'write'
+  /**
+   * Which surfaces may call this tool. Omitted = all surfaces (back-compat).
+   * UI-action tools that need the renderer set this to `['ai']` so they are not
+   * exposed to the headless MCP server.
+   */
+  surfaces?: Array<'ai' | 'mcp'>
   execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult>
 }
 

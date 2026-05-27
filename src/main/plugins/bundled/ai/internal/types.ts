@@ -15,6 +15,11 @@ export interface AIProviderModel {
   name: string
   contextWindow: number
   capabilities: ('chat' | 'tool-calling')[]
+  /**
+   * Relative price rank within the provider (0 = cheapest). Used to pick a
+   * sensible default model. Omitted when unknown (treated as most expensive).
+   */
+  costTier?: number
 }
 
 export interface AIProviderChatRequest {

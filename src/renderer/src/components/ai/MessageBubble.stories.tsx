@@ -40,11 +40,18 @@ export const AssistantMessage: Story = {
   },
 }
 
+export const AssistantShortReply: Story = {
+  args: {
+    message: makeMessage({ role: 'assistant', content: '1,284 users signed up today.' }),
+  },
+}
+
 export const AssistantError: Story = {
   args: {
     message: makeMessage({
       role: 'assistant',
-      content: 'Error: Failed to connect to the database. Check your connection settings.',
+      isError: true,
+      content: 'Failed to connect to the database. Check your connection settings.',
     }),
   },
 }

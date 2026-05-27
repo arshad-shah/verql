@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
 import { Box, Flex, IconButton, Stack, Text, Tooltip, EmptyState } from '@/primitives'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { notifyError } from '@/lib/notify-error'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { ConnectionListItem } from './ConnectionListItem'
 
 /**
@@ -22,8 +24,10 @@ export function ActiveConnectionsPanel() {
   const setActiveConnection = useConnectionsStore(s => s.setActiveConnection)
   const disconnect = useConnectionsStore(s => s.disconnect)
   const connect = useConnectionsStore(s => s.connect)
+  const deleteConnection = useConnectionsStore(s => s.deleteConnection)
   const addQueryTab = useTabsStore(s => s.addQueryTab)
   const openConnectionForm = useTabsStore(s => s.openConnectionForm)
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
   // Connected first, then alphabetical — live state reads at a glance.
   const sorted = [...connections].sort((a, b) => {
@@ -36,6 +40,11 @@ export function ActiveConnectionsPanel() {
   const handleConnect = async (id: string) => {
     const result = await connect(id)
     if (!result.success) notifyError(result.error ?? 'Connection failed', { titlePrefix: 'Connect' })
+  }
+
+  const confirmDelete = () => {
+    if (pendingDelete) void deleteConnection(pendingDelete.id)
+    setPendingDelete(null)
   }
 
   if (connections.length === 0) {
@@ -66,6 +75,7 @@ export function ActiveConnectionsPanel() {
   const saved = sorted.filter(c => !connectedIds.has(c.id))
 
   return (
+    <>
     <Stack className="py-1">
       <Flex align="center" justify="between" className="px-3 py-1">
         <Text size="xs" color="muted" className="text-[10px] uppercase tracking-wider">
@@ -102,6 +112,7 @@ export function ActiveConnectionsPanel() {
                 setActiveConnection(c.id)
                 addQueryTab(c.id, null, { autoCommit: initialAutoCommit(c) })
               }}
+              onDelete={() => setPendingDelete({ id: c.id, name: c.name })}
             />
           ))}
         </>
@@ -126,10 +137,21 @@ export function ActiveConnectionsPanel() {
                 setActiveConnection(c.id)
                 addQueryTab(c.id, null, { autoCommit: initialAutoCommit(c) })
               }}
+              onDelete={() => setPendingDelete({ id: c.id, name: c.name })}
             />
           ))}
         </>
       )}
     </Stack>
+    <ConfirmDialog
+      open={pendingDelete !== null}
+      variant="danger"
+      title="Delete connection"
+      message={pendingDelete ? `Delete "${pendingDelete.name}"? This can't be undone.` : undefined}
+      confirmLabel="Delete"
+      onConfirm={confirmDelete}
+      onCancel={() => setPendingDelete(null)}
+    />
+    </>
   )
 }

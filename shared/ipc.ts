@@ -227,6 +227,11 @@ export interface IpcChannelMap {
     args: [pluginId: string, commandId: string, payload: Record<string, unknown>]
     return: void
   }
+  /** Renderer reports the outcome of a `app:action:perform` request back to the AI tool. */
+  'app:action:result': {
+    args: [payload: { requestId: string; success: boolean; error?: string }]
+    return: void
+  }
   'plugins:ui:contributions-changed': {
     args: []
     return: void
@@ -600,7 +605,9 @@ export const IPC_CHANNELS = {
   // ── Themes ──────────────────────────────────────────────────────────────
   THEMES_LIST: 'themes:list',
   // ── Drag and drop ──────────────────────────────────────────────────────
-  PLUGINS_DRAG_DROP: 'plugins:drag-drop'
+  PLUGINS_DRAG_DROP: 'plugins:drag-drop',
+  // ── AI app actions ─────────────────────────────────────────────────────
+  APP_ACTION_RESULT: 'app:action:result'
 } as const satisfies Record<string, IpcChannel>
 
 // ─── Broadcast events (main → renderer push) ────────────────────────────────
@@ -632,6 +639,8 @@ export interface IpcEventMap {
   'notifications:show': [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
   /** The set of registered themes changed. */
   'themes:changed': []
+  /** The AI asked to perform an in-app action; the renderer runs it. */
+  'app:action:perform': [payload: { requestId: string; actionId: string; params: Record<string, unknown> }]
   /** Progress update for an in-flight `updater:update` install. */
   'updater:progress': [payload:
     | { phase: 'idle' }
@@ -657,5 +666,6 @@ export const IPC_EVENTS = {
   SETTINGS_CHANGED: 'settings:changed',
   NOTIFICATIONS_SHOW: 'notifications:show',
   THEMES_CHANGED: 'themes:changed',
-  UPDATER_PROGRESS: 'updater:progress'
+  UPDATER_PROGRESS: 'updater:progress',
+  APP_ACTION_PERFORM: 'app:action:perform'
 } as const satisfies Record<string, IpcEvent>

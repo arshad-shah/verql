@@ -7,6 +7,8 @@ export interface AIChatMessage {
   toolCalls?: AIToolCallRequest[]
   toolCallId?: string
   timestamp: number
+  /** Set on assistant messages that report an error, for distinct styling. */
+  isError?: boolean
 }
 
 export interface AIToolCallRequest {
@@ -56,6 +58,8 @@ export interface AIModelInfo {
   name: string
   contextWindow: number
   capabilities: ('chat' | 'tool-calling')[]
+  /** Relative price rank within the provider (0 = cheapest); omitted when unknown. */
+  costTier?: number
 }
 
 export interface AIProviderInfo {
@@ -67,4 +71,9 @@ export interface AIChatStartRequest {
   message: string
   connectionId?: string
   connectionMeta?: { type: string; driverName: string }
+  /** Catalog of available in-app actions, so the AI can offer deep links. */
+  appActionsCatalog?: string
+  /** Summary of saved connections and their connected state, so the AI can
+   *  tell an existing connection from one that needs creating. */
+  connectionsSummary?: string
 }

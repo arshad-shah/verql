@@ -64,6 +64,20 @@ describe('ConversationManager', () => {
     expect(context).toContain('Tables: users, orders')
   })
 
+  it('includes the app-action catalog and deep-link guidance in the system message', async () => {
+    const catalog = '- new-connection() [navigation]: Open the new-connection form'
+    const msg = await manager.assembleSystemMessage(undefined, 'conn-1', catalog)
+    expect(msg).toContain('new-connection')
+    expect(msg).toContain('verql://action/')
+  })
+
+  it('includes the saved-connections summary so the AI can tell existing from new', async () => {
+    const summary = '- Prod (postgres) — not connected\n- Local (sqlite) — connected, active'
+    const msg = await manager.assembleSystemMessage(undefined, 'conn-1', undefined, summary)
+    expect(msg).toContain('Saved connections')
+    expect(msg).toContain('Prod (postgres)')
+  })
+
   it('streams a simple text response', async () => {
     const provider = createMockProvider([
       { type: 'text', content: 'Hello' },
@@ -139,6 +153,42 @@ describe('ConversationManager', () => {
     // Final assistant turn after the tool round.
     expect(events.some(e => e.type === 'chunk' && e.content === 'Here are the tables.')).toBe(true)
     expect(events.at(-1)).toMatchObject({ type: 'done' })
+  })
+
+  it('uses the per-request connectionId for tool execution, overriding the ambient one', async () => {
+    // getConnectionId() returns 'conn-1' (ambient), but the chat request carries
+    // 'conn-2' — the connection the user actually has active in the UI. The tool
+    // must run against 'conn-2'.
+    let turn = 0
+    const provider: AIProvider = {
+      id: 'mock', name: 'Mock', supportsToolCalling: true,
+      models: async () => [{ id: 'mock-1', name: 'Mock', contextWindow: 4096, capabilities: ['chat', 'tool-calling'] as const }],
+      async *chat() {
+        turn++
+        if (turn === 1) {
+          yield { type: 'tool-call', toolCall: { id: 't1', name: 'list_tables', arguments: '{}' } } as never
+          yield { type: 'done' } as never
+        } else {
+          yield { type: 'text', content: 'done' } as never
+          yield { type: 'done' } as never
+        }
+      }
+    }
+    providerRegistry.register(provider)
+    providerRegistry.setActive('mock')
+    providerRegistry.setActiveModel('mock-1')
+
+    const execute = vi.fn(async () => ({ success: true, data: [], display: 'ok' }))
+    toolRegistry.register({
+      id: 'list_tables', name: 'List Tables', description: 'list tables',
+      inputSchema: z.object({}), permission: 'read', execute
+    })
+
+    manager.addUserMessage('list the tables')
+    for await (const _ of manager.chat({ connectionId: 'conn-2' })) { /* consume */ }
+
+    expect(execute).toHaveBeenCalledOnce()
+    expect(execute.mock.calls[0][1]).toMatchObject({ connectionId: 'conn-2' })
   })
 
   it('throws when no active provider', async () => {

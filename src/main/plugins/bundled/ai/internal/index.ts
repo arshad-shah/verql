@@ -4,6 +4,7 @@
 // activation time. Nothing in this module talks to Electron's `ipcMain`
 // directly — the plugin's PluginContext provides ipc.handle + broadcast.
 import { randomUUID } from 'crypto'
+import { z } from 'zod'
 import type { AIStreamEvent } from '@shared/ai-types'
 import { AIProviderRegistry } from './provider-registry'
 import { PermissionManager } from './permission-manager'
@@ -13,6 +14,7 @@ import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
 import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess, ToolRegistry } from '../../../sdk/types'
 import { createAIEnhancements } from './enhancements'
+import { pickCheapestModel } from './pick-cheapest-model'
 
 const AI_KEYRING_NS = '__ai__'
 
@@ -85,9 +87,12 @@ export function startAIModule(deps: AIDeps): AIModule {
     providerRegistry.setActiveModel(savedModel)
   } else if (providerRegistry.getActive()) {
     providerRegistry.getActive()!.models().then(models => {
-      if (models.length > 0) {
-        providerRegistry.setActiveModel(models[0].id)
-        deps.settingsStore.set('ai.activeModel', models[0].id)
+      // Default to the cheapest model for the vendor rather than whatever the
+      // API happens to list first.
+      const chosen = pickCheapestModel(models) ?? models[0]
+      if (chosen) {
+        providerRegistry.setActiveModel(chosen.id)
+        deps.settingsStore.set('ai.activeModel', chosen.id)
       }
     })
   }
@@ -123,6 +128,54 @@ export function startAIModule(deps: AIDeps): AIModule {
     conversationManager
   })
 
+  // Correlated request/response for agentic UI actions: the tool broadcasts a
+  // request to the renderer and awaits the renderer's outcome, so the tool
+  // result honestly reflects whether the action ran.
+  const pendingActions = new Map<string, (r: { success: boolean; error?: string }) => void>()
+  const APP_ACTION_TIMEOUT_MS = 10_000
+
+  deps.ipc.handle('app:action:result', async (payload: { requestId: string; success: boolean; error?: string }) => {
+    const resolve = pendingActions.get(payload.requestId)
+    if (resolve) {
+      pendingActions.delete(payload.requestId)
+      resolve({ success: payload.success, error: payload.error })
+    }
+  })
+
+  // Generic agentic UI-action tool. Lets the AI invoke any registered renderer
+  // app action (built-in or plugin-contributed) by id — the renderer enforces
+  // that only safe navigation actions run agentically. AI surface only, so the
+  // headless MCP server (which has no renderer) never sees it.
+  const appActionTool = toolRegistry.register({
+    id: 'perform_app_action',
+    name: 'Perform App Action',
+    description: 'Navigate or open something in the Verql UI by action id (see the action catalog). Use for safe navigation/open actions. For anything that changes data, do NOT use this — instead offer a markdown link with a verql://action/<id> href so the user confirms.',
+    inputSchema: z.object({
+      actionId: z.string(),
+      params: z.record(z.string(), z.unknown()).optional()
+    }),
+    permission: 'read',
+    surfaces: ['ai'],
+    execute: async (params) => {
+      const actionId = typeof params.actionId === 'string' ? params.actionId : ''
+      if (!actionId) return { success: false, data: null, display: 'No actionId provided' }
+      const actionParams = (params.params as Record<string, unknown> | undefined) ?? {}
+      const requestId = randomUUID()
+
+      const outcome = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+        const timer = setTimeout(() => {
+          pendingActions.delete(requestId)
+          resolve({ success: false, error: 'No response from the app (timed out)' })
+        }, APP_ACTION_TIMEOUT_MS)
+        pendingActions.set(requestId, (r) => { clearTimeout(timer); resolve(r) })
+        deps.broadcast('app:action:perform', { requestId, actionId, params: actionParams })
+      })
+
+      if (outcome.success) return { success: true, data: { actionId }, display: actionId }
+      return { success: false, data: null, display: outcome.error ?? 'Action failed' }
+    }
+  })
+
   // ── IPC handlers via PluginContext.ipc ──────────────────────────────────────
   // ctx.ipc.handle already tracks each registration on ctx.subscriptions, so we
   // don't store the disposables here — the plugin host removes the handlers on
@@ -133,7 +186,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     fn: (...args: A) => R | Promise<R>
   ) => { deps.ipc.handle(channel, fn as never) }
 
-  h('ai:chat:start', async (request: { message: string; connectionMeta?: { type: string; driverName: string } }) => {
+  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string }) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     activeStreams.set(streamId, controller)
@@ -142,7 +195,12 @@ export function startAIModule(deps: AIDeps): AIModule {
 
     ;(async () => {
       try {
-        for await (const event of conversationManager.chat(request.connectionMeta)) {
+        for await (const event of conversationManager.chat({
+          ...(request.connectionId ? { connectionId: request.connectionId } : {}),
+          ...(request.connectionMeta ? { connectionMeta: request.connectionMeta } : {}),
+          ...(request.appActionsCatalog ? { appActionsCatalog: request.appActionsCatalog } : {}),
+          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {})
+        })) {
           deps.broadcast('ai:chat:event', streamId, event)
         }
       } catch (err) {
@@ -188,6 +246,19 @@ export function startAIModule(deps: AIDeps): AIModule {
   h('ai:providers:set-active', async (providerId: string) => {
     providerRegistry.setActive(providerId)
     deps.settingsStore.set('ai.activeProvider', providerId)
+
+    // Default to the vendor's cheapest model, unless the user's current model
+    // already belongs to this provider (respect an explicit choice).
+    const provider = providerRegistry.getActive()
+    if (provider) {
+      const models = await provider.models()
+      const current = providerRegistry.getActiveModel()
+      if (models.length > 0 && !models.some(m => m.id === current)) {
+        const chosen = pickCheapestModel(models) ?? models[0]
+        providerRegistry.setActiveModel(chosen.id)
+        deps.settingsStore.set('ai.activeModel', chosen.id)
+      }
+    }
   })
 
   h('ai:providers:get-active', async () => {
@@ -236,6 +307,9 @@ export function startAIModule(deps: AIDeps): AIModule {
 
   const dispose: Disposable = {
     dispose: () => {
+      appActionTool.dispose()
+      for (const resolve of pendingActions.values()) resolve({ success: false, error: 'Shutting down' })
+      pendingActions.clear()
       for (const ctrl of activeStreams.values()) {
         try { ctrl.abort() } catch { /* ignore */ }
       }

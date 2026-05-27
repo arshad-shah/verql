@@ -1,5 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
+import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
+import { useConnectionsStore } from '@/stores/connections'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
 import { Spinner } from '@/primitives/feedback/Spinner'
 import { Text } from '@/primitives/typography/Text'
@@ -9,6 +11,48 @@ import { ToolCallCard } from './ToolCallCard'
 import { ApprovalCard } from './ApprovalCard'
 import { MarkdownContent } from './MarkdownContent'
 import type { AIChatMessage } from '@shared/ai-types'
+
+const SUGGESTIONS = [
+  'Summarize this database schema',
+  'Find the largest tables',
+  'Show recent slow query patterns',
+  'Explain the relationships between tables'
+]
+
+function EmptyState() {
+  const sendMessage = useAIStore(s => s.sendMessage)
+  const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
+  const connections = useConnectionsStore(s => s.connections)
+
+  const ask = (text: string) => {
+    const conn = activeConnectionId ? connections.find(c => c.id === activeConnectionId) : undefined
+    const meta = conn ? { type: conn.type, driverName: conn.type } : undefined
+    sendMessage(text, activeConnectionId ?? undefined, meta)
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 px-4 text-center">
+      <div className="flex flex-col items-center gap-2">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-border-default">
+          <Sparkles className="h-4 w-4" />
+        </span>
+        <Text size="sm" color="secondary">Ask about your schema, queries, or data</Text>
+      </div>
+      <div className="flex flex-wrap justify-center gap-1.5 max-w-[300px]">
+        {SUGGESTIONS.map(s => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => ask(s)}
+            className="rounded-md border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-hover hover:text-text-primary transition-colors"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function MessageThread() {
   const messages = useAIStore(s => s.messages)
@@ -35,11 +79,7 @@ export function MessageThread() {
 
   return (
     <ScrollArea direction="vertical" className="flex-1 p-3">
-      {messages.length === 0 && !isStreaming && (
-        <div className="flex items-center justify-center h-full">
-          <Text size="sm" color="secondary">Ask me anything about your database</Text>
-        </div>
-      )}
+      {messages.length === 0 && !isStreaming && <EmptyState />}
       {messages.map(msg => {
         // Skip standalone tool-result messages — they're shown inside ToolCallCard
         if (resultIds.has(msg.id)) return null
