@@ -6,6 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Verql** — a desktop database client built with Electron + React. Supports PostgreSQL, MySQL, SQLite natively, plus MongoDB, Redis, and Snowflake via bundled plugins. Brand assets live in `build/icon.svg` (source of truth) and the in-app `<VerqlMark>` SVG at `src/renderer/src/components/brand/VerqlMark.tsx`. Regenerate platform icons with `pnpm build:icons`.
 
+## Documentation
+
+In-depth docs live in [`docs/`](./docs/) — read these before deep work:
+
+- [`docs/architecture.md`](./docs/architecture.md) — end-to-end architecture: process model, the `shared/` boundary, main subsystems, renderer stores + design system, the plugin model, and data-flow walkthroughs. **Start here.**
+- [`docs/plugins.md`](./docs/plugins.md) — every contribution surface and how to write a plugin.
+- [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
+- [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
+
+Keep these (and this file) current when you change the corresponding subsystem.
+
 ## Commands
 
 ```bash
@@ -35,15 +46,17 @@ All renderer-to-main communication goes through typed IPC channels defined in `s
 ### State Management
 
 Zustand stores in `src/renderer/src/stores/`:
-- `connections.ts` — Connection profiles, connect/disconnect lifecycle
-- `tabs.ts` — Query/table/ER-diagram tabs (discriminated union: `QueryTab | TableTab | ErDiagramTab`)
+- `connections.ts` — Connection profiles, connect/disconnect lifecycle, active connection
+- `tabs.ts` — Open tabs (discriminated union: `QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab | SettingsTab`)
 - `schema.ts` — Schema metadata cache (tables, columns, indexes) keyed by connection+schema
-- `ui.ts` — Sidebar state, active panel, layout dimensions (persisted to localStorage)
-- `toast.ts` — Toast notifications
+- `ui.ts` — Sidebar/secondary-sidebar/bottom-dock state, active panel, layout dimensions (persisted to localStorage)
+- `ai.ts` — AI chat: messages, providers/models, and persisted conversation history (see `docs/ai.md`)
+- `selection.ts` / `notifications.ts` / `toast.ts` — inspector selection, notification center, transient toasts
+- `editor.ts` / `tab-actions.ts` — non-reactive registries of mounted Monaco editors and per-tab save/transaction handlers (refs, not reactive state)
 
 ### Database Adapters
 
-`DbAdapter` interface in `src/main/db/adapter.ts`. Built-in implementations: `sqlite.ts`, `postgres.ts`, `mysql.ts`. Factory in `src/main/db/factory.ts` falls back to plugin `DriverRegistry` for unknown types.
+`DbAdapter` interface in `src/main/db/adapter.ts`. Every driver — including the native sqlite/postgresql/mysql ones — is a **bundled plugin** that implements `DbAdapter` and registers a factory with the SDK `DriverRegistry`. `createAdapter` in `src/main/db/factory.ts` resolves a profile's adapter purely through that registry; there are no special-cased built-ins in `src/main/db/`.
 
 ### Plugin System
 
@@ -51,9 +64,17 @@ Plugins live in `src/main/plugins/`. Each plugin has a `manifest.json` declaring
 
 **Lifecycle**: discover → validate → resolve → activate → runtime. Managed by `BootCoordinator` in `plugin-host.ts`.
 
-**Plugin SDK** (`src/main/plugins/sdk/`): provides registries (DriverRegistry, CommandRegistry, PanelRegistry) and access objects (SchemaAccess, ConnectionAccess, PluginSettings) via `PluginContext`.
+**Plugin SDK** (`src/main/plugins/sdk/`): provides registries (DriverRegistry, ToolRegistry, CommandRegistry, PanelRegistry, ExporterRegistry, …) and access objects (SchemaAccess, ConnectionAccess, PluginSettings) via `PluginContext`. The `ToolRegistry` is shared by the AI assistant and the MCP server — register a tool once and both surfaces see it (gated by the tool's `surfaces` field).
 
-**Bundled plugins** in `src/main/plugins/bundled/`: ssh-tunnel (connection middleware), mongodb, redis, snowflake.
+**Bundled plugins** in `src/main/plugins/bundled/`: the native drivers (`sqlite`, `postgresql`, `mysql` — each implements `DbAdapter` and registers via the SDK), `db-tools` (the canonical query/schema tools), `ai` (the assistant — see `docs/ai.md`), `core-formats` (CSV/JSON/SQL exporters + importers), `core-themes`, `ssh-tunnel` (connection middleware), `mongodb`, `redis`, `snowflake`.
+
+### AI Assistant & Tooling
+
+The assistant is a bundled plugin (`src/main/plugins/bundled/ai/`). It registers AI providers (OpenAI/Anthropic/Ollama) and the `perform_app_action` tool, drives a streaming tool-call loop in `ConversationManager`, and trims each request to a token budget. The renderer (`stores/ai.ts`, `components/ai/`, `lib/app-actions/`) owns the chat UI, the App-Action registry (deep-link chips + agentic UI actions), and persisted/branchable conversation history. Tool calling is unified with the built-in MCP server through the shared `ToolRegistry`. Full detail in [`docs/ai.md`](./docs/ai.md).
+
+### MCP Server
+
+`src/main/mcp/` exposes the shared tool registry to external MCP clients (e.g. Claude Code) over a tokenised endpoint, with the same per-tool permission gating used by the AI chat.
 
 ### Design System
 
