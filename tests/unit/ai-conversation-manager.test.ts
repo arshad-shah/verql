@@ -1,5 +1,6 @@
 // tests/unit/ai-conversation-manager.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { z } from 'zod'
 import { ConversationManager } from '../../src/main/plugins/bundled/ai/internal/conversation-manager'
 import type { AIProvider } from '../../src/main/plugins/bundled/ai/internal/types'
 import { AIProviderRegistry } from '../../src/main/plugins/bundled/ai/internal/provider-registry'
@@ -90,6 +91,54 @@ describe('ConversationManager', () => {
     expect(msgs).toHaveLength(2)
     expect(msgs[1].role).toBe('assistant')
     expect(msgs[1].content).toBe('Hello world')
+  })
+
+  it('runs a tool from the shared registry and streams its result', async () => {
+    // A tool-calling provider that asks for `list_tables` on the first turn,
+    // then (after the tool result is fed back) answers with text on the second.
+    let turn = 0
+    const provider: AIProvider = {
+      id: 'mock', name: 'Mock', supportsToolCalling: true,
+      models: async () => [{ id: 'mock-1', name: 'Mock', contextWindow: 4096, capabilities: ['chat', 'tool-calling'] as const }],
+      async *chat() {
+        turn++
+        if (turn === 1) {
+          yield { type: 'tool-call', toolCall: { id: 't1', name: 'list_tables', arguments: '{}' } } as never
+          yield { type: 'done' } as never
+        } else {
+          yield { type: 'text', content: 'Here are the tables.' } as never
+          yield { type: 'done' } as never
+        }
+      }
+    }
+    providerRegistry.register(provider)
+    providerRegistry.setActive('mock')
+    providerRegistry.setActiveModel('mock-1')
+
+    const execute = vi.fn(async () => ({ success: true, data: ['users', 'orders'], display: '2 tables' }))
+    toolRegistry.register({
+      id: 'list_tables', name: 'List Tables', description: 'list tables',
+      inputSchema: z.object({}), permission: 'read', execute
+    })
+
+    manager.addUserMessage('list the tables')
+
+    const events: AIStreamEvent[] = []
+    for await (const event of manager.chat()) events.push(event)
+
+    // The tool was actually invoked through the shared registry with the active connection.
+    expect(execute).toHaveBeenCalledOnce()
+    expect(execute.mock.calls[0][1]).toMatchObject({ connectionId: 'conn-1' })
+
+    const toolCall = events.find(e => e.type === 'tool-call')
+    expect(toolCall).toMatchObject({ type: 'tool-call', toolCall: { name: 'list_tables' } })
+
+    const toolResult = events.find(e => e.type === 'tool-result')
+    expect(toolResult).toMatchObject({ type: 'tool-result', result: { success: true, data: ['users', 'orders'] } })
+
+    // Final assistant turn after the tool round.
+    expect(events.some(e => e.type === 'chunk' && e.content === 'Here are the tables.')).toBe(true)
+    expect(events.at(-1)).toMatchObject({ type: 'done' })
   })
 
   it('throws when no active provider', async () => {
