@@ -197,11 +197,6 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
   // plugin's subscriptions so they're cleaned up on deactivation.
   const aiAccess = createAIAccess(deps.services)
   const ai = {
-    registerTool(tool: Parameters<typeof aiAccess.registerTool>[0]) {
-      const d = aiAccess.registerTool(tool)
-      subscriptions.push(d)
-      return d
-    },
     registerProvider(provider: Parameters<typeof aiAccess.registerProvider>[0]) {
       const d = aiAccess.registerProvider(provider)
       subscriptions.push(d)

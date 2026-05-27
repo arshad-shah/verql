@@ -3,8 +3,6 @@ import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import { AI_SERVICE_ID } from '../../sdk/ai-access'
 import { startAIModule, type AIModule } from './internal'
-import { createSchemaTools } from './tools/schema-tools'
-import { createQueryTools } from './tools/query-tools'
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-ai',
@@ -60,17 +58,15 @@ export function activate(ctx: PluginContext): void {
     connectionAccess: ctx.connections,
     settingsStore: ctx.rootSettings,
     ipc: ctx.ipc,
-    broadcast: ctx.broadcast
+    broadcast: ctx.broadcast,
+    toolRegistry: ctx.tools
   })
 
-  // 2. Expose the AI service so other plugins' `ctx.ai.registerTool` calls land.
-  //    Buffered registrations from plugins that activated earlier are flushed
-  //    automatically by the ServiceRegistry.onAvailable mechanism.
+  // 2. Expose the AI service so other plugins' provider / context-provider
+  //    registrations land. Buffered registrations from plugins that activated
+  //    earlier are flushed automatically by the ServiceRegistry.onAvailable
+  //    mechanism. (Tools now live in the shared ctx.tools registry, not here.)
   ctx.services.provide(AI_SERVICE_ID, ai.service)
-
-  // 3. Register first-party tools.
-  for (const tool of createSchemaTools(ctx.schema)) ctx.ai.registerTool(tool)
-  for (const tool of createQueryTools(ctx.connections)) ctx.ai.registerTool(tool)
 
   // 4. Declare the chat sidebar panel. The renderer mounts <ChatPanel/> when it
   //    sees the contribution; removing the plugin removes the contribution.

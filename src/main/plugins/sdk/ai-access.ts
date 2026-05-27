@@ -11,13 +11,12 @@ import type { ServiceRegistry } from './service-registry'
 
 // Re-export the AI types under stable SDK paths so plugins don't reach into
 // another plugin's internals directly.
-export type { AITool, AIContextProvider, AIProvider } from '../bundled/ai/internal/types'
-import type { AITool, AIContextProvider, AIProvider } from '../bundled/ai/internal/types'
+export type { AIContextProvider, AIProvider } from '../bundled/ai/internal/types'
+import type { AIContextProvider, AIProvider } from '../bundled/ai/internal/types'
 
 export const AI_SERVICE_ID = 'ai'
 
 export interface AIService {
-  registerTool(tool: AITool): Disposable
   registerProvider(provider: AIProvider): Disposable
   registerContextProvider(provider: AIContextProvider): Disposable
 }
@@ -55,12 +54,6 @@ export function createAIAccess(services: ServiceRegistry): AIAccess {
   }
 
   return {
-    registerTool(tool) {
-      return forward(
-        (svc) => svc.registerTool(tool),
-        services.consume<AIService>(AI_SERVICE_ID)
-      )
-    },
     registerProvider(provider) {
       return forward(
         (svc) => svc.registerProvider(provider),
