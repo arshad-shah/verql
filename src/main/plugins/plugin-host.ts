@@ -19,6 +19,9 @@ import { validateTheme } from './sdk/theme-registry'
 import type { DbAdapter } from '../db/adapter'
 import type { ConnectionProfile } from '@shared/types'
 
+/** Bundled plugins the user cannot disable — without them core features break. */
+const ESSENTIAL_BUNDLED = new Set(['verql-plugin-db-tools'])
+
 // ─── Manifest Validation ─────────────────────────────────────────────────────
 
 const NAME_PATTERN = /^[a-z0-9-]+$/
@@ -535,7 +538,7 @@ export class PluginBootCoordinator {
         continue
       }
 
-      if (this.deps.disabledPluginsStore?.isDisabled(plugin.manifest.name)) {
+      if (!ESSENTIAL_BUNDLED.has(plugin.manifest.name) && this.deps.disabledPluginsStore?.isDisabled(plugin.manifest.name)) {
         plugin.status = { state: 'inactive' }
         report.plugins.push({ name: plugin.manifest.name, status: plugin.status, durationMs: 0 })
         continue
@@ -560,6 +563,7 @@ export class PluginBootCoordinator {
   // ── Deactivate ─────────────────────────────────────────────────────────────
 
   async deactivatePlugin(plugin: LoadedPlugin, opts: { persist?: boolean } = {}): Promise<void> {
+    if (opts.persist && ESSENTIAL_BUNDLED.has(plugin.manifest.name)) return
     if (plugin.module?.deactivate) {
       try {
         await plugin.module.deactivate()

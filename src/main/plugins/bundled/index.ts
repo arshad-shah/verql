@@ -18,6 +18,7 @@ interface BundledPluginModule {
 }
 
 import * as ai from './ai'
+import * as dbTools from './db-tools'
 import * as coreThemes from './core-themes'
 import * as coreFormats from './core-formats'
 import * as sshTunnel from './ssh-tunnel'
@@ -30,6 +31,7 @@ import * as sqlite from './sqlite'
 
 export const bundledPlugins: BundledPluginModule[] = [
   ai,
+  dbTools,
   coreThemes,
   coreFormats,
   sshTunnel,
