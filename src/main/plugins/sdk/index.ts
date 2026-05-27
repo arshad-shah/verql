@@ -33,6 +33,8 @@ export { ServiceRegistryImpl } from './service-registry'
 export { ExporterRegistryImpl } from './exporter-registry'
 export { ImporterRegistryImpl } from './importer-registry'
 export { TypeMapperRegistryImpl } from './type-mapper-registry'
+export { ToolRegistryImpl } from './tool-registry'
+export { isWriteQuery, toJsonSchema } from './tool-schema'
 
 // ─── Generic SQL helpers (parameterised on the driver's quote character)
 //     Drivers compose these to build their exporters/importers without

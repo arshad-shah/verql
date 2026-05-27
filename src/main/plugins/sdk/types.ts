@@ -5,6 +5,7 @@ import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
 import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
+import type { z } from 'zod'
 export type { DriverCapabilities } from '@shared/driver-capabilities'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ export interface PluginErrorRecord {
 export interface PluginContext {
   drivers: DriverRegistry
   commands: CommandRegistry
+  tools: ToolRegistry
   panels: PanelRegistry
   ui: UIRegistry
   completions: CompletionRegistry
@@ -200,6 +202,45 @@ export interface ConnectionMiddleware {
   shouldApply(profile: ConnectionProfile): boolean
   beforeConnect(profile: ConnectionProfile): Promise<ConnectionProfile>
   onDisconnect(profileId: string): Promise<void>
+}
+
+// ─── Tool Registry ───────────────────────────────────────────────────────────
+
+export interface ToolContext {
+  connectionId: string | null
+  abortSignal: AbortSignal
+}
+
+export interface ToolResult {
+  success: boolean
+  data: unknown
+  display?: string
+}
+
+export interface Tool {
+  id: string
+  name: string
+  description: string
+  inputSchema: z.ZodObject<z.ZodRawShape>
+  permission: 'read' | 'write'
+  execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult>
+}
+
+/** JSON-Schema tool definition handed to LLM providers. */
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+}
+
+export interface ToolRegistry {
+  register(tool: Tool): Disposable
+  unregister(id: string): void
+  get(id: string): Tool | undefined
+  list(): Tool[]
+  getToolDefinitions(): ToolDefinition[]
+  execute(id: string, params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult>
+  onChange(cb: () => void): Disposable
 }
 
 // ─── Command Registry ────────────────────────────────────────────────────────
