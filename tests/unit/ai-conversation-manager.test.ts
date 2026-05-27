@@ -78,6 +78,13 @@ describe('ConversationManager', () => {
     expect(msg).toContain('Prod (postgres)')
   })
 
+  it('includes the recent-notifications summary for diagnostics', async () => {
+    const notes = '- [error] Query failed: syntax error near "FORM"'
+    const msg = await manager.assembleSystemMessage(undefined, 'conn-1', undefined, undefined, notes)
+    expect(msg).toContain('Recent notifications')
+    expect(msg).toContain('syntax error near "FORM"')
+  })
+
   it('streams a simple text response', async () => {
     const provider = createMockProvider([
       { type: 'text', content: 'Hello' },

@@ -186,7 +186,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     fn: (...args: A) => R | Promise<R>
   ) => { deps.ipc.handle(channel, fn as never) }
 
-  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string }) => {
+  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string; notificationsSummary?: string }) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     activeStreams.set(streamId, controller)
@@ -199,7 +199,8 @@ export function startAIModule(deps: AIDeps): AIModule {
           ...(request.connectionId ? { connectionId: request.connectionId } : {}),
           ...(request.connectionMeta ? { connectionMeta: request.connectionMeta } : {}),
           ...(request.appActionsCatalog ? { appActionsCatalog: request.appActionsCatalog } : {}),
-          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {})
+          ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {}),
+          ...(request.notificationsSummary ? { notificationsSummary: request.notificationsSummary } : {})
         })) {
           deps.broadcast('ai:chat:event', streamId, event)
         }

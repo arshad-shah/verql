@@ -12,6 +12,7 @@ import { parseAppError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useUiStore } from './ui'
 import { useConnectionsStore } from './connections'
+import { useNotificationsStore } from './notifications'
 import { appActions } from '@/lib/app-actions/registry'
 
 interface SessionStats {
@@ -99,8 +100,14 @@ export const useAIStore = create<AIState>((set, get) => ({
       .map((c) => {
         const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
         const active = c.id === activeConnectionId ? ', active' : ''
-        return `- ${c.name} (${c.type}) — ${state}${active}`
+        return `- ${c.name} (${c.type}) — ${state}${active} [id: ${c.id}]`
       })
+      .join('\n')
+    const notificationsSummary = useNotificationsStore
+      .getState()
+      .notifications.filter((n) => n.type === 'error' || n.type === 'warning')
+      .slice(0, 6)
+      .map((n) => `- [${n.type}] ${n.title}${n.message ? `: ${n.message}` : ''}`)
       .join('\n')
     const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_START, {
       message,
@@ -108,6 +115,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       ...(connectionMeta ? { connectionMeta } : {}),
       ...(appActionsCatalog ? { appActionsCatalog } : {}),
       ...(connectionsSummary ? { connectionsSummary } : {}),
+      ...(notificationsSummary ? { notificationsSummary } : {}),
     }) as { streamId: string }
 
     set({ isStreaming: true, currentStreamId: result.streamId, streamingContent: '' })

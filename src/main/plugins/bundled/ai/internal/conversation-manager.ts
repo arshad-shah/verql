@@ -70,7 +70,8 @@ export class ConversationManager {
     connectionMeta?: { type: string; driverName: string },
     connectionIdOverride?: string | null,
     appActionsCatalog?: string,
-    connectionsSummary?: string
+    connectionsSummary?: string,
+    notificationsSummary?: string
   ): Promise<string> {
     const parts: string[] = [
       `You are a concise database assistant inside a desktop database client. Help users with schemas, queries, analysis, and debugging.
@@ -112,7 +113,11 @@ Rules:
     }
 
     if (connectionsSummary && connectionsSummary.trim()) {
-      parts.push(`Saved connections (use these to tell an existing connection from one to create):\n${connectionsSummary}`)
+      parts.push(`Saved connections (use these to tell an existing connection from one to create; refer to a connection by name or id):\n${connectionsSummary}`)
+    }
+
+    if (notificationsSummary && notificationsSummary.trim()) {
+      parts.push(`Recent notifications (most recent first). Use these to summarize the latest errors or activity, and link the user to the notifications panel:\n${notificationsSummary}`)
     }
 
     if (appActionsCatalog && appActionsCatalog.trim()) {
@@ -130,6 +135,7 @@ ${appActionsCatalog}`)
     connectionMeta?: { type: string; driverName: string }
     appActionsCatalog?: string
     connectionsSummary?: string
+    notificationsSummary?: string
   }): AsyncIterable<AIStreamEvent> {
     const provider = this.deps.providerRegistry.getActive()
     if (!provider) throw new Error('No active AI provider')
@@ -142,7 +148,7 @@ ${appActionsCatalog}`)
     const connectionId = opts?.connectionId ?? this.deps.getConnectionId()
 
     this.abortController = new AbortController()
-    const systemMessage = await this.assembleSystemMessage(opts?.connectionMeta, connectionId, opts?.appActionsCatalog, opts?.connectionsSummary)
+    const systemMessage = await this.assembleSystemMessage(opts?.connectionMeta, connectionId, opts?.appActionsCatalog, opts?.connectionsSummary, opts?.notificationsSummary)
 
     const tools = provider.supportsToolCalling
       ? this.deps.toolRegistry.getToolDefinitions()

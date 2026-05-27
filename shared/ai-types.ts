@@ -76,4 +76,7 @@ export interface AIChatStartRequest {
   /** Summary of saved connections and their connected state, so the AI can
    *  tell an existing connection from one that needs creating. */
   connectionsSummary?: string
+  /** Recent errors/warnings from the notification center, so the AI can
+   *  summarize the latest problems and point the user to the right panel. */
+  notificationsSummary?: string
 }
