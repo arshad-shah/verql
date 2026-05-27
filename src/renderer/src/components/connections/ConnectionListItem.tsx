@@ -1,5 +1,6 @@
-import { Pencil, Plug, PlugZap, Plus } from 'lucide-react'
-import { Badge, Flex, IconButton, Text, Tooltip } from '@/primitives'
+import { MoreHorizontal } from 'lucide-react'
+import { Badge, Flex, IconButton, Text } from '@/primitives'
+import { DropdownMenu } from '@/primitives/surfaces/DropdownMenu'
 import type { ConnectionProfile } from '@shared/types'
 
 /**
@@ -46,6 +47,7 @@ export interface ConnectionListItemProps {
   onConnect: () => void
   onDisconnect: () => void
   onOpenQueryTab: () => void
+  onDelete: () => void
 }
 
 /**
@@ -69,10 +71,22 @@ export function ConnectionListItem({
   onConnect,
   onDisconnect,
   onOpenQueryTab,
+  onDelete,
 }: ConnectionListItemProps) {
   const chip = typeChip(connection.type)
   const summary = describe(connection)
   const dotColor = connection.color ?? (connected ? 'var(--color-success)' : 'var(--color-text-disabled)')
+
+  // All row actions live in an overflow menu so the row stays uncluttered and
+  // destructive actions (delete) aren't a stray click away.
+  const menuItems = [
+    connected
+      ? { label: 'Disconnect', onSelect: onDisconnect }
+      : { label: 'Connect', onSelect: onConnect },
+    ...(connected ? [{ label: 'Open query tab', onSelect: onOpenQueryTab }] : []),
+    { label: 'Edit connection', onSelect: onEdit },
+    { label: 'Delete connection…', onSelect: onDelete },
+  ]
 
   return (
     <Flex
@@ -126,50 +140,21 @@ export function ConnectionListItem({
         )}
       </Flex>
 
-      <Flex className="opacity-0 group-hover:opacity-100 transition-opacity items-center gap-0.5 shrink-0">
-        <Tooltip content="Edit connection">
-          <IconButton label="Edit connection" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit() }}>
-            <Pencil size={11} />
-          </IconButton>
-        </Tooltip>
-        {connected ? (
-          <>
-            <Tooltip content="Open query tab">
-              <IconButton
-                label="Open query tab"
-                size="xs"
-                variant="ghost"
-                onClick={(e) => { e.stopPropagation(); onOpenQueryTab() }}
-              >
-                <Plus size={11} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip content="Disconnect">
-              <IconButton
-                label="Disconnect"
-                size="xs"
-                variant="ghost"
-                onClick={(e) => { e.stopPropagation(); onDisconnect() }}
-                className="hover:text-error"
-              >
-                <Plug size={11} />
-              </IconButton>
-            </Tooltip>
-          </>
-        ) : (
-          <Tooltip content="Connect">
-            <IconButton
-              label="Connect"
-              size="xs"
-              variant="ghost"
-              onClick={(e) => { e.stopPropagation(); onConnect() }}
-              className="hover:text-success"
-            >
-              <PlugZap size={11} />
+      {/* The kebab opens the overflow menu. Wrapping span stops the row's
+          onActivate from firing when the user just wants the menu. */}
+      <span
+        className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DropdownMenu
+          trigger={
+            <IconButton label="More actions" size="xs" variant="ghost">
+              <MoreHorizontal size={13} />
             </IconButton>
-          </Tooltip>
-        )}
-      </Flex>
+          }
+          items={menuItems}
+        />
+      </span>
     </Flex>
   )
 }

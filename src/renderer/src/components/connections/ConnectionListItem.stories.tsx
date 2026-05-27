@@ -31,6 +31,7 @@ const meta: Meta<typeof ConnectionListItem> = {
     onConnect: () => {},
     onDisconnect: () => {},
     onOpenQueryTab: () => {},
+    onDelete: () => {},
   },
   decorators: [
     (Story) => (

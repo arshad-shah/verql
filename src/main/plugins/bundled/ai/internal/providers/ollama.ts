@@ -20,6 +20,8 @@ export class OllamaProvider implements AIProvider {
         name: m.name,
         contextWindow: 8192,
         capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
+        // Local models run free, so they're always the cheapest option.
+        costTier: 0,
       }))
     } catch {
       return []

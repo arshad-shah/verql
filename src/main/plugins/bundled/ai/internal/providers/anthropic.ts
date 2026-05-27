@@ -15,6 +15,18 @@ function supportsTemperature(modelId: string): boolean {
   return true
 }
 
+/**
+ * Relative price rank from the Claude family naming: Haiku (cheapest) <
+ * Sonnet < Opus. Unknown models default to the middle tier.
+ */
+function anthropicCostTier(modelId: string): number {
+  const id = modelId.toLowerCase()
+  if (id.includes('haiku')) return 0
+  if (id.includes('sonnet')) return 1
+  if (id.includes('opus')) return 2
+  return 1
+}
+
 interface AnthropicModel {
   id: string
   display_name: string
@@ -117,6 +129,7 @@ export class AnthropicProvider implements AIProvider {
             name: m.display_name,
             contextWindow: 200000,
             capabilities: ['chat', 'tool-calling'],
+            costTier: anthropicCostTier(m.id),
           })
         }
 

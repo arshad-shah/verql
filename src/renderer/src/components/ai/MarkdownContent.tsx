@@ -1,5 +1,5 @@
 import { type ReactNode, Children, isValidElement } from 'react'
-import Markdown from 'react-markdown'
+import Markdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CodeBlock } from './CodeBlock'
 import { ActionChip } from './ActionChip'
@@ -28,6 +28,10 @@ export function MarkdownContent({ content }: Props) {
   return (
     <Markdown
       remarkPlugins={[remarkGfm]}
+      // react-markdown's default sanitizer strips unknown URL protocols, which
+      // would drop our `verql://action/...` deep links. Let those through and
+      // apply the default sanitization to everything else.
+      urlTransform={(value) => (value.startsWith('verql://') ? value : defaultUrlTransform(value))}
       components={{
         pre: ({ children }) => {
           const code = extractText(children).replace(/\n$/, '')

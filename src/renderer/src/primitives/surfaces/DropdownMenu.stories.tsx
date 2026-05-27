@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { fn, expect, userEvent } from 'storybook/test'
+import { fn, expect, userEvent, screen } from 'storybook/test'
 import { ChevronDown } from 'lucide-react'
 import { DropdownMenu } from './DropdownMenu'
 import { Button } from '../forms/Button'
@@ -33,7 +33,9 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     const user = userEvent.setup()
     await user.click(canvas.getByRole('button', { name: /actions/i }))
-    const editItem = await canvas.findByText('Edit table')
+    // The menu renders in a FloatingPortal (document.body), so query via screen
+    // rather than the story canvas.
+    const editItem = await screen.findByText('Edit table')
     await user.click(editItem)
     await expect(onEditTable).toHaveBeenCalled()
   },

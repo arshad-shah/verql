@@ -3,6 +3,17 @@ import type { AIToolCallRequest } from '@shared/ai-types'
 
 const CHAT_MODEL_PREFIXES = ['gpt-4o', 'gpt-4.1', 'o1', 'o3', 'o4']
 
+/**
+ * Relative price rank from OpenAI model naming: `nano` (cheapest) < `mini` <
+ * full models. A rough but stable heuristic for defaulting to a cheap model.
+ */
+function openaiCostTier(modelId: string): number {
+  const id = modelId.toLowerCase()
+  if (id.includes('nano')) return 0
+  if (id.includes('mini')) return 1
+  return 2
+}
+
 interface OpenAIModel {
   id: string
   object: string
@@ -43,6 +54,7 @@ export class OpenAIProvider implements AIProvider {
           name: m.id,
           contextWindow: 128000,
           capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
+          costTier: openaiCostTier(m.id),
         }))
     } catch {
       return []

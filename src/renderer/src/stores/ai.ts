@@ -171,9 +171,12 @@ export const useAIStore = create<AIState>((set, get) => ({
       await window.electronAPI.invoke(IPC_CHANNELS.AI_PROVIDERS_SET_ACTIVE, provider.id)
     }
     set({ activeProvider: provider })
-    // Reload models for the new provider
+    // Reload models for the new provider, then mirror the active model main
+    // chose (it defaults to the vendor's cheapest when switching providers).
     const models = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_LIST) as AIModelInfo[]
     set({ models })
+    const activeModel = await window.electronAPI.invoke(IPC_CHANNELS.AI_MODELS_GET_ACTIVE) as string | null
+    set({ activeModel })
   },
 
   setActiveModel: async (model) => {

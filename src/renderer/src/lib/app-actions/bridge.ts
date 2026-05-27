@@ -1,4 +1,4 @@
-import { IPC_EVENTS } from '@shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { appActions } from './registry'
 import { useToastStore } from '@/stores/toast'
 
@@ -15,19 +15,39 @@ export function initAppActionBridge(): void {
   if (typeof window === 'undefined' || !window.electronAPI) return
   initialized = true
 
-  window.electronAPI.on(IPC_EVENTS.APP_ACTION_PERFORM, (payload: unknown) => {
-    const p = payload as { actionId?: string; params?: Record<string, unknown> } | undefined
-    if (!p?.actionId) return
+  window.electronAPI.on(IPC_EVENTS.APP_ACTION_PERFORM, async (payload: unknown) => {
+    const p = payload as { requestId?: string; actionId?: string; params?: Record<string, unknown> } | undefined
+    if (!p?.requestId || !p.actionId) return
+
+    const report = (success: boolean, error?: string) => {
+      void window.electronAPI.invoke(IPC_CHANNELS.APP_ACTION_RESULT, {
+        requestId: p.requestId!, success, ...(error ? { error } : {})
+      })
+    }
+
     const action = appActions.get(p.actionId)
-    if (!action || action.kind !== 'navigation') return
-    // Fire-and-forget, but surface failures: an agentic action that throws
-    // (e.g. opening an ER diagram with no live connection) otherwise vanishes.
-    Promise.resolve(appActions.run(p.actionId, p.params ?? {})).catch((err) => {
+    if (!action) {
+      report(false, `Unknown action: ${p.actionId}`)
+      return
+    }
+    // Only safe navigation actions run agentically; mutating actions must be
+    // user-confirmed via a chip, never auto-run from a tool.
+    if (action.kind !== 'navigation') {
+      report(false, `"${action.title}" changes data and needs the user to confirm it.`)
+      return
+    }
+
+    try {
+      await appActions.run(p.actionId, p.params ?? {})
+      report(true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      report(false, message)
       useToastStore.getState().addToast({
         type: 'error',
         title: `Couldn't ${action.title.toLowerCase()}`,
-        message: err instanceof Error ? err.message : String(err)
+        message
       })
-    })
+    }
   })
 }

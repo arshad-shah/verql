@@ -10,6 +10,7 @@ import {
   flip,
   shift,
   autoUpdate,
+  FloatingPortal,
 } from '@floating-ui/react'
 import { cn } from '../utils/cn'
 
@@ -87,6 +88,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
       })}
 
       {isMounted && (
+        <FloatingPortal>
         <div
           ref={refs.setFloating}
           style={{ ...floatingStyles, zIndex: 50 }}
@@ -117,6 +119,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
             ))}
           </div>
         </div>
+        </FloatingPortal>
       )}
     </div>
   )

@@ -58,6 +58,8 @@ export interface AIModelInfo {
   name: string
   contextWindow: number
   capabilities: ('chat' | 'tool-calling')[]
+  /** Relative price rank within the provider (0 = cheapest); omitted when unknown. */
+  costTier?: number
 }
 
 export interface AIProviderInfo {
