@@ -131,6 +131,29 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
+    id: 'format-editor',
+    title: 'Format SQL',
+    description: "Pretty-print the SQL in the active editor using the connection's dialect formatter. Reformats the whole buffer; runs nothing.",
+    kind: 'navigation',
+    run: async () => {
+      const reg = editorRegistry.get()
+      if (!reg) throw new Error('No active SQL editor. Open or focus a query tab first.')
+      const model = reg.editor.getModel()
+      if (!model || model.getLanguageId() !== 'sql') throw new Error('Formatting is only available for SQL editors.')
+      const sql = model.getValue()
+      if (!sql.trim()) return
+      const { tabs } = useTabsStore.getState()
+      const tab = tabs.find((t) => t.id === reg.tabId)
+      const { activeConnectionId, connections } = useConnectionsStore.getState()
+      const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
+      const connType = connections.find((c) => c.id === connId)?.type ?? ''
+      const { formatted, changed } = await window.electronAPI.invoke(IPC_CHANNELS.DB_FORMAT_SQL, connType, sql)
+      if (!changed) return
+      reg.editor.executeEdits('format-sql', [{ range: model.getFullModelRange(), text: formatted }])
+      reg.editor.focus()
+    }
+  },
+  {
     id: 'insert-into-editor',
     title: 'Insert into Editor',
     description: 'Insert SQL into the active query editor, replacing the current selection (or inserting at the cursor when nothing is selected). The user reviews and runs it; nothing executes automatically.',

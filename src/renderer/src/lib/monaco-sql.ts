@@ -1,6 +1,10 @@
 import type { Monaco } from '@monaco-editor/react'
 import type { editor, Position } from 'monaco-editor'
 import type { CompletionItem, CompletionItemKind } from '@shared/plugin-ui-types'
+import { IPC_CHANNELS } from '@shared/ipc'
+import { editorRegistry } from '@/stores/editor'
+import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 
 let cachedItems: CompletionItem[] = []
 
@@ -42,6 +46,41 @@ export function registerCompletionProvider(monaco: Monaco, language: string): vo
       }))
 
       return { suggestions }
+    }
+  })
+}
+
+/** Dialect of the connection backing a given editor model, for formatting. */
+function connectionTypeForModel(model: editor.ITextModel): string {
+  const reg = editorRegistry.getByModelUri(model.uri.toString())
+  const tab = reg ? useTabsStore.getState().tabs.find(t => t.id === reg.tabId) : undefined
+  const { activeConnectionId, connections } = useConnectionsStore.getState()
+  const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
+  return connections.find(c => c.id === connId)?.type ?? ''
+}
+
+/**
+ * Registers a document-formatting provider so "Format Document" (Shift+Alt+F /
+ * right-click) pretty-prints SQL. The formatting itself is plugin-owned: this
+ * just calls the `db:format-sql` glue, which resolves the connection's dialect
+ * formatter. Register only for the `sql` language.
+ */
+export function registerSqlFormattingProvider(monaco: Monaco, language: string): void {
+  monaco.languages.registerDocumentFormattingEditProvider(language, {
+    async provideDocumentFormattingEdits(model: editor.ITextModel) {
+      const text = model.getValue()
+      if (!text.trim()) return []
+      try {
+        const { formatted, changed } = await window.electronAPI.invoke(
+          IPC_CHANNELS.DB_FORMAT_SQL,
+          connectionTypeForModel(model),
+          text
+        )
+        if (!changed) return []
+        return [{ range: model.getFullModelRange(), text: formatted }]
+      } catch {
+        return []
+      }
     }
   })
 }

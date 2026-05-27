@@ -5,8 +5,26 @@
 // helpers and supplies its own dialect-specific quoting / value formatting
 // only when the defaults don't fit (e.g. dialect-specific BLOB literals).
 
+import { format as prettyFormatSql, type SqlLanguage } from 'sql-formatter'
 import type { SchemaColumn } from '@shared/types'
 import { quoteIdentifier } from './identifier'
+
+/**
+ * Pretty-print SQL for a given dialect. A shared helper so each SQL driver
+ * plugin contributes a formatter in one line (passing its own dialect) instead
+ * of duplicating the wiring. Returns the input unchanged if the source can't be
+ * parsed, so formatting never destroys the user's buffer.
+ *
+ * `language` is the sql-formatter dialect id ('postgresql', 'mysql', 'sqlite',
+ * 'snowflake', or the generic 'sql').
+ */
+export function formatSql(sql: string, language: SqlLanguage = 'sql'): string {
+  try {
+    return prettyFormatSql(sql, { language })
+  } catch {
+    return sql
+  }
+}
 
 /**
  * Render a value as a SQL literal — quoted strings get their single quotes

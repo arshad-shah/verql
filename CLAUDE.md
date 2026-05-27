@@ -8,14 +8,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Documentation
 
-In-depth docs live in [`docs/`](./docs/) — read these before deep work:
+**Start from the docs, then go to the source.** Before changing a subsystem,
+read the relevant doc in [`docs/`](./docs/) to understand the design and the
+glue↔plugin boundary, then follow its file references into the code. The docs
+are the source of truth for intent; the code is the source of truth for detail.
+Read order: `docs/architecture.md` (the whole picture) → the topic doc for the
+area you're touching → the source it points to.
 
 - [`docs/architecture.md`](./docs/architecture.md) — end-to-end architecture: process model, the `shared/` boundary, main subsystems, renderer stores + design system, the plugin model, and data-flow walkthroughs. **Start here.**
-- [`docs/plugins.md`](./docs/plugins.md) — every contribution surface and how to write a plugin.
+- [`docs/plugins.md`](./docs/plugins.md) — every contribution surface (driver, exporter, importer, formatter, type mapper, theme, panel, command, AI provider, …) and how to write a plugin.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
 
-Keep these (and this file) current when you change the corresponding subsystem.
+When you change a subsystem, update its doc (and this file) in the same change
+so the docs never drift from the code.
+
+### Ownership boundary (important)
+
+The main app provides the **UI and the glue** (the registries, IPC, and the ways
+logic is invoked). **Plugins own their domain logic.** Database, theme (beyond
+the brand baseline), AI, SQL formatting, and import/export logic live in plugins
+under `src/main/plugins/bundled/`, never in the orchestrator. When adding a
+capability, add a contribution surface + registry (glue) and put the actual
+logic in a plugin — don't hardcode dialect/format/provider behavior in the main
+app or the renderer.
 
 ## Commands
 

@@ -8,6 +8,7 @@ import { CompletionRegistryImpl } from '../../src/main/plugins/sdk/completion-re
 import { ServiceRegistryImpl } from '../../src/main/plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from '../../src/main/plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from '../../src/main/plugins/sdk/importer-registry'
+import { FormatterRegistryImpl } from '../../src/main/plugins/sdk/formatter-registry'
 import { TypeMapperRegistryImpl } from '../../src/main/plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from '../../src/main/plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from '../../src/main/plugins/sdk/drag-drop-registry'
@@ -51,6 +52,7 @@ describe('Bundled Plugins', () => {
       services: new ServiceRegistryImpl(),
       exporterRegistry: new ExporterRegistryImpl(),
       importerRegistry: new ImporterRegistryImpl(),
+      formatterRegistry: new FormatterRegistryImpl(),
       typeMapperRegistry: new TypeMapperRegistryImpl(),
       themeRegistry: new ThemeRegistryImpl(),
       notificationBus: { show: () => {} },

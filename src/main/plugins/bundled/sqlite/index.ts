@@ -5,6 +5,7 @@ import { SqliteAdapter } from './sqlite-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
 import { createRelationalGetTableData } from '../../sdk/relational-helpers'
 import { quoteIdentifier } from '../../sdk/identifier'
+import { formatSql } from '../../sdk/sql-format'
 import {
   PG_TO_SQLITE, pgToSqliteFallback,
   MYSQL_TO_SQLITE, mysqlToSqliteFallback,
@@ -22,7 +23,8 @@ export const manifest: PluginManifest = {
   contributes: {
     drivers: [{ id: 'sqlite', name: 'SQLite' }],
     exporters: [{ id: 'sql', name: 'SQL (SQLite)', extension: 'sql' }],
-    importers: [{ id: 'sql', name: 'SQL (SQLite)', extensions: ['sql'] }]
+    importers: [{ id: 'sql', name: 'SQL (SQLite)', extensions: ['sql'] }],
+    formatters: [{ id: 'sql', name: 'SQL (SQLite)' }]
   }
 }
 
@@ -122,6 +124,11 @@ const SQLITE_FUNCTIONS: { label: string; detail: string }[] = [
 export function activate(ctx: PluginContext): void {
   ctx.exporters.register('sql', sqlExporter)
   ctx.importers.register('sql', sqlImporter)
+  ctx.formatters.register('sql', {
+    displayName: 'SQL (SQLite)',
+    appliesTo: (t) => t === 'sqlite',
+    format: (sql) => formatSql(sql, 'sqlite')
+  })
   ctx.typeMappers.register('postgresql', 'sqlite', PG_TO_SQLITE, pgToSqliteFallback)
   ctx.typeMappers.register('mysql', 'sqlite', MYSQL_TO_SQLITE, mysqlToSqliteFallback)
   ctx.typeMappers.register('sqlite', 'mysql', {}, sqliteToMysqlFallback)

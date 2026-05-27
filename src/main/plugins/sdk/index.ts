@@ -13,6 +13,7 @@ import { ServiceRegistryImpl, type ServiceRegistry } from './service-registry'
 import { createAIAccess } from './ai-access'
 import { ExporterRegistryImpl, type ExporterRegistry } from './exporter-registry'
 import { ImporterRegistryImpl, type ImporterRegistry } from './importer-registry'
+import { FormatterRegistryImpl, type FormatterRegistry } from './formatter-registry'
 import { TypeMapperRegistryImpl, type TypeMapperRegistry } from './type-mapper-registry'
 import { ThemeRegistryImpl, type ThemeRegistry, type RegisteredTheme } from './theme-registry'
 import { DragDropRegistryImpl } from './drag-drop-registry'
@@ -33,6 +34,7 @@ export { PluginSettingsImpl } from './settings'
 export { ServiceRegistryImpl } from './service-registry'
 export { ExporterRegistryImpl } from './exporter-registry'
 export { ImporterRegistryImpl } from './importer-registry'
+export { FormatterRegistryImpl } from './formatter-registry'
 export { TypeMapperRegistryImpl } from './type-mapper-registry'
 export { ToolRegistryImpl } from './tool-registry'
 export { isWriteQuery, toJsonSchema } from './tool-schema'
@@ -98,6 +100,7 @@ interface ContextDeps {
   services: ServiceRegistry
   exporterRegistry: ExporterRegistry
   importerRegistry: ImporterRegistry
+  formatterRegistry: FormatterRegistry
   typeMapperRegistry: TypeMapperRegistry
   themeRegistry: ThemeRegistry
   notificationBus: { show(notification: PluginNotification): void }
@@ -260,6 +263,14 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  const formatters = {
+    register(id: string, formatter: Parameters<FormatterRegistry['register']>[1]) {
+      const d = deps.formatterRegistry.register(`${pluginName}:${id}`, formatter)
+      subscriptions.push(d)
+      return d
+    }
+  }
+
   const themes = {
     register(theme: RegisteredTheme): Disposable {
       const d = deps.themeRegistry.register({ ...theme, source: pluginName })
@@ -336,6 +347,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     services,
     exporters,
     importers,
+    formatters,
     typeMappers,
     themes,
     notifications,

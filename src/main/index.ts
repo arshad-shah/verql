@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeImage, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, shell, type MenuItemConstructorOptions } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { registerIpcHandlers } from './ipc-handlers'
@@ -19,7 +19,18 @@ const STORAGE_NAME = 'verql'
 
 app.setName(STORAGE_NAME)
 
+const DOCS_URL = 'https://github.com/arshad-shah/verql/tree/main/docs'
+const ISSUES_URL = 'https://github.com/arshad-shah/verql/issues'
+
 function buildAppMenu(): void {
+  // Populates the native About panel (macOS / Linux). The macOS app menu's
+  // `role: 'about'` reads from this; the Help menu links out to the docs.
+  app.setAboutPanelOptions({
+    applicationName: APP_NAME,
+    applicationVersion: app.getVersion(),
+    copyright: `© ${new Date().getFullYear()} Arshad Shah`,
+  })
+
   const template: MenuItemConstructorOptions[] = [
     ...(process.platform === 'darwin'
       ? [
@@ -106,7 +117,22 @@ function buildAppMenu(): void {
     },
     {
       label: 'Help',
+      role: 'help',
       submenu: [
+        {
+          label: `${APP_NAME} Documentation`,
+          click: () => { void shell.openExternal(DOCS_URL) },
+        },
+        {
+          label: 'Report an Issue',
+          click: () => { void shell.openExternal(ISSUES_URL) },
+        },
+        { type: 'separator' },
+        // Non-macOS has no app menu, so surface About here. On macOS the
+        // native About lives in the app menu above.
+        ...(process.platform !== 'darwin'
+          ? [{ role: 'about' as const, label: `About ${APP_NAME}` }]
+          : []),
         {
           label: `${APP_NAME} v${app.getVersion()}`,
           enabled: false,

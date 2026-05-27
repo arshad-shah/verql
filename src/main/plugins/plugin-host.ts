@@ -117,6 +117,12 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
       }
     }
   }
+  if (c.formatters) {
+    for (const f of c.formatters) {
+      if (!f.id) return { valid: false, error: 'Formatter contribution missing required field: id' }
+      if (!f.name) return { valid: false, error: 'Formatter contribution missing required field: name' }
+    }
+  }
 
   return { valid: true }
 }
@@ -136,6 +142,7 @@ interface BootDeps {
   services: import('./sdk/service-registry').ServiceRegistry
   exporterRegistry: import('./sdk/exporter-registry').ExporterRegistry
   importerRegistry: import('./sdk/importer-registry').ImporterRegistry
+  formatterRegistry: import('./sdk/formatter-registry').FormatterRegistry
   typeMapperRegistry: import('./sdk/type-mapper-registry').TypeMapperRegistry
   themeRegistry: import('./sdk/theme-registry').ThemeRegistry
   notificationBus: { show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void }
@@ -354,6 +361,7 @@ export class PluginBootCoordinator {
       services: this.deps.services,
       exporterRegistry: this.deps.exporterRegistry,
       importerRegistry: this.deps.importerRegistry,
+      formatterRegistry: this.deps.formatterRegistry,
       typeMapperRegistry: this.deps.typeMapperRegistry,
       themeRegistry: this.deps.themeRegistry,
       notificationBus: this.deps.notificationBus,
@@ -463,6 +471,18 @@ export class PluginBootCoordinator {
           registered.push(`importer:${im.id}`)
         } else {
           missing.push(`importer:${im.id}`)
+        }
+      }
+    }
+
+    if (c.formatters) {
+      for (const fmt of c.formatters) {
+        const namespacedId = `${plugin.manifest.name}:${fmt.id}`
+        declared.push(`formatter:${fmt.id}`)
+        if (this.deps.formatterRegistry.get(namespacedId)) {
+          registered.push(`formatter:${fmt.id}`)
+        } else {
+          missing.push(`formatter:${fmt.id}`)
         }
       }
     }

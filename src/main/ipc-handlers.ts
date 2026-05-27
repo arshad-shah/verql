@@ -12,6 +12,8 @@ import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
 import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
+import { FormatterRegistryImpl } from './plugins/sdk/formatter-registry'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
@@ -82,6 +84,7 @@ export function registerIpcHandlers(): void {
   const services = new ServiceRegistryImpl()
   const exporterRegistry = new ExporterRegistryImpl()
   const importerRegistry = new ImporterRegistryImpl()
+  const formatterRegistry = new FormatterRegistryImpl()
   const typeMapperRegistry = new TypeMapperRegistryImpl()
   const themeRegistry = new ThemeRegistryImpl()
   const dragDropRegistry = new DragDropRegistryImpl()
@@ -108,6 +111,17 @@ export function registerIpcHandlers(): void {
   registerKeyringHandlers(ctx, handle)
   registerDbHandlers(ctx, handle, connectionAccess)
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
+
+  // SQL formatting is plugin-owned: drivers contribute a dialect formatter and
+  // core-formats a generic fallback. This handler is pure glue — resolve by
+  // connection type and run it. Never throws on bad SQL (the formatter returns
+  // the input unchanged), so the editor buffer is always safe.
+  handle(IPC_CHANNELS.DB_FORMAT_SQL, async (connectionType, sql) => {
+    const formatter = formatterRegistry.resolve(connectionType)
+    if (!formatter) return { formatted: sql, changed: false }
+    const formatted = await formatter.format(sql)
+    return { formatted, changed: formatted !== sql }
+  })
   // The migration IPC handler resolves type mappings through the registry,
   // so it needs visibility into what each driver plugin contributed.
   registerDialogHandlers(handle)
@@ -131,6 +145,7 @@ export function registerIpcHandlers(): void {
     services,
     exporterRegistry,
     importerRegistry,
+    formatterRegistry,
     typeMapperRegistry,
     themeRegistry,
     notificationBus,

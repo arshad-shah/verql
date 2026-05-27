@@ -10,8 +10,8 @@ This document covers:
 1. [What a plugin looks like](#what-a-plugin-looks-like) — the
    manifest + activate function
 2. [Plugin types](#plugin-types) — the contribution surfaces (driver,
-   exporter, importer, type mapper, theme, panel, command, …) with worked
-   examples
+   exporter, importer, formatter, type mapper, theme, panel, command, …) with
+   worked examples
 3. [Lifecycle](#plugin-lifecycle) — how plugins are discovered, validated,
    resolved, activated
 4. [Where things live](#repository-layout) — directory and naming
@@ -133,6 +133,7 @@ goes through one of its sub-registries:
 | `completions` | Contribute autocomplete items to the query editor |
 | `exporters` | Register an export format (CSV, JSON, SQL DDL, …) |
 | `importers` | Register an import format |
+| `formatters` | Pretty-print the query buffer for a dialect |
 | `typeMappers` | Translate column types between dialects |
 | `ai` | Provide AI tools, providers, or context |
 | `services` | Provide / consume named cross-plugin services |
@@ -299,7 +300,41 @@ If `driverExecutes` is `true`, the IPC layer calls `parse()` with
 `options.adapter` set and skips the default bulk-insert pass — useful for
 SQL scripts that need to be executed statement-by-statement.
 
-### 4. Type mapper
+### 4. Formatter
+
+Pretty-print the query buffer for the driver's dialect. The main app only
+resolves and invokes formatters (`db:format-sql` glue, the editor's "Format
+Document", the `format-editor` app action); the logic is yours.
+
+**Manifest**
+
+```json
+"contributes": {
+  "formatters": [{ "id": "sql", "name": "SQL (Cassandra)" }]
+}
+```
+
+**Activation**
+
+```ts
+import { formatSql } from '../../sdk/sql-format'
+
+ctx.formatters.register('sql', {
+  displayName: 'SQL (Cassandra)',
+  appliesTo: (t) => t === 'cassandra',
+  format: (sql) => formatSql(sql, 'sql'),   // or your own CQL formatter
+})
+```
+
+`formatSql(sql, dialect)` is a shared SDK helper (backed by `sql-formatter`) so
+SQL drivers contribute a formatter in one line — just pass your dialect
+(`'postgresql' | 'mysql' | 'sqlite' | 'snowflake' | 'sql'`). It returns the
+input unchanged on a parse error, so formatting never destroys the buffer.
+Omit `appliesTo` to register a generic fallback (the `core-formats` plugin does
+this for SQL); a driver-specific formatter whose `appliesTo` matches wins over
+the fallback. A non-SQL plugin can register any `format(source)` it likes.
+
+### 5. Type mapper
 
 Translate a column type from one dialect to another during migration.
 Drivers register what they know about translating into / out of their
@@ -326,7 +361,7 @@ Worked examples (each ships its own `type-maps.ts`):
 [mysql](../src/main/plugins/bundled/mysql/type-maps.ts),
 [sqlite](../src/main/plugins/bundled/sqlite/type-maps.ts).
 
-### 5. Connection middleware
+### 6. Connection middleware
 
 Wrap the connect/disconnect lifecycle for a particular configuration —
 e.g. open an SSH tunnel before connecting and tear it down afterwards.
@@ -358,7 +393,7 @@ ctx.drivers.registerConnectionMiddleware('ssh-tunnel', {
 
 Worked example: [ssh-tunnel](../src/main/plugins/bundled/ssh-tunnel/index.ts).
 
-### 6. Completion provider
+### 7. Completion provider
 
 Contribute autocomplete items (keywords, functions, table/column names)
 to the Monaco editor for a particular connection.
@@ -378,7 +413,7 @@ ctx.completions.register(async (connectionId, context) => {
 Worked examples: every relational driver plugin contributes its own
 completion provider. See [postgresql/index.ts](../src/main/plugins/bundled/postgresql/index.ts).
 
-### 7. Theme
+### 8. Theme
 
 Themes are *raw token overrides*, layered on top of the design system's
 semantic tokens. The registry validates each theme at registration time
@@ -433,7 +468,7 @@ makes the theme unselectable. Missing one of `RECOMMENDED_THEME_TOKENS`
 shows a warning badge but the theme stays selectable. The full lists
 live in `src/main/plugins/sdk/theme-registry.ts`.
 
-### 8. Panel (UI surface)
+### 9. Panel (UI surface)
 
 Add a panel into the primary or secondary sidebar, the bottom dock, or a
 plugin-defined slot.
@@ -463,7 +498,7 @@ Or, for purely declarative UI (no React component bundle), use
 selectors, and labels. See [snowflake/index.ts](../src/main/plugins/bundled/snowflake/index.ts)
 for the role/warehouse selectors driven entirely through declarative UI.
 
-### 9. Command
+### 10. Command
 
 Register a command palette entry.
 
@@ -486,7 +521,7 @@ ctx.commands.register('format-sql', async () => {
 The orchestrator prepends the plugin name to the command id, so the
 palette ends up running `verql-plugin-foo:format-sql`.
 
-### 10. AI provider / tool
+### 11. AI provider / tool
 
 Plugins can register additional AI providers (alongside OpenAI, Anthropic,
 Ollama) or new AI tools (alongside the built-in `schema_list_tables`,
@@ -516,7 +551,7 @@ ctx.ai.registerTool({
 The MongoDB and Redis bundled plugins both register an AI **context
 provider** so Claude knows how to format queries for those connections.
 
-### 11. Setting
+### 12. Setting
 
 A plugin can declare settings that appear in the app's Settings panel
 under any category it likes.

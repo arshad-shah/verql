@@ -7,7 +7,7 @@ function ctxWith(registry: DriverRegistryImpl) {
   const noop = () => ({ dispose() {} })
   return {
     drivers: registry, completions: { register: noop }, exporters: { register: noop },
-    importers: { register: noop }, typeMappers: { register: noop },
+    importers: { register: noop }, formatters: { register: noop }, typeMappers: { register: noop },
   } as never
 }
 

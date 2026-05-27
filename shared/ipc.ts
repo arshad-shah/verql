@@ -16,6 +16,10 @@ export interface IpcChannelMap {
     args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
   }
+  'db:format-sql': {
+    args: [connectionType: string, sql: string]
+    return: { formatted: string; changed: boolean }
+  }
   'db:test-connection': {
     args: [profile: ConnectionProfile]
     return: { success: boolean; error?: string; version?: string; details?: Record<string, string> }
@@ -501,6 +505,7 @@ export const IPC_CHANNELS = {
   DB_CONNECT: 'db:connect',
   DB_DISCONNECT: 'db:disconnect',
   DB_QUERY: 'db:query',
+  DB_FORMAT_SQL: 'db:format-sql',
   DB_TEST_CONNECTION: 'db:test-connection',
   DB_CONNECTION_OPTIONS: 'db:connection-options',
   DB_CANCEL_QUERY: 'db:cancel-query',
