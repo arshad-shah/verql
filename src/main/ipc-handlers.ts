@@ -5,6 +5,7 @@ import { setDriverRegistry } from './db/factory'
 import type { DbAdapter } from './db/adapter'
 import { DriverRegistryImpl } from './plugins/sdk/driver-registry'
 import { CommandRegistryImpl } from './plugins/sdk/command-registry'
+import { ToolRegistryImpl } from './plugins/sdk/tool-registry'
 import { PanelRegistryImpl } from './plugins/sdk/panel-registry'
 import { UIRegistryImpl } from './plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from './plugins/sdk/completion-registry'
@@ -72,6 +73,9 @@ export function registerIpcHandlers(): void {
   setDriverRegistry(ctx.driverRegistry)
 
   const commandRegistry = new CommandRegistryImpl()
+  // Shared across the plugin host (ctx.tools) and the MCP server so tools
+  // registered by the db-tools plugin are exposed to both consumers.
+  const toolRegistry = new ToolRegistryImpl()
   const panelRegistry = new PanelRegistryImpl()
   const uiRegistry = new UIRegistryImpl()
   const completionRegistry = new CompletionRegistryImpl()
@@ -116,6 +120,7 @@ export function registerIpcHandlers(): void {
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry: ctx.driverRegistry,
     commandRegistry,
+    toolRegistry,
     panelRegistry,
     uiRegistry,
     completionRegistry,
