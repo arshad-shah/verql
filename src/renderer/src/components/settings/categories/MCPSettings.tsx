@@ -43,8 +43,13 @@ export function MCPSettings() {
       else await window.electronAPI.invoke(IPC_CHANNELS.MCP_START)
       await refresh()
     } catch (err) {
-      const e = err as { code?: string; port?: number; message?: string }
-      setError(e.code === 'EADDRINUSE' ? `Port ${e.port ?? mcp.port} is already in use. Enable auto-port or pick another.` : (e.message ?? 'Failed to start MCP server'))
+      // Electron IPC strips custom error props (code/port), so detect the
+      // port conflict from the message text the main process throws
+      // ("Port N is already in use") rather than an error code.
+      const msg = (err as { message?: string }).message ?? ''
+      setError(/EADDRINUSE|already in use/i.test(msg)
+        ? `Port ${mcp.port} is already in use. Enable auto-port or pick another.`
+        : (msg || 'Failed to start MCP server'))
     } finally { setLoading(false) }
   }
 
