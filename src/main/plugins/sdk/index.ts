@@ -16,6 +16,7 @@ import { ImporterRegistryImpl, type ImporterRegistry } from './importer-registry
 import { TypeMapperRegistryImpl, type TypeMapperRegistry } from './type-mapper-registry'
 import { ThemeRegistryImpl, type ThemeRegistry, type RegisteredTheme } from './theme-registry'
 import { DragDropRegistryImpl } from './drag-drop-registry'
+import { ToolRegistryImpl } from './tool-registry'
 
 // ─── Registry implementations (most plugins don't need these directly,
 //     but driver authors writing tests against fake registries do) ─────────
@@ -101,6 +102,7 @@ interface ContextDeps {
   themeRegistry: ThemeRegistry
   notificationBus: { show(notification: PluginNotification): void }
   dragDropRegistry: import('./drag-drop-registry').DragDropRegistry
+  toolRegistry: ToolRegistryImpl
 }
 
 export interface PluginNotification {
@@ -301,6 +303,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
   return {
     drivers,
     commands,
+    tools: deps.toolRegistry,
     panels,
     ui,
     completions,

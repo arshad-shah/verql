@@ -12,6 +12,7 @@ import type { CommandRegistryImpl } from './sdk/command-registry'
 import type { PanelRegistryImpl } from './sdk/panel-registry'
 import type { UIRegistryImpl } from './sdk/ui-registry'
 import type { CompletionRegistryImpl } from './sdk/completion-registry'
+import type { ToolRegistryImpl } from './sdk/tool-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import { validateTheme } from './sdk/theme-registry'
@@ -136,6 +137,7 @@ interface BootDeps {
   themeRegistry: import('./sdk/theme-registry').ThemeRegistry
   notificationBus: { show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void }
   dragDropRegistry: import('./sdk/drag-drop-registry').DragDropRegistry
+  toolRegistry: ToolRegistryImpl
   /** Persistence for the user's enable/disable choice. Without this, the
    *  coordinator can flip status in memory but `boot()` re-activates every
    *  resolved plugin on next launch. */
@@ -352,7 +354,8 @@ export class PluginBootCoordinator {
       typeMapperRegistry: this.deps.typeMapperRegistry,
       themeRegistry: this.deps.themeRegistry,
       notificationBus: this.deps.notificationBus,
-      dragDropRegistry: this.deps.dragDropRegistry
+      dragDropRegistry: this.deps.dragDropRegistry,
+      toolRegistry: this.deps.toolRegistry
     })
     plugin.context = context
 
