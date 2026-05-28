@@ -31,11 +31,13 @@ export function useAIInlineSuggest(ed: editor.IStandaloneCodeEditor | null): voi
     const pillRoot = createRoot(pillNode)
     const toolbarRoot = createRoot(toolbarNode)
 
+    // 0 = TOP_RIGHT_CORNER, 1 = BOTTOM_RIGHT_CORNER, 2 = TOP_CENTER.
+    // Top-right keeps the pill visible above any UI Verql renders below the
+    // editor (results pane, action zone, etc.). Bottom-right gets clipped.
     const pillWidget: editor.IOverlayWidget = {
       getId: () => 'verql.inline-ai.pill',
       getDomNode: () => pillNode,
-      // 1 = OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER
-      getPosition: () => ({ preference: 1 }),
+      getPosition: () => ({ preference: 0 }),
     }
     const toolbarWidget: editor.IContentWidget = {
       getId: () => 'verql.inline-ai.toolbar',
