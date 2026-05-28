@@ -91,6 +91,37 @@ async function callProviderStreaming(
   }
 }
 
+/**
+ * Refuse-style outputs from the model leak through occasionally even with a
+ * strict prompt ("This query is already complete…", "I don't see what to
+ * add…"). They never start with a SQL keyword or punctuation. Detect a few
+ * common refusal openings and drop them — the editor shows no ghost text
+ * rather than a sentence pretending to be SQL.
+ */
+function sanitizeCompletion(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+  const lower = trimmed.toLowerCase()
+  const REFUSAL_PREFIXES = [
+    'this query',
+    'the query',
+    'there is nothing',
+    "there isn't",
+    'no completion',
+    'no meaningful',
+    "i don't",
+    'i cannot',
+    'i can’t',
+    'sorry',
+    'nothing to add',
+    'no further',
+  ]
+  for (const prefix of REFUSAL_PREFIXES) {
+    if (lower.startsWith(prefix)) return ''
+  }
+  return trimmed
+}
+
 async function getDbContext(deps: EnhancementDeps, connectionId: string): Promise<{ schema: string; queryFormat: string }> {
   let schema = ''
   try {
@@ -136,17 +167,32 @@ Use exact table and column names from the schema. Prefer read-only unless mutati
     const before = request.sql.slice(0, request.cursorOffset)
     const after = request.sql.slice(request.cursorOffset)
 
-    const systemPrompt = `You are an inline query completion function embedded in a code editor. Your output is inserted directly at the cursor position — it is not displayed to a human as prose.
+    const systemPrompt = `You are an inline query completion function embedded in a code editor. Your output is INSERTED VERBATIM at the cursor position. It is not shown to a human as prose, and you are not in a conversation.
 
-You receive a partial query with the cursor marked as |. Emit ONLY the fragment that belongs at that cursor position.
+You receive a partial query with the cursor marked as |. Emit ONLY the SQL fragment that belongs at the cursor.
 
-Prohibited:
-- Explanations, commentary, or natural language of any kind
-- Markdown formatting
-- Repeating text that already appears before or after the cursor
-- Complete rewrites of the query
+Treat SQL line comments (lines starting with --) and block comments (/* … */) as user intent. When the cursor is right after a comment that describes what to do, generate the SQL that implements it.
 
-If no meaningful completion exists, respond with an empty string. A short, precise fragment is always better than a long speculative one.
+Examples (the | marks the cursor; everything after the arrow is your response):
+
+  -- top 10 users by signup date
+  |
+  → SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
+
+  SELECT id, name
+  FROM users
+  WHERE |
+  → active = true
+
+  -- count orders per status
+  SELECT |
+  → status, COUNT(*) FROM orders GROUP BY status;
+
+Hard rules:
+- Output is SQL only. NEVER write explanations, commentary, apologies, or the words "the query".
+- NEVER repeat text that already appears before or after the cursor.
+- NEVER rewrite the existing query.
+- If you cannot produce a useful SQL fragment, output a single space character and nothing else.
 
 ${ctx.schema ? `Database schema:\n${ctx.schema}` : ''}
 ${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}`
@@ -155,7 +201,7 @@ ${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}`
       temperature: 0,
       maxTokens: 200
     })
-    return { completion: completion.trim() }
+    return { completion: sanitizeCompletion(completion) }
   }
 
   return {
