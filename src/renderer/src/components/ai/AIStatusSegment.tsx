@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
-import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap, Power } from 'lucide-react'
+import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
 import { Popover } from '@/primitives/surfaces/Popover'
+import { Switch } from '@/primitives/forms/Switch'
 import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
@@ -114,19 +115,20 @@ export function AIStatusSegment() {
 
       <Row label="Tool calls" value={String(stats.toolCallCount)} />
       <Row label="Inline completion" valueNode={
-        <button
-          type="button"
-          onClick={() => {
-            const next = !inlineEnabled
-            setInlineCompletionEnabled(next)
-            setInlineEnabled(next)
-          }}
-          aria-pressed={inlineEnabled}
-          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${inlineEnabled ? 'text-accent bg-accent/10 hover:bg-accent/20' : 'text-text-tertiary bg-bg-tertiary hover:bg-bg-tertiary/70'}`}
-        >
-          <Power size={9} />
-          {inlineEnabled ? (inlineState === 'thinking' ? 'thinking' : 'on') : 'off'}
-        </button>
+        <div className="inline-flex items-center gap-2">
+          <Text size="xs" color="muted">
+            {inlineEnabled ? (inlineState === 'thinking' ? 'thinking' : 'on') : 'off'}
+          </Text>
+          <Switch
+            label="Toggle AI inline completion"
+            checked={inlineEnabled}
+            onChange={(e) => {
+              const next = e.currentTarget.checked
+              setInlineCompletionEnabled(next)
+              setInlineEnabled(next)
+            }}
+          />
+        </div>
       } />
 
       <div className="flex gap-1 pt-1 border-t border-border-default">
