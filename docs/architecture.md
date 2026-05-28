@@ -94,9 +94,11 @@ class-variance-authority. Theming is three layers in `primitives/theme/tokens.cs
 (raw color scale → semantic tokens remapped per theme → component tokens),
 applied via a `data-theme` attribute by `ThemeProvider`.
 
-**Key libraries:** Monaco (SQL editor, custom completion + code lens in
+**Key libraries:** Monaco (SQL editor, custom completion in
 `lib/monaco-sql.ts`), AG Grid (results), `@xyflow/react` (ER diagrams), Recharts
 (chart panel).
+
+**Query editor.** The query editor renders per-statement actions through a `StatementGutter` overlay rather than Monaco's built-in CodeLens. Drivers contribute `splitStatements(source)` and `lensActions` (a list of `{ id, title, icon, when, handler }`) via the renderer-side statement registry; the gutter component owns the view-zone + content-widget lifecycle and reads execution results from the new `statement-status` store to show a per-statement chip (last run duration, row count, error). The plugin-facing API didn't change — only the renderer surface did.
 
 ## Plugin system
 

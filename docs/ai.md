@@ -191,6 +191,14 @@ one-shot provider calls used by the editor and results UI:
 
 These don't go through the conversation loop or tools.
 
+### Streaming explain results
+
+`ai:explain:start` returns `{ streamId, model }`; the plugin emits
+`ai:explain:event` messages (`token` | `done` | `error`) keyed by `streamId`
+until completion. Callers may abort with `ai:explain:abort(streamId)`. The
+renderer's Results bar uses this for token-by-token rendering of the Explain
+card with a Stop button.
+
 ## Renderer state and UI
 
 `stores/ai.ts` (`useAIStore`) holds messages, streaming state, providers/models,
