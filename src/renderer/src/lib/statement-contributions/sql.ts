@@ -1,3 +1,4 @@
+import { Play, Sparkles } from 'lucide-react'
 import { tabActions } from '@/stores/tab-actions'
 import type { Statement, StatementContribution } from '@/lib/statement-registry'
 
@@ -124,7 +125,7 @@ function advancePos(source: string, baseIdx: number, baseLine: number, baseCol: 
 export const sqlStatementContribution: StatementContribution = {
   splitStatements: splitSqlStatements,
   lensActions: [
-    { id: 'run',     title: '▶ Run',   handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
-    { id: 'explain', title: 'Explain', handler: (ctx) => tabActions.explainStatement(ctx.tabId, ctx.stmt.text) },
+    { id: 'run',     title: 'Run',     icon: Play,     handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
+    { id: 'explain', title: 'Explain', icon: Sparkles, handler: (ctx) => tabActions.explainStatement(ctx.tabId, ctx.stmt.text) },
   ],
 }
