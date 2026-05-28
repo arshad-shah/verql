@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
 import { Popover } from '@/primitives/surfaces/Popover'
 import { Text } from '@/primitives/typography/Text'
-import { Flex } from '@/primitives/layout/Flex'
 import { useAIStore } from '@/stores/ai'
+import { useUiStore } from '@/stores/ui'
 import {
   getInlineAIState,
   subscribeInlineAIState,
@@ -20,14 +20,11 @@ function formatTokens(n: number): string {
 /**
  * AI segment for the status bar. Plugin-owned: the AI bundled plugin
  * contributes a host-component widget pointing at this id, and the renderer
- * mounts it inside the `app.statusBar.right` slot. The main app has no AI
- * knowledge — it only knows there's a host-component called `ai-status`.
+ * mounts it inside the `app.statusBar.right` slot.
  *
- * Visible states:
- *   - inline-AI idle + no chat activity → static Sparkles
- *   - inline-AI thinking → spinner
- *   - chat streaming → spinner
- * Click opens a popover with model, context-window usage bar, and totals.
+ * The trigger is icon-only (Sparkles or spinner). All detail lives in the
+ * popover: provider, model, permission mode, context-window meter with
+ * remaining tokens, inline-completion / chat status, and quick actions.
  */
 export function AIStatusSegment() {
   const [inlineState, setInlineState] = useState<InlineAIState>(() => getInlineAIState())
@@ -38,6 +35,10 @@ export function AIStatusSegment() {
   const activeProvider = useAIStore((s) => s.activeProvider)
   const models = useAIStore((s) => s.models)
   const stats = useAIStore((s) => s.sessionStats)
+  const profile = useAIStore((s) => s.permissionProfile)
+  const compact = useAIStore((s) => s.compactConversation)
+  const setSecondaryActivePanel = useUiStore((s) => s.setSecondaryActivePanel)
+  const setActivePanel = useUiStore((s) => s.setActivePanel)
 
   const busy = inlineState === 'thinking' || isStreaming
   const totalTokens = stats.totalInputTokens + stats.totalOutputTokens
@@ -45,6 +46,16 @@ export function AIStatusSegment() {
   const pct = contextWindow && contextWindow > 0
     ? Math.min(100, Math.round((totalTokens / contextWindow) * 100))
     : 0
+  const remaining = contextWindow != null ? Math.max(0, contextWindow - totalTokens) : 0
+
+  const modeLabel = profile === 'read-only' ? 'Read-only' : profile === 'auto' ? 'Auto' : 'Ask write'
+  const ModeIcon = profile === 'read-only' ? Eye : profile === 'auto' ? Zap : Shield
+
+  const statusLabel = isStreaming ? 'streaming' : inlineState === 'thinking' ? 'thinking' : 'idle'
+  const statusTone =
+    isStreaming || inlineState === 'thinking'
+      ? 'bg-accent/15 text-accent'
+      : 'bg-success/15 text-success'
 
   const trigger = (
     <StatusBarSegment
@@ -58,58 +69,76 @@ export function AIStatusSegment() {
     </StatusBarSegment>
   )
 
-  return (
-    <Popover
-      trigger={trigger}
-      content={
-        <div className="min-w-[240px] p-1 space-y-2">
-          <Flex direction="column" gap="xs">
-            <Flex align="center" gap="xs">
-              <Sparkles size={12} className="text-accent" />
-              <Text size="xs" weight="medium">AI</Text>
-            </Flex>
-            <Flex align="center" justify="between">
-              <Text size="xs" color="muted">Provider</Text>
-              <Text size="xs">{activeProvider?.name ?? 'None'}</Text>
-            </Flex>
-            <Flex align="center" justify="between">
-              <Text size="xs" color="muted">Model</Text>
-              <Text size="xs" className="truncate max-w-[160px]">{activeModelId ?? 'None'}</Text>
-            </Flex>
-          </Flex>
+  const popoverContent = (
+    <div className="min-w-[260px] p-1 space-y-2">
+      <div className="flex items-center gap-2 px-1">
+        <Sparkles size={12} className="text-accent" />
+        <Text size="xs" weight="medium">AI</Text>
+        <span className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${statusTone}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {statusLabel}
+        </span>
+      </div>
 
-          {contextWindow != null ? (
-            <Flex direction="column" gap="xs" className="pt-1 border-t border-border-default">
-              <Flex align="center" justify="between">
-                <Text size="xs" color="muted">Context window</Text>
-                <Text size="xs">
-                  {formatTokens(totalTokens)} / {formatTokens(contextWindow)}
-                </Text>
-              </Flex>
-              <div className="h-1 rounded bg-bg-tertiary overflow-hidden">
-                <div
-                  className={pct >= 90 ? 'h-full bg-error' : pct >= 70 ? 'h-full bg-warning' : 'h-full bg-accent'}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <Text size="xs" color="muted">
-                {formatTokens(Math.max(0, contextWindow - totalTokens))} remaining
-              </Text>
-            </Flex>
-          ) : null}
+      <Row label="Provider" value={activeProvider?.name ?? 'None'} />
+      <Row label="Model"    value={activeModelId ?? 'None'} />
+      <Row label="Mode" valueNode={
+        <span className="inline-flex items-center gap-1 text-text-primary">
+          <ModeIcon size={10} /> {modeLabel}
+        </span>
+      } />
 
-          <Flex direction="column" gap="xs" className="pt-1 border-t border-border-default">
-            <Flex align="center" justify="between">
-              <Text size="xs" color="muted">Inline completion</Text>
-              <Text size="xs">{inlineState === 'idle' ? 'idle' : inlineState}</Text>
-            </Flex>
-            <Flex align="center" justify="between">
-              <Text size="xs" color="muted">Chat</Text>
-              <Text size="xs">{isStreaming ? 'streaming' : 'idle'}</Text>
-            </Flex>
-          </Flex>
+      {contextWindow != null ? (
+        <div className="rounded bg-bg-secondary p-2 space-y-1">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-accent">
+            <span>Context window</span>
+            <span className="font-mono text-text-primary text-[10.5px] normal-case tracking-normal">
+              {formatTokens(totalTokens)} / {formatTokens(contextWindow)}
+            </span>
+          </div>
+          <div className="h-1 rounded bg-bg-tertiary overflow-hidden">
+            <div
+              className={pct >= 90 ? 'h-full bg-error' : pct >= 70 ? 'h-full bg-warning' : 'h-full bg-accent'}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <Text size="xs" weight="medium" className={`block text-right ${pct >= 90 ? 'text-error' : pct >= 70 ? 'text-warning' : 'text-success'}`}>
+            {formatTokens(remaining)} tokens remaining
+          </Text>
         </div>
-      }
-    />
+      ) : null}
+
+      <Row label="Tool calls"        value={String(stats.toolCallCount)} />
+      <Row label="Inline completion" value={inlineState} />
+
+      <div className="flex gap-1 pt-1 border-t border-border-default">
+        <ActionBtn icon={Minimize2} label="Compact"   onClick={() => { void compact() }} />
+        <ActionBtn icon={Maximize2} label="Open chat" onClick={() => setSecondaryActivePanel('plugin:ai-chat')} />
+        <ActionBtn icon={Settings}  label="Settings"  onClick={() => setActivePanel('settings')} />
+      </div>
+    </div>
+  )
+
+  return <Popover trigger={trigger} content={popoverContent} placement="top" />
+}
+
+function Row({ label, value, valueNode }: { label: string; value?: string; valueNode?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-1 py-0.5 text-[10.5px]">
+      <Text size="xs" color="muted">{label}</Text>
+      {valueNode ? valueNode : <Text size="xs" className="truncate max-w-[160px]">{value}</Text>}
+    </div>
+  )
+}
+
+function ActionBtn({ icon: Icon, label, onClick }: { icon: ComponentType<{ size?: number }>; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-1 inline-flex items-center justify-center gap-1 rounded border border-border-default bg-bg-primary px-1.5 py-1 text-[10px] text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+    >
+      <Icon size={10} /> {label}
+    </button>
   )
 }
