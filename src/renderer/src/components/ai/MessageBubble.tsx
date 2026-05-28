@@ -54,7 +54,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   if (isUser) {
     return (
-      <div className="group flex justify-end mb-3">
+      <div className="group flex justify-end mb-2.5">
         <div className="max-w-[82%]">
           {/* Tail toward the right edge (rounded-tr-sm) so it reads as the user's. */}
           <div className="rounded-xl rounded-tr-sm bg-accent-emphasis px-3 py-2">
@@ -72,7 +72,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const wide = !isError && isWideMessageContent(message.content)
 
   return (
-    <div className="group flex gap-2 mb-3">
+    <div className="group flex gap-2 mb-2.5">
       <Avatar
         name="Assistant"
         size="sm"
@@ -80,7 +80,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         className={isError ? 'shrink-0 mt-0.5 bg-error/10 text-error ring-error/30' : 'shrink-0 mt-0.5'}
       />
       <div className={wide ? 'flex-1 min-w-0' : 'min-w-0 max-w-[82%]'}>
-        <Text size="xs" color="muted" className="block text-[10px] mb-0.5">Assistant</Text>
         {/* Tail toward the avatar (rounded-tl-sm) so the bubble emanates from it. */}
         <div
           className={`rounded-xl rounded-tl-sm border px-3 py-2 max-w-full ${wide ? 'block' : 'inline-block'} ${
