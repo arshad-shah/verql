@@ -162,7 +162,7 @@ function ActionBar({ tabId, text }: { tabId: string; text: string }) {
     const sql = tab && tab.type === 'query' ? tab.sql : ''
     const prefill = `> ${sql.split('\n').join('\n> ')}\n\nFollow-up about this explanation:\n\n${text}\n\n`
     useAIStore.getState().seedComposer(prefill)
-    useUiStore.getState().setSecondaryActivePanel('ai')
+    useUiStore.getState().setSecondaryActivePanel('plugin:ai-chat')
   }, [tabId, text])
 
   const regenerate = useCallback(async () => {

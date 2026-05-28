@@ -122,8 +122,19 @@ function advancePos(source: string, baseIdx: number, baseLine: number, baseCol: 
   return { line, col }
 }
 
+/**
+ * True when a statement contains nothing but SQL comments + whitespace.
+ * Run/Explain shouldn't render above a comment block — there's nothing to
+ * execute. The gutter filters these out via this predicate.
+ */
+function isOnlyComments(text: string): boolean {
+  const noBlock = text.replace(/\/\*[\s\S]*?\*\//g, '')
+  const noLine = noBlock.replace(/--[^\n]*/g, '')
+  return noLine.trim().length === 0
+}
+
 export const sqlStatementContribution: StatementContribution = {
-  splitStatements: splitSqlStatements,
+  splitStatements: (source) => splitSqlStatements(source).filter((s) => !isOnlyComments(s.text)),
   lensActions: [
     { id: 'run',     title: 'Run',     icon: Play,     handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
     { id: 'explain', title: 'Explain', icon: Sparkles, handler: (ctx) => tabActions.explainStatement(ctx.tabId, ctx.stmt.text) },
