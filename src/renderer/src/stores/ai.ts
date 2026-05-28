@@ -62,6 +62,10 @@ interface AIState {
   branchConversation: (fromMessageId: string) => Promise<void>
   compactConversation: (keepLast?: number) => Promise<void>
   isCompacting: boolean
+  lastPreCompactMessages: AIChatMessage[] | null
+  autoCompactSuppressed: Record<string, boolean>
+  undoLastCompact: () => Promise<void>
+  suppressAutoCompactForActive: () => void
   retryLast: () => void
   abort: () => Promise<void>
   seedComposer: (text: string) => void
@@ -165,6 +169,8 @@ export const useAIStore = create<AIState>((set, get) => ({
   activeConversationId: initialConversations.activeConversationId,
   composerSeed: null,
   permissionProfile: 'ask-write',
+  lastPreCompactMessages: null,
+  autoCompactSuppressed: {},
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -251,7 +257,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       messages: target.messages,
       sessionStats: { ...target.stats },
       streamingContent: '',
-      pendingApproval: null
+      pendingApproval: null,
+      lastPreCompactMessages: null,
     })
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, target.messages)
     persistConversations(get().conversations, id)
@@ -300,6 +307,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     if (messages.length < 6) return
     if (keepLast < 0) keepLast = 0
 
+    const snapshot = messages
     const toSummarize = messages.slice(0, messages.length - keepLast)
     const tail = messages.slice(messages.length - keepLast)
     set({ isCompacting: true })
@@ -325,12 +333,34 @@ export const useAIStore = create<AIState>((set, get) => ({
         conversations: nextConversations,
         sessionStats: { ...EMPTY_STATS },
         streamingContent: '',
+        lastPreCompactMessages: snapshot,
       })
       await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, newMessages)
       persistConversations(nextConversations, activeConversationId)
     } finally {
       set({ isCompacting: false })
     }
+  },
+
+  undoLastCompact: async () => {
+    const { lastPreCompactMessages, conversations, activeConversationId } = get()
+    if (!lastPreCompactMessages) return
+    const nextConversations = conversations.map((c) =>
+      c.id === activeConversationId ? { ...c, messages: lastPreCompactMessages, updatedAt: Date.now() } : c
+    )
+    set({
+      messages: lastPreCompactMessages,
+      conversations: nextConversations,
+      lastPreCompactMessages: null,
+    })
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, lastPreCompactMessages)
+    persistConversations(nextConversations, activeConversationId)
+  },
+
+  suppressAutoCompactForActive: () => {
+    const id = get().activeConversationId
+    if (!id) return
+    set((s) => ({ autoCompactSuppressed: { ...s.autoCompactSuppressed, [id]: true } }))
   },
 
   branchConversation: async (fromMessageId) => {
