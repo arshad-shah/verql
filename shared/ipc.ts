@@ -431,6 +431,10 @@ export interface IpcChannelMap {
     args: [streamId: string]
     return: void
   }
+  'ai:conversation:summarize': {
+    args: [messages: AIChatMessage[]]
+    return: { summary: string }
+  }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
     args: []
@@ -606,6 +610,7 @@ export const IPC_CHANNELS = {
   AI_EXPLAIN_RESULTS: 'ai:explain-results',
   AI_EXPLAIN_START: 'ai:explain:start',
   AI_EXPLAIN_ABORT: 'ai:explain:abort',
+  AI_CONVERSATION_SUMMARIZE: 'ai:conversation:summarize',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',

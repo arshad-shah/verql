@@ -58,6 +58,8 @@ interface AIState {
   deleteConversation: (id: string) => Promise<void>
   renameConversation: (id: string, title: string) => void
   branchConversation: (fromMessageId: string) => Promise<void>
+  compactConversation: (keepLast?: number) => Promise<void>
+  isCompacting: boolean
   retryLast: () => void
   abort: () => Promise<void>
   seedComposer: (text: string) => void
@@ -275,6 +277,54 @@ export const useAIStore = create<AIState>((set, get) => ({
     )
     set({ conversations: next })
     persistConversations(next, get().activeConversationId)
+  },
+
+  isCompacting: false,
+
+  /**
+   * Summarize all messages except the last `keepLast` (default 2) into a single
+   * system message, replacing the older history. Keeps the conversation usable
+   * but trims tokens. No-op when the conversation is too short to be worth
+   * compacting (< 6 messages).
+   */
+  compactConversation: async (keepLast = 2) => {
+    const { messages, conversations, activeConversationId, isStreaming, abort, isCompacting } = get()
+    if (isCompacting) return
+    if (isStreaming) await abort()
+    if (messages.length < 6) return
+    if (keepLast < 0) keepLast = 0
+
+    const toSummarize = messages.slice(0, messages.length - keepLast)
+    const tail = messages.slice(messages.length - keepLast)
+    set({ isCompacting: true })
+    try {
+      const { summary } = await window.electronAPI.invoke(
+        IPC_CHANNELS.AI_CONVERSATION_SUMMARIZE,
+        toSummarize,
+      ) as { summary: string }
+
+      const summaryMsg: AIChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'system',
+        content: `Summary of earlier conversation:\n\n${summary}`,
+        timestamp: Date.now(),
+      }
+      const newMessages: AIChatMessage[] = [summaryMsg, ...tail]
+
+      const nextConversations = conversations.map((c) =>
+        c.id === activeConversationId ? { ...c, messages: newMessages, updatedAt: Date.now() } : c
+      )
+      set({
+        messages: newMessages,
+        conversations: nextConversations,
+        sessionStats: { ...EMPTY_STATS },
+        streamingContent: '',
+      })
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, newMessages)
+      persistConversations(nextConversations, activeConversationId)
+    } finally {
+      set({ isCompacting: false })
+    }
   },
 
   branchConversation: async (fromMessageId) => {

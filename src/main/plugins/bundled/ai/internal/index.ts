@@ -338,6 +338,10 @@ export function startAIModule(deps: AIDeps): AIModule {
     }
   })
 
+  h('ai:conversation:summarize', async (messages: Parameters<typeof enhancements.summarizeConversation>[0]) =>
+    enhancements.summarizeConversation(messages)
+  )
+
   const service: AIService = {
     registerProvider: (provider) => providerRegistry.register(provider),
     registerContextProvider: (provider) => conversationManager.registerContextProvider(provider)

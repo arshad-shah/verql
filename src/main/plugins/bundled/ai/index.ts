@@ -16,7 +16,8 @@ export const manifest: PluginManifest = {
       { id: 'explain-table', title: 'AI: Explain Table' },
       { id: 'suggest-queries', title: 'AI: Generate Sample Queries' },
       { id: 'explain-query', title: 'AI: Explain Query' },
-      { id: 'optimize-query', title: 'AI: Optimize Query' }
+      { id: 'optimize-query', title: 'AI: Optimize Query' },
+      { id: 'compact-conversation', title: 'AI: Compact Conversation' }
     ],
     // The chat surface is rendered by the renderer's <PluginPanel> infrastructure
     // for any plugin contributing a "panels" entry with location 'sidebar'. When
