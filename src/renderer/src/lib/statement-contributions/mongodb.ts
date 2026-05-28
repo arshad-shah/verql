@@ -1,3 +1,4 @@
+import { Play } from 'lucide-react'
 import { tabActions } from '@/stores/tab-actions'
 import type { Statement, StatementContribution } from '@/lib/statement-registry'
 
@@ -61,6 +62,6 @@ export function splitMongoStatements(source: string): Statement[] {
 export const mongoStatementContribution: StatementContribution = {
   splitStatements: splitMongoStatements,
   lensActions: [
-    { id: 'run', title: '▶ Run', handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
+    { id: 'run', title: 'Run', icon: Play, handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
   ],
 }
