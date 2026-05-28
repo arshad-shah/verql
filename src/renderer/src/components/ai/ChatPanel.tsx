@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
 import { MessageThread } from './MessageThread'
-import { ChatInput } from './ChatInput'
+import { ActionZone } from './ActionZone'
 import { ChatPanelHeader } from './ChatPanelHeader'
 
 export function ChatPanel() {
@@ -24,7 +24,7 @@ export function ChatPanel() {
     <div className="flex flex-col h-full bg-bg-primary">
       <ChatPanelHeader />
       <MessageThread />
-      <ChatInput />
+      <ActionZone />
     </div>
   )
 }
