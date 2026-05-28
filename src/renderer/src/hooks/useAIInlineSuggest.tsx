@@ -2,9 +2,8 @@ import { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { editor } from 'monaco-editor'
 import { Sparkles, Check, X, Loader2 } from 'lucide-react'
-import { Button } from '@/primitives/forms/Button'
+import { IconButton } from '@/primitives/forms/Button'
 import { Kbd } from '@/primitives/typography/Kbd'
-import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import {
   subscribeInlineAIState,
@@ -14,10 +13,12 @@ import {
 
 /**
  * Mounts two Monaco overlay widgets:
- *   1. A status pill (bottom-right of the editor viewport) reflecting the
+ *   1. A status pill (top-right of the editor viewport) reflecting the
  *      inline-completion state machine: idle → thinking → ready → idle.
- *   2. An Accept/Reject toolbar anchored to the cursor line whenever the
- *      provider has a suggestion ready.
+ *   2. A compact Accept/Reject toolbar anchored to the cursor line whenever
+ *      the provider has a suggestion ready. Icon-only with kbd hints — the
+ *      keyboard shortcuts (Tab / Esc) do the same work; the toolbar is
+ *      discoverability + click affordance, not the primary path.
  *
  * Both widgets render React content into DOM nodes owned by Monaco; the
  * hook tears them down on unmount.
@@ -31,9 +32,8 @@ export function useAIInlineSuggest(ed: editor.IStandaloneCodeEditor | null): voi
     const pillRoot = createRoot(pillNode)
     const toolbarRoot = createRoot(toolbarNode)
 
-    // 0 = TOP_RIGHT_CORNER, 1 = BOTTOM_RIGHT_CORNER, 2 = TOP_CENTER.
-    // Top-right keeps the pill visible above any UI Verql renders below the
-    // editor (results pane, action zone, etc.). Bottom-right gets clipped.
+    // 0 = TOP_RIGHT_CORNER (keeps the pill above any UI Verql renders below
+    // the editor: results pane, action zone, status bar).
     const pillWidget: editor.IOverlayWidget = {
       getId: () => 'verql.inline-ai.pill',
       getDomNode: () => pillNode,
@@ -45,7 +45,6 @@ export function useAIInlineSuggest(ed: editor.IStandaloneCodeEditor | null): voi
       getPosition: () => {
         const pos = ed.getPosition()
         if (!pos) return null
-        // [2 BELOW, 1 ABOVE]
         return { position: pos, preference: [2, 1] }
       },
     }
@@ -54,9 +53,10 @@ export function useAIInlineSuggest(ed: editor.IStandaloneCodeEditor | null): voi
     ed.addContentWidget(toolbarWidget)
 
     const render = (state: InlineAIState): void => {
-      const model = useAIStore.getState().activeModel ?? 'AI'
+      const modelId = useAIStore.getState().activeModel
+      const model = useAIStore.getState().models.find((m) => m.id === modelId)?.name ?? modelId ?? 'AI'
       pillRoot.render(<Pill state={state} model={model} />)
-      toolbarRoot.render(state === 'ready' ? <Toolbar editor={ed} model={model} /> : null)
+      toolbarRoot.render(state === 'ready' ? <Toolbar editor={ed} /> : null)
       ed.layoutContentWidget(toolbarWidget)
     }
 
@@ -77,47 +77,65 @@ export function useAIInlineSuggest(ed: editor.IStandaloneCodeEditor | null): voi
 
 function Pill({ state, model }: { state: InlineAIState; model: string }) {
   if (state === 'idle') return null
+  const thinking = state === 'thinking'
   return (
-    <div className="m-2 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] text-accent">
-      {state === 'thinking' ? (
-        <Loader2 size={10} className="animate-spin" />
-      ) : (
-        <Sparkles size={10} />
-      )}
-      <span>{model}</span>
-      {state === 'thinking' ? <Kbd size="sm">Esc</Kbd> : <Kbd size="sm">Tab</Kbd>}
+    <div
+      className={`verql-ai-pill m-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] backdrop-blur-sm shadow-sm transition-all duration-200 ${
+        thinking
+          ? 'border-accent/30 bg-accent/10 text-accent'
+          : 'border-success/30 bg-success/10 text-success'
+      }`}
+      style={{ animation: 'verql-ai-pill-in 180ms ease-out' }}
+    >
+      {thinking
+        ? <Loader2 size={11} className="animate-spin" />
+        : <Sparkles size={11} />}
+      <span className="font-medium">{model}</span>
+      <span className="opacity-70">·</span>
+      <Kbd size="sm">{thinking ? 'Esc' : 'Tab'}</Kbd>
+      <style>{`
+        @keyframes verql-ai-pill-in {
+          from { opacity: 0; transform: translateY(-4px) scale(0.95); }
+          to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+      `}</style>
     </div>
   )
 }
 
-function Toolbar({
-  editor: ed,
-  model,
-}: {
-  editor: editor.IStandaloneCodeEditor
-  model: string
-}) {
+function Toolbar({ editor: ed }: { editor: editor.IStandaloneCodeEditor }) {
   return (
-    <div className="mt-1 inline-flex items-center gap-0.5 rounded border border-border-default bg-bg-secondary p-0.5 shadow-sm">
-      <Button
+    <div
+      className="mt-1 inline-flex items-center gap-1 rounded-md border border-border-default bg-bg-elevated px-1 py-0.5 shadow-[var(--shadow-dropdown)]"
+      style={{ animation: 'verql-ai-toolbar-in 140ms ease-out' }}
+    >
+      <IconButton
+        label="Accept suggestion"
         variant="ghost"
         size="xs"
-        className="!h-6 !px-1.5 gap-1 !text-success"
+        className="!h-6 !w-6 !text-success"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.commit', null)}
       >
-        <Check size={11} /> Accept <Kbd size="sm">Tab</Kbd>
-      </Button>
-      <Button
+        <Check size={12} />
+      </IconButton>
+      <Kbd size="sm">Tab</Kbd>
+      <span className="mx-0.5 h-3 w-px bg-border-default" />
+      <IconButton
+        label="Reject suggestion"
         variant="ghost"
         size="xs"
-        className="!h-6 !px-1.5 gap-1 !text-error"
+        className="!h-6 !w-6 !text-error"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.hide', null)}
       >
-        <X size={11} /> Reject <Kbd size="sm">Esc</Kbd>
-      </Button>
-      <Text as="span" size="xs" color="muted" className="px-1.5">
-        {model}
-      </Text>
+        <X size={12} />
+      </IconButton>
+      <Kbd size="sm">Esc</Kbd>
+      <style>{`
+        @keyframes verql-ai-toolbar-in {
+          from { opacity: 0; transform: translateY(-2px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }

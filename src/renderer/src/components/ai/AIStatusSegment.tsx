@@ -86,7 +86,7 @@ export function AIStatusSegment() {
       </div>
 
       <Row label="Provider" value={activeProvider?.name ?? 'None'} />
-      <Row label="Model"    value={activeModelId ?? 'None'} />
+      <Row label="Model"    value={models.find((m) => m.id === activeModelId)?.name ?? activeModelId ?? 'None'} />
       <Row label="Mode" valueNode={
         <span className="inline-flex items-center gap-1 text-text-primary">
           <ModeIcon size={10} /> {modeLabel}

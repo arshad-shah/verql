@@ -124,7 +124,7 @@ export function ChatPanelHeader() {
             <Text size="xs" color="muted">Model</Text>
           </Flex>
           <Text size="xs" weight="medium" className="truncate max-w-[180px]">
-            {activeModel ?? 'No model'}
+            {models.find((m) => m.id === activeModel)?.name ?? activeModel ?? 'No model'}
           </Text>
         </Flex>
 
