@@ -20,7 +20,7 @@ interface Props {
  * <ExplainResult> so the status bar stays a single row regardless of state.
  */
 export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
-  const loading = useExplainStore(s => s.loading[tabId] ?? false)
+  const loading = useExplainStore(s => s.byTab[tabId]?.loading ?? false)
   const setLoading = useExplainStore(s => s.setLoading)
   const setTabAiExplanation = useTabsStore(s => s.setTabAiExplanation)
 
@@ -67,7 +67,7 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
  * flight — so the grid keeps its full height when AI isn't being used.
  */
 export function ExplainResult({ tabId, explanation }: { tabId: string; explanation: string | null }) {
-  const loading = useExplainStore(s => s.loading[tabId] ?? false)
+  const loading = useExplainStore(s => s.byTab[tabId]?.loading ?? false)
   const [expanded, setExpanded] = useState(true)
 
   if (!explanation && !loading) return null
