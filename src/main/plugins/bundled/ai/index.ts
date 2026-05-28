@@ -81,9 +81,6 @@ export function activate(ctx: PluginContext): void {
   ctx.ui.registerSlot('app.secondaryActivityBar.top', [
     { id: 'ai-toggle', type: 'host-component', componentId: 'ai-toggle-button' }
   ])
-  ctx.ui.registerSlot('query.editor.top', [
-    { id: 'ai-nl', type: 'host-component', componentId: 'ai-nl-input' }
-  ])
   ctx.ui.registerSlot('results.actions', [
     { id: 'ai-explain', type: 'host-component', componentId: 'ai-explain' }
   ])

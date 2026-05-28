@@ -10,6 +10,28 @@ let currentConnectionId: string | null = null
 let state: InlineAIState = 'idle'
 const listeners = new Set<Listener>()
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+const ENABLED_KEY = 'verql:ai-inline-completion-enabled'
+let enabled = readEnabled()
+
+function readEnabled(): boolean {
+  try {
+    if (typeof localStorage === 'undefined') return true
+    const raw = localStorage.getItem(ENABLED_KEY)
+    return raw == null ? true : raw === 'true'
+  } catch {
+    return true
+  }
+}
+
+export function isInlineCompletionEnabled(): boolean {
+  return enabled
+}
+
+export function setInlineCompletionEnabled(next: boolean): void {
+  enabled = next
+  try { localStorage.setItem(ENABLED_KEY, String(next)) } catch { /* quota */ }
+  if (!next) setState('idle')
+}
 
 function setState(next: InlineAIState): void {
   if (state === next) return
@@ -38,6 +60,7 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
       _context: languages.InlineCompletionContext,
       token: CancellationToken
     ) => {
+      if (!enabled) return { items: [] }
       if (!currentConnectionId) return { items: [] }
       if (debounceTimer) clearTimeout(debounceTimer)
 

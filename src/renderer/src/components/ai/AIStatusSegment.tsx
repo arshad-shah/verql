@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
-import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
+import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap, Power } from 'lucide-react'
 import { Popover } from '@/primitives/surfaces/Popover'
 import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
@@ -8,6 +8,8 @@ import { useTabsStore } from '@/stores/tabs'
 import {
   getInlineAIState,
   subscribeInlineAIState,
+  isInlineCompletionEnabled,
+  setInlineCompletionEnabled,
   type InlineAIState,
 } from '@/lib/monaco-ai-completion'
 import { StatusBarSegment } from '@/components/shell/status-bar/StatusBarSegment'
@@ -30,6 +32,7 @@ function formatTokens(n: number): string {
 export function AIStatusSegment() {
   const [inlineState, setInlineState] = useState<InlineAIState>(() => getInlineAIState())
   useEffect(() => subscribeInlineAIState(setInlineState), [])
+  const [inlineEnabled, setInlineEnabled] = useState<boolean>(() => isInlineCompletionEnabled())
 
   const isStreaming = useAIStore((s) => s.isStreaming)
   const activeModelId = useAIStore((s) => s.activeModel)
@@ -109,8 +112,22 @@ export function AIStatusSegment() {
         </div>
       ) : null}
 
-      <Row label="Tool calls"        value={String(stats.toolCallCount)} />
-      <Row label="Inline completion" value={inlineState} />
+      <Row label="Tool calls" value={String(stats.toolCallCount)} />
+      <Row label="Inline completion" valueNode={
+        <button
+          type="button"
+          onClick={() => {
+            const next = !inlineEnabled
+            setInlineCompletionEnabled(next)
+            setInlineEnabled(next)
+          }}
+          aria-pressed={inlineEnabled}
+          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${inlineEnabled ? 'text-accent bg-accent/10 hover:bg-accent/20' : 'text-text-tertiary bg-bg-tertiary hover:bg-bg-tertiary/70'}`}
+        >
+          <Power size={9} />
+          {inlineEnabled ? (inlineState === 'thinking' ? 'thinking' : 'on') : 'off'}
+        </button>
+      } />
 
       <div className="flex gap-1 pt-1 border-t border-border-default">
         <ActionBtn icon={Minimize2} label="Compact"   onClick={() => { void compact() }} />
