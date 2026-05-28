@@ -58,6 +58,39 @@ async function callProvider(
   return result
 }
 
+async function callProviderStreaming(
+  deps: EnhancementDeps,
+  systemPrompt: string,
+  userPrompt: string,
+  options: CallOptions | undefined,
+  onToken: (text: string) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  const provider = deps.providerRegistry.getActive()
+  if (!provider) throw new Error('No active AI provider configured')
+
+  const modelId = deps.providerRegistry.getActiveModel()
+  if (!modelId) throw new Error('No active AI model configured')
+
+  const messages: AIChatMessage[] = [
+    { id: 'system', role: 'system', content: systemPrompt, timestamp: 0 },
+    { id: 'user', role: 'user', content: userPrompt, timestamp: Date.now() },
+  ]
+
+  for await (const chunk of provider.chat({
+    model: modelId,
+    messages,
+    temperature: options?.temperature,
+    maxTokens: options?.maxTokens,
+    stopSequences: options?.stopSequences,
+  })) {
+    if (signal.aborted) break
+    if (chunk.type === 'text' && chunk.content) onToken(chunk.content)
+    if (chunk.type === 'done') break
+    if (chunk.type === 'error') throw new Error(chunk.error ?? 'Provider error')
+  }
+}
+
 async function getDbContext(deps: EnhancementDeps, connectionId: string): Promise<{ schema: string; queryFormat: string }> {
   let schema = ''
   try {
@@ -157,6 +190,28 @@ ${JSON.stringify(sampleData, null, 2)}`
       })
       const model = deps.providerRegistry.getActiveModel() ?? 'unknown'
       return { explanation, model, durationMs: Date.now() - startedAt }
-    }
+    },
+
+    explainResultsStream: async (
+      request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] },
+      onToken: (text: string) => void,
+      signal: AbortSignal,
+    ): Promise<{ model: string; durationMs: number }> => {
+      const sampleData = request.sampleRows.slice(0, 5)
+      const userPrompt = `Query: ${request.sql}
+
+Columns: ${request.columns.join(', ')}
+Total rows: ${request.rowCount}
+Sample data (first ${sampleData.length} rows):
+${JSON.stringify(sampleData, null, 2)}`
+
+      const startedAt = Date.now()
+      await callProviderStreaming(deps, EXPLAIN_SYSTEM_PROMPT, userPrompt, {
+        temperature: 0.3,
+        maxTokens: 400,
+      }, onToken, signal)
+      const model = deps.providerRegistry.getActiveModel() ?? 'unknown'
+      return { model, durationMs: Date.now() - startedAt }
+    },
   }
 }

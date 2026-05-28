@@ -304,6 +304,40 @@ export function startAIModule(deps: AIDeps): AIModule {
     enhancements.explainResults(request)
   )
 
+  const explainAborts = new Map<string, AbortController>()
+
+  h('ai:explain:start', async (request: Parameters<typeof enhancements.explainResultsStream>[0]) => {
+    const streamId = randomUUID()
+    const controller = new AbortController()
+    explainAborts.set(streamId, controller)
+    const model = providerRegistry.getActiveModel() ?? 'unknown'
+
+    ;(async () => {
+      try {
+        const { durationMs } = await enhancements.explainResultsStream(
+          request,
+          (text) => { deps.broadcast('ai:explain:event', { streamId, kind: 'token', text }) },
+          controller.signal,
+        )
+        deps.broadcast('ai:explain:event', { streamId, kind: 'done', durationMs })
+      } catch (err) {
+        deps.broadcast('ai:explain:event', { streamId, kind: 'error', message: err instanceof Error ? err.message : String(err) })
+      } finally {
+        explainAborts.delete(streamId)
+      }
+    })()
+
+    return { streamId, model }
+  })
+
+  h('ai:explain:abort', async (streamId: string) => {
+    const controller = explainAborts.get(streamId)
+    if (controller) {
+      controller.abort()
+      explainAborts.delete(streamId)
+    }
+  })
+
   const service: AIService = {
     registerProvider: (provider) => providerRegistry.register(provider),
     registerContextProvider: (provider) => conversationManager.registerContextProvider(provider)
@@ -318,6 +352,10 @@ export function startAIModule(deps: AIDeps): AIModule {
         try { ctrl.abort() } catch { /* ignore */ }
       }
       activeStreams.clear()
+      for (const ctrl of explainAborts.values()) {
+        try { ctrl.abort() } catch { /* ignore */ }
+      }
+      explainAborts.clear()
     }
   }
 
