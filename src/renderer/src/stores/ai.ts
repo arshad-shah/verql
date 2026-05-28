@@ -33,6 +33,7 @@ export interface Conversation {
 interface AIState {
   messages: AIChatMessage[]
   isStreaming: boolean
+  isAwaitingResponse: boolean
   streamingContent: string
   activeProvider: AIProviderInfo | null
   activeModel: string | null
@@ -45,6 +46,9 @@ interface AIState {
   sessionStats: SessionStats
   conversations: Conversation[]
   activeConversationId: string | null
+  /** One-shot composer seed: the next mount/render of ChatInput should overwrite its input with this string and call `clearComposerSeed`. */
+  composerSeed: string | null
+  permissionProfile: 'read-only' | 'ask-write' | 'auto'
 
   // Actions
   togglePanel: () => void
@@ -56,8 +60,18 @@ interface AIState {
   deleteConversation: (id: string) => Promise<void>
   renameConversation: (id: string, title: string) => void
   branchConversation: (fromMessageId: string) => Promise<void>
+  compactConversation: (keepLast?: number) => Promise<void>
+  isCompacting: boolean
+  lastPreCompactMessages: AIChatMessage[] | null
+  autoCompactSuppressed: Record<string, boolean>
+  undoLastCompact: () => Promise<void>
+  suppressAutoCompactForActive: () => void
   retryLast: () => void
   abort: () => Promise<void>
+  seedComposer: (text: string) => void
+  clearComposerSeed: () => void
+  loadPermissionProfile: () => Promise<void>
+  setPermissionProfile: (p: 'read-only' | 'ask-write' | 'auto') => Promise<void>
   loadProviders: () => Promise<void>
   loadConfiguredProviders: () => Promise<void>
   loadModels: () => Promise<void>
@@ -140,6 +154,7 @@ const initialConversations = initConversations()
 export const useAIStore = create<AIState>((set, get) => ({
   messages: initialConversations.messages,
   isStreaming: false,
+  isAwaitingResponse: false,
   streamingContent: '',
   activeProvider: null,
   activeModel: null,
@@ -152,6 +167,10 @@ export const useAIStore = create<AIState>((set, get) => ({
   sessionStats: initialConversations.sessionStats,
   conversations: initialConversations.conversations,
   activeConversationId: initialConversations.activeConversationId,
+  composerSeed: null,
+  permissionProfile: 'ask-write',
+  lastPreCompactMessages: null,
+  autoCompactSuppressed: {},
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -177,22 +196,30 @@ export const useAIStore = create<AIState>((set, get) => ({
       content: message,
       timestamp: Date.now()
     }
-    set((s) => ({ messages: [...s.messages, userMsg] }))
+    set((s) => ({ messages: [...s.messages, userMsg], isAwaitingResponse: true }))
 
     const appActionsCatalog = appActions.describeForPrompt()
     const { connections, connectedIds, activeConnectionId } = useConnectionsStore.getState()
-    const connectionsSummary = connections
-      .map((c) => {
-        const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
-        const active = c.id === activeConnectionId ? ', active' : ''
-        return `- ${c.name} (${c.type}) — ${state}${active} [id: ${c.id}]`
-      })
-      .join('\n')
+    // Send only the connections that aren't the active one — the active one
+    // is already named in connectionMeta. When there's only one connection
+    // we send nothing. Keeps the prompt small in the common single-connection
+    // workspace.
+    const others = connections.filter((c) => c.id !== activeConnectionId)
+    const connectionsSummary = others.length > 0
+      ? others
+          .map((c) => {
+            const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
+            return `- ${c.name} (${c.type}) — ${state} [id: ${c.id}]`
+          })
+          .join('\n')
+      : ''
+    // Cap notifications at 3 (was 6) and drop the message body — title alone
+    // is usually enough for the AI to mention the latest error.
     const notificationsSummary = useNotificationsStore
       .getState()
       .notifications.filter((n) => n.type === 'error' || n.type === 'warning')
-      .slice(0, 6)
-      .map((n) => `- [${n.type}] ${n.title}${n.message ? `: ${n.message}` : ''}`)
+      .slice(0, 3)
+      .map((n) => `- [${n.type}] ${n.title}`)
       .join('\n')
     const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_START, {
       message,
@@ -238,7 +265,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       messages: target.messages,
       sessionStats: { ...target.stats },
       streamingContent: '',
-      pendingApproval: null
+      pendingApproval: null,
+      lastPreCompactMessages: null,
     })
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, target.messages)
     persistConversations(get().conversations, id)
@@ -270,6 +298,77 @@ export const useAIStore = create<AIState>((set, get) => ({
     )
     set({ conversations: next })
     persistConversations(next, get().activeConversationId)
+  },
+
+  isCompacting: false,
+
+  /**
+   * Summarize all messages except the last `keepLast` (default 2) into a single
+   * system message, replacing the older history. Keeps the conversation usable
+   * but trims tokens. No-op when the conversation is too short to be worth
+   * compacting (< 6 messages).
+   */
+  compactConversation: async (keepLast = 2) => {
+    const { messages, conversations, activeConversationId, isStreaming, abort, isCompacting } = get()
+    if (isCompacting) return
+    if (isStreaming) await abort()
+    if (messages.length < 6) return
+    if (keepLast < 0) keepLast = 0
+
+    const snapshot = messages
+    const toSummarize = messages.slice(0, messages.length - keepLast)
+    const tail = messages.slice(messages.length - keepLast)
+    set({ isCompacting: true })
+    try {
+      const { summary } = await window.electronAPI.invoke(
+        IPC_CHANNELS.AI_CONVERSATION_SUMMARIZE,
+        toSummarize,
+      ) as { summary: string }
+
+      const summaryMsg: AIChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'system',
+        content: `Summary of earlier conversation:\n\n${summary}`,
+        timestamp: Date.now(),
+      }
+      const newMessages: AIChatMessage[] = [summaryMsg, ...tail]
+
+      const nextConversations = conversations.map((c) =>
+        c.id === activeConversationId ? { ...c, messages: newMessages, updatedAt: Date.now() } : c
+      )
+      set({
+        messages: newMessages,
+        conversations: nextConversations,
+        sessionStats: { ...EMPTY_STATS },
+        streamingContent: '',
+        lastPreCompactMessages: snapshot,
+      })
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, newMessages)
+      persistConversations(nextConversations, activeConversationId)
+    } finally {
+      set({ isCompacting: false })
+    }
+  },
+
+  undoLastCompact: async () => {
+    const { lastPreCompactMessages, conversations, activeConversationId } = get()
+    if (!lastPreCompactMessages) return
+    const nextConversations = conversations.map((c) =>
+      c.id === activeConversationId ? { ...c, messages: lastPreCompactMessages, updatedAt: Date.now() } : c
+    )
+    set({
+      messages: lastPreCompactMessages,
+      conversations: nextConversations,
+      lastPreCompactMessages: null,
+    })
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, lastPreCompactMessages)
+    persistConversations(nextConversations, activeConversationId)
+  },
+
+  suppressAutoCompactForActive: () => {
+    const id = get().activeConversationId
+    if (!id) return
+    set((s) => ({ autoCompactSuppressed: { ...s.autoCompactSuppressed, [id]: true } }))
   },
 
   branchConversation: async (fromMessageId) => {
@@ -317,11 +416,45 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   abort: async () => {
-    const { currentStreamId } = get()
+    const { currentStreamId, messages, pendingApproval } = get()
     if (currentStreamId) {
       await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_ABORT, currentStreamId)
     }
-    set({ isStreaming: false, streamingContent: '', currentStreamId: null })
+
+    // Reconcile any tool calls that were mid-flight. Without this, ToolCallCard
+    // shows a spinner forever (it watches for a `tool` message keyed by the
+    // call id and never finds one when the stream was killed before the
+    // tool-result event landed).
+    const settledIds = new Set(messages.filter((m) => m.role === 'tool' && m.toolCallId).map((m) => m.toolCallId!))
+    const cancelMsgs: AIChatMessage[] = []
+    for (const m of messages) {
+      if (!m.toolCalls?.length) continue
+      for (const call of m.toolCalls) {
+        if (!settledIds.has(call.id)) {
+          cancelMsgs.push({
+            id: crypto.randomUUID(),
+            role: 'tool',
+            content: 'Cancelled',
+            toolCallId: call.id,
+            timestamp: Date.now(),
+          })
+        }
+      }
+    }
+    // Resolve any open approval prompt with "rejected" so it doesn't hang the
+    // chat-loop in the plugin (waitForApproval would otherwise sit forever).
+    if (pendingApproval) {
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_APPROVAL_RESPONSE, pendingApproval.requestId, false)
+    }
+
+    set((s) => ({
+      isStreaming: false,
+      isAwaitingResponse: false,
+      streamingContent: '',
+      currentStreamId: null,
+      pendingApproval: null,
+      messages: cancelMsgs.length > 0 ? [...s.messages, ...cancelMsgs] : s.messages,
+    }))
   },
 
   loadProviders: async () => {
@@ -383,10 +516,22 @@ export const useAIStore = create<AIState>((set, get) => ({
     set({ mcpPendingApproval: null })
   },
 
+  seedComposer: (text) => set({ composerSeed: text }),
+  clearComposerSeed: () => set({ composerSeed: null }),
+
+  loadPermissionProfile: async () => {
+    const profile = await window.electronAPI.invoke(IPC_CHANNELS.AI_PERMISSION_GET_PROFILE) as 'read-only' | 'ask-write' | 'auto'
+    set({ permissionProfile: profile })
+  },
+  setPermissionProfile: async (p) => {
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_PERMISSION_SET_PROFILE, p)
+    set({ permissionProfile: p })
+  },
+
   handleStreamEvent: (event) => {
     switch (event.type) {
       case 'chunk':
-        set((s) => ({ streamingContent: s.streamingContent + event.content }))
+        set((s) => ({ streamingContent: s.streamingContent + event.content, isAwaitingResponse: false }))
         break
 
       case 'tool-call': {
@@ -454,12 +599,13 @@ export const useAIStore = create<AIState>((set, get) => ({
           set((s) => ({
             messages: [...s.messages, assistantMsg],
             isStreaming: false,
+            isAwaitingResponse: false,
             streamingContent: '',
             currentStreamId: null,
             sessionStats: updatedStats
           }))
         } else {
-          set({ isStreaming: false, streamingContent: '', currentStreamId: null, sessionStats: updatedStats })
+          set({ isStreaming: false, isAwaitingResponse: false, streamingContent: '', currentStreamId: null, sessionStats: updatedStats })
         }
         break
       }
@@ -476,6 +622,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         set((s) => ({
           messages: [...s.messages, errorMsg],
           isStreaming: false,
+          isAwaitingResponse: false,
           streamingContent: '',
           currentStreamId: null
         }))

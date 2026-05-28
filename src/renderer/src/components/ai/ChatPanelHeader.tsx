@@ -1,0 +1,229 @@
+import { useEffect, useRef, useState } from 'react'
+import {
+  History, Plus, Trash2, Pencil, Check, X, Sparkles,
+  Minimize2, MoreHorizontal, ChevronDown, Loader2,
+} from 'lucide-react'
+import { useAIStore } from '@/stores/ai'
+import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
+import { Tooltip } from '@/primitives/surfaces/Tooltip'
+
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  return String(n)
+}
+
+/**
+ * Top of the chat panel. Combines conversation switcher, model name, and a
+ * prominent context-window indicator showing how much budget is left for the
+ * current conversation. Compact button summarises the older turns into a
+ * single system message to free up context.
+ */
+export function ChatPanelHeader() {
+  const conversations = useAIStore((s) => s.conversations)
+  const activeId = useAIStore((s) => s.activeConversationId)
+  const newConversation = useAIStore((s) => s.newConversation)
+  const switchConversation = useAIStore((s) => s.switchConversation)
+  const deleteConversation = useAIStore((s) => s.deleteConversation)
+  const renameConversation = useAIStore((s) => s.renameConversation)
+  const compactConversation = useAIStore((s) => s.compactConversation)
+  const isCompacting = useAIStore((s) => s.isCompacting)
+  const activeModel = useAIStore((s) => s.activeModel)
+  const models = useAIStore((s) => s.models)
+  const messages = useAIStore((s) => s.messages)
+  const stats = useAIStore((s) => s.sessionStats)
+
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [moreOpen, setMoreOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const active = conversations.find((c) => c.id === activeId)
+  const sorted = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt)
+
+  const totalTokens = stats.totalInputTokens + stats.totalOutputTokens
+  const contextWindow = models.find((m) => m.id === activeModel)?.contextWindow ?? null
+  const remaining = contextWindow != null ? Math.max(0, contextWindow - totalTokens) : null
+  const pct = contextWindow && contextWindow > 0
+    ? Math.min(100, Math.round((totalTokens / contextWindow) * 100))
+    : 0
+  const tone = pct >= 90 ? 'bg-error' : pct >= 70 ? 'bg-warning' : 'bg-accent'
+  const remainingTone = pct >= 90 ? 'text-error' : pct >= 70 ? 'text-warning' : 'text-text-secondary'
+
+  const canCompact = messages.length >= 6 && !isCompacting
+
+  useEffect(() => {
+    if (!historyOpen && !moreOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setHistoryOpen(false)
+        setMoreOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [historyOpen, moreOpen])
+
+  const commitEdit = () => {
+    if (editingId) renameConversation(editingId, draft)
+    setEditingId(null)
+  }
+
+  return (
+    <div ref={ref} className="relative border-b border-border-default bg-bg-secondary">
+      {/* Row 1: title + actions */}
+      <Flex align="center" gap="xs" className="px-3 pt-2 pb-1.5">
+        <button
+          type="button"
+          onClick={() => { setHistoryOpen((o) => !o); setMoreOpen(false) }}
+          className="flex items-center gap-1.5 flex-1 min-w-0 text-left rounded-md px-1.5 py-1 hover:bg-hover transition-colors"
+          aria-label="Conversation history"
+          aria-expanded={historyOpen}
+        >
+          <History size={13} className="text-text-tertiary shrink-0" />
+          <Text size="sm" weight="medium" truncate className="flex-1">
+            {active?.title ?? 'New chat'}
+          </Text>
+          <ChevronDown size={12} className="text-text-tertiary shrink-0" />
+        </button>
+        <Tooltip content="New chat" side="bottom">
+          <IconButton label="New chat" size="xs" variant="ghost" onClick={() => { newConversation(); setHistoryOpen(false) }}>
+            <Plus size={14} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip
+          content={canCompact ? 'Compact older messages to free up context' : 'Conversation too short to compact'}
+          side="bottom"
+        >
+          <IconButton
+            label="Compact conversation"
+            size="xs"
+            variant="ghost"
+            disabled={!canCompact}
+            onClick={() => { void compactConversation() }}
+          >
+            {isCompacting ? <Loader2 size={13} className="animate-spin" /> : <Minimize2 size={13} />}
+          </IconButton>
+        </Tooltip>
+        <IconButton
+          label="More"
+          size="xs"
+          variant="ghost"
+          onClick={() => { setMoreOpen((o) => !o); setHistoryOpen(false) }}
+        >
+          <MoreHorizontal size={14} />
+        </IconButton>
+      </Flex>
+
+      {/* Row 2: model + context window bar (prominent) */}
+      <div className="px-3 pb-2 space-y-1">
+        <Flex align="center" justify="between" className="text-[11px]">
+          <Flex align="center" gap="xs">
+            <Sparkles size={11} className="text-accent" />
+            <Text size="xs" color="muted">Model</Text>
+          </Flex>
+          <Text size="xs" weight="medium" className="truncate max-w-[180px]">
+            {models.find((m) => m.id === activeModel)?.name ?? activeModel ?? 'No model'}
+          </Text>
+        </Flex>
+
+        {contextWindow != null ? (
+          <>
+            <div className="h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
+              <div className={`h-full transition-[width] ${tone}`} style={{ width: `${pct}%` }} />
+            </div>
+            <Flex align="center" justify="between" className="text-[10px]">
+              <Text size="xs" color="muted">
+                {formatTokens(totalTokens)} / {formatTokens(contextWindow)} used
+              </Text>
+              <Text size="xs" weight="medium" className={remainingTone}>
+                {formatTokens(remaining ?? 0)} remaining
+              </Text>
+            </Flex>
+          </>
+        ) : (
+          <Text size="xs" color="muted">No context window data</Text>
+        )}
+      </div>
+
+      {/* History dropdown */}
+      {historyOpen && (
+        <div className="absolute left-2 right-2 top-full z-50 mt-1 rounded-lg border border-border-default bg-bg-elevated shadow-dropdown overflow-hidden">
+          <ScrollArea direction="vertical" className="max-h-64 py-1">
+            {sorted.map((c) => (
+              <div
+                key={c.id}
+                className={`group flex items-center gap-1 px-2 py-1.5 cursor-pointer hover:bg-hover ${c.id === activeId ? 'bg-accent/10' : ''}`}
+                onClick={() => { if (editingId !== c.id) { void switchConversation(c.id); setHistoryOpen(false) } }}
+              >
+                {editingId === c.id ? (
+                  <>
+                    <Input
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      size="xs"
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitEdit()
+                        if (e.key === 'Escape') setEditingId(null)
+                      }}
+                      className="flex-1"
+                    />
+                    <IconButton label="Save name" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); commitEdit() }}>
+                      <Check size={12} />
+                    </IconButton>
+                    <IconButton label="Cancel rename" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(null) }}>
+                      <X size={12} />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <Text size="xs" truncate className="flex-1">{c.title}</Text>
+                    <div className="hidden group-hover:flex items-center gap-0.5">
+                      <IconButton label="Rename conversation" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }}>
+                        <Pencil size={11} />
+                      </IconButton>
+                      <IconButton label="Delete conversation" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); void deleteConversation(c.id) }}>
+                        <Trash2 size={11} />
+                      </IconButton>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* More menu */}
+      {moreOpen && active && (
+        <div className="absolute right-2 top-full z-50 mt-1 w-48 rounded-lg border border-border-default bg-bg-elevated shadow-dropdown overflow-hidden py-1">
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs"
+            onClick={() => { setEditingId(active.id); setDraft(active.title); setHistoryOpen(true); setMoreOpen(false) }}
+          >
+            <Pencil size={12} /> Rename
+          </button>
+          <button
+            type="button"
+            disabled={!canCompact}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => { setMoreOpen(false); void compactConversation() }}
+          >
+            <Minimize2 size={12} /> Compact conversation
+          </button>
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs text-error"
+            onClick={() => { setMoreOpen(false); void deleteConversation(active.id) }}
+          >
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

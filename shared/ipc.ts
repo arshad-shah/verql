@@ -421,7 +421,27 @@ export interface IpcChannelMap {
   }
   'ai:explain-results': {
     args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
-    return: { explanation: string }
+    return: { explanation: string; model: string; durationMs: number }
+  }
+  'ai:explain:start': {
+    args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
+    return: { streamId: string; model: string }
+  }
+  'ai:explain:abort': {
+    args: [streamId: string]
+    return: void
+  }
+  'ai:conversation:summarize': {
+    args: [messages: AIChatMessage[]]
+    return: { summary: string }
+  }
+  'ai:permission:get-profile': {
+    args: []
+    return: 'read-only' | 'ask-write' | 'auto'
+  }
+  'ai:permission:set-profile': {
+    args: [profile: 'read-only' | 'ask-write' | 'auto']
+    return: void
   }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
@@ -596,6 +616,11 @@ export const IPC_CHANNELS = {
   AI_GENERATE_SQL: 'ai:generate-sql',
   AI_COMPLETE_SQL: 'ai:complete-sql',
   AI_EXPLAIN_RESULTS: 'ai:explain-results',
+  AI_EXPLAIN_START: 'ai:explain:start',
+  AI_EXPLAIN_ABORT: 'ai:explain:abort',
+  AI_CONVERSATION_SUMMARIZE: 'ai:conversation:summarize',
+  AI_PERMISSION_GET_PROFILE: 'ai:permission:get-profile',
+  AI_PERMISSION_SET_PROFILE: 'ai:permission:set-profile',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',
@@ -629,6 +654,12 @@ export const IPC_CHANNELS = {
 export interface IpcEventMap {
   /** Stream events for an in-flight AI chat (delta tokens, tool calls, …). */
   'ai:chat:event': [event: AIStreamEvent]
+  /** Stream events for an in-flight explain-results stream. */
+  'ai:explain:event': [event:
+    | { streamId: string; kind: 'token'; text: string }
+    | { streamId: string; kind: 'done'; durationMs: number }
+    | { streamId: string; kind: 'error'; message: string }
+  ]
   /** MCP server requested user approval for a sensitive action. */
   'mcp:approval-request': [request: import('./mcp').MCPApprovalRequest]
   /** MCP server recorded a tool call. */
@@ -666,6 +697,7 @@ export type IpcEvent = keyof IpcEventMap
 
 export const IPC_EVENTS = {
   AI_CHAT_EVENT: 'ai:chat:event',
+  AI_EXPLAIN_EVENT: 'ai:explain:event',
   MCP_APPROVAL_REQUEST: 'mcp:approval-request',
   MCP_ACTIVITY_EVENT: 'mcp:activity-event',
   MENU_NEW_QUERY_TAB: 'menu:new-query-tab',

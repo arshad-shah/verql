@@ -80,6 +80,18 @@ export interface HostComponentWidget extends WidgetBase {
   props?: Record<string, unknown>
 }
 
+/**
+ * Click-to-open popover. The `trigger` widget renders inline; clicking it
+ * opens a panel containing the `content` widget tree. Renderer wraps with
+ * the design-system Popover primitive — no plugin code needed for
+ * positioning, dismissal, or accessibility.
+ */
+export interface PopoverWidget extends WidgetBase {
+  type: 'popover'
+  trigger: Widget
+  content: Widget[]
+}
+
 export type Widget =
   | SelectorWidget
   | ActionButtonWidget
@@ -90,6 +102,7 @@ export type Widget =
   | SectionWidget
   | SeparatorWidget
   | HostComponentWidget
+  | PopoverWidget
 
 // ─── Contribution Surfaces ──────────────────────────────────────────────────
 

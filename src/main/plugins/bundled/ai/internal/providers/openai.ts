@@ -7,11 +7,60 @@ const CHAT_MODEL_PREFIXES = ['gpt-4o', 'gpt-4.1', 'o1', 'o3', 'o4']
  * Relative price rank from OpenAI model naming: `nano` (cheapest) < `mini` <
  * full models. A rough but stable heuristic for defaulting to a cheap model.
  */
+/**
+ * Friendly display name for an OpenAI model id. The /v1/models endpoint
+ * returns the raw id only (e.g. 'gpt-4o-2024-08-06'); we surface something
+ * humans recognise ('GPT-4o (2024-08-06)') for menus and status bars.
+ */
+function openaiFriendlyName(id: string): string {
+  const lower = id.toLowerCase()
+  // Strip date suffix when present so we can append it as parenthesised tag.
+  const dateMatch = lower.match(/-(\d{4}-\d{2}-\d{2})$/)
+  const date = dateMatch ? dateMatch[1] : null
+  const base = date ? lower.slice(0, -date.length - 1) : lower
+  const pretty = (() => {
+    if (base.startsWith('gpt-5')) return 'GPT-5' + (base.slice(5) || '')
+    if (base.startsWith('gpt-4.1-nano')) return 'GPT-4.1 nano'
+    if (base.startsWith('gpt-4.1-mini')) return 'GPT-4.1 mini'
+    if (base.startsWith('gpt-4.1')) return 'GPT-4.1' + base.slice(7)
+    if (base.startsWith('gpt-4o-mini')) return 'GPT-4o mini'
+    if (base.startsWith('gpt-4o')) return 'GPT-4o' + base.slice(6)
+    if (base === 'gpt-4-turbo') return 'GPT-4 Turbo'
+    if (base.startsWith('gpt-4.5')) return 'GPT-4.5' + base.slice(7)
+    if (base === 'o4-mini') return 'o4 mini'
+    if (base === 'o3-mini') return 'o3 mini'
+    if (base === 'o1-mini') return 'o1 mini'
+    if (base === 'o3' || base === 'o1' || base === 'o4') return base
+    return id
+  })()
+  return date ? `${pretty} (${date})` : pretty
+}
+
 function openaiCostTier(modelId: string): number {
   const id = modelId.toLowerCase()
   if (id.includes('nano')) return 0
   if (id.includes('mini')) return 1
   return 2
+}
+
+/**
+ * Context window per OpenAI model. The /v1/models endpoint doesn't return
+ * this. Pattern-match on the id, validated against current OpenAI / Azure
+ * Foundry docs:
+ *   - gpt-5 family    → 1,047,576 tokens (advertised as 1M / 1.05M)
+ *   - gpt-4.1 family  → 1,047,576 tokens
+ *   - o3 / o4 family  → 200k tokens
+ *   - o1 family       → 128k tokens
+ *   - gpt-4o / 4-turbo / 4o-mini / gpt-4.5 — 128k tokens
+ * Default falls back to 128k for unknown / future ids.
+ */
+function openaiContextWindow(modelId: string): number {
+  const id = modelId.toLowerCase()
+  if (id.startsWith('gpt-5')) return 1_047_576
+  if (id.startsWith('gpt-4.1')) return 1_047_576
+  if (id.startsWith('o3') || id.startsWith('o4')) return 200_000
+  if (id.startsWith('o1')) return 128_000
+  return 128_000
 }
 
 interface OpenAIModel {
@@ -51,8 +100,8 @@ export class OpenAIProvider implements AIProvider {
         .sort((a, b) => a.id.localeCompare(b.id))
         .map(m => ({
           id: m.id,
-          name: m.id,
-          contextWindow: 128000,
+          name: openaiFriendlyName(m.id),
+          contextWindow: openaiContextWindow(m.id),
           capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
           costTier: openaiCostTier(m.id),
         }))

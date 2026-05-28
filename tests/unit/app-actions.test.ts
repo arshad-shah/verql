@@ -70,8 +70,9 @@ describe('AppActionRegistry', () => {
   it('describes the catalog for the system prompt', () => {
     registry.register(navAction)
     const text = registry.describeForPrompt()
+    // Compact format: `id "Title"` (description dropped to save tokens).
     expect(text).toContain('open-settings')
-    expect(text).toContain('Open settings')
+    expect(text).toContain('"Open Settings"')
   })
 })
 

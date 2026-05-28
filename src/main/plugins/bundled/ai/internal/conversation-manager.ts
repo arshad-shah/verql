@@ -91,29 +91,22 @@ export class ConversationManager {
     connectionsSummary?: string,
     notificationsSummary?: string
   ): Promise<string> {
+    // Single tight rules block — every sentence here is paid for on every
+    // turn. Avoid restating things the model already knows; trust tool
+    // schemas to document themselves.
     const parts: string[] = [
-      `You are a concise database assistant inside a desktop database client. Help users with schemas, queries, analysis, and debugging.
-
-Rules:
-- Be brief. Short sentences, no filler, no greetings, no emoji.
-- Answer directly — do not list your capabilities or offer generic help.
-- Only help with database-related tasks. Decline everything else in one sentence.
-- Never write application code (no React, Python, JS, etc.).
-- Prefer safe read operations. Only run destructive operations if the user explicitly confirms.
-- Do not invent data — only reference the schema or query results.`
+      `You are Verql's database assistant. Be brief. Decline non-database tasks in one sentence. Never write application code. Confirm before destructive ops. Don't invent data.`
     ]
 
     if (connectionMeta) {
-      parts.push(`The user is connected to a ${connectionMeta.driverName} database (type: ${connectionMeta.type}). Generate queries and commands appropriate for this database system.`)
+      parts.push(`Active connection: ${connectionMeta.driverName} (${connectionMeta.type}).`)
     }
 
     const connectionId = connectionIdOverride !== undefined ? connectionIdOverride : this.deps.getConnectionId()
     if (connectionId) {
       try {
         const schemaContext = await this.deps.getSchemaContext(connectionId)
-        if (schemaContext) {
-          parts.push(`\nCurrent database schema:\n${schemaContext}`)
-        }
+        if (schemaContext) parts.push(schemaContext)
       } catch {
         // Schema unavailable
       }
@@ -131,18 +124,15 @@ Rules:
     }
 
     if (connectionsSummary && connectionsSummary.trim()) {
-      parts.push(`Saved connections (use these to tell an existing connection from one to create; refer to a connection by name or id):\n${connectionsSummary}`)
+      parts.push(`Saved connections:\n${connectionsSummary}`)
     }
 
     if (notificationsSummary && notificationsSummary.trim()) {
-      parts.push(`Recent notifications (most recent first). Use these to summarize the latest errors or activity, and link the user to the notifications panel:\n${notificationsSummary}`)
+      parts.push(`Recent notifications:\n${notificationsSummary}`)
     }
 
     if (appActionsCatalog && appActionsCatalog.trim()) {
-      parts.push(`You can point the user to places in the app using deep links written as markdown links with a verql://action/<id> href, e.g. [Add a connection](verql://action/new-connection). These render as clickable buttons. Always use the action's human title (shown below) as the visible link text — never the raw id. When you cannot do something yourself (such as creating a connection), briefly say so, then give the deep link to where the user can do it and what to do there.
-
-Available actions:
-${appActionsCatalog}`)
+      parts.push(`Deep links: [Title](verql://action/<id>). Use the action's human title as the visible text. Available:\n${appActionsCatalog}`)
     }
 
     return parts.join('\n\n')
@@ -236,6 +226,20 @@ ${appActionsCatalog}`)
               success: false,
               data: null,
               display: 'Failed to parse tool arguments'
+            }}
+            continue
+          }
+
+          if (this.deps.permissionManager.isWriteBlocked(tool)) {
+            const blockedMsg = 'Blocked: this tool requires write access and the current permission profile is read-only.'
+            const resultContent = JSON.stringify({ error: blockedMsg })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
+            yield { type: 'tool-result', result: {
+              toolCallId: chunk.toolCall.id,
+              toolName: chunk.toolCall.name,
+              success: false,
+              data: null,
+              display: blockedMsg
             }}
             continue
           }

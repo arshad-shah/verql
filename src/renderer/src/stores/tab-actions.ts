@@ -16,6 +16,7 @@
  * pending-close tab id that App.tsx watches to drive the confirm dialog.
  */
 import { create } from 'zustand'
+import { useStatementStatus, hashStatement, type StatementStatus } from '@/stores/statement-status'
 
 export interface TabActions {
   /** Persist the tab's content. Receives no args — implementations read their own state. */
@@ -24,9 +25,9 @@ export interface TabActions {
   isDirty?: () => boolean
   /** Optional human description for confirm dialogs ("Query 1", "Settings", …). */
   label?: string
-  /** Run a single SQL statement (CodeLens "▶ Run"). */
+  /** Run a single SQL statement (statement-gutter Run action). */
   runStatement?: (sql: string) => void
-  /** Show EXPLAIN ANALYZE plan for a single statement (CodeLens "Explain"). */
+  /** Show EXPLAIN ANALYZE plan for a single statement (statement-gutter Explain action). */
   explainStatement?: (sql: string) => void
   /** Returns 'active' when the tab has an open, uncommitted transaction. */
   txnStatus?: () => 'none' | 'active'
@@ -58,7 +59,19 @@ export const tabActions = {
     if (a?.onSave) await a.onSave()
   },
 
+  recordRunStart(tabId: string, sql: string): void {
+    const h = hashStatement(sql)
+    useStatementStatus.getState().record(tabId, h, {
+      kind: 'running', durationMs: null, rowCount: null, ranAt: Date.now(),
+    })
+  },
+  recordRunResult(tabId: string, sql: string, outcome: Omit<StatementStatus, 'ranAt'>): void {
+    const h = hashStatement(sql)
+    useStatementStatus.getState().record(tabId, h, { ...outcome, ranAt: Date.now() })
+  },
+
   runStatement(tabId: string, sql: string): void {
+    this.recordRunStart(tabId, sql)
     handlers.get(tabId)?.runStatement?.(sql)
   },
   explainStatement(tabId: string, sql: string): void {

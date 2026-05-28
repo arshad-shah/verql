@@ -49,6 +49,13 @@ export function startAIModule(deps: AIDeps): AIModule {
   const toolRegistry = deps.toolRegistry
   const permissionManager = new PermissionManager()
 
+  const savedProfile = deps.settingsStore.get('ai.permissionProfile') as
+    | 'read-only' | 'ask-write' | 'auto'
+    | undefined
+  if (savedProfile === 'read-only' || savedProfile === 'ask-write' || savedProfile === 'auto') {
+    permissionManager.setProfile(savedProfile)
+  }
+
   // One-time migration: move legacy plaintext keys from settings.json into the keyring.
   for (const provider of ['openai', 'anthropic'] as const) {
     const legacy = deps.settingsStore.get(`ai.${provider}Key`) as string | undefined
@@ -97,18 +104,22 @@ export function startAIModule(deps: AIDeps): AIModule {
     })
   }
 
+  /**
+   * Cheap schema context: a comma-separated list of table names only. The
+   * model can ask for columns/types/keys via the describe_table tool when
+   * it actually needs them. A full schema dump cost 2-5k tokens every turn
+   * regardless of whether the user's question touched the schema; this
+   * keeps the prompt at ~50 tokens for most workspaces.
+   */
   const getSchemaContext = async (connectionId: string): Promise<string> => {
     try {
       const summary = await deps.schemaAccess.getSchemaSummary(connectionId)
-      return summary.tables.map((t: typeof summary.tables[number]) => {
-        const cols = t.columns.map((c: typeof t.columns[number]) => {
-          let desc = `${c.name} ${c.dataType}`
-          if (c.isPrimaryKey) desc += ' PK'
-          if (c.isForeignKey && c.references) desc += ` FK→${c.references.table}.${c.references.column}`
-          return desc
-        }).join(', ')
-        return `${t.name}(${cols})`
-      }).join('\n')
+      const names = summary.tables.map((t: typeof summary.tables[number]) => t.name)
+      if (names.length === 0) return ''
+      // Soft cap so very wide schemas don't blow the budget.
+      const head = names.slice(0, 200).join(', ')
+      const more = names.length > 200 ? ` (+${names.length - 200} more — call list_tables)` : ''
+      return `Tables in this database: ${head}${more}. Call describe_table for column details when you need them.`
     } catch {
       return ''
     }
@@ -304,6 +315,50 @@ export function startAIModule(deps: AIDeps): AIModule {
     enhancements.explainResults(request)
   )
 
+  const explainAborts = new Map<string, AbortController>()
+
+  h('ai:explain:start', async (request: Parameters<typeof enhancements.explainResultsStream>[0]) => {
+    const streamId = randomUUID()
+    const controller = new AbortController()
+    explainAborts.set(streamId, controller)
+    const model = providerRegistry.getActiveModel() ?? 'unknown'
+
+    ;(async () => {
+      try {
+        const { durationMs } = await enhancements.explainResultsStream(
+          request,
+          (text) => { deps.broadcast('ai:explain:event', { streamId, kind: 'token', text }) },
+          controller.signal,
+        )
+        deps.broadcast('ai:explain:event', { streamId, kind: 'done', durationMs })
+      } catch (err) {
+        deps.broadcast('ai:explain:event', { streamId, kind: 'error', message: err instanceof Error ? err.message : String(err) })
+      } finally {
+        explainAborts.delete(streamId)
+      }
+    })()
+
+    return { streamId, model }
+  })
+
+  h('ai:explain:abort', async (streamId: string) => {
+    const controller = explainAborts.get(streamId)
+    if (controller) {
+      controller.abort()
+      explainAborts.delete(streamId)
+    }
+  })
+
+  h('ai:conversation:summarize', async (messages: Parameters<typeof enhancements.summarizeConversation>[0]) =>
+    enhancements.summarizeConversation(messages)
+  )
+
+  h('ai:permission:get-profile', async () => permissionManager.getProfile())
+  h('ai:permission:set-profile', async (profile: 'read-only' | 'ask-write' | 'auto') => {
+    permissionManager.setProfile(profile)
+    deps.settingsStore.set('ai.permissionProfile', profile)
+  })
+
   const service: AIService = {
     registerProvider: (provider) => providerRegistry.register(provider),
     registerContextProvider: (provider) => conversationManager.registerContextProvider(provider)
@@ -318,6 +373,10 @@ export function startAIModule(deps: AIDeps): AIModule {
         try { ctrl.abort() } catch { /* ignore */ }
       }
       activeStreams.clear()
+      for (const ctrl of explainAborts.values()) {
+        try { ctrl.abort() } catch { /* ignore */ }
+      }
+      explainAborts.clear()
     }
   }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Button, Text, Input, CodeView, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text, Input, CodeView, Switch, Alert } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
@@ -93,7 +93,7 @@ export function MCPSettings() {
       {status.running && status.autoSelectedPort && (
         <Text size="xs" color="muted">Requested port {mcp.port} was busy — using {status.port}.</Text>
       )}
-      {error && <Text size="xs" color="error">{error}</Text>}
+      {error && <Alert variant={'error'}>{error}</Alert>}
 
       <SettingRow label="Port" description="Preferred HTTP port for the MCP server">
         <Input type="number" value={mcp.port} onChange={(e) => setSetting('mcp.port', parseInt(e.target.value) || 3100)} size="sm" className="w-28" min={1024} max={65535} disabled={status.running} aria-label="MCP server port" />
@@ -112,16 +112,12 @@ export function MCPSettings() {
       </SettingRow>
 
       <Divider />
-      <Text size="xs" color="muted">Tools exposed to MCP clients</Text>
+      <Text size="sm" color="muted">Tools exposed to MCP clients</Text>
       <Stack gap="xs">
         {tools.map(t => (
-          <Flex key={t.id} direction="row" align="center" justify="between" gap="sm">
-            <Stack gap="xs">
-              <Text size="xs">{t.name} <Text as="span" size="xs" color="muted">({t.permission})</Text></Text>
-              <Text size="xs" color="muted">{t.description}</Text>
-            </Stack>
+          <SettingRow key={t.id} label={t.name} description={t.description}>
             <Switch checked={t.enabled} onChange={(e) => setToolEnabled(t.id, e.target.checked)} label={`Enable ${t.name}`} />
-          </Flex>
+          </SettingRow>
         ))}
       </Stack>
 

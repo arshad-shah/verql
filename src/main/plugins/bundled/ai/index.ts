@@ -16,7 +16,8 @@ export const manifest: PluginManifest = {
       { id: 'explain-table', title: 'AI: Explain Table' },
       { id: 'suggest-queries', title: 'AI: Generate Sample Queries' },
       { id: 'explain-query', title: 'AI: Explain Query' },
-      { id: 'optimize-query', title: 'AI: Optimize Query' }
+      { id: 'optimize-query', title: 'AI: Optimize Query' },
+      { id: 'compact-conversation', title: 'AI: Compact Conversation' }
     ],
     // The chat surface is rendered by the renderer's <PluginPanel> infrastructure
     // for any plugin contributing a "panels" entry with location 'sidebar'. When
@@ -80,11 +81,11 @@ export function activate(ctx: PluginContext): void {
   ctx.ui.registerSlot('app.secondaryActivityBar.top', [
     { id: 'ai-toggle', type: 'host-component', componentId: 'ai-toggle-button' }
   ])
-  ctx.ui.registerSlot('query.editor.top', [
-    { id: 'ai-nl', type: 'host-component', componentId: 'ai-nl-input' }
-  ])
   ctx.ui.registerSlot('results.actions', [
     { id: 'ai-explain', type: 'host-component', componentId: 'ai-explain' }
+  ])
+  ctx.ui.registerSlot('app.statusBar.right', [
+    { id: 'ai-status', type: 'host-component', componentId: 'ai-status' }
   ])
 
   // 4. Commands that future renderer surfaces invoke via the command palette.
@@ -92,6 +93,7 @@ export function activate(ctx: PluginContext): void {
   ctx.commands.register('suggest-queries', async () => { /* renderer opens chat */ })
   ctx.commands.register('explain-query', async () => { /* renderer opens chat */ })
   ctx.commands.register('optimize-query', async () => { /* renderer opens chat */ })
+  ctx.commands.register('compact-conversation', async () => { /* renderer triggers compact via the chat panel header */ })
 
   // 5. Tear-down on plugin deactivation: abort streams, remove IPC handlers.
   ctx.subscriptions.push(ai.dispose)

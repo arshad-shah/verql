@@ -15,10 +15,12 @@ describe('Popover', () => {
     expect(screen.getByText('Open')).toBeInTheDocument()
   })
 
-  it('renders content element', () => {
+  it('renders content element after the trigger is clicked', async () => {
     render(
       <Popover trigger={<button>Open</button>} content={<div>pop content</div>} />
     )
+    expect(screen.queryByText('pop content')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByText('Open'))
     expect(screen.getByText('pop content')).toBeInTheDocument()
   })
 })

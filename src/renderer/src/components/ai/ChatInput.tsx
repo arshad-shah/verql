@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type KeyboardEvent } from 'react'
+import { useState, useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
 import { ArrowUp, Square, ChevronDown } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
@@ -18,7 +18,16 @@ export function ChatInput() {
   const providers = useAIStore(s => s.providers)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const connections = useConnectionsStore(s => s.connections)
+  const composerSeed = useAIStore(s => s.composerSeed)
+  const clearComposerSeed = useAIStore(s => s.clearComposerSeed)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (composerSeed != null) {
+      setInput(composerSeed)
+      clearComposerSeed()
+    }
+  }, [composerSeed, clearComposerSeed])
 
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [autocompleteFilter, setAutocompleteFilter] = useState('')

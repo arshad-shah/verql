@@ -1,8 +1,10 @@
 /**
- * Per-DB CodeLens contributions. Each plugin (or bundled DB module) registers
- * a splitter + an ordered list of lens actions keyed by dbType. The Monaco
- * CodeLens provider in monaco-codelens.ts is the only consumer.
+ * Per-DB statement contributions. Each plugin (or bundled DB module) registers
+ * a splitter + an ordered list of lens actions keyed by dbType. The
+ * StatementGutter overlay is the only consumer.
  */
+import type { LucideIcon } from 'lucide-react'
+
 export interface Statement {
   startLine: number
   startColumn: number
@@ -21,6 +23,8 @@ export interface LensActionContext {
 export interface LensAction {
   id: string
   title: string
+  /** Optional lucide icon component rendered to the left of the title. */
+  icon?: LucideIcon
   when?: (stmt: Statement) => boolean
   handler: (ctx: LensActionContext) => void
 }

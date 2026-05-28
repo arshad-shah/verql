@@ -3,6 +3,7 @@ import { Flex } from '@/primitives'
 import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
+import { PluginSlot } from '@/components/plugins/PluginSlot'
 import {
   ConnectionSegment,
   SchemaSegment,
@@ -65,6 +66,11 @@ export function StatusBar() {
                 <WidgetRenderer widgets={c.widgets} pluginId={c.pluginId} />
               </div>
             ))}
+        {/* Plugin contributions that aren't tied to the active driver (e.g. AI) target this slot. */}
+        <PluginSlot
+          id="app.statusBar.right"
+          wrap={(nodes) => <Flex align="stretch" className="h-full">{nodes}</Flex>}
+        />
         <PluginStatusSegment />
         <DevSegment />
       </Flex>

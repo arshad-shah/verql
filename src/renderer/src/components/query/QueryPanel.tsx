@@ -98,7 +98,13 @@ export function QueryPanel({ tab }: Props) {
       const reason = destructiveReason(sql)
       if (reason && !window.confirm(`${reason}\n\nRun anyway?`)) return
     }
+    // Only single-statement runs (e.g. statement gutter) carry an override.
+    // We record per-statement status only in that case — multi-statement runs
+    // from Cmd+Enter don't have a single hash.
+    const singleStmt = override?.trim() || null
+
     setTabExecuting(tab.id, true)
+    const startedAt = performance.now()
     try {
       const timeoutMs = queryTimeout * 1000
       // Transactional queries are routed through a per-tab session so they
@@ -145,7 +151,18 @@ export function QueryPanel({ tab }: Props) {
       if (isSchemaMutatingSql(sql) && tab.connectionId) {
         useSchemaStore.getState().clearCache(tab.connectionId)
       }
+      if (singleStmt) {
+        tabActions.recordRunResult(tab.id, singleStmt, {
+          kind: 'ok',
+          durationMs: Math.round(performance.now() - startedAt),
+          rowCount: result?.rowCount ?? null,
+        })
+      }
     } catch (err) {
+      const durationMs = Math.round(performance.now() - startedAt)
+      if (singleStmt) {
+        tabActions.recordRunResult(tab.id, singleStmt, { kind: 'error', durationMs, rowCount: null })
+      }
       const raw = (err as Error).message
       const parsed = parseDbError(raw)
       // Tab stores the raw text so the QueryErrorView can re-parse and show

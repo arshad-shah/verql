@@ -27,6 +27,25 @@ function anthropicCostTier(modelId: string): number {
   return 1
 }
 
+/**
+ * Context window per Anthropic model. The /v1/models endpoint doesn't return
+ * this, so we pattern-match the id. Validated against the public Anthropic
+ * model docs (https://docs.anthropic.com/en/docs/about-claude/models/overview)
+ * which list the wide-context tier explicitly:
+ *   - Opus 4.6 and later     → 1M tokens
+ *   - Sonnet 4.6 and later   → 1M tokens
+ *   - Everything else        → 200k tokens (Haiku 4.5, Sonnet 4.5, Opus 4.5,
+ *                              Opus 4.1, Sonnet 4, Opus 4, and the 3.x family)
+ */
+function anthropicContextWindow(modelId: string): number {
+  const id = modelId.toLowerCase()
+  const ONE_MILLION = 1_000_000
+  const TWO_HUNDRED_K = 200_000
+  if (/claude-opus-4-([6-9]|\d{2})/.test(id)) return ONE_MILLION
+  if (/claude-sonnet-4-([6-9]|\d{2})/.test(id)) return ONE_MILLION
+  return TWO_HUNDRED_K
+}
+
 interface AnthropicModel {
   id: string
   display_name: string
@@ -127,7 +146,7 @@ export class AnthropicProvider implements AIProvider {
           allModels.push({
             id: m.id,
             name: m.display_name,
-            contextWindow: 200000,
+            contextWindow: anthropicContextWindow(m.id),
             capabilities: ['chat', 'tool-calling'],
             costTier: anthropicCostTier(m.id),
           })

@@ -82,7 +82,7 @@ export function ToolCallCard({ message, result }: ToolCallCardProps) {
   const isExecuting = !result && pendingApproval === null
 
   return (
-    <div className="mb-3 mx-2 rounded-lg border border-[var(--color-border)] overflow-hidden">
+    <div className="mb-2.5 mx-2 rounded-lg border border-border-default border-l-2 border-l-warning overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setShowCode(s => !s)}
