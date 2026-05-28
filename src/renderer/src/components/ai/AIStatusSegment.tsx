@@ -4,6 +4,7 @@ import { Popover } from '@/primitives/surfaces/Popover'
 import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
+import { useTabsStore } from '@/stores/tabs'
 import {
   getInlineAIState,
   subscribeInlineAIState,
@@ -38,7 +39,7 @@ export function AIStatusSegment() {
   const profile = useAIStore((s) => s.permissionProfile)
   const compact = useAIStore((s) => s.compactConversation)
   const setSecondaryActivePanel = useUiStore((s) => s.setSecondaryActivePanel)
-  const setActivePanel = useUiStore((s) => s.setActivePanel)
+  const openSettings = useTabsStore((s) => s.openSettings)
 
   const busy = inlineState === 'thinking' || isStreaming
   const totalTokens = stats.totalInputTokens + stats.totalOutputTokens
@@ -114,7 +115,7 @@ export function AIStatusSegment() {
       <div className="flex gap-1 pt-1 border-t border-border-default">
         <ActionBtn icon={Minimize2} label="Compact"   onClick={() => { void compact() }} />
         <ActionBtn icon={Maximize2} label="Open chat" onClick={() => setSecondaryActivePanel('plugin:ai-chat')} />
-        <ActionBtn icon={Settings}  label="Settings"  onClick={() => setActivePanel('settings')} />
+        <ActionBtn icon={Settings}  label="Settings"  onClick={() => openSettings()} />
       </div>
     </div>
   )
