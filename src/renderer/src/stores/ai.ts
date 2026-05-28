@@ -45,6 +45,8 @@ interface AIState {
   sessionStats: SessionStats
   conversations: Conversation[]
   activeConversationId: string | null
+  /** One-shot composer seed: the next mount/render of ChatInput should overwrite its input with this string and call `clearComposerSeed`. */
+  composerSeed: string | null
 
   // Actions
   togglePanel: () => void
@@ -58,6 +60,8 @@ interface AIState {
   branchConversation: (fromMessageId: string) => Promise<void>
   retryLast: () => void
   abort: () => Promise<void>
+  seedComposer: (text: string) => void
+  clearComposerSeed: () => void
   loadProviders: () => Promise<void>
   loadConfiguredProviders: () => Promise<void>
   loadModels: () => Promise<void>
@@ -152,6 +156,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   sessionStats: initialConversations.sessionStats,
   conversations: initialConversations.conversations,
   activeConversationId: initialConversations.activeConversationId,
+  composerSeed: null,
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -382,6 +387,9 @@ export const useAIStore = create<AIState>((set, get) => ({
     await window.electronAPI.invoke(IPC_CHANNELS.MCP_APPROVAL_RESPONSE, requestId, approved)
     set({ mcpPendingApproval: null })
   },
+
+  seedComposer: (text) => set({ composerSeed: text }),
+  clearComposerSeed: () => set({ composerSeed: null }),
 
   handleStreamEvent: (event) => {
     switch (event.type) {
