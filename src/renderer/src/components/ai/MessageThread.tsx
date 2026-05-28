@@ -3,12 +3,10 @@ import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
-import { Spinner } from '@/primitives/feedback/Spinner'
 import { Text } from '@/primitives/typography/Text'
-import { Card } from '@/primitives/surfaces/Card'
 import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
-import { MarkdownContent } from './MarkdownContent'
+import { StreamingResponse } from './StreamingResponse'
 import type { AIChatMessage } from '@shared/ai-types'
 
 const SUGGESTIONS = [
@@ -55,13 +53,13 @@ function EmptyState() {
 
 export function MessageThread() {
   const messages = useAIStore(s => s.messages)
+  const isAwaiting = useAIStore(s => s.isAwaitingResponse)
   const streamingContent = useAIStore(s => s.streamingContent)
-  const isStreaming = useAIStore(s => s.isStreaming)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingContent])
+  }, [messages, streamingContent, isAwaiting])
 
   // Build a map of toolCallId → result message, and a set of result message IDs to skip
   const { resultMap, resultIds } = useMemo(() => {
@@ -78,7 +76,7 @@ export function MessageThread() {
 
   return (
     <ScrollArea direction="vertical" className="flex-1 p-3">
-      {messages.length === 0 && !isStreaming && <EmptyState />}
+      {messages.length === 0 && !isAwaiting && !streamingContent && <EmptyState />}
       {messages.map(msg => {
         // Skip standalone tool-result messages — they're shown inside ToolCallCard
         if (resultIds.has(msg.id)) return null
@@ -91,22 +89,7 @@ export function MessageThread() {
 
         return <MessageBubble key={msg.id} message={msg} />
       })}
-      {isStreaming && !streamingContent && (
-        <div className="flex justify-start mb-3">
-          <div className="flex items-center gap-2 px-3 py-2">
-            <Spinner size="xs" label="Thinking" />
-            <Text size="xs" color="muted">Thinking...</Text>
-          </div>
-        </div>
-      )}
-      {streamingContent && (
-        <div className="flex justify-start mb-3">
-          <Card padding="none" className="max-w-[85%] px-3 py-2">
-            <MarkdownContent content={streamingContent} />
-            <span className="inline-block w-0.5 h-4 bg-accent animate-[cursor-pulse_1s_ease-in-out_infinite] ml-0.5 align-text-bottom rounded-full" />
-          </Card>
-        </div>
-      )}
+      <StreamingResponse />
       <div ref={bottomRef} />
     </ScrollArea>
   )
