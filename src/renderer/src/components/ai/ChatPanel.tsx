@@ -11,12 +11,14 @@ export function ChatPanel() {
   )
   const loadConfiguredProviders = useAIStore(s => s.loadConfiguredProviders)
   const loadModels = useAIStore(s => s.loadModels)
+  const loadPermissionProfile = useAIStore(s => s.loadPermissionProfile)
 
   useEffect(() => {
     if (panelOpen) {
       loadConfiguredProviders().then(() => loadModels())
+      loadPermissionProfile()
     }
-  }, [panelOpen, loadConfiguredProviders, loadModels])
+  }, [panelOpen, loadConfiguredProviders, loadModels, loadPermissionProfile])
 
   return (
     <div className="flex flex-col h-full bg-bg-primary">

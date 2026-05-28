@@ -47,6 +47,7 @@ interface AIState {
   activeConversationId: string | null
   /** One-shot composer seed: the next mount/render of ChatInput should overwrite its input with this string and call `clearComposerSeed`. */
   composerSeed: string | null
+  permissionProfile: 'read-only' | 'ask-write' | 'auto'
 
   // Actions
   togglePanel: () => void
@@ -64,6 +65,8 @@ interface AIState {
   abort: () => Promise<void>
   seedComposer: (text: string) => void
   clearComposerSeed: () => void
+  loadPermissionProfile: () => Promise<void>
+  setPermissionProfile: (p: 'read-only' | 'ask-write' | 'auto') => Promise<void>
   loadProviders: () => Promise<void>
   loadConfiguredProviders: () => Promise<void>
   loadModels: () => Promise<void>
@@ -159,6 +162,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   conversations: initialConversations.conversations,
   activeConversationId: initialConversations.activeConversationId,
   composerSeed: null,
+  permissionProfile: 'ask-write',
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -440,6 +444,15 @@ export const useAIStore = create<AIState>((set, get) => ({
 
   seedComposer: (text) => set({ composerSeed: text }),
   clearComposerSeed: () => set({ composerSeed: null }),
+
+  loadPermissionProfile: async () => {
+    const profile = await window.electronAPI.invoke(IPC_CHANNELS.AI_PERMISSION_GET_PROFILE) as 'read-only' | 'ask-write' | 'auto'
+    set({ permissionProfile: profile })
+  },
+  setPermissionProfile: async (p) => {
+    await window.electronAPI.invoke(IPC_CHANNELS.AI_PERMISSION_SET_PROFILE, p)
+    set({ permissionProfile: p })
+  },
 
   handleStreamEvent: (event) => {
     switch (event.type) {
