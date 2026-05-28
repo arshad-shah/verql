@@ -2,8 +2,29 @@ import type { Monaco } from '@monaco-editor/react'
 import type { editor, Position, CancellationToken, languages } from 'monaco-editor'
 import { IPC_CHANNELS } from '@shared/ipc'
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+export type InlineAIState = 'idle' | 'thinking' | 'ready'
+
+type Listener = (s: InlineAIState) => void
+
 let currentConnectionId: string | null = null
+let state: InlineAIState = 'idle'
+const listeners = new Set<Listener>()
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function setState(next: InlineAIState): void {
+  if (state === next) return
+  state = next
+  for (const l of listeners) l(state)
+}
+
+export function getInlineAIState(): InlineAIState {
+  return state
+}
+
+export function subscribeInlineAIState(l: Listener): () => void {
+  listeners.add(l)
+  return () => { listeners.delete(l) }
+}
 
 export function setAICompletionContext(connectionId: string | null): void {
   currentConnectionId = connectionId
@@ -17,40 +38,27 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
       _context: languages.InlineCompletionContext,
       token: CancellationToken
     ) => {
-      // Don't trigger if no connection
       if (!currentConnectionId) return { items: [] }
-
-      // Debounce — wait 300ms after last keystroke
       if (debounceTimer) clearTimeout(debounceTimer)
 
       return new Promise((resolve) => {
         debounceTimer = setTimeout(async () => {
-          if (token.isCancellationRequested) {
-            resolve({ items: [] })
-            return
-          }
-
+          if (token.isCancellationRequested) { resolve({ items: [] }); return }
           const fullText = model.getValue()
-          const offset = model.getOffsetAt(position)
+          if (fullText.trim().length < 3) { resolve({ items: [] }); return }
 
-          // Don't trigger on empty or very short content
-          if (fullText.trim().length < 3) {
-            resolve({ items: [] })
-            return
-          }
-
+          setState('thinking')
           try {
             const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_COMPLETE_SQL, {
               sql: fullText,
-              cursorOffset: offset,
-              connectionId: currentConnectionId!
+              cursorOffset: model.getOffsetAt(position),
+              connectionId: currentConnectionId!,
             }) as { completion: string }
 
             if (token.isCancellationRequested || !result.completion) {
-              resolve({ items: [] })
-              return
+              setState('idle'); resolve({ items: [] }); return
             }
-
+            setState('ready')
             resolve({
               items: [{
                 insertText: result.completion,
@@ -58,20 +66,18 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
                   startLineNumber: position.lineNumber,
                   startColumn: position.column,
                   endLineNumber: position.lineNumber,
-                  endColumn: position.column
-                }
-              }]
+                  endColumn: position.column,
+                },
+              }],
             })
           } catch {
+            setState('idle')
             resolve({ items: [] })
           }
         }, 300)
       })
     },
-    freeInlineCompletions: () => { /* no-op */ },
-    // Monaco renamed `freeInlineCompletions` → `disposeInlineCompletions` in
-    // newer builds. Some builds call the new name and crash if it's missing.
-    // Provide both so we work across the bundled Monaco versions.
-    disposeInlineCompletions: () => { /* no-op */ },
+    freeInlineCompletions: () => { setState('idle') },
+    disposeInlineCompletions: () => { setState('idle') },
   } as Parameters<typeof monaco.languages.registerInlineCompletionsProvider>[1])
 }
