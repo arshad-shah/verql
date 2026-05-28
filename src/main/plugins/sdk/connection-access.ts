@@ -32,6 +32,11 @@ export class ConnectionAccessImpl implements ConnectionAccess {
     return adapter.query(sql, params)
   }
 
+  cancelQuery(connectionId: string): void {
+    const adapter = this.getAdapter(connectionId)
+    adapter?.cancelQuery?.()
+  }
+
   onActiveConnectionChanged(listener: (id: string | null) => void): Disposable {
     this.listeners.add(listener)
     return { dispose: () => { this.listeners.delete(listener) } }

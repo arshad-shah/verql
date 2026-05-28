@@ -7,6 +7,32 @@ function noConn(): ToolResult {
 }
 
 /**
+ * Wraps a query in race against the tool's abort signal. If the signal aborts
+ * mid-query we ask the connection's adapter to cancel; the promise still
+ * settles with a rejected sentinel that callers turn into a tool-result.
+ */
+async function withCancellation<T>(
+  connections: ConnectionAccess,
+  ctx: ToolContext,
+  run: () => Promise<T>,
+): Promise<T> {
+  if (ctx.abortSignal.aborted) throw new Error('Cancelled')
+  let onAbort: (() => void) | undefined
+  try {
+    return await new Promise<T>((resolve, reject) => {
+      onAbort = () => {
+        if (ctx.connectionId) connections.cancelQuery(ctx.connectionId)
+        reject(new Error('Cancelled'))
+      }
+      ctx.abortSignal.addEventListener('abort', onAbort)
+      run().then(resolve, reject)
+    })
+  } finally {
+    if (onAbort) ctx.abortSignal.removeEventListener('abort', onAbort)
+  }
+}
+
+/**
  * The canonical database tools. `getMaxRows` is read per-call so the row cap
  * tracks the live MCP setting without re-creating the tools.
  */
@@ -24,7 +50,9 @@ export function createDbTools(
       permission: 'write',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
-        const result = await connections.query(ctx.connectionId, params.sql as string)
+        const result = await withCancellation(connections, ctx, () =>
+          connections.query(ctx.connectionId!, params.sql as string),
+        )
         const max = getMaxRows()
         return {
           success: true,
@@ -47,7 +75,9 @@ export function createDbTools(
       permission: 'read',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
-        const result = await connections.query(ctx.connectionId, `EXPLAIN ${params.sql as string}`)
+        const result = await withCancellation(connections, ctx, () =>
+          connections.query(ctx.connectionId!, `EXPLAIN ${params.sql as string}`),
+        )
         return { success: true, data: result.rows, display: `Execution plan (${result.rows.length} step(s))` }
       }
     },

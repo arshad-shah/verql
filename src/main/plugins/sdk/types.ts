@@ -306,6 +306,12 @@ export interface ConnectionAccess {
   getActiveConnectionId(): string | null
   getProfile(connectionId: string): ConnectionProfile | null
   query(connectionId: string, sql: string, params?: unknown[]): Promise<QueryResult>
+  /**
+   * Best-effort cancel of any query currently running on the given connection.
+   * Drivers that don't expose cancellation are no-ops. Safe to call when no
+   * query is in flight.
+   */
+  cancelQuery(connectionId: string): void
   onActiveConnectionChanged(listener: (id: string | null) => void): Disposable
 }
 

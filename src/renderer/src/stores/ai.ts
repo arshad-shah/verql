@@ -408,11 +408,45 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   abort: async () => {
-    const { currentStreamId } = get()
+    const { currentStreamId, messages, pendingApproval } = get()
     if (currentStreamId) {
       await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_ABORT, currentStreamId)
     }
-    set({ isStreaming: false, isAwaitingResponse: false, streamingContent: '', currentStreamId: null })
+
+    // Reconcile any tool calls that were mid-flight. Without this, ToolCallCard
+    // shows a spinner forever (it watches for a `tool` message keyed by the
+    // call id and never finds one when the stream was killed before the
+    // tool-result event landed).
+    const settledIds = new Set(messages.filter((m) => m.role === 'tool' && m.toolCallId).map((m) => m.toolCallId!))
+    const cancelMsgs: AIChatMessage[] = []
+    for (const m of messages) {
+      if (!m.toolCalls?.length) continue
+      for (const call of m.toolCalls) {
+        if (!settledIds.has(call.id)) {
+          cancelMsgs.push({
+            id: crypto.randomUUID(),
+            role: 'tool',
+            content: 'Cancelled',
+            toolCallId: call.id,
+            timestamp: Date.now(),
+          })
+        }
+      }
+    }
+    // Resolve any open approval prompt with "rejected" so it doesn't hang the
+    // chat-loop in the plugin (waitForApproval would otherwise sit forever).
+    if (pendingApproval) {
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_APPROVAL_RESPONSE, pendingApproval.requestId, false)
+    }
+
+    set((s) => ({
+      isStreaming: false,
+      isAwaitingResponse: false,
+      streamingContent: '',
+      currentStreamId: null,
+      pendingApproval: null,
+      messages: cancelMsgs.length > 0 ? [...s.messages, ...cancelMsgs] : s.messages,
+    }))
   },
 
   loadProviders: async () => {
