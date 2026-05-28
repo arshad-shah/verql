@@ -14,6 +14,17 @@ interface CallOptions {
   stopSequences?: string[]
 }
 
+const EXPLAIN_SYSTEM_PROMPT = `You are a data-analysis function. Your output is rendered as Markdown in a small UI panel inside a database client.
+
+Given a query and a sample of its results, produce a concise explanation:
+- One sentence on what the query does.
+- One to three sentences on notable patterns, distributions, or anomalies in the returned data.
+- If the result set is empty or suspicious, say so.
+
+Keep the total response under 120 words. You may use light Markdown — short \`code\` spans for identifiers and triple-backtick fenced blocks for SQL when truly useful. Do not use headings or bullet lists.
+
+Do not reproduce the query. Do not suggest alternative queries. Do not offer to help further.`
+
 async function callProvider(
   deps: EnhancementDeps,
   systemPrompt: string,
@@ -130,18 +141,7 @@ ${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}`
       return completeQuery(request)
     },
 
-    explainResults: async (request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }): Promise<{ explanation: string }> => {
-      const systemPrompt = `You are a data-analysis function. Your output is rendered as plain text in a small UI panel inside a database client.
-
-Given a query and a sample of its results, produce a concise explanation:
-- One sentence on what the query does.
-- One to three sentences on notable patterns, distributions, or anomalies in the returned data.
-- If the result set is empty or suspicious, say so.
-
-Keep the total response under 100 words. Write in plain text — no markdown, no bold, no code fences, no bullet points.
-
-Do not reproduce the query. Do not suggest alternative queries. Do not offer to help further.`
-
+    explainResults: async (request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }): Promise<{ explanation: string; model: string; durationMs: number }> => {
       const sampleData = request.sampleRows.slice(0, 5)
       const userPrompt = `Query: ${request.sql}
 
@@ -150,11 +150,13 @@ Total rows: ${request.rowCount}
 Sample data (first ${sampleData.length} rows):
 ${JSON.stringify(sampleData, null, 2)}`
 
-      const explanation = await callProvider(deps, systemPrompt, userPrompt, {
+      const startedAt = Date.now()
+      const explanation = await callProvider(deps, EXPLAIN_SYSTEM_PROMPT, userPrompt, {
         temperature: 0.3,
-        maxTokens: 300
+        maxTokens: 400
       })
-      return { explanation }
+      const model = deps.providerRegistry.getActiveModel() ?? 'unknown'
+      return { explanation, model, durationMs: Date.now() - startedAt }
     }
   }
 }

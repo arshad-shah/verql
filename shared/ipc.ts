@@ -421,7 +421,7 @@ export interface IpcChannelMap {
   }
   'ai:explain-results': {
     args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
-    return: { explanation: string }
+    return: { explanation: string; model: string; durationMs: number }
   }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
