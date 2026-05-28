@@ -6,7 +6,9 @@ export type InlineAIState = 'idle' | 'thinking' | 'ready'
 
 type Listener = (s: InlineAIState) => void
 
-const DEBOUNCE_MS = 350
+const AUTO_DEBOUNCE_MS = 700
+const EXPLICIT_DEBOUNCE_MS = 60
+const INTENT_DEBOUNCE_MS = 250
 const MIN_TRIGGER_CHARS = 3
 
 let currentConnectionId: string | null = null
@@ -168,19 +170,20 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
       const charAfter = after[0] ?? ''
       if (/[a-z0-9_]/i.test(charBefore) && /[a-z0-9_]/i.test(charAfter)) return { items: [] }
 
-      // Auto-trigger gating: every keystroke calls this provider with
-      // triggerKind=Automatic (0). To avoid burning tokens on every
-      // edit we only proceed automatically when the buffer carries a
-      // strong intent signal — a comment line followed by newline (the
-      // user just finished writing what they want). For all other
-      // automatic calls we wait for an Explicit trigger (Cmd+\ binds
-      // editor.action.inlineSuggest.trigger; Tab on a previously-shown
-      // suggestion also counts as an explicit re-trigger).
+      // Debounce by trigger source so we don't burn tokens on every
+      // keystroke, but still feel responsive:
+      //   - Explicit (Cmd+\)      → fire almost immediately (60ms).
+      //   - Comment-intent in     → fire after a short pause (250ms);
+      //     the user just told us what they want.
+      //   - Anything else         → fire after a long pause (700ms);
+      //     only when the user has actually stopped typing.
       // triggerKind values: Automatic = 0, Explicit = 1.
       const triggerKind = (context as unknown as { triggerKind?: number }).triggerKind ?? 0
-      if (triggerKind === 0 && !endsWithCommentIntent(before)) {
-        return { items: [] }
-      }
+      const delay = triggerKind === 1
+        ? EXPLICIT_DEBOUNCE_MS
+        : endsWithCommentIntent(before)
+          ? INTENT_DEBOUNCE_MS
+          : AUTO_DEBOUNCE_MS
 
       return new Promise((resolve) => {
         pending = { resolve, token }
@@ -230,7 +233,7 @@ export function registerAIInlineCompletionProvider(monaco: Monaco, language: str
             pending = null
             resolve({ items: [] })
           }
-        }, DEBOUNCE_MS)
+        }, delay)
       })
     },
     freeInlineCompletions: () => { setState('idle') },
