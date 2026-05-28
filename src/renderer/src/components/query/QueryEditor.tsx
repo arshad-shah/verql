@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAIInlineSuggest } from '@/hooks/useAIInlineSuggest'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import { registerCompletionProvider, registerQueryFormattingProvider, updateCompletionItems } from '@/lib/monaco-sql'
@@ -148,6 +149,15 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
         run: () => onSave()
       })
     }
+    if (language === 'sql') {
+      actions.push({
+        id: 'ai-inline-trigger',
+        label: 'Trigger AI Suggestion',
+        bindingId: 'ai-inline-trigger',
+        fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Backslash,
+        run: () => editorInstance.trigger('verql', 'editor.action.inlineSuggest.trigger', null),
+      })
+    }
 
     const disposables = actions.map((a) => {
       const binding = keybindings.find((k) => k.id === a.bindingId)
@@ -158,7 +168,9 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
     })
 
     return () => { for (const d of disposables) d.dispose() }
-  }, [editorInstance, monacoInstance, keybindings, onExecute, onSave])
+  }, [editorInstance, monacoInstance, keybindings, onExecute, onSave, language])
+
+  useAIInlineSuggest(language === 'sql' ? editorInstance : null)
 
   useEffect(() => {
     setAICompletionContext(connectionId && connectedIds.has(connectionId) ? connectionId : null)
