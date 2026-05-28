@@ -36,6 +36,36 @@ describe('AnthropicProvider', () => {
     expect(models).toEqual([])
   })
 
+  it('attaches cache_control to system prompt and last tool', async () => {
+    let captured: { system?: unknown; tools?: unknown[] } = {}
+    vi.spyOn(globalThis, 'fetch').mockImplementationOnce(async (_url, init) => {
+      captured = JSON.parse((init as RequestInit).body as string)
+      // Minimal SSE stream that ends immediately.
+      const body = 'data: {"type":"message_stop"}\n\n'
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } })
+    })
+    const provider = new AnthropicProvider(() => 'test-key')
+    for await (const _ of provider.chat({
+      model: 'claude-sonnet-4-6',
+      messages: [
+        { id: 's', role: 'system', content: 'You are helpful.', timestamp: 0 },
+        { id: 'u', role: 'user', content: 'hi', timestamp: 0 },
+      ],
+      tools: [
+        { name: 'a', description: 'A', parameters: { type: 'object' } },
+        { name: 'b', description: 'B', parameters: { type: 'object' } },
+      ],
+    })) { /* drain */ }
+
+    expect(captured.system).toEqual([
+      { type: 'text', text: 'You are helpful.', cache_control: { type: 'ephemeral' } },
+    ])
+    const tools = captured.tools as Array<Record<string, unknown>>
+    expect(tools).toHaveLength(2)
+    expect(tools[0].cache_control).toBeUndefined()
+    expect(tools[1].cache_control).toEqual({ type: 'ephemeral' })
+  })
+
   it('throws when no API key', async () => {
     const provider = new AnthropicProvider(() => null)
     await expect(async () => {
