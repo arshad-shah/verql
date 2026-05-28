@@ -210,6 +210,11 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
     padding: { top: 8, bottom: 8 },
     suggestOnTriggerCharacters: true,
     quickSuggestions: true,
+    // Hide Monaco's built-in inline-suggest toolbar (the "Accept | Reject"
+    // chip Monaco floats next to ghost text). Verql renders its own with
+    // design-system primitives in useAIInlineSuggest — having both stacked
+    // shows two competing toolbars.
+    inlineSuggest: { enabled: true, showToolbar: 'never' },
     // Explicit: SQL editors render "Run / Explain" statement-gutter overlay above each
     // statement. The default is true, but we set it so a user who customises
     // editor options later can't accidentally hide the inline run buttons.
