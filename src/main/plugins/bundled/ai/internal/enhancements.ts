@@ -1,6 +1,12 @@
 import type { AIProviderRegistry } from './provider-registry'
 import type { AIChatMessage } from '@shared/ai-types'
 import type { ConversationManager } from './conversation-manager'
+import {
+  buildExplainPrompt,
+  buildGenerateQueryPrompt,
+  buildInlineCompletePrompt,
+  buildSummarizePrompt,
+} from '../prompts'
 
 interface EnhancementDeps {
   providerRegistry: AIProviderRegistry
@@ -14,16 +20,13 @@ interface CallOptions {
   stopSequences?: string[]
 }
 
-const EXPLAIN_SYSTEM_PROMPT = `You are a data-analysis function. Your output is rendered as Markdown in a small UI panel inside a database client.
-
-Given a query and a sample of its results, produce a concise explanation:
-- One sentence on what the query does.
-- One to three sentences on notable patterns, distributions, or anomalies in the returned data.
-- If the result set is empty or suspicious, say so.
-
-Keep the total response under 120 words. You may use light Markdown — short \`code\` spans for identifiers and triple-backtick fenced blocks for SQL when truly useful. Do not use headings or bullet lists.
-
-Do not reproduce the query. Do not suggest alternative queries. Do not offer to help further.`
+// Prompt templates live in `../prompts/*.md`. We compile them once at
+// module load — `buildExplainPrompt()` / `buildSummarizePrompt()` take no
+// args, so caching the result avoids re-running the placeholder pass on
+// every call. The dynamic ones (`generate`/`complete`) accept the schema
+// context as a parameter and are rebuilt per request.
+const EXPLAIN_SYSTEM_PROMPT = buildExplainPrompt()
+const SUMMARIZE_SYSTEM_PROMPT = buildSummarizePrompt()
 
 async function callProvider(
   deps: EnhancementDeps,
@@ -179,19 +182,7 @@ export function createAIEnhancements(deps: EnhancementDeps) {
   async function generateQuery(request: { prompt: string; connectionId: string; schema?: string }): Promise<{ query: string }> {
     const ctx = await getDbContext(deps, request.connectionId)
 
-    const systemPrompt = `You are a query-generation function behind an API endpoint. Your response body is piped directly into the database driver — any character that is not part of a valid query will cause a fatal parse error.
-
-Rules:
-- Emit exactly one query
-- No markdown, no backticks, no prose, no prefixes, no commentary
-- Do not second-guess, revise, or emit multiple attempts
-- If ambiguous, pick the most likely interpretation and emit one query
-- Use the exact format expected by the connected database
-
-${ctx.schema ? `Database schema:\n${ctx.schema}` : ''}
-${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}
-
-Use exact table and column names from the schema. Prefer read-only unless mutation is explicitly requested.`
+    const systemPrompt = buildGenerateQueryPrompt({ schema: ctx.schema, queryFormat: ctx.queryFormat })
 
     const query = await callProvider(deps, systemPrompt, request.prompt, {
       temperature: 0,
@@ -206,60 +197,7 @@ Use exact table and column names from the schema. Prefer read-only unless mutati
     const before = request.sql.slice(0, request.cursorOffset)
     const after = request.sql.slice(request.cursorOffset)
 
-    const systemPrompt = `You are an inline SQL completion function embedded in a code editor (think GitHub Copilot for SQL). Your output is INSERTED VERBATIM at the cursor — every character you emit appears in the user's file. You are NOT in a conversation. The human never sees your text as prose.
-
-INPUT FORMAT
-The user message is the buffer with a single | marking the cursor position. There is nothing before or after that buffer.
-
-OUTPUT FORMAT
-Respond with exactly one of:
-  (a) The SQL fragment that belongs at the cursor, with no quoting, no markdown, no surrounding whitespace beyond what is meaningful inside the fragment.
-  (b) Zero characters — a completely empty response — if no useful SQL completion exists. Do NOT explain why; do NOT emit a placeholder like a single space or a parenthesised note; do NOT emit a fenced empty code block. Silence means "no suggestion" and is the correct answer.
-
-The request being non-SQL (e.g. "give me a react component"), schema not matching, or the cursor being in a hopeless spot are all cases where (b) — silence — is the right answer.
-
-DECISION RULES
-1. If the cursor is inside a string literal ('...' or "..."), inside a line comment (-- ...) that has not yet ended, or inside an unterminated block comment (/* ... */), return empty.
-2. If the buffer ends with a line comment describing intent (-- show top 10 users by signup), generate the SQL that implements that intent and starts on the next line.
-3. If the cursor is mid-token (inside an identifier or keyword without a trailing space), complete that token only — do NOT add a leading space or new keyword.
-4. If the buffer is already a complete, syntactically valid statement and there is no comment-intent to act on, return empty. Do not invent new statements.
-5. Match the dialect implied by the schema below (case, quoting, function names). Default to ANSI SQL when unclear.
-6. Output at most one statement. Do NOT add a trailing semicolon unless the statement actually ends inside your fragment.
-7. Never repeat text that already appears immediately before or after the cursor.
-
-FORBIDDEN
-- Prose, explanations, apologies, or the strings "the query", "this query", "I", "sorry", "let me", "here is".
-- Markdown fences, backticks, code blocks.
-- Wrapping the answer in quotes.
-- Multiple statements separated by extra blank lines.
-
-EXAMPLES (| marks the cursor; → is what you reply)
-
-  -- top 10 users by signup date
-  |
-  → SELECT * FROM users ORDER BY created_at DESC LIMIT 10
-
-  SELECT id, name
-  FROM users
-  WHERE |
-  → active = true
-
-  -- count orders per status
-  SELECT |
-  → status, COUNT(*) FROM orders GROUP BY status
-
-  SELECT * FROM ord|
-  → ers
-
-  SELECT * FROM users;
-  |
-  → (empty — buffer is complete, no comment intent)
-
-  SELECT 'hello |world' FROM dual
-  → (empty — cursor is inside a string)
-
-${ctx.schema ? `\nDATABASE SCHEMA:\n${ctx.schema}` : ''}
-${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}`
+    const systemPrompt = buildInlineCompletePrompt({ schema: ctx.schema, queryFormat: ctx.queryFormat })
 
     const completion = await callProvider(deps, systemPrompt, `${before}|${after}`, {
       temperature: 0,
@@ -325,22 +263,12 @@ ${JSON.stringify(sampleData, null, 2)}`
     },
 
     summarizeConversation: async (messages: AIChatMessage[]): Promise<{ summary: string }> => {
-      const systemPrompt = `You are summarizing a conversation between a user and an AI database assistant. Produce a compact summary (under 200 words) that future turns can rely on instead of the full history.
-
-Capture:
-- The user's overall goal in this conversation.
-- Key identifiers, table/column names, and decisions established.
-- Important facts the assistant has been told or has discovered (schema details, prior query results, constraints).
-- The current state of work — what was last done, what's pending.
-
-Omit pleasantries and turn-by-turn play-by-play. Write in third person ("The user asked…", "The assistant identified…"). Output plain prose, no headings, no bullet lists.`
-
       const transcript = messages
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
         .join('\n\n')
 
-      const summary = await callProvider(deps, systemPrompt, transcript, {
+      const summary = await callProvider(deps, SUMMARIZE_SYSTEM_PROMPT, transcript, {
         temperature: 0.2,
         maxTokens: 500,
       })
