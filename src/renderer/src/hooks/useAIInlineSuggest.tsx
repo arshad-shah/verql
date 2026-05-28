@@ -80,10 +80,10 @@ function Pill({ state, model }: { state: InlineAIState; model: string }) {
   const thinking = state === 'thinking'
   return (
     <div
-      className={`verql-ai-pill m-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] backdrop-blur-sm shadow-sm transition-all duration-200 ${
+      className={`verql-ai-pill m-2 inline-flex items-center gap-2 rounded-full border bg-bg-elevated px-2.5 py-1 text-[11px] shadow-md transition-all duration-200 ${
         thinking
-          ? 'border-accent/30 bg-accent/10 text-accent'
-          : 'border-success/30 bg-success/10 text-success'
+          ? 'border-accent text-accent'
+          : 'border-success text-success'
       }`}
       style={{ animation: 'verql-ai-pill-in 180ms ease-out' }}
     >
@@ -91,7 +91,7 @@ function Pill({ state, model }: { state: InlineAIState; model: string }) {
         ? <Loader2 size={11} className="animate-spin" />
         : <Sparkles size={11} />}
       <span className="font-medium">{model}</span>
-      <span className="opacity-70">·</span>
+      <span className="text-text-muted">·</span>
       <Kbd size="sm">{thinking ? 'Esc' : 'Tab'}</Kbd>
       <style>{`
         @keyframes verql-ai-pill-in {
