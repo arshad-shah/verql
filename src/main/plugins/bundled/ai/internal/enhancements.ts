@@ -116,6 +116,13 @@ function sanitizeCompletion(raw: string): string {
   const trimmed = s.trim()
   if (!trimmed) return ''
   if (!/[a-z0-9_]/i.test(trimmed)) return ''
+  // The model should emit SQL that goes BELOW a comment-intent, never echo
+  // the comment back. A leading `--` is almost always a refusal-echo of
+  // what the user already typed.
+  if (trimmed.startsWith('--')) return ''
+  // A response made of only comments is the same problem — drop it.
+  const nonComment = trimmed.split('\n').filter(l => l.trim() && !l.trim().startsWith('--'))
+  if (nonComment.length === 0) return ''
 
   const lower = trimmed.toLowerCase()
 
