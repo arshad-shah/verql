@@ -21,7 +21,6 @@ interface Props {
 
 interface ZoneEntry {
   zoneId: string
-  widgetId: string
   containerEl: HTMLDivElement
   stmt: Statement
 }
@@ -49,18 +48,18 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
       editor.changeViewZones((accessor) => {
         for (const e of entriesRef.current) {
           accessor.removeZone(e.zoneId)
-          editor.removeContentWidget({
-            getId: () => e.widgetId,
-            getDomNode: () => e.containerEl,
-            getPosition: () => null,
-          })
         }
         entriesRef.current = []
 
         for (const stmt of stmts) {
+          // The view zone owns its domNode — Monaco renders it inline at the
+          // requested line. React portals into containerEl below; we never
+          // call addContentWidget (that would re-parent the DOM away from
+          // the zone into Monaco's overlay layer and the zone would render
+          // blank). The portal mounts inside the zone's own DOM, so the
+          // buttons land in the right place automatically.
           const containerEl = document.createElement('div')
-          containerEl.className = 'verql-stmt-gutter flex items-center gap-1 px-2 h-[24px] text-xs'
-          const widgetId = `verql.stmt-widget.${stmt.startLine}.${stmt.startColumn}`
+          containerEl.className = 'verql-stmt-gutter flex items-center gap-1 px-2 h-[24px] text-xs pointer-events-auto'
           const domNode = document.createElement('div')
           domNode.style.width = '100%'
           domNode.appendChild(containerEl)
@@ -71,13 +70,7 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
             domNode,
           })
 
-          editor.addContentWidget({
-            getId: () => widgetId,
-            getDomNode: () => containerEl,
-            getPosition: () => null,
-          })
-
-          entriesRef.current.push({ zoneId, widgetId, containerEl, stmt })
+          entriesRef.current.push({ zoneId, containerEl, stmt })
         }
       })
 
@@ -97,11 +90,6 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
       editor.changeViewZones((accessor) => {
         for (const e of entriesRef.current) {
           accessor.removeZone(e.zoneId)
-          editor.removeContentWidget({
-            getId: () => e.widgetId,
-            getDomNode: () => e.containerEl,
-            getPosition: () => null,
-          })
         }
         entriesRef.current = []
       })
@@ -117,14 +105,14 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
       {entriesRef.current.map((entry) =>
         createPortal(
           <GutterRow
-            key={entry.widgetId}
             stmt={entry.stmt}
             actions={contribution.lensActions}
             tabId={tabId}
             connectionId={connectionId}
             dbType={dbType}
           />,
-          entry.containerEl
+          entry.containerEl,
+          entry.zoneId
         )
       )}
     </>

@@ -21,7 +21,7 @@ export const Default: Story = {
         <div style={{ padding: 12, minWidth: 200, color: 'var(--color-text-primary)' }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Popover title</div>
           <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-            Popover body content. Uses the native Popover API.
+            Popover body content. Click outside or press Escape to close.
           </div>
         </div>
       }
