@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- [#72](https://github.com/arshad-shah/verql/pull/72) [`3855e81`](https://github.com/arshad-shah/verql/commit/3855e81d0880f64fceb15d6f52f9aa464435b8bc) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Expand what the AI assistant can do in the app. The App-Action registry now ships
+  built-in actions for the full capability roadmap, each usable as a clickable chip or
+  run directly by the assistant:
+
+  - **Connections** — connect, disconnect, and switch the active connection by name or id.
+  - **Schema authoring** — scaffold `CREATE TABLE`/migration SQL into a new query tab (never auto-run).
+  - **Results** — export the current results to CSV/JSON, or open a chart of them.
+  - **Navigation** — reveal a table (or column) in the explorer, open a saved query, and open the ER diagram with a table selected.
+  - **Editor assist** — insert SQL at the cursor or replace the current selection in the active editor.
+  - **Plugins** — open the plugin install screen (and settings categories, including plugins).
+  - **Diagnostics** — the assistant now sees recent errors/warnings and can summarize them and open the notifications panel.
+
+- [#71](https://github.com/arshad-shah/verql/pull/71) [`a94b1f3`](https://github.com/arshad-shah/verql/commit/a94b1f39b9e821325958a23b1f54245b43f2d03a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Enhance the AI chat and surrounding workflow:
+
+  - **Active connection fix** — the assistant now uses the connection you have active in the UI (previously it had no connection and its query/schema tools silently failed).
+  - **Refined message bubbles** — avatar-anchored, adaptive width so tables and code never truncate, copy/retry actions, and a suggestion empty state.
+  - **Deeper app integration** — the assistant can link you to the right place (e.g. "Add a Connection", "Open ER Diagram") via clickable action chips, and can navigate the app directly through an extensible App-Action registry that plugins can contribute to. The assistant knows your saved connections, so it sends you to the connections list for an existing one and the form only for a new one. Agentic actions report real success/failure back to the chat.
+  - **Cheapest model by default** — when a provider is active or you switch vendors, the cheapest model for that vendor is selected by default (you can still pick another).
+  - **Connections panel** — row actions moved into an overflow menu, with a new Delete action (confirmed via a dialog).
+
+- [#72](https://github.com/arshad-shah/verql/pull/72) [`3855e81`](https://github.com/arshad-shah/verql/commit/3855e81d0880f64fceb15d6f52f9aa464435b8bc) Thanks [@arshad-shah](https://github.com/arshad-shah)! - AI chat now keeps a history of conversations and runs leaner:
+
+  - **Conversations** — your chats are saved and listed in a switcher at the top of the AI panel. Start a new chat, rename or delete old ones, and pick up any conversation where you left off (they persist across restarts).
+  - **Branching** — fork a new conversation from any message to explore an alternative direction without losing the original thread.
+  - **More efficient context** — long conversations no longer send an ever-growing transcript to the model on every turn. The request is trimmed to a token budget (keeping the most recent context), which keeps responses fast and costs down.
+
+- [#73](https://github.com/arshad-shah/verql/pull/73) [`3dc6718`](https://github.com/arshad-shah/verql/commit/3dc6718953906907e4db48b21d18cf44b0974c8f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Editor AI redesign: replace the CodeLens "Run / Explain" bar with a custom
+  statement gutter (lucide icons + per-statement status chip); add an
+  Accept/Reject toolbar and status pill to inline AI ghost-text; rebuild the
+  Explain-results panel with Markdown, streaming, Copy/Regenerate/Ask-follow-up
+  actions. No ASCII glyphs remain in the touched surfaces.
+
+- [#72](https://github.com/arshad-shah/verql/pull/72) [`3855e81`](https://github.com/arshad-shah/verql/commit/3855e81d0880f64fceb15d6f52f9aa464435b8bc) Thanks [@arshad-shah](https://github.com/arshad-shah)! - SQL formatting, in-app help, and docs:
+
+  - **Format query** — the editor can now pretty-print the buffer ("Format Document" / Shift+Alt+F, or ask the assistant to "format this"). Formatting is plugin-owned and keyed by editor language: SQL drivers (PostgreSQL, MySQL, SQLite, Snowflake) contribute dialect formatters backed by `sql-formatter`, MongoDB pretty-prints its JSON, and Redis tidies its command buffer. New database plugins can contribute a formatter for their own query language via the new `formatters` contribution surface.
+  - **Help menu** — a native Help menu links to the documentation and issue tracker, and the About panel shows the version (macOS/Linux).
+  - **Docs** — added `docs/architecture.md` and `docs/ai.md`, documented the formatter surface in `docs/plugins.md`, and refreshed `CLAUDE.md` with a docs-first workflow and the glue↔plugin ownership boundary.
+
+### Patch Changes
+
+- [#73](https://github.com/arshad-shah/verql/pull/73) [`3dc6718`](https://github.com/arshad-shah/verql/commit/3dc6718953906907e4db48b21d18cf44b0974c8f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Bump the `uuid` transitive (via snowflake-sdk) to `>=11.1.1` to resolve
+  GHSA-w5hq-g745-h8pq (missing buffer bounds check in v3/v5/v6). Our usage path
+  through snowflake-sdk only touches v4, but the audit gate flagged it; the
+  override moves us to a maintained line.
+
+- [#73](https://github.com/arshad-shah/verql/pull/73) [`3dc6718`](https://github.com/arshad-shah/verql/commit/3dc6718953906907e4db48b21d18cf44b0974c8f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Trim the AI system prompt: drop verbose rule restatements, send only table
+  names (instead of full column schemas) with a hint to call describe_table on
+  demand, compact the App-Action catalog to `id "Title"` pairs, omit the active
+  connection from the "saved connections" list, and cap recent notifications at
+  three titles. Cuts per-turn prompt size by ~2-5k tokens on typical workspaces.
+
 ## 0.9.0
 
 ### Minor Changes
