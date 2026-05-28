@@ -15,16 +15,48 @@ export class OllamaProvider implements AIProvider {
       const response = await fetch(`${this.endpoint}/api/tags`)
       if (!response.ok) return []
       const data = (await response.json()) as { models?: Array<{ name: string; details?: { parameter_size?: string } }> }
-      return (data.models ?? []).map((m) => ({
-        id: m.name,
-        name: m.name,
-        contextWindow: 8192,
-        capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
-        // Local models run free, so they're always the cheapest option.
-        costTier: 0,
+      const tags = data.models ?? []
+      // Ollama exposes context length per model via /api/show in model_info
+      // under a vendor-specific key ending in `.context_length`. Fan out in
+      // parallel; fall back to 8k when /api/show fails or the field is missing
+      // (some custom modelfiles omit it).
+      const enriched = await Promise.all(tags.map(async (m) => {
+        const contextWindow = await this.fetchContextLength(m.name)
+        return {
+          id: m.name,
+          name: m.name,
+          contextWindow,
+          capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
+          // Local models run free, so they're always the cheapest option.
+          costTier: 0,
+        }
       }))
+      return enriched
     } catch {
       return []
+    }
+  }
+
+  private async fetchContextLength(name: string): Promise<number> {
+    try {
+      const response = await fetch(`${this.endpoint}/api/show`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: name }),
+      })
+      if (!response.ok) return 8192
+      const data = (await response.json()) as { model_info?: Record<string, unknown> }
+      const info = data.model_info ?? {}
+      // Vendor prefix varies (llama.context_length, qwen2.context_length, …).
+      // Pick the first numeric *.context_length entry.
+      for (const [key, value] of Object.entries(info)) {
+        if (key.endsWith('.context_length') && typeof value === 'number' && value > 0) {
+          return value
+        }
+      }
+      return 8192
+    } catch {
+      return 8192
     }
   }
 

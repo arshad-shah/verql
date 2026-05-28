@@ -14,6 +14,24 @@ function openaiCostTier(modelId: string): number {
   return 2
 }
 
+/**
+ * Context window per OpenAI model. The /v1/models endpoint doesn't return
+ * this. Pattern-match on the id:
+ *   - gpt-4.1 family — 1,047,576 tokens (advertised as 1M).
+ *   - o3 family       — 200k tokens.
+ *   - o1 family       — 128k tokens.
+ *   - gpt-4o / 4-turbo / 4o-mini / gpt-4.5 — 128k tokens.
+ * Default falls back to 128k for unknown / future ids.
+ */
+function openaiContextWindow(modelId: string): number {
+  const id = modelId.toLowerCase()
+  if (id.startsWith('gpt-4.1')) return 1_047_576
+  if (id.startsWith('o3')) return 200_000
+  if (id.startsWith('o1')) return 128_000
+  if (id.startsWith('gpt-5')) return 400_000
+  return 128_000
+}
+
 interface OpenAIModel {
   id: string
   object: string
@@ -52,7 +70,7 @@ export class OpenAIProvider implements AIProvider {
         .map(m => ({
           id: m.id,
           name: m.id,
-          contextWindow: 128000,
+          contextWindow: openaiContextWindow(m.id),
           capabilities: ['chat', 'tool-calling'] as ('chat' | 'tool-calling')[],
           costTier: openaiCostTier(m.id),
         }))

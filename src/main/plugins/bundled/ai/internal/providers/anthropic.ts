@@ -27,6 +27,24 @@ function anthropicCostTier(modelId: string): number {
   return 1
 }
 
+/**
+ * Context window per Anthropic model. The /v1/models endpoint doesn't return
+ * this, so we pattern-match the id. Opus 4.5+ and Sonnet 4.5+ ship with a
+ * 1M-token window; everything else in the Claude 4 family is 200k.
+ * Default falls back to 200k for unknown / future ids.
+ */
+function anthropicContextWindow(modelId: string): number {
+  const id = modelId.toLowerCase()
+  const ONE_MILLION = 1_000_000
+  const TWO_HUNDRED_K = 200_000
+  // Opus 4.5 and later — wide-context tier.
+  if (/claude-opus-4-([5-9]|\d{2})/.test(id)) return ONE_MILLION
+  // Sonnet 4.5 and later — wide-context tier.
+  if (/claude-sonnet-4-([5-9]|\d{2})/.test(id)) return ONE_MILLION
+  // All other Claude 4 / 3.x models.
+  return TWO_HUNDRED_K
+}
+
 interface AnthropicModel {
   id: string
   display_name: string
@@ -127,7 +145,7 @@ export class AnthropicProvider implements AIProvider {
           allModels.push({
             id: m.id,
             name: m.display_name,
-            contextWindow: 200000,
+            contextWindow: anthropicContextWindow(m.id),
             capabilities: ['chat', 'tool-calling'],
             costTier: anthropicCostTier(m.id),
           })
