@@ -40,27 +40,30 @@ export function NLInputBar({ connectionId, schema, onSqlGenerated }: Props) {
     }
   }, [handleGenerate])
 
-  if (!connectionId) return null
+  const disabled = !connectionId || loading
+  const placeholder = connectionId
+    ? 'Describe what you want to query in plain English…'
+    : 'Connect to a database to generate SQL from plain English'
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-bg-secondary shrink-0">
-      <Sparkles size={14} className="text-accent shrink-0" />
+    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border-default bg-bg-secondary shrink-0">
+      <Sparkles size={14} className={connectionId ? 'text-accent shrink-0' : 'text-text-muted shrink-0'} />
       <input
         type="text"
         value={prompt}
         onChange={e => setPrompt(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Describe what you want to query in plain English..."
-        disabled={loading}
-        className="flex-1 bg-bg-primary border border-border rounded-md px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+        placeholder={placeholder}
+        disabled={disabled}
+        className="flex-1 bg-bg-primary border border-border-default rounded-md px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
       />
       <button
         onClick={handleGenerate}
-        disabled={!prompt.trim() || loading}
-        className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+        disabled={disabled || !prompt.trim()}
+        className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
       >
-        {loading ? <Loader2 size={14} className="animate-spin" /> : null}
-        {loading ? 'Generating...' : 'Generate'}
+        {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+        {loading ? 'Generating…' : 'Generate'}
       </button>
     </div>
   )
