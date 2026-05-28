@@ -14,12 +14,17 @@ export function SessionInfo() {
   const messages = useAIStore(s => s.messages)
   const activeProvider = useAIStore(s => s.activeProvider)
   const activeModel = useAIStore(s => s.activeModel)
+  const models = useAIStore(s => s.models)
   const stats = useAIStore(s => s.sessionStats)
 
   const userMsgCount = messages.filter(m => m.role === 'user').length
   const assistantMsgCount = messages.filter(m => m.role === 'assistant' && !m.toolCalls?.length).length
   const totalTokens = stats.totalInputTokens + stats.totalOutputTokens
   const hasTokens = totalTokens > 0
+  const contextWindow = models.find(m => m.id === activeModel)?.contextWindow ?? null
+  const ctxPct = contextWindow && contextWindow > 0
+    ? Math.min(100, Math.round((totalTokens / contextWindow) * 100))
+    : 0
 
   if (messages.length === 0) return null
 
@@ -97,6 +102,27 @@ export function SessionInfo() {
               <div className="flex justify-between text-[10px]">
                 <Text size="xs" color="secondary">Total tokens</Text>
                 <Text size="xs" weight="medium">{formatTokens(totalTokens)}</Text>
+              </div>
+            </>
+          )}
+
+          {/* Context window */}
+          {contextWindow != null && (
+            <>
+              <div className="h-px bg-[var(--color-border)] my-1" />
+              <div className="flex justify-between text-[10px]">
+                <Text size="xs" color="secondary">Context window</Text>
+                <Text size="xs">{formatTokens(totalTokens)} / {formatTokens(contextWindow)}</Text>
+              </div>
+              <div className="h-1 rounded bg-[var(--color-bg-tertiary)] overflow-hidden">
+                <div
+                  className={ctxPct >= 90 ? 'h-full bg-error' : ctxPct >= 70 ? 'h-full bg-warning' : 'h-full bg-accent'}
+                  style={{ width: `${ctxPct}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <Text size="xs" color="secondary">Remaining</Text>
+                <Text size="xs">{formatTokens(Math.max(0, contextWindow - totalTokens))}</Text>
               </div>
             </>
           )}

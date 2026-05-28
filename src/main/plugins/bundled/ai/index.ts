@@ -86,6 +86,9 @@ export function activate(ctx: PluginContext): void {
   ctx.ui.registerSlot('results.actions', [
     { id: 'ai-explain', type: 'host-component', componentId: 'ai-explain' }
   ])
+  ctx.ui.registerSlot('app.statusBar.right', [
+    { id: 'ai-status', type: 'host-component', componentId: 'ai-status' }
+  ])
 
   // 4. Commands that future renderer surfaces invoke via the command palette.
   ctx.commands.register('explain-table', async () => { /* renderer opens chat with context */ })
