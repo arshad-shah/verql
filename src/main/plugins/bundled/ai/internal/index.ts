@@ -104,18 +104,22 @@ export function startAIModule(deps: AIDeps): AIModule {
     })
   }
 
+  /**
+   * Cheap schema context: a comma-separated list of table names only. The
+   * model can ask for columns/types/keys via the describe_table tool when
+   * it actually needs them. A full schema dump cost 2-5k tokens every turn
+   * regardless of whether the user's question touched the schema; this
+   * keeps the prompt at ~50 tokens for most workspaces.
+   */
   const getSchemaContext = async (connectionId: string): Promise<string> => {
     try {
       const summary = await deps.schemaAccess.getSchemaSummary(connectionId)
-      return summary.tables.map((t: typeof summary.tables[number]) => {
-        const cols = t.columns.map((c: typeof t.columns[number]) => {
-          let desc = `${c.name} ${c.dataType}`
-          if (c.isPrimaryKey) desc += ' PK'
-          if (c.isForeignKey && c.references) desc += ` FK→${c.references.table}.${c.references.column}`
-          return desc
-        }).join(', ')
-        return `${t.name}(${cols})`
-      }).join('\n')
+      const names = summary.tables.map((t: typeof summary.tables[number]) => t.name)
+      if (names.length === 0) return ''
+      // Soft cap so very wide schemas don't blow the budget.
+      const head = names.slice(0, 200).join(', ')
+      const more = names.length > 200 ? ` (+${names.length - 200} more — call list_tables)` : ''
+      return `Tables in this database: ${head}${more}. Call describe_table for column details when you need them.`
     } catch {
       return ''
     }

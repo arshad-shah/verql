@@ -31,20 +31,15 @@ export class AppActionRegistry {
     await action.run(params)
   }
 
-  /** Catalog text appended to the AI system prompt. */
+  /**
+   * Catalog text appended to the AI system prompt. Compact: `id "Title"` —
+   * the description is dropped because the model never quotes it back and
+   * paying for it on every turn was the single biggest contributor to the
+   * AI system prompt's size.
+   */
   describeForPrompt(): string {
     if (this.actions.size === 0) return ''
-    const lines = this.list().map((a) => {
-      const params = a.params
-        ? Object.entries(a.params)
-            .map(([k, p]) => `${k}${p.required ? '' : '?'}`)
-            .join(', ')
-        : ''
-      // id is what goes in the verql://action/<id> href; title is the
-      // human label the AI must use as the visible link text.
-      return `- ${a.id}(${params}) [${a.kind}] — title "${a.title}": ${a.description}`
-    })
-    return lines.join('\n')
+    return this.list().map((a) => `${a.id} "${a.title}"`).join('\n')
   }
 
   onChange(cb: () => void): () => void {

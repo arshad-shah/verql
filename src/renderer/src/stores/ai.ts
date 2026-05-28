@@ -200,18 +200,26 @@ export const useAIStore = create<AIState>((set, get) => ({
 
     const appActionsCatalog = appActions.describeForPrompt()
     const { connections, connectedIds, activeConnectionId } = useConnectionsStore.getState()
-    const connectionsSummary = connections
-      .map((c) => {
-        const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
-        const active = c.id === activeConnectionId ? ', active' : ''
-        return `- ${c.name} (${c.type}) — ${state}${active} [id: ${c.id}]`
-      })
-      .join('\n')
+    // Send only the connections that aren't the active one — the active one
+    // is already named in connectionMeta. When there's only one connection
+    // we send nothing. Keeps the prompt small in the common single-connection
+    // workspace.
+    const others = connections.filter((c) => c.id !== activeConnectionId)
+    const connectionsSummary = others.length > 0
+      ? others
+          .map((c) => {
+            const state = connectedIds.has(c.id) ? 'connected' : 'not connected'
+            return `- ${c.name} (${c.type}) — ${state} [id: ${c.id}]`
+          })
+          .join('\n')
+      : ''
+    // Cap notifications at 3 (was 6) and drop the message body — title alone
+    // is usually enough for the AI to mention the latest error.
     const notificationsSummary = useNotificationsStore
       .getState()
       .notifications.filter((n) => n.type === 'error' || n.type === 'warning')
-      .slice(0, 6)
-      .map((n) => `- [${n.type}] ${n.title}${n.message ? `: ${n.message}` : ''}`)
+      .slice(0, 3)
+      .map((n) => `- [${n.type}] ${n.title}`)
       .join('\n')
     const result = await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_START, {
       message,
