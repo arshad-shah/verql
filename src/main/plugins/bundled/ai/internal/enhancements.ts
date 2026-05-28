@@ -92,34 +92,63 @@ async function callProviderStreaming(
 }
 
 /**
- * Refuse-style outputs from the model leak through occasionally even with a
- * strict prompt ("This query is already complete…", "I don't see what to
- * add…"). They never start with a SQL keyword or punctuation. Detect a few
- * common refusal openings and drop them — the editor shows no ghost text
- * rather than a sentence pretending to be SQL.
+ * Last-line defence against model outputs that violate the inline-completion
+ * contract. The model occasionally:
+ *   - wraps SQL in a markdown fence (with prose around it),
+ *   - emits refusal sentences ("This query is already complete…"),
+ *   - returns prose mixed with code,
+ *   - emits a junk prefix before a fence.
+ * We extract the first fenced block when present, then reject anything that
+ * still looks like English prose. The editor shows no ghost text rather than
+ * a sentence pretending to be SQL.
  */
 function sanitizeCompletion(raw: string): string {
-  const trimmed = raw.trim()
+  let s = raw
+  // If the response contains a fenced block anywhere, take only the FIRST
+  // block and discard everything else (prose before/after the fence).
+  const fence = s.match(/```(?:sql)?\s*\n?([\s\S]*?)\n?```/i)
+  if (fence) s = fence[1]
+  // Drop leftover stray backticks.
+  s = s.replace(/^`+|`+$/g, '')
+  // Drop any trailing comment that explains the SQL.
+  s = s.replace(/\n--[^\n]*$/g, '')
+
+  const trimmed = s.trim()
   if (!trimmed) return ''
+  if (!/[a-z0-9_]/i.test(trimmed)) return ''
+
   const lower = trimmed.toLowerCase()
-  const REFUSAL_PREFIXES = [
-    'this query',
-    'the query',
-    'there is nothing',
-    "there isn't",
-    'no completion',
-    'no meaningful',
-    "i don't",
-    'i cannot',
-    'i can’t',
-    'sorry',
-    'nothing to add',
-    'no further',
+
+  // Any of these markers anywhere → the model is talking, not coding.
+  const PROSE_MARKERS = [
+    'i cannot', 'i can’t', "i can't", 'i will not', "i won't",
+    'i would', 'i should', "i'm sorry", 'sorry', 'apolog',
+    'this query', 'the query is', 'the query already',
+    'there is nothing', 'there are no', "there isn't",
+    'no completion', 'no meaningful', 'nothing to add',
+    'sql query context', 'query context', 'database context',
+    "here's just", 'here is just', 'just the completion',
+    'as an ai', 'as a language model',
+    'note:', 'note that', 'note —', 'please ',
   ]
-  for (const prefix of REFUSAL_PREFIXES) {
-    if (lower.startsWith(prefix)) return ''
+  for (const marker of PROSE_MARKERS) {
+    if (lower.includes(marker)) return ''
   }
-  return trimmed
+
+  // Sentence-shape heuristic: ". X" where X is a capital letter looks like
+  // prose ("LIMIT 10. Here's the…"). SQL rarely has that pattern outside of
+  // strings, and we already filter those above.
+  if (/\.\s+[A-Z]/.test(s)) return ''
+
+  // Multi-line response where ≥2 lines look like prose (have spaces, end in
+  // period, lack SQL keywords) → drop.
+  const lines = s.split('\n').map(l => l.trim()).filter(Boolean)
+  const proseLines = lines.filter(l =>
+    l.length > 20 && /\s/.test(l) && !/(\bselect\b|\bfrom\b|\bwhere\b|\bjoin\b|\bgroup\b|\border\b|\binsert\b|\bupdate\b|\bdelete\b|\bcreate\b|\balter\b|\bdrop\b|\bwith\b|\bvalues\b|\bset\b|\bin\b|\band\b|\bor\b|\bon\b|\bas\b|\bcase\b|\bwhen\b|\bthen\b|\belse\b|\bend\b|\bunion\b|\blimit\b|\boffset\b|\bhaving\b|\bdistinct\b)/i.test(l)
+  )
+  if (proseLines.length >= 1 && lines.length > 1) return ''
+
+  return s
 }
 
 async function getDbContext(deps: EnhancementDeps, connectionId: string): Promise<{ schema: string; queryFormat: string }> {
@@ -167,17 +196,36 @@ Use exact table and column names from the schema. Prefer read-only unless mutati
     const before = request.sql.slice(0, request.cursorOffset)
     const after = request.sql.slice(request.cursorOffset)
 
-    const systemPrompt = `You are an inline query completion function embedded in a code editor. Your output is INSERTED VERBATIM at the cursor position. It is not shown to a human as prose, and you are not in a conversation.
+    const systemPrompt = `You are an inline SQL completion function embedded in a code editor (think GitHub Copilot for SQL). Your output is INSERTED VERBATIM at the cursor — every character you emit appears in the user's file. You are NOT in a conversation. The human never sees your text as prose.
 
-You receive a partial query with the cursor marked as |. Emit ONLY the SQL fragment that belongs at the cursor.
+INPUT FORMAT
+The user message is the buffer with a single | marking the cursor position. There is nothing before or after that buffer.
 
-Treat SQL line comments (lines starting with --) and block comments (/* … */) as user intent. When the cursor is right after a comment that describes what to do, generate the SQL that implements it.
+OUTPUT FORMAT
+Respond with exactly one of:
+  (a) The SQL fragment that belongs at the cursor, with no quoting, no markdown, no surrounding whitespace beyond what is meaningful inside the fragment.
+  (b) An empty string (zero characters) if no useful completion exists.
 
-Examples (the | marks the cursor; everything after the arrow is your response):
+DECISION RULES
+1. If the cursor is inside a string literal ('...' or "..."), inside a line comment (-- ...) that has not yet ended, or inside an unterminated block comment (/* ... */), return empty.
+2. If the buffer ends with a line comment describing intent (-- show top 10 users by signup), generate the SQL that implements that intent and starts on the next line.
+3. If the cursor is mid-token (inside an identifier or keyword without a trailing space), complete that token only — do NOT add a leading space or new keyword.
+4. If the buffer is already a complete, syntactically valid statement and there is no comment-intent to act on, return empty. Do not invent new statements.
+5. Match the dialect implied by the schema below (case, quoting, function names). Default to ANSI SQL when unclear.
+6. Output at most one statement. Do NOT add a trailing semicolon unless the statement actually ends inside your fragment.
+7. Never repeat text that already appears immediately before or after the cursor.
+
+FORBIDDEN
+- Prose, explanations, apologies, or the strings "the query", "this query", "I", "sorry", "let me", "here is".
+- Markdown fences, backticks, code blocks.
+- Wrapping the answer in quotes.
+- Multiple statements separated by extra blank lines.
+
+EXAMPLES (| marks the cursor; → is what you reply)
 
   -- top 10 users by signup date
   |
-  → SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
+  → SELECT * FROM users ORDER BY created_at DESC LIMIT 10
 
   SELECT id, name
   FROM users
@@ -186,15 +234,19 @@ Examples (the | marks the cursor; everything after the arrow is your response):
 
   -- count orders per status
   SELECT |
-  → status, COUNT(*) FROM orders GROUP BY status;
+  → status, COUNT(*) FROM orders GROUP BY status
 
-Hard rules:
-- Output is SQL only. NEVER write explanations, commentary, apologies, or the words "the query".
-- NEVER repeat text that already appears before or after the cursor.
-- NEVER rewrite the existing query.
-- If you cannot produce a useful SQL fragment, output a single space character and nothing else.
+  SELECT * FROM ord|
+  → ers
 
-${ctx.schema ? `Database schema:\n${ctx.schema}` : ''}
+  SELECT * FROM users;
+  |
+  → (empty — buffer is complete, no comment intent)
+
+  SELECT 'hello |world' FROM dual
+  → (empty — cursor is inside a string)
+
+${ctx.schema ? `\nDATABASE SCHEMA:\n${ctx.schema}` : ''}
 ${ctx.queryFormat ? `\n${ctx.queryFormat}` : ''}`
 
     const completion = await callProvider(deps, systemPrompt, `${before}|${after}`, {
