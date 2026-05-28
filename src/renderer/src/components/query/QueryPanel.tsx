@@ -101,7 +101,7 @@ export function QueryPanel({ tab }: Props) {
     // Only single-statement runs (e.g. statement gutter) carry an override.
     // We record per-statement status only in that case — multi-statement runs
     // from Cmd+Enter don't have a single hash.
-    const singleStmt = override?.trim() ? override.trim() : null
+    const singleStmt = override?.trim() || null
 
     setTabExecuting(tab.id, true)
     const startedAt = performance.now()
@@ -159,12 +159,9 @@ export function QueryPanel({ tab }: Props) {
         })
       }
     } catch (err) {
+      const durationMs = Math.round(performance.now() - startedAt)
       if (singleStmt) {
-        tabActions.recordRunResult(tab.id, singleStmt, {
-          kind: 'error',
-          durationMs: Math.round(performance.now() - startedAt),
-          rowCount: null,
-        })
+        tabActions.recordRunResult(tab.id, singleStmt, { kind: 'error', durationMs, rowCount: null })
       }
       const raw = (err as Error).message
       const parsed = parseDbError(raw)
