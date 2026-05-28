@@ -4,6 +4,7 @@ import { ChatPanel } from '@/components/ai/ChatPanel'
 import { AIToggleButton } from '@/components/ai/AIToggleButton'
 import { NLInputBar } from '@/components/ai/NLInputBar'
 import { ExplainPanel } from '@/components/ai/ExplainPanel'
+import { AIStatusSegment } from '@/components/ai/AIStatusSegment'
 
 /**
  * Registry of host components a plugin can mount via the `host-component`
@@ -19,6 +20,7 @@ const HOST_COMPONENTS: Record<string, ComponentType<any>> = {
   'ai-toggle-button': AIToggleButton,
   'ai-nl-input': NLInputBar,
   'ai-explain': ExplainPanel,
+  'ai-status': AIStatusSegment,
 }
 
 interface Props {
