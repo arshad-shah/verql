@@ -133,10 +133,13 @@ function sanitizeCompletion(raw: string): string {
     'this query', 'the query is', 'the query already',
     'there is nothing', 'there are no', "there isn't",
     'no completion', 'no meaningful', 'nothing to add',
-    'sql query context', 'query context', 'database context',
+    'sql query context', 'sql query builder', 'query context',
+    'database context', 'react code', 'react component',
+    'not sql', 'is not sql', 'isn’t sql', "isn't sql",
     "here's just", 'here is just', 'just the completion',
     'as an ai', 'as a language model',
     'note:', 'note that', 'note —', 'please ',
+    'single space', 'placeholder',
   ]
   for (const marker of PROSE_MARKERS) {
     if (lower.includes(marker)) return ''
@@ -211,7 +214,9 @@ The user message is the buffer with a single | marking the cursor position. Ther
 OUTPUT FORMAT
 Respond with exactly one of:
   (a) The SQL fragment that belongs at the cursor, with no quoting, no markdown, no surrounding whitespace beyond what is meaningful inside the fragment.
-  (b) An empty string (zero characters) if no useful completion exists.
+  (b) Zero characters — a completely empty response — if no useful SQL completion exists. Do NOT explain why; do NOT emit a placeholder like a single space or a parenthesised note; do NOT emit a fenced empty code block. Silence means "no suggestion" and is the correct answer.
+
+The request being non-SQL (e.g. "give me a react component"), schema not matching, or the cursor being in a hopeless spot are all cases where (b) — silence — is the right answer.
 
 DECISION RULES
 1. If the cursor is inside a string literal ('...' or "..."), inside a line comment (-- ...) that has not yet ended, or inside an unterminated block comment (/* ... */), return empty.
