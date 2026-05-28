@@ -112,16 +112,23 @@ export function MCPSettings() {
       </SettingRow>
 
       <Divider />
-      <Text size="xs" color="muted">Tools exposed to MCP clients</Text>
+      <Text size="sm" color="muted">Tools exposed to MCP clients</Text>
       <Stack gap="xs">
         {tools.map(t => (
-          <Flex key={t.id} direction="row" align="center" justify="between" gap="sm">
-            <Stack gap="xs">
-              <Text size="xs">{t.name} <Text as="span" size="xs" color="muted">({t.permission})</Text></Text>
-              <Text size="xs" color="muted">{t.description}</Text>
-            </Stack>
-            <Switch checked={t.enabled} onChange={(e) => setToolEnabled(t.id, e.target.checked)} label={`Enable ${t.name}`} />
-          </Flex>
+          <>
+            <Flex key={t.id} direction="row" align="center" justify="between" gap="sm">
+              <Stack gap="sm">
+                <Text size="xs">{t.name} <Text as="span" size="xs" color="muted">({t.permission})</Text></Text>
+                <Text size="xs" color="muted">{t.description}</Text>
+              </Stack>
+              <Switch checked={t.enabled} onChange={(e) => setToolEnabled(t.id, e.target.checked)} label={`Enable ${t.name}`} />
+            </Flex>
+
+
+            <SettingRow key={t.id} label={t.name} description={t.description}>
+              <Switch checked={t.enabled} onChange={(e) => setToolEnabled(t.id, e.target.checked)} label={`Enable ${t.name}`} />
+            </SettingRow>
+          </>
         ))}
       </Stack>
 
