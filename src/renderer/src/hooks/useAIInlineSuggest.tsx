@@ -100,8 +100,7 @@ function Toolbar({
       <Button
         variant="ghost"
         size="xs"
-        className="!h-6 !px-1.5 gap-1"
-        style={{ color: 'var(--color-success, var(--success))' }}
+        className="!h-6 !px-1.5 gap-1 !text-success"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.commit', null)}
       >
         <Check size={11} /> Accept <Kbd size="sm">Tab</Kbd>
@@ -109,8 +108,7 @@ function Toolbar({
       <Button
         variant="ghost"
         size="xs"
-        className="!h-6 !px-1.5 gap-1"
-        style={{ color: 'var(--color-error, var(--error))' }}
+        className="!h-6 !px-1.5 gap-1 !text-error"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.hide', null)}
       >
         <X size={11} /> Reject <Kbd size="sm">Esc</Kbd>
