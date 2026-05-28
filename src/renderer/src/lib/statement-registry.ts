@@ -1,7 +1,7 @@
 /**
- * Per-DB CodeLens contributions. Each plugin (or bundled DB module) registers
- * a splitter + an ordered list of lens actions keyed by dbType. The Monaco
- * CodeLens provider in monaco-codelens.ts is the only consumer.
+ * Per-DB statement contributions. Each plugin (or bundled DB module) registers
+ * a splitter + an ordered list of lens actions keyed by dbType. The
+ * StatementGutter overlay is the only consumer.
  */
 import type { LucideIcon } from 'lucide-react'
 

@@ -4,7 +4,7 @@ import type { editor } from 'monaco-editor'
 import { registerCompletionProvider, registerQueryFormattingProvider, updateCompletionItems } from '@/lib/monaco-sql'
 import { registerAIInlineCompletionProvider, setAICompletionContext } from '@/lib/monaco-ai-completion'
 import { defineAppThemes, getMonacoThemeName } from '@/lib/monaco-themes'
-import { installCodeLensCommand, registerCodeLensProviderForLanguage } from '@/lib/monaco-codelens'
+import { StatementGutter } from './StatementGutter'
 import { editorRegistry } from '@/stores/editor'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -115,14 +115,6 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
       registeredLanguages.add(language)
     }
 
-    // CodeLens lives outside the completion-provider gate above because the
-    // gate set persists across HMR reloads. Installers are idempotent (own
-    // internal flags), so it's safe to call on every mount. The provider
-    // itself returns no lenses when no statement-contribution is registered
-    // for the active tab's dbType, so non-SQL editors are handled gracefully.
-    installCodeLensCommand(monaco)
-    registerCodeLensProviderForLanguage(monaco, language)
-
     // Publish ourselves to the editor registry so the command palette,
     // run-selection action, and any plugin can introspect or drive the editor.
     editorRegistry.register({ editor: ed, monaco, tabId })
@@ -206,10 +198,10 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
     padding: { top: 8, bottom: 8 },
     suggestOnTriggerCharacters: true,
     quickSuggestions: true,
-    // Explicit: SQL editors render "▶ Run / Explain" CodeLens above each
+    // Explicit: SQL editors render "Run / Explain" statement-gutter overlay above each
     // statement. The default is true, but we set it so a user who customises
     // editor options later can't accidentally hide the inline run buttons.
-    codeLens: true,
+    codeLens: false,
     scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
   }), [editorSettings])
 
@@ -236,19 +228,29 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
   }, [monacoInstance, theme])
 
   return (
-    <Editor
-      language={language}
-      value={value}
-      onChange={(v) => onChange(v ?? '')}
-      theme={getMonacoThemeName(theme)}
-      options={options}
-      beforeMount={handleBeforeMount}
-      onMount={handleMount}
-      loading={
-        <Flex align="center" justify="center" className="h-full">
-          <Text size="sm" color="muted">Loading editor...</Text>
-        </Flex>
-      }
-    />
+    <>
+      <Editor
+        language={language}
+        value={value}
+        onChange={(v) => onChange(v ?? '')}
+        theme={getMonacoThemeName(theme)}
+        options={options}
+        beforeMount={handleBeforeMount}
+        onMount={handleMount}
+        loading={
+          <Flex align="center" justify="center" className="h-full">
+            <Text size="sm" color="muted">Loading editor...</Text>
+          </Flex>
+        }
+      />
+      {editorInstance ? (
+        <StatementGutter
+          editor={editorInstance}
+          tabId={tabId}
+          connectionId={connectionId}
+          dbType={databaseType}
+        />
+      ) : null}
+    </>
   )
 }
