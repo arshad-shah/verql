@@ -1,4 +1,3 @@
-import { useAIStore } from '@/stores/ai'
 import { Text } from '@/primitives/typography/Text'
 import { Button } from '@/primitives/forms/Button'
 import type { AIApprovalRequest } from '@shared/ai-types'
@@ -39,16 +38,3 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
   )
 }
 
-export function ApprovalCard() {
-  const pendingApproval = useAIStore(s => s.pendingApproval)
-  const respondToApproval = useAIStore(s => s.respondToApproval)
-
-  if (!pendingApproval) return null
-
-  return (
-    <ApprovalCardContent
-      approval={pendingApproval}
-      onRespond={respondToApproval}
-    />
-  )
-}

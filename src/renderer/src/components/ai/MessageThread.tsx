@@ -8,7 +8,6 @@ import { Text } from '@/primitives/typography/Text'
 import { Card } from '@/primitives/surfaces/Card'
 import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
-import { ApprovalCard } from './ApprovalCard'
 import { MarkdownContent } from './MarkdownContent'
 import type { AIChatMessage } from '@shared/ai-types'
 
@@ -108,7 +107,6 @@ export function MessageThread() {
           </Card>
         </div>
       )}
-      <ApprovalCard />
       <div ref={bottomRef} />
     </ScrollArea>
   )
