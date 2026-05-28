@@ -53,13 +53,8 @@ export function AIStatusSegment() {
       aria-label={busy ? 'AI working' : 'AI status'}
     >
       {busy
-        ? <Loader2 size={10} className="animate-spin text-accent" />
-        : <Sparkles size={10} className={activeModelId ? 'text-accent' : 'text-text-muted'} />}
-      <span className="text-[10px]">
-        {busy
-          ? (inlineState === 'thinking' ? 'completing' : 'chatting')
-          : 'AI'}
-      </span>
+        ? <Loader2 size={12} className="animate-spin text-accent" />
+        : <Sparkles size={12} className={activeModelId ? 'text-accent' : 'text-text-muted'} />}
     </StatusBarSegment>
   )
 
