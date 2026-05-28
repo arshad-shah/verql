@@ -3,6 +3,7 @@ import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
 import { MessageThread } from './MessageThread'
 import { ActionZone } from './ActionZone'
+import { AutoCompactBanner } from './AutoCompactBanner'
 import { ChatPanelHeader } from './ChatPanelHeader'
 
 export function ChatPanel() {
@@ -23,6 +24,7 @@ export function ChatPanel() {
   return (
     <div className="flex flex-col h-full bg-bg-primary">
       <ChatPanelHeader />
+      <AutoCompactBanner />
       <MessageThread />
       <ActionZone />
     </div>
