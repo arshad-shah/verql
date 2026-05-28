@@ -33,6 +33,7 @@ export interface Conversation {
 interface AIState {
   messages: AIChatMessage[]
   isStreaming: boolean
+  isAwaitingResponse: boolean
   streamingContent: string
   activeProvider: AIProviderInfo | null
   activeModel: string | null
@@ -149,6 +150,7 @@ const initialConversations = initConversations()
 export const useAIStore = create<AIState>((set, get) => ({
   messages: initialConversations.messages,
   isStreaming: false,
+  isAwaitingResponse: false,
   streamingContent: '',
   activeProvider: null,
   activeModel: null,
@@ -188,7 +190,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       content: message,
       timestamp: Date.now()
     }
-    set((s) => ({ messages: [...s.messages, userMsg] }))
+    set((s) => ({ messages: [...s.messages, userMsg], isAwaitingResponse: true }))
 
     const appActionsCatalog = appActions.describeForPrompt()
     const { connections, connectedIds, activeConnectionId } = useConnectionsStore.getState()
@@ -380,7 +382,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     if (currentStreamId) {
       await window.electronAPI.invoke(IPC_CHANNELS.AI_CHAT_ABORT, currentStreamId)
     }
-    set({ isStreaming: false, streamingContent: '', currentStreamId: null })
+    set({ isStreaming: false, isAwaitingResponse: false, streamingContent: '', currentStreamId: null })
   },
 
   loadProviders: async () => {
@@ -457,7 +459,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   handleStreamEvent: (event) => {
     switch (event.type) {
       case 'chunk':
-        set((s) => ({ streamingContent: s.streamingContent + event.content }))
+        set((s) => ({ streamingContent: s.streamingContent + event.content, isAwaitingResponse: false }))
         break
 
       case 'tool-call': {
@@ -525,12 +527,13 @@ export const useAIStore = create<AIState>((set, get) => ({
           set((s) => ({
             messages: [...s.messages, assistantMsg],
             isStreaming: false,
+            isAwaitingResponse: false,
             streamingContent: '',
             currentStreamId: null,
             sessionStats: updatedStats
           }))
         } else {
-          set({ isStreaming: false, streamingContent: '', currentStreamId: null, sessionStats: updatedStats })
+          set({ isStreaming: false, isAwaitingResponse: false, streamingContent: '', currentStreamId: null, sessionStats: updatedStats })
         }
         break
       }
@@ -547,6 +550,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         set((s) => ({
           messages: [...s.messages, errorMsg],
           isStreaming: false,
+          isAwaitingResponse: false,
           streamingContent: '',
           currentStreamId: null
         }))
