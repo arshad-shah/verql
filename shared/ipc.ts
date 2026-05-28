@@ -435,6 +435,14 @@ export interface IpcChannelMap {
     args: [messages: AIChatMessage[]]
     return: { summary: string }
   }
+  'ai:permission:get-profile': {
+    args: []
+    return: 'read-only' | 'ask-write' | 'auto'
+  }
+  'ai:permission:set-profile': {
+    args: [profile: 'read-only' | 'ask-write' | 'auto']
+    return: void
+  }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
     args: []
@@ -611,6 +619,8 @@ export const IPC_CHANNELS = {
   AI_EXPLAIN_START: 'ai:explain:start',
   AI_EXPLAIN_ABORT: 'ai:explain:abort',
   AI_CONVERSATION_SUMMARIZE: 'ai:conversation:summarize',
+  AI_PERMISSION_GET_PROFILE: 'ai:permission:get-profile',
+  AI_PERMISSION_SET_PROFILE: 'ai:permission:set-profile',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',

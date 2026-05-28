@@ -49,6 +49,13 @@ export function startAIModule(deps: AIDeps): AIModule {
   const toolRegistry = deps.toolRegistry
   const permissionManager = new PermissionManager()
 
+  const savedProfile = deps.settingsStore.get('ai.permissionProfile') as
+    | 'read-only' | 'ask-write' | 'auto'
+    | undefined
+  if (savedProfile === 'read-only' || savedProfile === 'ask-write' || savedProfile === 'auto') {
+    permissionManager.setProfile(savedProfile)
+  }
+
   // One-time migration: move legacy plaintext keys from settings.json into the keyring.
   for (const provider of ['openai', 'anthropic'] as const) {
     const legacy = deps.settingsStore.get(`ai.${provider}Key`) as string | undefined
@@ -341,6 +348,12 @@ export function startAIModule(deps: AIDeps): AIModule {
   h('ai:conversation:summarize', async (messages: Parameters<typeof enhancements.summarizeConversation>[0]) =>
     enhancements.summarizeConversation(messages)
   )
+
+  h('ai:permission:get-profile', async () => permissionManager.getProfile())
+  h('ai:permission:set-profile', async (profile: 'read-only' | 'ask-write' | 'auto') => {
+    permissionManager.setProfile(profile)
+    deps.settingsStore.set('ai.permissionProfile', profile)
+  })
 
   const service: AIService = {
     registerProvider: (provider) => providerRegistry.register(provider),
