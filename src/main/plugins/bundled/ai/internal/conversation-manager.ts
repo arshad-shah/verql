@@ -240,6 +240,20 @@ ${appActionsCatalog}`)
             continue
           }
 
+          if (this.deps.permissionManager.isWriteBlocked(tool)) {
+            const blockedMsg = 'Blocked: this tool requires write access and the current permission profile is read-only.'
+            const resultContent = JSON.stringify({ error: blockedMsg })
+            toolCalls.push({ call: chunk.toolCall, resultContent })
+            yield { type: 'tool-result', result: {
+              toolCallId: chunk.toolCall.id,
+              toolName: chunk.toolCall.name,
+              success: false,
+              data: null,
+              display: blockedMsg
+            }}
+            continue
+          }
+
           if (this.deps.permissionManager.needsApproval(tool)) {
             const display = tool.description + ': ' + JSON.stringify(params)
             const requestId = this.deps.permissionManager.createApprovalRequest(
