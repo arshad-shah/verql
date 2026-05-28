@@ -58,10 +58,16 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
           // the zone into Monaco's overlay layer and the zone would render
           // blank). The portal mounts inside the zone's own DOM, so the
           // buttons land in the right place automatically.
+          // Monaco's view-zone layer defaults to `pointer-events: none` so
+          // typing/clicking in the editor isn't blocked by zones. We override
+          // it on both wrappers so the action buttons inside actually receive
+          // clicks. Without this, the buttons render but don't respond.
           const containerEl = document.createElement('div')
-          containerEl.className = 'verql-stmt-gutter flex items-center gap-1 px-2 h-[24px] text-xs pointer-events-auto'
+          containerEl.className = 'verql-stmt-gutter flex items-center gap-1 px-2 h-[24px] text-xs'
+          containerEl.style.pointerEvents = 'auto'
           const domNode = document.createElement('div')
           domNode.style.width = '100%'
+          domNode.style.pointerEvents = 'auto'
           domNode.appendChild(containerEl)
 
           const zoneId = accessor.addZone({
