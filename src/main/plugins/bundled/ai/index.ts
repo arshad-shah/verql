@@ -96,6 +96,7 @@ export function activate(ctx: PluginContext): void {
   ctx.commands.register('suggest-queries', async () => { /* renderer opens chat */ })
   ctx.commands.register('explain-query', async () => { /* renderer opens chat */ })
   ctx.commands.register('optimize-query', async () => { /* renderer opens chat */ })
+  ctx.commands.register('compact-conversation', async () => { /* renderer triggers compact via the chat panel header */ })
 
   // 5. Tear-down on plugin deactivation: abort streams, remove IPC handlers.
   ctx.subscriptions.push(ai.dispose)
