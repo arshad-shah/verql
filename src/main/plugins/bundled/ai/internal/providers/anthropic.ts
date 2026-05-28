@@ -29,19 +29,20 @@ function anthropicCostTier(modelId: string): number {
 
 /**
  * Context window per Anthropic model. The /v1/models endpoint doesn't return
- * this, so we pattern-match the id. Opus 4.5+ and Sonnet 4.5+ ship with a
- * 1M-token window; everything else in the Claude 4 family is 200k.
- * Default falls back to 200k for unknown / future ids.
+ * this, so we pattern-match the id. Validated against the public Anthropic
+ * model docs (https://docs.anthropic.com/en/docs/about-claude/models/overview)
+ * which list the wide-context tier explicitly:
+ *   - Opus 4.6 and later     → 1M tokens
+ *   - Sonnet 4.6 and later   → 1M tokens
+ *   - Everything else        → 200k tokens (Haiku 4.5, Sonnet 4.5, Opus 4.5,
+ *                              Opus 4.1, Sonnet 4, Opus 4, and the 3.x family)
  */
 function anthropicContextWindow(modelId: string): number {
   const id = modelId.toLowerCase()
   const ONE_MILLION = 1_000_000
   const TWO_HUNDRED_K = 200_000
-  // Opus 4.5 and later — wide-context tier.
-  if (/claude-opus-4-([5-9]|\d{2})/.test(id)) return ONE_MILLION
-  // Sonnet 4.5 and later — wide-context tier.
-  if (/claude-sonnet-4-([5-9]|\d{2})/.test(id)) return ONE_MILLION
-  // All other Claude 4 / 3.x models.
+  if (/claude-opus-4-([6-9]|\d{2})/.test(id)) return ONE_MILLION
+  if (/claude-sonnet-4-([6-9]|\d{2})/.test(id)) return ONE_MILLION
   return TWO_HUNDRED_K
 }
 

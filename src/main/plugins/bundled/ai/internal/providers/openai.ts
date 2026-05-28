@@ -16,19 +16,21 @@ function openaiCostTier(modelId: string): number {
 
 /**
  * Context window per OpenAI model. The /v1/models endpoint doesn't return
- * this. Pattern-match on the id:
- *   - gpt-4.1 family — 1,047,576 tokens (advertised as 1M).
- *   - o3 family       — 200k tokens.
- *   - o1 family       — 128k tokens.
- *   - gpt-4o / 4-turbo / 4o-mini / gpt-4.5 — 128k tokens.
+ * this. Pattern-match on the id, validated against current OpenAI / Azure
+ * Foundry docs:
+ *   - gpt-5 family    → 1,047,576 tokens (advertised as 1M / 1.05M)
+ *   - gpt-4.1 family  → 1,047,576 tokens
+ *   - o3 / o4 family  → 200k tokens
+ *   - o1 family       → 128k tokens
+ *   - gpt-4o / 4-turbo / 4o-mini / gpt-4.5 — 128k tokens
  * Default falls back to 128k for unknown / future ids.
  */
 function openaiContextWindow(modelId: string): number {
   const id = modelId.toLowerCase()
+  if (id.startsWith('gpt-5')) return 1_047_576
   if (id.startsWith('gpt-4.1')) return 1_047_576
-  if (id.startsWith('o3')) return 200_000
+  if (id.startsWith('o3') || id.startsWith('o4')) return 200_000
   if (id.startsWith('o1')) return 128_000
-  if (id.startsWith('gpt-5')) return 400_000
   return 128_000
 }
 
