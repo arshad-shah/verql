@@ -4,7 +4,7 @@ import os from 'os'
 import { execFileSync } from 'child_process'
 import { app } from 'electron'
 import type { PluginManifest, LoadedPlugin } from './types'
-import type { PluginStatus, BootReport } from './sdk/types'
+import type { PluginStatus, BootReport, PluginContext } from './sdk/types'
 import { createPluginContext, disposePluginContext } from './sdk/index'
 import { safeCall, ErrorBudget } from './sdk/safe-call'
 import type { DriverRegistryImpl } from './sdk/driver-registry'
@@ -17,6 +17,9 @@ import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import { validateTheme } from './sdk/theme-registry'
 import { ALL_PERMISSIONS, effectiveGrants, isPluginPermission, type PluginPermission } from './sdk/permissions'
+import { IsolatedPlugin, canIsolate } from './isolation/isolated-plugin'
+import { spawnIsolatedWorker } from './isolation/worker-process'
+import type { Transport } from './isolation/rpc'
 import type { DbAdapter } from '../db/adapter'
 import type { ConnectionProfile } from '@shared/types'
 
@@ -207,6 +210,10 @@ interface BootDeps {
     getGrants(name: string): PluginPermission[]
     setGrants(name: string, permissions: PluginPermission[]): void
   }
+  /** Spawn the duplex channel to a fresh plugin-worker process. Injectable so
+   *  tests can drive the isolation bridge over an in-memory transport instead
+   *  of forking a real Electron utilityProcess. Defaults to `spawnIsolatedWorker`. */
+  spawnWorkerTransport?: () => Transport
 }
 
 export class PluginBootCoordinator {
@@ -354,6 +361,18 @@ export class PluginBootCoordinator {
         continue
       }
 
+      plugin.mainPath = mainPath
+
+      // Process isolation: a plugin that will run in a separate process must
+      // NOT be require()'d here — loading its code into the main process is
+      // exactly what isolation avoids. We defer the activate()-export check to
+      // the worker. In-process plugins are require()'d as before.
+      if (this.shouldIsolate(plugin)) {
+        plugin.runIsolated = true
+        plugin.status = { state: 'validated' }
+        continue
+      }
+
       try {
         const mod = require(mainPath)
         if (typeof mod.activate !== 'function') {
@@ -382,25 +401,17 @@ export class PluginBootCoordinator {
 
   // ── Phase 4: Activate ──────────────────────────────────────────────────────
 
-  async activatePlugin(plugin: LoadedPlugin): Promise<LoadedPlugin> {
-    if (!plugin.module) {
-      plugin.status = { state: 'error', error: 'No module loaded', phase: 'activate' }
-      return plugin
-    }
+  /** Should this plugin run in a separate process? Untrusted plugins whose
+   *  contributions are marshalling-compatible, when isolation is enabled. */
+  private shouldIsolate(plugin: LoadedPlugin): boolean {
+    if (plugin.path === '<bundled>') return false
+    if (this.deps.settingsStore.get('plugins.isolation') === false) return false
+    return canIsolate(plugin.manifest)
+  }
 
-    plugin.status = { state: 'activating' }
-
-    // User explicitly enabled this plugin — clear any persisted disabled flag
-    // so it stays active across restarts.
-    this.deps.disabledPluginsStore?.markEnabled(plugin.manifest.name)
-
-    // Set the current plugin name so registries can track ownership
-    this.deps.uiRegistry.currentPluginName = plugin.manifest.name
-    this.deps.completionRegistry.currentPluginName = plugin.manifest.name
-
-    // Bundled plugins (path === '<bundled>') are first-party code shipped in
-    // the app bundle and are fully trusted. Third-party plugins only receive
-    // the capabilities the user granted, intersected with what they declared.
+  /** Build the guarded PluginContext for a plugin. Trusted (bundled) plugins
+   *  get every capability; third-party plugins get the granted ∩ declared set. */
+  private buildPluginContext(plugin: LoadedPlugin): PluginContext {
     const trusted = plugin.path === '<bundled>'
     const grantedPermissions = trusted
       ? [...ALL_PERMISSIONS]
@@ -408,8 +419,7 @@ export class PluginBootCoordinator {
           plugin.manifest.permissions,
           this.deps.pluginGrantsStore?.getGrants(plugin.manifest.name),
         )]
-
-    const context = createPluginContext({
+    return createPluginContext({
       pluginName: plugin.manifest.name,
       trusted,
       grantedPermissions,
@@ -432,6 +442,29 @@ export class PluginBootCoordinator {
       dragDropRegistry: this.deps.dragDropRegistry,
       toolRegistry: this.deps.toolRegistry
     })
+  }
+
+  async activatePlugin(plugin: LoadedPlugin): Promise<LoadedPlugin> {
+    if (!plugin.runIsolated && !plugin.module) {
+      plugin.status = { state: 'error', error: 'No module loaded', phase: 'activate' }
+      return plugin
+    }
+
+    plugin.status = { state: 'activating' }
+
+    // User explicitly enabled this plugin — clear any persisted disabled flag
+    // so it stays active across restarts.
+    this.deps.disabledPluginsStore?.markEnabled(plugin.manifest.name)
+
+    if (plugin.runIsolated) {
+      return this.activateIsolated(plugin)
+    }
+
+    // Set the current plugin name so registries can track ownership
+    this.deps.uiRegistry.currentPluginName = plugin.manifest.name
+    this.deps.completionRegistry.currentPluginName = plugin.manifest.name
+
+    const context = this.buildPluginContext(plugin)
     plugin.context = context
 
     try {
@@ -453,6 +486,57 @@ export class PluginBootCoordinator {
       this.activationOrder.push(plugin.manifest.name)
     }
 
+    return plugin
+  }
+
+  /** Activate an untrusted plugin in a separate process. Its code never runs in
+   *  the main process; contributions become host-side proxies and every
+   *  capability call is dispatched through the gated context (so permission
+   *  enforcement is identical to the in-process path). */
+  private async activateIsolated(plugin: LoadedPlugin): Promise<LoadedPlugin> {
+    const context = this.buildPluginContext(plugin)
+    plugin.context = context
+
+    const transport = (this.deps.spawnWorkerTransport ?? spawnIsolatedWorker)()
+    const isolated = new IsolatedPlugin(transport, {
+      pluginName: plugin.manifest.name,
+      mainPath: plugin.mainPath!,
+      context,
+      commandRegistry: this.deps.commandRegistry,
+      themeRegistry: this.deps.themeRegistry,
+      onCrash: (error) => {
+        plugin.status = { state: 'error', error: error.message, phase: 'runtime' }
+        plugin.isolatedHandle = undefined
+        this.activationOrder = this.activationOrder.filter(n => n !== plugin.manifest.name)
+        this.deps.notificationBus.show({
+          kind: 'error',
+          title: `Plugin "${plugin.manifest.displayName}" stopped`,
+          message: error.message,
+          durationMs: 8000,
+        })
+      },
+    })
+
+    try {
+      await isolated.activate()
+    } catch (err) {
+      try { await isolated.deactivate() } catch { /* ignore */ }
+      disposePluginContext(context)
+      plugin.context = undefined
+      plugin.status = {
+        state: 'error',
+        error: err instanceof Error ? err.message : String(err),
+        phase: 'activate',
+      }
+      return plugin
+    }
+
+    plugin.isolatedHandle = isolated
+    const verification = this.verifyContributions(plugin)
+    plugin.status = verification
+    if (verification.state === 'active' || verification.state === 'degraded') {
+      this.activationOrder.push(plugin.manifest.name)
+    }
     return plugin
   }
 
@@ -648,7 +732,15 @@ export class PluginBootCoordinator {
 
   async deactivatePlugin(plugin: LoadedPlugin, opts: { persist?: boolean } = {}): Promise<void> {
     if (opts.persist && ESSENTIAL_BUNDLED.has(plugin.manifest.name)) return
-    if (plugin.module?.deactivate) {
+    if (plugin.isolatedHandle) {
+      // Isolated plugin: tell the worker to deactivate, then kill the process.
+      try {
+        await plugin.isolatedHandle.deactivate()
+      } catch {
+        // Ignore deactivation errors
+      }
+      plugin.isolatedHandle = undefined
+    } else if (plugin.module?.deactivate) {
       try {
         await plugin.module.deactivate()
       } catch {

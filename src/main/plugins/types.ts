@@ -132,4 +132,11 @@ export interface LoadedPlugin {
   status: PluginStatus
   module?: { activate: (ctx: PluginContext) => void | Promise<void>; deactivate?: () => void | Promise<void> }
   context?: PluginContext
+  /** Set in validate phase: this (untrusted) plugin runs in a separate process
+   *  and was therefore NOT require()'d into the main process. */
+  runIsolated?: boolean
+  /** Absolute path to the compiled main entry (resolved during validation). */
+  mainPath?: string
+  /** Host-side controller for an isolated plugin's worker; present while active. */
+  isolatedHandle?: { deactivate: () => Promise<void> }
 }

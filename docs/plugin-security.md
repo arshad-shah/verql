@@ -145,13 +145,62 @@ necessarily malicious) plugin can do to the rest of the app:
   uninstall/disable fully unwinds its contributions (including its tools and
   IPC handlers).
 
+## Process isolation
+
+Untrusted plugins whose contributions are **marshalling-compatible** run in a
+separate OS process (an Electron `utilityProcess`), not the main process. This
+is the enforcement layer the capability model was designed for: the plugin's
+code physically cannot touch the keyring, the connection pool, or app state —
+its only path to any Verql capability is a cross-process RPC the host answers,
+and the host applies the permission grant before answering. A crashing or
+hostile isolated plugin also can't take down the main process.
+
+How it fits together (`src/main/plugins/isolation/`):
+
+- `protocol.ts` / `rpc.ts` — a small JSON request/response/event protocol and a
+  transport-agnostic bidirectional `RpcEndpoint`. The `Transport` abstraction
+  lets the whole bridge be unit-tested over an in-memory channel
+  (`memory-transport.ts`) with no subprocess.
+- `worker-entry.ts` / `worker-runtime.ts` / `worker-context.ts` — the code that
+  runs in the worker: it `require()`s the plugin, hands `activate()` a **proxy
+  `PluginContext`** whose every capability method forwards to the host, and
+  serves host→worker invocations of the contributions it registered. Bundled to
+  `out/main/plugin-worker.js`.
+- `worker-process.ts` — forks the `utilityProcess` and adapts it to `Transport`.
+- `isolated-plugin.ts` — the host controller. It registers each reported
+  contribution as a **proxy** in the real registries and serves the worker's
+  capability calls by dispatching them against the *same guarded
+  `PluginContext`* the in-process path uses — so permission enforcement is
+  identical and lives in exactly one place. On worker exit it tears the proxies
+  down and marks the plugin failed.
+
+**Where it's applied.** A plugin is isolated when `canIsolate(manifest)` holds:
+its contributions are limited to surfaces whose values can cross a process
+boundary — today **commands** and **themes** (plus manifest-only declarations
+like connection fields and settings). The boundary the worker exposes covers
+the async capability surfaces: `connections.query`, `keyring.store/retrieve/delete`,
+and `schema.*`, plus `notifications`/`broadcast` events. Isolation is on by
+default and can be disabled with the `plugins.isolation` setting (e.g. to debug
+a plugin in-process). Bundled plugins are trusted and always run in-process.
+
+**Why not every plugin (yet).** The current plugin API is pervasively built on
+values that don't survive a process boundary: live `DbAdapter` objects and
+**synchronous** methods (`DriverFactory.placeholder`, `sampleQuery`,
+`DbAdapter.isConnected`), predicate functions (`exporter.appliesTo`,
+`formatter.appliesTo`), and Zod `inputSchema` objects on tools. Plugins that
+contribute those surfaces fall back to in-process execution (no regression), so
+**a third-party driver or tool plugin still runs in-process and should
+therefore be treated as trusted.** Broadening isolation to those surfaces means
+making that API marshalling-friendly — see the roadmap.
+
 ## Known limitations (read this)
 
 Be honest about what the model does and does not buy you:
 
-1. **No true sandbox.** Plugins run in the main process. A determined malicious
-   plugin can `require` any Node builtin and ignore the advisory permissions.
-   The enforced gates only cover the *Verql-provided* surfaces.
+1. **Isolation is partial by contribution type.** Command/theme plugins run
+   sandboxed; driver, exporter, importer, formatter, tool, and UI plugins still
+   run in the main process (see above) and can `require` any Node builtin. For
+   those, the enforced capability gates are the only boundary.
 2. **Zip extraction shells out to `unzip`.** `installFromZip` uses the system
    `unzip` binary. Modern Info-ZIP refuses traversal entries, and the symlink
    scan + name validation run on the extracted result before anything is
@@ -165,14 +214,20 @@ Be honest about what the model does and does not buy you:
 
 In rough priority order:
 
-1. **Process isolation** — run untrusted plugins in a separate `utilityProcess`
-   with a message-passing bridge, so the advisory permissions (`network`,
-   `filesystem`, `process`) become enforceable and a plugin crash can't take
-   down the main process. This is the big one; the permission *declarations*
-   above are designed to be the policy input for it.
-2. **Cross-platform, in-process zip extraction** to remove the `unzip`
+1. **Marshalling-friendly contribution APIs** so process isolation can cover
+   the rich surfaces too. Concretely: replace synchronous predicate functions
+   (`exporter.appliesTo`, `formatter.appliesTo`) with declarative descriptors
+   (`appliesToTypes: string[]`); ship tool `inputSchema` as JSON Schema rather
+   than a live Zod object; and make the `DbAdapter`/`DriverFactory` contract
+   async (drop sync `isConnected`/`placeholder`/`sampleQuery`) so a driver's
+   adapter can live behind an RPC handle. Each is a focused, breaking SDK change.
+2. **Enforce advisory permissions in the worker.** With plugins out-of-process,
+   `network`/`filesystem`/`process` can be enforced by sandboxing the worker
+   (e.g. dropping `NODE_OPTIONS`, restricting the module loader) — turning them
+   from advisory into real gates.
+3. **Cross-platform, in-process zip extraction** to remove the `unzip`
    dependency and fully own traversal/symlink handling.
-3. **Signed plugins + a trusted registry** — verify a publisher signature or a
+4. **Signed plugins + a trusted registry** — verify a publisher signature or a
    checksum from a known index at install time, and show provenance in the UI.
 
 ## For plugin authors
@@ -201,3 +256,7 @@ The security boundary is pinned by tests under `tests/unit/audit/`:
 `plugin-permissions.test.ts`, `plugin-install-symlink.test.ts`,
 `plugin-path-traversal.test.ts`, `plugin-bundled-shadowing.test.ts`,
 `plugin-manifest-rejects-bad-input.test.ts`, and `sdk-public-surface.test.ts`.
+The process-isolation bridge is covered under `tests/unit/isolation/`
+(`rpc.test.ts`, `isolated-plugin.test.ts`) — including that an ungranted
+capability is denied across the (simulated) process boundary and that a worker
+crash tears the plugin's proxies down.
