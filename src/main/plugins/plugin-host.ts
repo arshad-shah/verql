@@ -16,6 +16,7 @@ import type { ToolRegistryImpl } from './sdk/tool-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import { validateTheme } from './sdk/theme-registry'
+import { ALL_PERMISSIONS, effectiveGrants, isPluginPermission, type PluginPermission } from './sdk/permissions'
 import type { DbAdapter } from '../db/adapter'
 import type { ConnectionProfile } from '@shared/types'
 
@@ -50,6 +51,20 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
   }
   if (!manifest.main.endsWith('.js')) {
     return { valid: false, error: `main must end in .js (got "${manifest.main}")` }
+  }
+
+  if (manifest.permissions !== undefined) {
+    if (!Array.isArray(manifest.permissions)) {
+      return { valid: false, error: 'permissions must be an array of capability strings' }
+    }
+    for (const p of manifest.permissions) {
+      if (!isPluginPermission(p)) {
+        return {
+          valid: false,
+          error: `Unknown permission "${String(p)}". Allowed: ${ALL_PERMISSIONS.join(', ')}`,
+        }
+      }
+    }
   }
 
   const c = manifest.contributes
@@ -127,6 +142,35 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
   return { valid: true }
 }
 
+/**
+ * Walk a directory tree (using lstat, so it never follows links) and return
+ * the path of the first symbolic link found, or null. Used to refuse plugin
+ * installs that contain symlinks — a copy of which could escape the plugin
+ * sandbox. Depth-limited to avoid pathological/looping inputs.
+ */
+function findSymlink(root: string, depth = 0): string | null {
+  if (depth > 32) return null
+  let stat: fs.Stats
+  try {
+    stat = fs.lstatSync(root)
+  } catch {
+    return null
+  }
+  if (stat.isSymbolicLink()) return root
+  if (!stat.isDirectory()) return null
+  let entries: string[]
+  try {
+    entries = fs.readdirSync(root)
+  } catch {
+    return null
+  }
+  for (const entry of entries) {
+    const found = findSymlink(path.join(root, entry), depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
 // ─── Boot Coordinator ─────────────────────────────────────────────────────────
 
 interface BootDeps {
@@ -155,6 +199,13 @@ interface BootDeps {
     isDisabled(name: string): boolean
     markDisabled(name: string): void
     markEnabled(name: string): void
+  }
+  /** Persistence for the per-plugin capability grants the user has approved.
+   *  Without it, third-party plugins fall back to no grants (deny by default)
+   *  and any enforced capability they use throws. */
+  pluginGrantsStore?: {
+    getGrants(name: string): PluginPermission[]
+    setGrants(name: string, permissions: PluginPermission[]): void
   }
 }
 
@@ -347,8 +398,21 @@ export class PluginBootCoordinator {
     this.deps.uiRegistry.currentPluginName = plugin.manifest.name
     this.deps.completionRegistry.currentPluginName = plugin.manifest.name
 
+    // Bundled plugins (path === '<bundled>') are first-party code shipped in
+    // the app bundle and are fully trusted. Third-party plugins only receive
+    // the capabilities the user granted, intersected with what they declared.
+    const trusted = plugin.path === '<bundled>'
+    const grantedPermissions = trusted
+      ? [...ALL_PERMISSIONS]
+      : [...effectiveGrants(
+          plugin.manifest.permissions,
+          this.deps.pluginGrantsStore?.getGrants(plugin.manifest.name),
+        )]
+
     const context = createPluginContext({
       pluginName: plugin.manifest.name,
+      trusted,
+      grantedPermissions,
       driverRegistry: this.deps.driverRegistry,
       commandRegistry: this.deps.commandRegistry,
       panelRegistry: this.deps.panelRegistry,
@@ -638,6 +702,40 @@ export class PluginBootCoordinator {
     return this.errorBudget
   }
 
+  /**
+   * Capability state for a plugin, for the consent UI. `trusted` plugins
+   * (bundled) are implicitly granted everything and the user cannot change it.
+   */
+  getPermissionState(name: string): {
+    trusted: boolean
+    declared: PluginPermission[]
+    granted: PluginPermission[]
+  } | undefined {
+    const plugin = this.plugins.get(name)
+    if (!plugin) return undefined
+    const trusted = plugin.path === '<bundled>'
+    const declared = plugin.manifest.permissions ?? []
+    const granted = trusted
+      ? [...declared]
+      : [...effectiveGrants(declared, this.deps.pluginGrantsStore?.getGrants(name))]
+    return { trusted, declared, granted }
+  }
+
+  /**
+   * Persist the user's capability grants for a third-party plugin. Grants are
+   * intersected with what the manifest declared, so a plugin can never be
+   * granted something it didn't ask for. Returns the effective granted set.
+   * Trusted plugins are immutable (returns their full declared set).
+   */
+  setGrants(name: string, permissions: PluginPermission[]): PluginPermission[] {
+    const plugin = this.plugins.get(name)
+    if (!plugin) return []
+    if (plugin.path === '<bundled>') return plugin.manifest.permissions ?? []
+    const effective = [...effectiveGrants(plugin.manifest.permissions, permissions)]
+    this.deps.pluginGrantsStore?.setGrants(name, effective)
+    return effective
+  }
+
   /** Wrap a plugin call with error budget tracking. Auto-deactivates on budget exceeded. */
   async safeCallWithBudget<T>(pluginName: string, fn: () => T | Promise<T>, options?: { timeoutMs?: number }): Promise<T> {
     try {
@@ -697,6 +795,14 @@ export class PluginBootCoordinator {
         return { success: false, error: 'No plugin-manifest.json or package.json found' }
       }
 
+      if (!NAME_PATTERN.test(name)) {
+        // Defend the destination join below: `name` becomes a path segment
+        // under the plugin dir. A name like '../evil' or with separators must
+        // never escape it. validateManifest enforces this later too, but the
+        // install copy happens first, so guard here.
+        return { success: false, error: `Invalid plugin name: "${name}"` }
+      }
+
       // Same protection as discover(): refuse to install a plugin whose name
       // collides with a bundled plugin. The user is asking to drop a folder
       // onto disk, but we won't let it shadow the built-in driver of the
@@ -704,6 +810,15 @@ export class PluginBootCoordinator {
       const collidingBundled = this.plugins.get(name)
       if (collidingBundled && collidingBundled.path === '<bundled>') {
         return { success: false, error: `Cannot install: '${name}' is a bundled plugin name` }
+      }
+
+      // Reject symlinks anywhere in the source tree. fs.cpSync would otherwise
+      // copy a symlink that points at, e.g., the user's keychain dir or /etc
+      // into the trusted plugin folder, and a later read would follow it out
+      // of the sandbox. Plugins are plain files; a symlink is never legitimate.
+      const offending = findSymlink(sourcePath)
+      if (offending) {
+        return { success: false, error: `Refusing to install: contains a symlink (${offending})` }
       }
 
       const destDir = path.join(this.getPluginDir(), name)

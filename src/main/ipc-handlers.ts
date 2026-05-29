@@ -21,6 +21,7 @@ import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
+import type { PluginPermission } from './plugins/sdk/permissions'
 // Single import that lists every bundled plugin. The orchestrator never
 // names individual drivers — that list lives in src/main/plugins/bundled/
 // where it belongs. Adding a driver does not change this file.
@@ -165,6 +166,19 @@ export function registerIpcHandlers(): void {
         const current = (ctx.configStore.getSetting('disabledPlugins') as string[] | undefined) ?? []
         if (!current.includes(name)) return
         ctx.configStore.setSetting('disabledPlugins', current.filter(n => n !== name))
+      }
+    },
+    pluginGrantsStore: {
+      getGrants: (name) => {
+        const map = ctx.configStore.getSetting('pluginGrants') as Record<string, string[]> | undefined
+        const list = map?.[name]
+        return Array.isArray(list) ? (list as PluginPermission[]) : []
+      },
+      setGrants: (name, permissions) => {
+        const map = { ...((ctx.configStore.getSetting('pluginGrants') as Record<string, string[]> | undefined) ?? {}) }
+        if (permissions.length === 0) delete map[name]
+        else map[name] = permissions
+        ctx.configStore.setSetting('pluginGrants', map)
       }
     }
   })

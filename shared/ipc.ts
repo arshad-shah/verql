@@ -159,7 +159,24 @@ export interface IpcChannelMap {
       icon?: string
       status: { state: string; error?: string; phase?: string; contributions?: string[] }
       contributions: string[]
+      /** Sensitive capabilities the plugin declared in its manifest. */
+      requestedPermissions: string[]
+      /** Capabilities currently granted (all of them for trusted/bundled). */
+      grantedPermissions: string[]
     }[]
+  }
+  'plugins:get-permissions': {
+    args: [name: string]
+    return: {
+      trusted: boolean
+      declared: string[]
+      granted: string[]
+      info: Record<string, { title: string; description: string; enforced: boolean; sensitive: boolean }>
+    } | null
+  }
+  'plugins:set-permissions': {
+    args: [name: string, permissions: string[]]
+    return: { granted: string[] }
   }
   'plugins:activate': {
     args: [name: string]
@@ -566,6 +583,8 @@ export const IPC_CHANNELS = {
   MIGRATION_GENERATE_DDL: 'migration:generate-ddl',
   // ── Plugins ────────────────────────────────────────────────────────────
   PLUGINS_LIST: 'plugins:list',
+  PLUGINS_GET_PERMISSIONS: 'plugins:get-permissions',
+  PLUGINS_SET_PERMISSIONS: 'plugins:set-permissions',
   PLUGINS_ACTIVATE: 'plugins:activate',
   PLUGINS_DEACTIVATE: 'plugins:deactivate',
   PLUGINS_INSTALL_FROM_PATH: 'plugins:install-from-path',

@@ -58,6 +58,17 @@ const EXPECTED_EXPORTS = [
   'validateTheme',
   'REQUIRED_THEME_TOKENS',
   'RECOMMENDED_THEME_TOKENS',
+  // Capability/permission model — plugin authors declare permissions in their
+  // manifest and the host gates the enforced surfaces. These constants and the
+  // error type are part of the public contract.
+  'ALL_PERMISSIONS',
+  'ENFORCED_PERMISSIONS',
+  'ADVISORY_PERMISSIONS',
+  'PERMISSION_INFO',
+  'isPluginPermission',
+  'hasPermission',
+  'effectiveGrants',
+  'PermissionDeniedError',
 ] as const
 
 describe('SDK barrel — public surface for plugin authors', () => {
