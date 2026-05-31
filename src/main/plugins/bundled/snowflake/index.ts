@@ -193,7 +193,7 @@ export function activate(ctx: PluginContext): void {
     createAdapter: (config) => new SnowflakeAdapter(config),
     sqlDialect: 'snowflake',
     quoteChar: SNOWFLAKE_QUOTE,
-    placeholder: () => '?',
+    placeholderStyle: 'positional',
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
@@ -218,14 +218,14 @@ export function activate(ctx: PluginContext): void {
       { key: 'database', label: 'Database', type: 'select', fetchable: true, step: 2 },
       { key: 'schema', label: 'Schema', type: 'select', fetchable: true, step: 2, default: 'PUBLIC' },
     ],
-    sampleQuery: (table, schema) => {
+    sampleQuery: async (table, schema) => {
       const qualified = schema
         ? quoteIdentifier([schema, table], SNOWFLAKE_QUOTE)
         : quoteIdentifier(table, SNOWFLAKE_QUOTE)
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SNOWFLAKE_QUOTE),
-    generateMigrationDdl: (tableName, columns) =>
+    generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,
         columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),

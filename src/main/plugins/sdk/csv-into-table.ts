@@ -1,5 +1,6 @@
 import type { DbAdapter } from '../../db/adapter'
-import { quoteIdentifier } from './identifier'
+import { quoteIdentifier, renderPlaceholder } from './identifier'
+import type { PlaceholderStyle } from './types'
 
 export interface CsvIntoTableOptions {
   tableName: string
@@ -8,9 +9,10 @@ export interface CsvIntoTableOptions {
   /** Driver's identifier quote character — passed in by the orchestrator so
    *  the core-formats plugin never branches on dialect names. */
   quoteChar: string
-  /** Driver's parameter-placeholder rendering. Postgres returns "$1", "$2"…;
-   *  MySQL / SQLite return "?". */
-  placeholder: (index: number) => string
+  /** Driver's parameter-placeholder style. `'numbered'` ⇒ "$1", "$2"… (Postgres);
+   *  `'positional'` ⇒ "?" (MySQL / SQLite). Declarative (was a function) so the
+   *  driver descriptor stays serializable. */
+  placeholderStyle: PlaceholderStyle
 }
 
 export async function importCsvToTable(
@@ -18,7 +20,7 @@ export async function importCsvToTable(
   csvRows: Record<string, string>[],
   options: CsvIntoTableOptions,
 ): Promise<{ inserted: number; skipped: number; errors: string[] }> {
-  const { tableName, columnMapping, onConflict, quoteChar, placeholder } = options
+  const { tableName, columnMapping, onConflict, quoteChar, placeholderStyle } = options
   const dbColumns = Object.values(columnMapping)
   const csvColumns = Object.keys(columnMapping)
 
@@ -28,7 +30,7 @@ export async function importCsvToTable(
 
   const colList = dbColumns.map(c => quoteIdentifier(c, quoteChar)).join(', ')
   const qTable = quoteIdentifier(tableName, quoteChar)
-  const placeholders = dbColumns.map((_, idx) => placeholder(idx + 1)).join(', ')
+  const placeholders = dbColumns.map((_, idx) => renderPlaceholder(placeholderStyle, idx + 1)).join(', ')
   const sql = `INSERT INTO ${qTable} (${colList}) VALUES (${placeholders})`
 
   for (let i = 0; i < csvRows.length; i++) {

@@ -51,7 +51,7 @@ export type { JsonSchemaObject } from './tool-schema'
 // ─── Generic SQL helpers (parameterised on the driver's quote character)
 //     Drivers compose these to build their exporters/importers without
 //     touching anything in src/main/ outside src/main/plugins/. ────────────
-export { quoteIdentifier, validateIdentifier, IdentifierError } from './identifier'
+export { quoteIdentifier, validateIdentifier, IdentifierError, renderPlaceholder } from './identifier'
 export {
   formatSqlValue,
   generateCreateTable,

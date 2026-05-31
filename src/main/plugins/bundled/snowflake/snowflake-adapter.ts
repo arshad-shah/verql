@@ -110,7 +110,7 @@ export class SnowflakeAdapter implements DbAdapter {
     }
   }
 
-  isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     return this.connected && this.connection !== null
   }
 
@@ -162,7 +162,7 @@ export class SnowflakeAdapter implements DbAdapter {
     return quoteIdentifier(name, SNOWFLAKE_QUOTE)
   }
 
-  cancelQuery(): void {
+  async cancelQuery(): Promise<void> {
     if (this.connection && this.activeStatementId) {
       this.connection.execute({
         sqlText: `SELECT SYSTEM$CANCEL_ALL_QUERIES(CURRENT_SESSION())`,

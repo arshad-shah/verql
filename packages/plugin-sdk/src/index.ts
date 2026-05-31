@@ -21,7 +21,7 @@ export { definePlugin } from '../../../src/main/plugins/sdk/define-plugin'
 export type { PluginModule } from '../../../src/main/plugins/sdk/define-plugin'
 
 // ─── Generic SQL helpers (parameterised on the driver's quote character) ──────
-export { quoteIdentifier, validateIdentifier, IdentifierError } from '../../../src/main/plugins/sdk/identifier'
+export { quoteIdentifier, validateIdentifier, IdentifierError, renderPlaceholder } from '../../../src/main/plugins/sdk/identifier'
 export {
   formatSqlValue,
   generateCreateTable,

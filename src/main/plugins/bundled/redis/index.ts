@@ -217,7 +217,7 @@ Do not use SQL syntax. Use standard Redis commands.`
   ctx.drivers.register('redis', {
     createAdapter: (config) => new RedisAdapter(config),
     editorLanguage: 'plaintext',
-    sampleQuery: (key: string) => `GET ${key}`,
+    sampleQuery: async (key: string) => `GET ${key}`,
     getTableData,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },

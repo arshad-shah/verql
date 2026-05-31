@@ -176,7 +176,7 @@ export function registerDbHandlers(
 
   handle('db:cancel-query', async (profileId) => {
     const adapter = ctx.activeAdapters.get(profileId)
-    if (adapter?.cancelQuery) adapter.cancelQuery()
+    if (adapter?.cancelQuery) await adapter.cancelQuery()
   })
 
   handle('db:session:open', async (profileId, sessionId, opts) => {

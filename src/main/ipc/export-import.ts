@@ -115,14 +115,14 @@ export function registerExportImportHandlers(
     })
     if (!importer.driverExecutes) {
       // Generic CSV-into-relational-table fallback. The orchestrator drives
-      // it using the driver's contributed `quoteChar` + `placeholder`, so no
-      // dialect knowledge has to live in this file. Drivers that need
+      // it using the driver's contributed `quoteChar` + `placeholderStyle`, so
+      // no dialect knowledge has to live in this file. Drivers that need
       // upserts or other dialect-specific behaviour should ship their own
       // importer with driverExecutes:true.
       const driver = ctx.driverRegistry.get(connectionType)
-      if (!driver?.quoteChar || !driver?.placeholder) {
+      if (!driver?.quoteChar || !driver?.placeholderStyle) {
         throw new Error(
-          `Driver '${connectionType}' did not contribute quoteChar + placeholder. ` +
+          `Driver '${connectionType}' did not contribute quoteChar + placeholderStyle. ` +
           `The generic CSV → table importer cannot be used; register a ` +
           `driverExecutes importer instead.`
         )
@@ -132,7 +132,7 @@ export function registerExportImportHandlers(
         columnMapping,
         onConflict,
         quoteChar: driver.quoteChar,
-        placeholder: driver.placeholder,
+        placeholderStyle: driver.placeholderStyle,
       })
     }
     return {

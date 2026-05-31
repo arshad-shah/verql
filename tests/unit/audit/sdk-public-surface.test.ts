@@ -47,6 +47,7 @@ const EXPECTED_EXPORTS = [
   'quoteIdentifier',
   'validateIdentifier',
   'IdentifierError',
+  'renderPlaceholder',
   'formatSqlValue',
   'generateCreateTable',
   'generateInsertStatements',

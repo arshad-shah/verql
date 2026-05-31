@@ -34,7 +34,9 @@ export class ConnectionAccessImpl implements ConnectionAccess {
 
   cancelQuery(connectionId: string): void {
     const adapter = this.getAdapter(connectionId)
-    adapter?.cancelQuery?.()
+    // Fire-and-forget: the adapter's cancel is now async, but callers of this
+    // convenience treat it as best-effort void. Swallow rejections.
+    void adapter?.cancelQuery?.()?.catch(() => {})
   }
 
   onActiveConnectionChanged(listener: (id: string | null) => void): Disposable {

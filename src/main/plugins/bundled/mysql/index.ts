@@ -134,7 +134,7 @@ export function activate(ctx: PluginContext): void {
     createAdapter: (config) => new MysqlAdapter(config),
     sqlDialect: 'mysql',
     quoteChar: MY_QUOTE,
-    placeholder: () => '?',
+    placeholderStyle: 'positional',
     editorLanguage: 'sql',
     defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
@@ -145,14 +145,14 @@ export function activate(ctx: PluginContext): void {
       { key: 'password', label: 'Password', type: 'password' },
       { key: 'ssl', label: 'SSL', type: 'boolean', default: false },
     ],
-    sampleQuery: (table, schema) => {
+    sampleQuery: async (table, schema) => {
       const qualified = schema
         ? quoteIdentifier([schema, table], MY_QUOTE)
         : quoteIdentifier(table, MY_QUOTE)
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(MY_QUOTE),
-    generateMigrationDdl: (tableName, columns) =>
+    generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,
         columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),

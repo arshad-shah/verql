@@ -121,7 +121,7 @@ export function activate(ctx: PluginContext): void {
     createAdapter: (config) => new PostgresAdapter(config),
     sqlDialect: 'postgresql',
     quoteChar: PG_QUOTE,
-    placeholder: (i) => `$${i}`,
+    placeholderStyle: 'numbered',
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['public'],
     connectionFields: [
@@ -136,14 +136,14 @@ export function activate(ctx: PluginContext): void {
         { value: 'no-verify', label: 'Skip verification (insecure)' },
       ]},
     ],
-    sampleQuery: (table, schema) => {
+    sampleQuery: async (table, schema) => {
       const qualified = schema
         ? quoteIdentifier([schema, table], PG_QUOTE)
         : quoteIdentifier(table, PG_QUOTE)
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(PG_QUOTE),
-    generateMigrationDdl: (tableName, columns) =>
+    generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,
         columns.map(c => ({ ...c, isForeignKey: false, references: undefined })),

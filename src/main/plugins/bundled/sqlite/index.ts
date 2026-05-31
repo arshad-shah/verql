@@ -138,20 +138,20 @@ export function activate(ctx: PluginContext): void {
     createAdapter: (config) => new SqliteAdapter(config),
     sqlDialect: 'sqlite',
     quoteChar: SQLITE_QUOTE,
-    placeholder: () => '?',
+    placeholderStyle: 'positional',
     editorLanguage: 'sql',
     defaultSchemaCandidates: ['main'],
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },
     ],
-    sampleQuery: (table, schema) => {
+    sampleQuery: async (table, schema) => {
       const qualified = schema && schema !== 'main'
         ? quoteIdentifier([schema, table], SQLITE_QUOTE)
         : quoteIdentifier(table, SQLITE_QUOTE)
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SQLITE_QUOTE),
-    generateMigrationDdl: (tableName, columns) => {
+    generateMigrationDdl: async (tableName, columns) => {
       // SQLite quirk: the rowid alias is only created when the column is
       // declared exactly as `INTEGER PRIMARY KEY` (no NOT NULL needed —
       // it's implied). Anything else needs an explicit PRIMARY KEY clause

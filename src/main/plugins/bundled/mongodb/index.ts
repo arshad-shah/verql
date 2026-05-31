@@ -240,7 +240,7 @@ Examples:
       const uri = `${protocol}://${auth}${hostPort}/${database}${query ? '?' + query : ''}`
       return new MongoAdapter(uri, database)
     },
-    sampleQuery: (collection: string) =>
+    sampleQuery: async (collection: string) =>
       JSON.stringify({ collection, operation: 'find', filter: {}, limit: 100 }),
     getTableData,
     connectionFields: [

@@ -98,7 +98,7 @@ export class RedisAdapter implements DbAdapter {
     this.client = null
   }
 
-  isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     return this.client !== null && this.client.status === 'ready'
   }
 
@@ -187,7 +187,7 @@ export class RedisAdapter implements DbAdapter {
     this.currentDatabase = dbNum
   }
 
-  cancelQuery(): void {
+  async cancelQuery(): Promise<void> {
     // Redis does not support query cancellation
   }
 }
