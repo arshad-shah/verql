@@ -56,7 +56,8 @@ export type { RegisteredImporter, ImporterParseFn, ImporterOptions, ImporterResu
 export type { TypeMapping, TypeMappingEntry, TypeMappingFallback } from '../../../src/main/plugins/sdk/type-mapper-registry'
 
 // ─── Tool schema helpers ──────────────────────────────────────────────────────
-export { isWriteQuery, toJsonSchema } from '../../../src/main/plugins/sdk/tool-schema'
+export { isWriteQuery, toJsonSchema, jsonSchemaToZodShape } from '../../../src/main/plugins/sdk/tool-schema'
+export type { JsonSchemaObject } from '../../../src/main/plugins/sdk/tool-schema'
 
 // ─── Error handling ───────────────────────────────────────────────────────────
 export { safeCall, ErrorBudget, PluginError } from '../../../src/main/plugins/sdk/safe-call'

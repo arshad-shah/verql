@@ -5,7 +5,7 @@ import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
 import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
-import type { z } from 'zod'
+import type { JsonSchemaObject } from './tool-schema'
 export type { DriverCapabilities } from '@shared/driver-capabilities'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
@@ -229,7 +229,10 @@ export interface Tool {
   id: string
   name: string
   description: string
-  inputSchema: z.ZodObject<z.ZodRawShape>
+  /** JSON Schema for the tool's params — serializable, so the tool can be
+   *  registered from a process-isolated plugin. Authors typically build it with
+   *  the SDK's `toJsonSchema(z.object({ … }))`. */
+  inputSchema: JsonSchemaObject
   permission: 'read' | 'write'
   /**
    * Which surfaces may call this tool. Omitted = all surfaces (back-compat).

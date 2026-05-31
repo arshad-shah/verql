@@ -5,6 +5,7 @@
 // directly — the plugin's PluginContext provides ipc.handle + broadcast.
 import { randomUUID } from 'crypto'
 import { z } from 'zod'
+import { toJsonSchema } from '../../../sdk/tool-schema'
 import type { AIStreamEvent } from '@shared/ai-types'
 import { AIProviderRegistry } from './provider-registry'
 import { PermissionManager } from './permission-manager'
@@ -161,10 +162,10 @@ export function startAIModule(deps: AIDeps): AIModule {
     id: 'perform_app_action',
     name: 'Perform App Action',
     description: 'Navigate or open something in the Verql UI by action id (see the action catalog). Use for safe navigation/open actions. For anything that changes data, do NOT use this — instead offer a markdown link with a verql://action/<id> href so the user confirms.',
-    inputSchema: z.object({
+    inputSchema: toJsonSchema(z.object({
       actionId: z.string(),
       params: z.record(z.string(), z.unknown()).optional()
-    }),
+    })),
     permission: 'read',
     surfaces: ['ai'],
     execute: async (params) => {

@@ -69,6 +69,11 @@ const EXPECTED_EXPORTS = [
   'hasPermission',
   'effectiveGrants',
   'PermissionDeniedError',
+  // Tool schema helpers — tools ship inputSchema as JSON Schema; authors build
+  // it from Zod with toJsonSchema, and the MCP boundary rebuilds a Zod shape.
+  'toJsonSchema',
+  'jsonSchemaToZodShape',
+  'isWriteQuery',
 ] as const
 
 describe('SDK barrel — public surface for plugin authors', () => {

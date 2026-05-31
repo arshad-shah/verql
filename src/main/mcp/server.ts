@@ -4,7 +4,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { BrowserWindow } from 'electron'
 import { generateToken, validateAuth } from './auth'
 import { findFreePort } from './find-port'
-import { isWriteQuery } from '../plugins/sdk/tool-schema'
+import { isWriteQuery, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
 import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
 
@@ -105,7 +105,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
     const server = new McpServer({ name: 'verql', version: '0.1.0' }, { capabilities: { tools: {} } })
     const exposed = selectExposedTools(deps.toolRegistry.list(), gate())
     for (const tool of exposed) {
-      server.tool(tool.id, tool.description, tool.inputSchema.shape, async (args: Record<string, unknown>) => {
+      server.tool(tool.id, tool.description, jsonSchemaToZodShape(tool.inputSchema), async (args: Record<string, unknown>) => {
         const startedAt = Date.now()
         const connectionId = deps.getActiveConnectionId()
         if (!connectionId) {

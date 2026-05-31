@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
+import { toJsonSchema } from '../../../src/main/plugins/sdk/tool-schema'
 import { ToolRegistryImpl } from '../../../src/main/plugins/sdk/tool-registry'
 
 // A focused contract test: a tool registered through one holder of a shared
@@ -11,7 +12,7 @@ describe('shared ToolRegistry contract', () => {
     const mcpSide = shared
     pluginSide.register({
       id: 'query', name: 'Query', description: 'run sql',
-      inputSchema: z.object({ sql: z.string() }), permission: 'write',
+      inputSchema: toJsonSchema(z.object({ sql: z.string() })), permission: 'write',
       async execute() { return { success: true, data: null } }
     })
     expect(mcpSide.get('query')?.permission).toBe('write')

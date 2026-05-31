@@ -45,7 +45,8 @@ export { ImporterRegistryImpl } from './importer-registry'
 export { FormatterRegistryImpl } from './formatter-registry'
 export { TypeMapperRegistryImpl } from './type-mapper-registry'
 export { ToolRegistryImpl } from './tool-registry'
-export { isWriteQuery, toJsonSchema } from './tool-schema'
+export { isWriteQuery, toJsonSchema, jsonSchemaToZodShape } from './tool-schema'
+export type { JsonSchemaObject } from './tool-schema'
 
 // ─── Generic SQL helpers (parameterised on the driver's quote character)
 //     Drivers compose these to build their exporters/importers without

@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { z } from 'zod'
+import { toJsonSchema } from '../../../src/main/plugins/sdk/tool-schema'
 import { ToolRegistryImpl } from '../../../src/main/plugins/sdk/tool-registry'
 import type { Tool } from '../../../src/main/plugins/sdk/types'
 
 function makeTool(id: string): Tool {
   return {
     id, name: id, description: `desc ${id}`,
-    inputSchema: z.object({ x: z.string() }),
+    inputSchema: toJsonSchema(z.object({ x: z.string() })),
     permission: 'read',
     async execute(params) { return { success: true, data: params } }
   }

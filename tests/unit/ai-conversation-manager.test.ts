@@ -1,6 +1,7 @@
 // tests/unit/ai-conversation-manager.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { z } from 'zod'
+import { toJsonSchema } from '../../src/main/plugins/sdk/tool-schema'
 import { ConversationManager } from '../../src/main/plugins/bundled/ai/internal/conversation-manager'
 import type { AIProvider } from '../../src/main/plugins/bundled/ai/internal/types'
 import { AIProviderRegistry } from '../../src/main/plugins/bundled/ai/internal/provider-registry'
@@ -139,7 +140,7 @@ describe('ConversationManager', () => {
     const execute = vi.fn(async () => ({ success: true, data: ['users', 'orders'], display: '2 tables' }))
     toolRegistry.register({
       id: 'list_tables', name: 'List Tables', description: 'list tables',
-      inputSchema: z.object({}), permission: 'read', execute
+      inputSchema: toJsonSchema(z.object({})), permission: 'read', execute
     })
 
     manager.addUserMessage('list the tables')
@@ -188,7 +189,7 @@ describe('ConversationManager', () => {
     const execute = vi.fn(async () => ({ success: true, data: [], display: 'ok' }))
     toolRegistry.register({
       id: 'list_tables', name: 'List Tables', description: 'list tables',
-      inputSchema: z.object({}), permission: 'read', execute
+      inputSchema: toJsonSchema(z.object({})), permission: 'read', execute
     })
 
     manager.addUserMessage('list the tables')
