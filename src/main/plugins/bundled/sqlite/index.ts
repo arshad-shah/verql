@@ -127,7 +127,7 @@ export function activate(ctx: PluginContext): void {
   ctx.formatters.register('sql', {
     language: 'sql',
     displayName: 'SQL (SQLite)',
-    appliesTo: (t) => t === 'sqlite',
+    appliesToTypes: ['sqlite'],
     format: (sql) => formatSql(sql, 'sqlite')
   })
   ctx.typeMappers.register('postgresql', 'sqlite', PG_TO_SQLITE, pgToSqliteFallback)

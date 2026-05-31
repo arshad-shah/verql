@@ -188,7 +188,7 @@ export function activate(ctx: PluginContext): void {
   ctx.formatters.register('json', {
     language: 'json',
     displayName: 'JSON (MongoDB)',
-    appliesTo: (t) => t === 'mongodb',
+    appliesToTypes: ['mongodb'],
     format: (src) => formatJson(src)
   })
 

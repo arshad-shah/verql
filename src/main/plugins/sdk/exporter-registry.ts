@@ -24,8 +24,11 @@ export interface RegisteredExporter {
   format: string
   extension: string
   displayName: string
-  /** When present, the exporter only applies to matching connection types. */
-  appliesTo?: (connectionType: string) => boolean
+  /** Connection types this exporter applies to (e.g. `['postgresql']`). Omit
+   *  for a format-neutral exporter that applies to every connection. Declarative
+   *  (not a predicate) so the descriptor can cross the process-isolation
+   *  boundary — see docs/plugin-security.md. */
+  appliesToTypes?: string[]
   execute: ExporterFn
 }
 
@@ -57,7 +60,7 @@ export class ExporterRegistryImpl implements ExporterRegistry {
   resolve(format: string, connectionType: string): RegisteredExporter | undefined {
     for (const exporter of this.byId.values()) {
       if (exporter.format !== format) continue
-      if (exporter.appliesTo && !exporter.appliesTo(connectionType)) continue
+      if (exporter.appliesToTypes && !exporter.appliesToTypes.includes(connectionType)) continue
       return exporter
     }
     return undefined
@@ -66,6 +69,6 @@ export class ExporterRegistryImpl implements ExporterRegistry {
   list(connectionType?: string): RegisteredExporter[] {
     const all = [...this.byId.values()]
     if (!connectionType) return all
-    return all.filter(e => !e.appliesTo || e.appliesTo(connectionType))
+    return all.filter(e => !e.appliesToTypes || e.appliesToTypes.includes(connectionType))
   }
 }

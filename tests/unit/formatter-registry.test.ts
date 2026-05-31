@@ -7,7 +7,7 @@ describe('FormatterRegistryImpl', () => {
   it('prefers a connection-specific formatter over the language fallback', () => {
     const reg = new FormatterRegistryImpl()
     reg.register('sql-generic', { language: 'sql', displayName: 'SQL (generic)', format: (s) => `generic:${s}` })
-    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => `pg:${s}` })
+    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesToTypes: ['postgresql'], format: (s) => `pg:${s}` })
 
     expect(reg.resolve('sql', 'postgresql')?.format('x')).toBe('pg:x')
     // No dialect-specific match → language-wide fallback.
@@ -17,7 +17,7 @@ describe('FormatterRegistryImpl', () => {
   it('never crosses languages (a SQL fallback can\'t apply to JSON)', () => {
     const reg = new FormatterRegistryImpl()
     reg.register('sql-generic', { language: 'sql', displayName: 'SQL (generic)', format: (s) => s })
-    reg.register('mongo', { language: 'json', displayName: 'JSON (Mongo)', appliesTo: (t) => t === 'mongodb', format: (s) => `json:${s}` })
+    reg.register('mongo', { language: 'json', displayName: 'JSON (Mongo)', appliesToTypes: ['mongodb'], format: (s) => `json:${s}` })
 
     expect(reg.resolve('json', 'mongodb')?.format('x')).toBe('json:x')
     // A plaintext editor has no formatter — must not fall back to the SQL one.
@@ -28,7 +28,7 @@ describe('FormatterRegistryImpl', () => {
 
   it('returns undefined when nothing matches and there is no language fallback', () => {
     const reg = new FormatterRegistryImpl()
-    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesTo: (t) => t === 'postgresql', format: (s) => s })
+    reg.register('pg', { language: 'sql', displayName: 'SQL (PG)', appliesToTypes: ['postgresql'], format: (s) => s })
     expect(reg.resolve('sql', 'mysql')).toBeUndefined()
   })
 

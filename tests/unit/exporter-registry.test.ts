@@ -37,7 +37,7 @@ describe('ExporterRegistryImpl', () => {
       format: 'sql',
       extension: 'sql',
       displayName: 'SQL (Postgres)',
-      appliesTo: (t) => t === 'postgresql',
+      appliesToTypes: ['postgresql'],
       execute: () => ''
     })
     expect(reg.list('postgresql').map(e => e.format).sort()).toEqual(['csv', 'sql'])

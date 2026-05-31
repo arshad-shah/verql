@@ -18,9 +18,10 @@ export interface RegisteredFormatter {
   language: string
   /** Human label, e.g. "SQL (PostgreSQL)". */
   displayName: string
-  /** Restrict to matching connection types; omit for a language-wide fallback
-   *  used when no connection-specific formatter matches. */
-  appliesTo?: (connectionType: string) => boolean
+  /** Connection types this formatter applies to; omit for a language-wide
+   *  fallback used when no connection-specific formatter matches. Declarative
+   *  (not a predicate) so the descriptor can cross the isolation boundary. */
+  appliesToTypes?: string[]
   /** Pretty-print the source. Must return the input unchanged on failure so a
    *  formatting error never destroys the user's buffer. */
   format: (source: string) => string | Promise<string>
@@ -54,10 +55,10 @@ export class FormatterRegistryImpl implements FormatterRegistry {
 
   resolve(language: string, connectionType: string): RegisteredFormatter | undefined {
     for (const f of this.byId.values()) {
-      if (f.language === language && f.appliesTo && f.appliesTo(connectionType)) return f
+      if (f.language === language && f.appliesToTypes && f.appliesToTypes.includes(connectionType)) return f
     }
     for (const f of this.byId.values()) {
-      if (f.language === language && !f.appliesTo) return f
+      if (f.language === language && !f.appliesToTypes) return f
     }
     return undefined
   }

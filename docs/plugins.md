@@ -253,15 +253,18 @@ ctx.exporters.register('parquet', {
   format: 'parquet',
   extension: 'parquet',
   displayName: 'Parquet',
-  appliesTo: (connectionType) => connectionType === 'cassandra', // optional
+  appliesToTypes: ['cassandra'], // optional
   execute(rows, columns, options) {
     return serializeParquet(rows, columns)  // string | Buffer
   }
 })
 ```
 
-The `appliesTo` predicate lets you restrict the exporter to connections of
-a specific type. Omit it for neutral formats (CSV, JSON, Parquet).
+The `appliesToTypes` array restricts the exporter to connections of the listed
+types. Omit it for neutral formats (CSV, JSON, Parquet). It is a declarative
+`string[]` (not a predicate function) so the contribution can be marshalled
+across the process-isolation boundary — see
+[plugin-security.md](./plugin-security.md).
 
 Worked examples:
 [core-formats](../src/main/plugins/bundled/core-formats/index.ts) (CSV/JSON),
@@ -287,7 +290,7 @@ ctx.importers.register('parquet', {
   format: 'parquet',
   extensions: ['parquet'],
   displayName: 'Parquet',
-  appliesTo: (t) => t === 'cassandra',
+  appliesToTypes: ['cassandra'],
   // When the importer drives execution itself (e.g. SQL scripts), set this:
   driverExecutes: false,
   parse(content, options) {
@@ -324,15 +327,16 @@ import { formatSql } from '../../sdk/sql-format'
 ctx.formatters.register('sql', {
   language: 'sql',                          // the editor language this formats
   displayName: 'SQL (Cassandra)',
-  appliesTo: (t) => t === 'cassandra',      // omit for a language-wide fallback
+  appliesToTypes: ['cassandra'],            // omit for a language-wide fallback
   format: (sql) => formatSql(sql, 'sql'),   // or your own CQL formatter
 })
 ```
 
 **Resolution.** For a given (editor language, connection type), a formatter whose
-`appliesTo` matches the connection wins; otherwise a language-wide fallback (no
-`appliesTo`) is used; otherwise nothing (a clean no-op). Resolution never crosses
-languages, so a SQL fallback can't touch a JSON or plaintext editor.
+`appliesToTypes` includes the connection type wins; otherwise a language-wide
+fallback (no `appliesToTypes`) is used; otherwise nothing (a clean no-op).
+Resolution never crosses languages, so a SQL fallback can't touch a JSON or
+plaintext editor.
 
 **Shared SDK helpers** (so bundled plugins don't duplicate logic):
 

@@ -41,7 +41,7 @@ export const jsonLinesExporter: RegisteredExporter = {
   format: 'jsonl',
   extension: 'jsonl',
   displayName: 'JSON Lines (one document per line)',
-  appliesTo: (t) => t === 'mongodb',
+  appliesToTypes: ['mongodb'],
   execute(rows) {
     return rows.map(r => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : '')
   }
@@ -51,7 +51,7 @@ export const bsonArrayExporter: RegisteredExporter = {
   format: 'json',
   extension: 'json',
   displayName: 'JSON Array (Mongo Extended JSON)',
-  appliesTo: (t) => t === 'mongodb',
+  appliesToTypes: ['mongodb'],
   execute(rows) {
     return JSON.stringify(rows, null, 2)
   }
@@ -66,7 +66,7 @@ export const jsonLinesImporter: RegisteredImporter = {
   format: 'jsonl',
   extensions: ['jsonl', 'ndjson'],
   displayName: 'JSON Lines',
-  appliesTo: (t) => t === 'mongodb',
+  appliesToTypes: ['mongodb'],
   driverExecutes: true,
   async parse(content, options) {
     const text = typeof content === 'string' ? content : content.toString('utf-8')

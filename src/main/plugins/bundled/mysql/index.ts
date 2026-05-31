@@ -125,7 +125,7 @@ export function activate(ctx: PluginContext): void {
   ctx.formatters.register('sql', {
     language: 'sql',
     displayName: 'SQL (MySQL)',
-    appliesTo: (t) => t === 'mysql',
+    appliesToTypes: ['mysql'],
     format: (sql) => formatSql(sql, 'mysql')
   })
   ctx.typeMappers.register('postgresql', 'mysql', PG_TO_MYSQL, pgToMysqlFallback)

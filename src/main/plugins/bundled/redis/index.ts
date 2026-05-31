@@ -189,7 +189,7 @@ export function activate(ctx: PluginContext): void {
   ctx.formatters.register('commands', {
     language: 'plaintext',
     displayName: 'Redis commands',
-    appliesTo: (t) => t === 'redis',
+    appliesToTypes: ['redis'],
     format: tidyRedisCommands
   })
 
