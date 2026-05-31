@@ -11,6 +11,7 @@ import {
   type InvokeParams,
 } from './protocol'
 import { buildWorkerContext } from './worker-context'
+import { installModuleSandbox } from './sandbox'
 
 interface PluginModule {
   activate: (ctx: unknown) => void | Promise<void>
@@ -20,6 +21,10 @@ interface PluginModule {
 export interface StartWorkerOptions {
   /** Injectable module loader (defaults to CommonJS require). */
   requireModule?: (path: string) => PluginModule
+  /** Injectable sandbox installer (defaults to patching the CJS loader). Tests
+   *  override this to observe the requested grants without touching the global
+   *  module system. */
+  installSandbox?: (granted: string[]) => () => void
   timeoutMs?: number
 }
 
@@ -31,13 +36,19 @@ export function startWorker(transport: Transport, options: StartWorkerOptions = 
       return require(p) as PluginModule
     })
 
+  const installSandbox = options.installSandbox ?? installModuleSandbox
+
   const endpoint = new RpcEndpoint(transport, { timeoutMs: options.timeoutMs })
 
   let module: PluginModule | undefined
   let handles = new Map<string, (...args: unknown[]) => unknown>()
 
   endpoint.handle(H2W.ACTIVATE, async (params): Promise<ActivateResult> => {
-    const { mainPath } = params as ActivateParams
+    const { mainPath, grantedPermissions } = params as ActivateParams
+    // Lock down Node builtins per the advisory grants BEFORE loading the
+    // plugin, so even its top-level module code can't reach an ungranted
+    // capability while being required.
+    installSandbox(grantedPermissions ?? [])
     module = requireModule(mainPath)
     if (typeof module.activate !== 'function') {
       throw new Error('Plugin module has no activate() export')

@@ -45,6 +45,10 @@ const CAPABILITY_SURFACES = new Set(['connections', 'keyring', 'schema', 'settin
 export interface IsolatedPluginDeps {
   pluginName: string
   mainPath: string
+  /** Capabilities the user granted this plugin. Forwarded to the worker so its
+   *  module sandbox leaves the matching Node builtins (network/filesystem/
+   *  process) reachable and blocks the rest. */
+  grantedPermissions: string[]
   /** The guarded PluginContext built for this (untrusted) plugin. Capability
    *  calls and events are dispatched against it, so its permission guards run. */
   context: PluginContext
@@ -74,6 +78,7 @@ export class IsolatedPlugin {
     const result = await this.endpoint.request<ActivateResult>(H2W.ACTIVATE, {
       pluginName: this.deps.pluginName,
       mainPath: this.deps.mainPath,
+      grantedPermissions: this.deps.grantedPermissions,
     })
     const registered: string[] = []
     for (const c of result.contributions) {

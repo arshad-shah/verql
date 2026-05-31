@@ -74,25 +74,35 @@ a typo fails the plugin loudly rather than silently granting nothing.
 
 | Permission | Tier | Enforced? | What it covers |
 |------------|------|-----------|----------------|
-| `keyring` | enforced | ✅ host blocks the surface | stored secrets |
-| `connections` | enforced | ✅ | connection profiles + live queries |
-| `ipc` | enforced | ✅ | custom main-process channels |
-| `network` | advisory | ❌ cannot be enforced in-process | outbound network |
-| `filesystem` | advisory | ❌ | files outside the plugin folder |
-| `process` | advisory | ❌ | launching child processes |
+| `keyring` | enforced (host) | ✅ host blocks the surface | stored secrets |
+| `connections` | enforced (host) | ✅ | connection profiles + live queries |
+| `ipc` | enforced (host) | ✅ | custom main-process channels |
+| `network` | enforced (worker)¹ | ✅ when isolated | outbound network |
+| `filesystem` | enforced (worker)¹ | ✅ when isolated | files outside the plugin folder |
+| `process` | enforced (worker)¹ | ✅ when isolated | launching child processes |
 
-**Enforced** capabilities are wrapped by guards (`guardKeyring`,
+¹ Enforced **for process-isolated plugins** via the worker module sandbox (see
+below). A plugin that falls back to in-process execution (driver/exporter/tool
+plugins — see *Process isolation*) is in the host process where these can't be
+gated, so for those they remain advisory. Isolation is on by default, so a
+typical command/theme plugin gets real enforcement.
+
+**Host-enforced** capabilities are wrapped by guards (`guardKeyring`,
 `guardConnections`, and an inline check in `ctx.ipc.handle`). An ungranted call
 throws `PermissionDeniedError` — synchronously for sync methods, as a rejected
 promise for async ones — with an actionable message telling the author what to
 add to their manifest.
 
-**Advisory** capabilities are declared for transparency and consent only. Verql
-**cannot** stop in-process code from calling `require('node:net')` or
-`require('node:child_process')`, and the docs say so plainly rather than
-implying a guarantee that doesn't exist. They surface in the consent UI so a
-user can see "this plugin says it will talk to the network" before installing,
-and they are the seam that a future process-isolation layer would enforce.
+**Worker-enforced** capabilities (`network`/`filesystem`/`process`) are gated by
+the **module sandbox** in `src/main/plugins/isolation/sandbox.ts`. When an
+isolated worker activates a plugin, it patches the worker's CommonJS loader so
+that `require('net')`, `require('fs')`, `require('child_process')`, and friends
+(bare and `node:`-prefixed) throw `SandboxViolationError` unless the matching
+capability was granted — *before* the plugin's own module code runs. A plugin
+with no advisory grants gets a pure-compute sandbox whose only outside contact
+is the RPC bridge. This is a real gate, not transparency-only; its honest limit
+is that it patches the documented loader, so deeper escapes (native addons a
+plugin ships, internal bindings) are follow-up hardening — see the roadmap.
 
 ### Consent & grants
 
@@ -167,6 +177,9 @@ How it fits together (`src/main/plugins/isolation/`):
   serves host→worker invocations of the contributions it registered. Bundled to
   `out/main/plugin-worker.js`.
 - `worker-process.ts` — forks the `utilityProcess` and adapts it to `Transport`.
+- `sandbox.ts` — the worker module sandbox: patches the CJS loader so ungranted
+  `network`/`filesystem`/`process` builtins throw, turning those advisory
+  permissions into real gates for isolated plugins.
 - `isolated-plugin.ts` — the host controller. It registers each reported
   contribution as a **proxy** in the real registries and serves the worker's
   capability calls by dispatching them against the *same guarded
@@ -208,27 +221,39 @@ Be honest about what the model does and does not buy you:
    extraction is tracked below.
 3. **No signature / publisher verification.** Verql does not yet verify a
    signature or checksum on an installed plugin, nor is there a curated
-   registry. "Only install plugins you trust" is currently a social control.
+   registry. "Only install plugins you trust" is currently a social control. A
+   full design for this exists at
+   [`proposals/signed-plugins-and-registry.md`](./proposals/signed-plugins-and-registry.md).
+4. **The worker sandbox patches the documented loader.** It closes
+   `require()` of gated builtins, but a plugin shipping a native addon or
+   reaching internal bindings is deeper escape surface — see roadmap item 2.
 
 ## Roadmap
 
-In rough priority order:
+Done (kept here for context):
 
-1. **Marshalling-friendly contribution APIs** so process isolation can cover
-   the rich surfaces too. Concretely: replace synchronous predicate functions
-   (`exporter.appliesTo`, `formatter.appliesTo`) with declarative descriptors
-   (`appliesToTypes: string[]`); ship tool `inputSchema` as JSON Schema rather
-   than a live Zod object; and make the `DbAdapter`/`DriverFactory` contract
-   async (drop sync `isConnected`/`placeholder`/`sampleQuery`) so a driver's
-   adapter can live behind an RPC handle. Each is a focused, breaking SDK change.
-2. **Enforce advisory permissions in the worker.** With plugins out-of-process,
-   `network`/`filesystem`/`process` can be enforced by sandboxing the worker
-   (e.g. dropping `NODE_OPTIONS`, restricting the module loader) — turning them
-   from advisory into real gates.
+- ✅ **Marshalling-friendly contribution APIs** — exporter/formatter/importer
+  use declarative `appliesToTypes: string[]`; tool `inputSchema` ships as JSON
+  Schema; the `DbAdapter`/`DriverFactory` contract is async and `placeholder`
+  is a declarative `placeholderStyle`. The rich surfaces can now cross the
+  isolation boundary, so isolation will broaden to drivers/exporters/tools.
+- ✅ **Enforce advisory permissions in the worker** — `network`/`filesystem`/
+  `process` are gated by the worker module sandbox (above) for isolated plugins.
+
+Remaining, in rough priority order:
+
+1. **Broaden `canIsolate`** to the now-marshalling-friendly surfaces (drivers,
+   exporters, importers, formatters, tools), with the live `DbAdapter` exposed
+   to the host as an RPC handle, so those plugins also run out-of-process.
+2. **Deeper worker hardening** — drop `NODE_OPTIONS`/inherited env on the
+   forked process and restrict the native-addon / internal-binding escape
+   routes the module sandbox doesn't cover.
 3. **Cross-platform, in-process zip extraction** to remove the `unzip`
    dependency and fully own traversal/symlink handling.
 4. **Signed plugins + a trusted registry** — verify a publisher signature or a
    checksum from a known index at install time, and show provenance in the UI.
+   A full design spec already exists:
+   [`proposals/signed-plugins-and-registry.md`](./proposals/signed-plugins-and-registry.md).
 
 ## For plugin authors
 
@@ -257,6 +282,8 @@ The security boundary is pinned by tests under `tests/unit/audit/`:
 `plugin-path-traversal.test.ts`, `plugin-bundled-shadowing.test.ts`,
 `plugin-manifest-rejects-bad-input.test.ts`, and `sdk-public-surface.test.ts`.
 The process-isolation bridge is covered under `tests/unit/isolation/`
-(`rpc.test.ts`, `isolated-plugin.test.ts`) — including that an ungranted
-capability is denied across the (simulated) process boundary and that a worker
-crash tears the plugin's proxies down.
+(`rpc.test.ts`, `isolated-plugin.test.ts`, `sandbox.test.ts`) — including that an
+ungranted host capability is denied across the (simulated) process boundary, that
+the worker module sandbox blocks an ungranted `require('net')`/`fs`/
+`child_process`, that grants flow to the worker, and that a worker crash tears
+the plugin's proxies down.

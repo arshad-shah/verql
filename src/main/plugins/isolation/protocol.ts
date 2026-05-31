@@ -102,6 +102,10 @@ export interface ActivateParams {
   pluginName: string
   /** Absolute path to the plugin's compiled main entry. */
   mainPath: string
+  /** The capabilities the user granted this plugin. The worker uses the
+   *  advisory ones (network/filesystem/process) to decide which Node builtins
+   *  to leave un-sandboxed; everything else is blocked. */
+  grantedPermissions: string[]
 }
 
 export interface ActivateResult {

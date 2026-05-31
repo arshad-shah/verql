@@ -409,16 +409,21 @@ export class PluginBootCoordinator {
     return canIsolate(plugin.manifest)
   }
 
+  /** Effective capability grants for a plugin: trusted (bundled) plugins get
+   *  everything; third-party plugins get granted ∩ declared. */
+  private grantsFor(plugin: LoadedPlugin): PluginPermission[] {
+    if (plugin.path === '<bundled>') return [...ALL_PERMISSIONS]
+    return [...effectiveGrants(
+      plugin.manifest.permissions,
+      this.deps.pluginGrantsStore?.getGrants(plugin.manifest.name),
+    )]
+  }
+
   /** Build the guarded PluginContext for a plugin. Trusted (bundled) plugins
    *  get every capability; third-party plugins get the granted ∩ declared set. */
   private buildPluginContext(plugin: LoadedPlugin): PluginContext {
     const trusted = plugin.path === '<bundled>'
-    const grantedPermissions = trusted
-      ? [...ALL_PERMISSIONS]
-      : [...effectiveGrants(
-          plugin.manifest.permissions,
-          this.deps.pluginGrantsStore?.getGrants(plugin.manifest.name),
-        )]
+    const grantedPermissions = this.grantsFor(plugin)
     return createPluginContext({
       pluginName: plugin.manifest.name,
       trusted,
@@ -501,6 +506,7 @@ export class PluginBootCoordinator {
     const isolated = new IsolatedPlugin(transport, {
       pluginName: plugin.manifest.name,
       mainPath: plugin.mainPath!,
+      grantedPermissions: this.grantsFor(plugin),
       context,
       commandRegistry: this.deps.commandRegistry,
       themeRegistry: this.deps.themeRegistry,

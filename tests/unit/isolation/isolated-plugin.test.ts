@@ -108,19 +108,26 @@ const fakePlugin = {
 
 function setup(grantedPermissions: string[], over: Record<string, unknown> = {}) {
   const { host, worker } = createMemoryTransportPair()
-  startWorker(worker, { requireModule: () => fakePlugin })
+  // Stub the sandbox installer so the worker runtime doesn't patch the real
+  // global module loader during tests; capture the grants it was given.
+  const sandboxGrants: string[][] = []
+  startWorker(worker, {
+    requireModule: () => fakePlugin,
+    installSandbox: (g) => { sandboxGrants.push(g); return () => {} },
+  })
   const reg = fakeRegistries()
   const context = hostContext({ grantedPermissions, ...over })
   const onCrash = vi.fn()
   const isolated = new IsolatedPlugin(host, {
     pluginName: 'p',
     mainPath: '/fake/plugin/index.js',
+    grantedPermissions,
     context,
     commandRegistry: reg.commandRegistry,
     themeRegistry: reg.themeRegistry,
     onCrash,
   })
-  return { isolated, ...reg, context, onCrash, host, worker }
+  return { isolated, ...reg, context, onCrash, host, worker, sandboxGrants }
 }
 
 describe('canIsolate', () => {
@@ -146,6 +153,12 @@ describe('IsolatedPlugin bridge', () => {
     expect(themes.has('my-theme')).toBe(true)
     expect(registered).toContain('command:run-query')
     expect(registered).toContain('theme:my-theme')
+  })
+
+  it('forwards the granted permissions to the worker sandbox at activate', async () => {
+    const { isolated, sandboxGrants } = setup(['network'])
+    await isolated.activate()
+    expect(sandboxGrants).toEqual([['network']])
   })
 
   it('forwards a command invocation across the boundary to a granted capability', async () => {
