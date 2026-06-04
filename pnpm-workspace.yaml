@@ -1,6 +1,9 @@
-# Workspace members. The root is the Electron app; packages/* holds publishable
-# libraries (e.g. @verql/plugin-sdk) that are NOT bundled into the app.
+# Workspace members. The root (`.`) is the Electron app; packages/* holds
+# publishable libraries (e.g. @verql/plugin-sdk) that are NOT bundled into the
+# app. The root must be listed so Changesets can discover and version the
+# `verql` package when cutting a release.
 packages:
+  - '.'
   - 'packages/*'
 
 # pnpm explicitly recommends `node-linker=hoisted` for Electron apps:
