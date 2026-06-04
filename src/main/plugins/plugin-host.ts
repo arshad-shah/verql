@@ -941,9 +941,12 @@ export class PluginBootCoordinator {
   }
 
   installFromZip(zipPath: string): { success: boolean; name?: string; error?: string } {
-    const tmpDir = path.join(os.tmpdir(), `verql-plugin-${Date.now()}`)
+    // mkdtempSync atomically creates a unique, owner-only (0700) directory.
+    // A predictable name like `verql-plugin-${Date.now()}` + recursive
+    // mkdir lets a local attacker pre-create the dir (or plant a symlink
+    // inside it) on a shared machine before `unzip -o` overwrites into it.
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verql-plugin-'))
     try {
-      fs.mkdirSync(tmpDir, { recursive: true })
       execFileSync('unzip', ['-o', '-q', zipPath, '-d', tmpDir])
       // The zip may contain a single top-level directory or files at root.
       // Check if there's exactly one subdirectory — if so, install from that.

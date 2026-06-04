@@ -38,9 +38,29 @@ export function canIsolate(manifest: PluginManifest): boolean {
   return keys.every((k) => ISOLATABLE_CONTRIBUTIONS.has(k))
 }
 
-/** Surfaces of the gated context the worker is allowed to call. Anything else
- *  is refused — the worker can't reach, say, ctx.drivers through this channel. */
-const CAPABILITY_SURFACES = new Set(['connections', 'keyring', 'schema', 'settings'])
+/** Per-surface allowlist of the exact methods the worker may invoke over the
+ *  capability channel. Allowlisting *methods* (not just surfaces) is essential:
+ *  the dispatcher does `ctx[surface][method]` with a worker-controlled `method`,
+ *  so without this a hostile worker could reach inherited members like
+ *  `constructor`, `hasOwnProperty`, or `valueOf` (all `typeof === 'function'`)
+ *  and invoke them with attacker-controlled args, escaping the documented
+ *  capability surface and bypassing the per-method permission guards. The set
+ *  mirrors exactly what `buildWorkerContext` (worker-context.ts) forwards. */
+const CAPABILITY_METHODS: Record<string, Set<string>> = {
+  connections: new Set(['query', 'cancelQuery']),
+  keyring: new Set(['store', 'retrieve', 'delete']),
+  schema: new Set([
+    'getTables', 'getColumns', 'getIndexes',
+    'getSchemas', 'getDatabases', 'getSchemaSummary',
+  ]),
+  settings: new Set(['set']),
+}
+
+/** True only for the exact (surface, method) pairs the isolation boundary
+ *  intentionally exposes. Exported for unit testing. */
+export function isAllowedCapability(surface: string, method: string): boolean {
+  return CAPABILITY_METHODS[surface]?.has(method) ?? false
+}
 
 export interface IsolatedPluginDeps {
   pluginName: string
@@ -128,8 +148,8 @@ export class IsolatedPlugin {
 
     this.endpoint.handle(W2H.CAPABILITY, async (params) => {
       const { surface, method, args } = params as CapabilityParams
-      if (!CAPABILITY_SURFACES.has(surface)) {
-        throw new Error(`Capability surface '${surface}' is not exposed to isolated plugins`)
+      if (!isAllowedCapability(surface, method)) {
+        throw new Error(`Capability '${surface}.${method}' is not exposed to isolated plugins`)
       }
       const target = ctx[surface]
       const fn = target?.[method]

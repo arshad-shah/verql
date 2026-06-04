@@ -7,6 +7,31 @@ export interface CommandResult {
   value: unknown
 }
 
+/**
+ * Map a stored connection profile to ioredis options + a target database.
+ *
+ * The previous factory passed the whole profile straight to ioredis as
+ * `RedisOptions` with no second arg, which (a) dropped the `database` field
+ * — every connection silently landed on db0 — and (b) never translated the
+ * `ssl` checkbox into ioredis's `tls` option, so a user who enabled "SSL"
+ * got a plaintext connection while the UI claimed otherwise. Profile-only
+ * keys (`id`, `name`, `type`, `ssl`, `database`, …) also leaked in as bogus
+ * ioredis options. This maps each declared field explicitly instead.
+ */
+export function buildRedisConnection(
+  config: Record<string, unknown>
+): { options: RedisOptions; database: number } {
+  const options: RedisOptions = {
+    host: (typeof config.host === 'string' && config.host) || 'localhost',
+    port: Number(config.port) || 6379,
+  }
+  if (typeof config.username === 'string' && config.username) options.username = config.username
+  if (typeof config.password === 'string' && config.password) options.password = config.password
+  // ioredis enables TLS only when `tls` is set; the profile uses an `ssl` flag.
+  if (config.ssl) options.tls = {}
+  return { options, database: Number(config.database) || 0 }
+}
+
 export function parseRedisCommands(input: string): string[][] {
   return input
     .split('\n')

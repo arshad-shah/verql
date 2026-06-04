@@ -7,6 +7,7 @@ import {
   extractAndPersistSecrets,
   injectSecretsFromKeyring,
   deleteProfileSecrets,
+  stripSecretsForDisk,
   type KeyringLike,
 } from '../ipc/profile-secrets'
 
@@ -97,7 +98,15 @@ export class ConfigStore {
   }
 
   private save(): void {
-    writeAtomic(this.filePath, JSON.stringify(this.data, null, 2))
+    // Always strip keyring-backed secrets before serialising. `this.data`
+    // holds plaintext in memory; writing it verbatim would leak every
+    // connection's password into config.json whenever an unrelated change
+    // (settings, delete) triggers a save.
+    const diskData = {
+      connections: this.data.connections.map(c => stripSecretsForDisk(c, this.keyring)),
+      settings: this.data.settings,
+    }
+    writeAtomic(this.filePath, JSON.stringify(diskData, null, 2))
   }
 
   // ─── Connections ──────────────────────────────────────────────
@@ -120,16 +129,14 @@ export class ConfigStore {
    * When `secretKeys` is omitted the profile is written as-is (legacy / test path).
    */
   saveConnection(profile: ConnectionProfile, secretKeys?: Iterable<string>): ConnectionProfile {
-    let onDisk: ConnectionProfile
     let inMemory: ConnectionProfile
 
     if (secretKeys) {
-      // Strip secrets → keyring, blank on disk
-      onDisk = extractAndPersistSecrets(profile, secretKeys, this.keyring)
-      // Re-inject from keyring so in-memory copy is always complete
+      // Push secrets into the keyring; the in-memory copy stays plaintext-complete.
+      // `save()` blanks every keyring-backed field before it touches disk.
+      const onDisk = extractAndPersistSecrets(profile, secretKeys, this.keyring)
       inMemory = injectSecretsFromKeyring(onDisk, this.keyring)
     } else {
-      onDisk = profile
       inMemory = profile
     }
 
@@ -141,43 +148,9 @@ export class ConfigStore {
       this.data.connections.push(inMemory)
     }
 
-    // Persist to disk with secrets blanked
-    this._persist(onDisk)
+    // Persist the whole config; secrets are stripped inside save().
+    this.save()
     return inMemory
-  }
-
-  /**
-   * Write a single profile to disk (secrets should already be stripped before
-   * calling this). Updates the on-disk JSON without touching the in-memory state.
-   */
-  private _persist(profile: ConnectionProfile): void {
-    // Build the list we'll write: replace the matching entry (or append) with
-    // the stripped/on-disk version, leaving all other profiles untouched on disk.
-    // We need to read what's currently on disk to avoid writing plaintext for
-    // other profiles that may still be in-memory only.
-    let diskConnections: ConnectionProfile[]
-    try {
-      if (fs.existsSync(this.filePath)) {
-        const raw = fs.readFileSync(this.filePath, 'utf-8')
-        diskConnections = (JSON.parse(raw) as { connections?: ConnectionProfile[] }).connections ?? []
-      } else {
-        diskConnections = []
-      }
-    } catch {
-      diskConnections = []
-    }
-    const diskIdx = diskConnections.findIndex(c => c.id === profile.id)
-    if (diskIdx >= 0) {
-      diskConnections[diskIdx] = profile
-    } else {
-      diskConnections.push(profile)
-    }
-    // Write full config with updated connections list
-    const diskData = {
-      connections: diskConnections,
-      settings: this.data.settings,
-    }
-    writeAtomic(this.filePath, JSON.stringify(diskData, null, 2))
   }
 
   async deleteConnection(id: string): Promise<void> {

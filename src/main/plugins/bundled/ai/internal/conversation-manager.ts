@@ -222,7 +222,7 @@ export class ConversationManager {
             continue
           }
 
-          if (this.deps.permissionManager.isWriteBlocked(tool)) {
+          if (this.deps.permissionManager.isWriteBlocked(tool, params)) {
             const blockedMsg = 'Blocked: this tool requires write access and the current permission profile is read-only.'
             const resultContent = JSON.stringify({ error: blockedMsg })
             toolCalls.push({ call: chunk.toolCall, resultContent })
@@ -236,7 +236,7 @@ export class ConversationManager {
             continue
           }
 
-          if (this.deps.permissionManager.needsApproval(tool)) {
+          if (this.deps.permissionManager.needsApproval(tool, params)) {
             const display = tool.description + ': ' + JSON.stringify(params)
             const requestId = this.deps.permissionManager.createApprovalRequest(
               tool.id, params, display

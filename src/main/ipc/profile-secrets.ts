@@ -45,6 +45,30 @@ export function extractAndPersistSecrets(
 }
 
 /**
+ * Return a disk-safe copy of `profile` with every keyring-backed field
+ * blanked. The set of secret fields is derived from the keyring itself
+ * (`listKeys`), so this works even when the original `secretKeys` are no
+ * longer in scope — e.g. when `ConfigStore.save()` rewrites the whole
+ * config as a side effect of an unrelated settings change.
+ *
+ * This is the single chokepoint that guarantees the at-rest model: any
+ * path that serialises a profile to disk must run it through here first,
+ * otherwise the plaintext secrets held in memory leak into config.json.
+ */
+export function stripSecretsForDisk(
+  profile: ConnectionProfile,
+  keyring: KeyringLike
+): ConnectionProfile {
+  const keys = keyring.listKeys(profile.id)
+  if (keys.length === 0) return profile
+  const out = { ...profile } as ConnectionProfile & Record<string, unknown>
+  for (const key of keys) {
+    if (key in out) out[key] = ''
+  }
+  return out as ConnectionProfile
+}
+
+/**
  * Pull all keyring-stored secrets back into `profile` in memory.
  * Called after loading profiles from disk so in-memory state is always
  * plaintext-complete.

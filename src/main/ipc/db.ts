@@ -32,6 +32,7 @@ export function registerDbHandlers(
     if (existing) return existing
 
     const attempt = (async () => {
+      let adapter: DbAdapter | null = null
       try {
         let profile = ctx.configStore.getConnection(profileId)
         if (!profile) return { success: false as const, error: 'Connection profile not found — it may have been deleted' }
@@ -42,12 +43,18 @@ export function registerDbHandlers(
           }
         }
 
-        const adapter = createAdapter(profile)
+        adapter = createAdapter(profile)
         await adapter.connect()
         ctx.activeAdapters.set(profileId, adapter)
         connectionAccess.setActiveConnectionId(profileId)
         return { success: true as const }
       } catch (err) {
+        // connect() can partially initialise a pool/socket (e.g. pg.Pool with
+        // background reconnect timers) before throwing. If we never stored the
+        // adapter, release it here so each failed attempt doesn't leak a pool.
+        if (adapter && ctx.activeAdapters.get(profileId) !== adapter) {
+          await adapter.disconnect().catch(() => { /* best-effort cleanup */ })
+        }
         return { success: false as const, error: err instanceof Error ? err.message : String(err) }
       } finally {
         inFlightConnects.delete(profileId)
