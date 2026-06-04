@@ -188,7 +188,7 @@ export function activate(ctx: PluginContext): void {
   ctx.formatters.register('json', {
     language: 'json',
     displayName: 'JSON (MongoDB)',
-    appliesTo: (t) => t === 'mongodb',
+    appliesToTypes: ['mongodb'],
     format: (src) => formatJson(src)
   })
 
@@ -240,7 +240,7 @@ Examples:
       const uri = `${protocol}://${auth}${hostPort}/${database}${query ? '?' + query : ''}`
       return new MongoAdapter(uri, database)
     },
-    sampleQuery: (collection: string) =>
+    sampleQuery: async (collection: string) =>
       JSON.stringify({ collection, operation: 'find', filter: {}, limit: 100 }),
     getTableData,
     connectionFields: [

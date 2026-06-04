@@ -17,6 +17,9 @@ area you're touching → the source it points to.
 
 - [`docs/architecture.md`](./docs/architecture.md) — end-to-end architecture: process model, the `shared/` boundary, main subsystems, renderer stores + design system, the plugin model, and data-flow walkthroughs. **Start here.**
 - [`docs/plugins.md`](./docs/plugins.md) — every contribution surface (driver, exporter, importer, formatter, type mapper, theme, panel, command, AI provider, …) and how to write a plugin.
+- [`docs/plugin-security.md`](./docs/plugin-security.md) — the plugin trust boundary: bundled (trusted) vs third-party (untrusted), the enforced/advisory capability model (`keyring`/`connections`/`ipc` gating + manifest `permissions`), **process isolation** (untrusted command/theme plugins run in a `utilityProcess` via the RPC bridge in `src/main/plugins/isolation/`; capability calls are dispatched through the gated context so enforcement stays in one place), install hardening, and known limitations. Read before touching anything that grants a plugin access to secrets, connections, or IPC.
+- [`docs/sdk/`](./docs/sdk/README.md) — the published `@verql/plugin-sdk` package (source under `packages/plugin-sdk/`) that external plugin authors consume, plus a getting-started walkthrough. The package re-exports the **electron-free** author surface of `src/main/plugins/sdk`; keep its curated barrel and the `sdk-public-surface` test in sync when changing public exports.
+- [`docs/guide/`](./docs/guide/README.md) — end-user (consumer) documentation. The in-app Help menu links here.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
 

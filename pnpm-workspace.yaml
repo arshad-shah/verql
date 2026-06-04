@@ -1,3 +1,8 @@
+# Workspace members. The root is the Electron app; packages/* holds publishable
+# libraries (e.g. @verql/plugin-sdk) that are NOT bundled into the app.
+packages:
+  - 'packages/*'
+
 # pnpm explicitly recommends `node-linker=hoisted` for Electron apps:
 # https://pnpm.io/settings#nodelinker
 # Under the default isolated layout pnpm uses symlinks via .pnpm/, and

@@ -18,6 +18,14 @@ import { TypeMapperRegistryImpl, type TypeMapperRegistry } from './type-mapper-r
 import { ThemeRegistryImpl, type ThemeRegistry, type RegisteredTheme } from './theme-registry'
 import { DragDropRegistryImpl } from './drag-drop-registry'
 import { ToolRegistryImpl } from './tool-registry'
+import {
+  guardKeyring,
+  guardConnections,
+  hasPermission,
+  PermissionDeniedError,
+  type PermissionGrant,
+  type PluginPermission,
+} from './permissions'
 
 // ─── Registry implementations (most plugins don't need these directly,
 //     but driver authors writing tests against fake registries do) ─────────
@@ -37,12 +45,13 @@ export { ImporterRegistryImpl } from './importer-registry'
 export { FormatterRegistryImpl } from './formatter-registry'
 export { TypeMapperRegistryImpl } from './type-mapper-registry'
 export { ToolRegistryImpl } from './tool-registry'
-export { isWriteQuery, toJsonSchema } from './tool-schema'
+export { isWriteQuery, toJsonSchema, jsonSchemaToZodShape } from './tool-schema'
+export type { JsonSchemaObject } from './tool-schema'
 
 // ─── Generic SQL helpers (parameterised on the driver's quote character)
 //     Drivers compose these to build their exporters/importers without
 //     touching anything in src/main/ outside src/main/plugins/. ────────────
-export { quoteIdentifier, validateIdentifier, IdentifierError } from './identifier'
+export { quoteIdentifier, validateIdentifier, IdentifierError, renderPlaceholder } from './identifier'
 export {
   formatSqlValue,
   generateCreateTable,
@@ -63,6 +72,27 @@ export {
 
 // ─── Error handling ────────────────────────────────────────────────────
 export { safeCall, ErrorBudget, PluginError } from './safe-call'
+
+// ─── Permissions / capability model ─────────────────────────────────────
+// Plugin authors declare the capabilities they need in their manifest's
+// `permissions` array; the host gates the enforced surfaces at this boundary.
+export {
+  ALL_PERMISSIONS,
+  ENFORCED_PERMISSIONS,
+  ADVISORY_PERMISSIONS,
+  PERMISSION_INFO,
+  isPluginPermission,
+  hasPermission,
+  effectiveGrants,
+  PermissionDeniedError,
+} from './permissions'
+export type {
+  PluginPermission,
+  EnforcedPermission,
+  AdvisoryPermission,
+  PermissionInfo,
+  PermissionGrant,
+} from './permissions'
 
 // ─── Plugin author ergonomics ──────────────────────────────────────────
 // `definePlugin({ manifest, activate, deactivate? })` is a typed identity
@@ -88,6 +118,12 @@ export type { CsvIntoTableOptions } from './csv-into-table'
 
 interface ContextDeps {
   pluginName: string
+  /** Bundled plugins shipped with the app are trusted; every capability is
+   *  implicitly granted and gating is bypassed. Third-party plugins are not. */
+  trusted: boolean
+  /** Capabilities the user has granted this plugin (already intersected with
+   *  what the manifest declared). Ignored when `trusted` is true. */
+  grantedPermissions: readonly PluginPermission[]
   driverRegistry: DriverRegistryImpl
   commandRegistry: CommandRegistryImpl
   panelRegistry: PanelRegistryImpl
@@ -119,6 +155,15 @@ export interface PluginNotification {
 export function createPluginContext(deps: ContextDeps): PluginContext {
   const subscriptions: Disposable[] = []
   const { pluginName } = deps
+
+  // Capability grant for this plugin. Trusted (bundled) plugins get everything;
+  // third-party plugins only get what the user approved. The guarded surfaces
+  // below throw `PermissionDeniedError` if the plugin reaches for something it
+  // wasn't granted.
+  const grant: PermissionGrant = {
+    trusted: deps.trusted,
+    granted: new Set(deps.grantedPermissions),
+  }
 
   const drivers = {
     register(id: string, factory: Parameters<DriverRegistryImpl['register']>[1]) {
@@ -214,6 +259,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
 
   const ipc: PluginIpc = {
     handle(channel, handler) {
+      if (!hasPermission(grant, 'ipc')) throw new PermissionDeniedError(pluginName, 'ipc')
       ipcMain.handle(channel, (_event, ...args) =>
         (handler as (...a: unknown[]) => unknown)(...args)
       )
@@ -330,6 +376,20 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  // Raw, un-namespaced app settings can expose other subsystems' config (AI
+  // provider selection, MCP token, …). There is no legitimate third-party use,
+  // so it is trusted-only — untrusted plugins get a throwing shim rather than
+  // a silent no-op, so the failure is obvious during development.
+  const rootSettingsDenied = (): never => {
+    throw new Error(
+      `Plugin '${pluginName}': rootSettings is restricted to trusted (bundled) ` +
+        `plugins. Use ctx.settings for your own namespaced settings instead.`,
+    )
+  }
+  const rootSettings = deps.trusted
+    ? deps.settingsStore
+    : { get: rootSettingsDenied, set: rootSettingsDenied }
+
   return {
     drivers,
     commands,
@@ -338,9 +398,9 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     ui,
     completions,
     schema: deps.schemaAccess,
-    connections: deps.connectionAccess,
+    connections: guardConnections(deps.connectionAccess, grant, pluginName),
     settings,
-    keyring: deps.keyring,
+    keyring: guardKeyring(deps.keyring, grant, pluginName),
     ai,
     ipc,
     broadcast,
@@ -352,7 +412,7 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     themes,
     notifications,
     dragDrop,
-    rootSettings: deps.settingsStore,
+    rootSettings,
     subscriptions
   }
 }

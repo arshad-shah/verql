@@ -150,7 +150,7 @@ export class MongoAdapter implements DbAdapter {
     this.db = null
   }
 
-  isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     return this.client !== null && this.db !== null
   }
 
@@ -296,7 +296,7 @@ export class MongoAdapter implements DbAdapter {
     this.db = this.client.db(database)
   }
 
-  cancelQuery(): void {
+  async cancelQuery(): Promise<void> {
     // MongoDB driver does not support query cancellation in the same way
   }
 }

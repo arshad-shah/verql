@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Tool, ToolContext, ToolResult } from '../../sdk/types'
 import type { SchemaAccess, ConnectionAccess } from '../../sdk/types'
+import { toJsonSchema } from '../../sdk/tool-schema'
 
 function noConn(): ToolResult {
   return { success: false, data: null, display: 'No active database connection in Verql' }
@@ -46,7 +47,7 @@ export function createDbTools(
       id: 'query',
       name: 'Run Query',
       description: 'Execute a SQL query against the active database connection. Use this to read data, insert, update, or delete records.',
-      inputSchema: z.object({ sql: z.string().describe('The SQL query to execute') }),
+      inputSchema: toJsonSchema(z.object({ sql: z.string().describe('The SQL query to execute') })),
       permission: 'write',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
@@ -71,7 +72,7 @@ export function createDbTools(
       id: 'explain_query',
       name: 'Explain Query',
       description: 'Run EXPLAIN on a SQL query to show its execution plan. Read-only.',
-      inputSchema: z.object({ sql: z.string().describe('The SQL query to explain') }),
+      inputSchema: toJsonSchema(z.object({ sql: z.string().describe('The SQL query to explain') })),
       permission: 'read',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
@@ -85,7 +86,7 @@ export function createDbTools(
       id: 'list_tables',
       name: 'List Tables',
       description: 'List all tables in the current database schema.',
-      inputSchema: z.object({ schema: z.string().optional().describe('Schema name (optional)') }),
+      inputSchema: toJsonSchema(z.object({ schema: z.string().optional().describe('Schema name (optional)') })),
       permission: 'read',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
@@ -101,10 +102,10 @@ export function createDbTools(
       id: 'describe_table',
       name: 'Describe Table',
       description: 'Get detailed information about a table including columns, types, indexes, and foreign key relationships.',
-      inputSchema: z.object({
+      inputSchema: toJsonSchema(z.object({
         table: z.string().describe('Table name to describe'),
         schema: z.string().optional().describe('Schema name (optional)')
-      }),
+      })),
       permission: 'read',
       async execute(params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
@@ -121,7 +122,7 @@ export function createDbTools(
       id: 'get_schemas',
       name: 'Get Schemas',
       description: 'List all available schemas or databases on the current connection.',
-      inputSchema: z.object({}),
+      inputSchema: toJsonSchema(z.object({})),
       permission: 'read',
       async execute(_params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()
@@ -136,7 +137,7 @@ export function createDbTools(
       id: 'connection_info',
       name: 'Connection Info',
       description: 'Get information about the currently active database connection including type, host, and database name.',
-      inputSchema: z.object({}),
+      inputSchema: toJsonSchema(z.object({})),
       permission: 'read',
       async execute(_params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
         if (!ctx.connectionId) return noConn()

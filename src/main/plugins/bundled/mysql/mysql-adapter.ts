@@ -66,7 +66,7 @@ export class MysqlAdapter implements DbAdapter {
     this.pool = null
   }
 
-  isConnected(): boolean { return this.pool !== null }
+  async isConnected(): Promise<boolean> { return this.pool !== null }
 
   async query(sql: string, params?: unknown[]): Promise<QueryResult> {
     if (!this.pool) throw new Error('Not connected')

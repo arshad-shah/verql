@@ -33,7 +33,7 @@ export class ToolRegistryImpl implements ToolRegistry {
     return this.list().map(t => ({
       name: t.id,
       description: t.description,
-      parameters: toJsonSchema(t.inputSchema)
+      parameters: t.inputSchema
     }))
   }
 

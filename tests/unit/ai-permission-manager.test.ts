@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { z } from 'zod'
+import { toJsonSchema } from '../../src/main/plugins/sdk/tool-schema'
 import { PermissionManager } from '../../src/main/plugins/bundled/ai/internal/permission-manager'
 import type { Tool } from '../../src/main/plugins/sdk/types'
 
 function makeTool(id: string, permission: 'read' | 'write'): Tool {
   return {
-    id, name: id, description: '', inputSchema: z.object({}),
+    id, name: id, description: '', inputSchema: toJsonSchema(z.object({})),
     permission,
     execute: vi.fn(async () => ({ success: true, data: null }))
   }

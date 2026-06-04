@@ -10,7 +10,7 @@ export const sqlExporter: RegisteredExporter = {
   format: 'sql',
   extension: 'sql',
   displayName: 'SQL (Snowflake)',
-  appliesTo: (t) => t === 'snowflake',
+  appliesToTypes: ['snowflake'],
   execute(rows, columns, options) {
     let output = ''
     if (options.includeSchema) {
@@ -34,7 +34,7 @@ export const sqlImporter: RegisteredImporter = {
   format: 'sql',
   extensions: ['sql'],
   displayName: 'SQL (Snowflake)',
-  appliesTo: (t) => t === 'snowflake',
+  appliesToTypes: ['snowflake'],
   driverExecutes: true,
   async parse(content, options) {
     const text = typeof content === 'string' ? content : content.toString('utf-8')

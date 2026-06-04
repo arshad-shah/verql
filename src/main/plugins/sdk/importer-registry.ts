@@ -33,7 +33,10 @@ export interface RegisteredImporter {
   format: string
   extensions: string[]
   displayName: string
-  appliesTo?: (connectionType: string) => boolean
+  /** Connection types this importer applies to; omit to apply to all.
+   *  Declarative (a `string[]`, not a predicate) so the descriptor can be
+   *  marshalled across the process-isolation boundary. */
+  appliesToTypes?: string[]
   /** When true, the importer mutates the database itself via `options.adapter`.
    *  The IPC handler will not perform a follow-up bulk-insert. */
   driverExecutes?: boolean
@@ -66,7 +69,7 @@ export class ImporterRegistryImpl implements ImporterRegistry {
     const target = ext.toLowerCase().replace(/^\./, '')
     for (const importer of this.byId.values()) {
       if (!importer.extensions.some(e => e.toLowerCase() === target)) continue
-      if (connectionType && importer.appliesTo && !importer.appliesTo(connectionType)) continue
+      if (connectionType && importer.appliesToTypes && !importer.appliesToTypes.includes(connectionType)) continue
       return importer
     }
     return undefined
@@ -75,6 +78,6 @@ export class ImporterRegistryImpl implements ImporterRegistry {
   list(connectionType?: string): RegisteredImporter[] {
     const all = [...this.byId.values()]
     if (!connectionType) return all
-    return all.filter(i => !i.appliesTo || i.appliesTo(connectionType))
+    return all.filter(i => !i.appliesToTypes || i.appliesToTypes.includes(connectionType))
   }
 }

@@ -88,7 +88,7 @@ export class PostgresAdapter implements DbAdapter {
     this.pool = null
   }
 
-  isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     return this.pool !== null
   }
 

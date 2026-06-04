@@ -62,3 +62,14 @@ export function quoteIdentifier(name: string | string[], quoteChar: string): str
     })
     .join('.')
 }
+
+/**
+ * Render a prepared-statement placeholder for a 1-based parameter index in the
+ * driver's declared style. `'numbered'` ⇒ `$1`, `$2`, … (Postgres);
+ * `'positional'` ⇒ `?` (MySQL / SQLite / Snowflake). Replaces the old per-driver
+ * `placeholder(index)` function so the driver descriptor is plain, serializable
+ * data that can cross the process-isolation boundary.
+ */
+export function renderPlaceholder(style: 'numbered' | 'positional', index: number): string {
+  return style === 'numbered' ? `$${index}` : '?'
+}

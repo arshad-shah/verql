@@ -70,7 +70,7 @@ export const jsonExporter: RegisteredExporter = {
   format: 'json',
   extension: 'json',
   displayName: 'JSON (Redis key/value)',
-  appliesTo: (t) => t === 'redis',
+  appliesToTypes: ['redis'],
   execute(rows) {
     return JSON.stringify(rows, null, 2)
   }

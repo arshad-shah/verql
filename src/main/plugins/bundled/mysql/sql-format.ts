@@ -10,7 +10,7 @@ export const sqlExporter: RegisteredExporter = {
   format: 'sql',
   extension: 'sql',
   displayName: 'SQL (MySQL)',
-  appliesTo: (t) => t === 'mysql',
+  appliesToTypes: ['mysql'],
   execute(rows, columns, options) {
     let output = ''
     if (options.includeSchema) {
@@ -34,7 +34,7 @@ export const sqlImporter: RegisteredImporter = {
   format: 'sql',
   extensions: ['sql'],
   displayName: 'SQL (MySQL)',
-  appliesTo: (t) => t === 'mysql',
+  appliesToTypes: ['mysql'],
   driverExecutes: true,
   async parse(content, options) {
     const text = typeof content === 'string' ? content : content.toString('utf-8')

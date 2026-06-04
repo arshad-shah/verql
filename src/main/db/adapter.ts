@@ -16,8 +16,8 @@ export interface DbAdapter {
   setSchema?(schema: string): Promise<void>
   switchWarehouse?(warehouse: string): Promise<void>
   switchRole?(role: string): Promise<void>
-  cancelQuery?(): void
-  isConnected(): boolean
+  cancelQuery?(): Promise<void>
+  isConnected(): Promise<boolean>
   getConnectionOptions?(field: string): Promise<string[]>
   /**
    * Returns non-table schema objects (views, materialized views, functions,
