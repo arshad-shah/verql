@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
+import { toJsonSchema } from '../../../src/main/plugins/sdk/tool-schema'
 import { selectExposedTools, needsApprovalForCall, summarizeParams, createMCPServer } from '../../../src/main/mcp/server'
 import { ToolRegistryImpl } from '../../../src/main/plugins/sdk/tool-registry'
 import type { Tool } from '../../../src/main/plugins/sdk/types'
 
 function tool(id: string, permission: 'read' | 'write'): Tool {
-  return { id, name: id, description: id, inputSchema: z.object({ sql: z.string().optional() }), permission, async execute() { return { success: true, data: null } } }
+  return { id, name: id, description: id, inputSchema: toJsonSchema(z.object({ sql: z.string().optional() })), permission, async execute() { return { success: true, data: null } } }
 }
 
 describe('selectExposedTools', () => {

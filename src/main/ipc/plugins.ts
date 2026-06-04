@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { BrowserWindow, dialog } from 'electron'
 import { PluginBootCoordinator } from '../plugins/plugin-host'
+import { PERMISSION_INFO, type PluginPermission } from '../plugins/sdk/permissions'
 import { UIRegistryImpl } from '../plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../plugins/sdk/completion-registry'
 import { CommandRegistryImpl } from '../plugins/sdk/command-registry'
@@ -32,18 +33,34 @@ export function registerPluginHandlers(
   const { uiRegistry, completionRegistry, commandRegistry, pluginCoordinator } = deps
 
   handle('plugins:list', async () => {
-    return pluginCoordinator.getLoadedPlugins().map(p => ({
-      name: p.manifest.name,
-      displayName: p.manifest.displayName,
-      version: p.manifest.version,
-      description: p.manifest.description,
-      bundled: p.path === '<bundled>',
-      icon: resolvePluginIcon(p),
-      status: p.status as { state: string; error?: string; phase?: string; contributions?: string[] },
-      contributions: p.status.state === 'active' ? p.status.contributions
-        : p.status.state === 'degraded' ? p.status.contributions
-        : []
-    }))
+    return pluginCoordinator.getLoadedPlugins().map(p => {
+      const perms = pluginCoordinator.getPermissionState(p.manifest.name)
+      return {
+        name: p.manifest.name,
+        displayName: p.manifest.displayName,
+        version: p.manifest.version,
+        description: p.manifest.description,
+        bundled: p.path === '<bundled>',
+        icon: resolvePluginIcon(p),
+        status: p.status as { state: string; error?: string; phase?: string; contributions?: string[] },
+        contributions: p.status.state === 'active' ? p.status.contributions
+          : p.status.state === 'degraded' ? p.status.contributions
+          : [],
+        requestedPermissions: perms?.declared ?? [],
+        grantedPermissions: perms?.granted ?? []
+      }
+    })
+  })
+
+  handle('plugins:get-permissions', async (name) => {
+    const state = pluginCoordinator.getPermissionState(name)
+    if (!state) return null
+    return { ...state, info: PERMISSION_INFO }
+  })
+
+  handle('plugins:set-permissions', async (name, permissions) => {
+    const granted = pluginCoordinator.setGrants(name, permissions as PluginPermission[])
+    return { granted }
   })
 
   const broadcastLifecycle = (

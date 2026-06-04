@@ -17,6 +17,15 @@ interface PluginInfo {
   icon?: string
   status: { state: string; error?: string; phase?: string; contributions?: string[] }
   contributions: string[]
+  requestedPermissions: string[]
+  grantedPermissions: string[]
+}
+
+interface PermissionState {
+  trusted: boolean
+  declared: string[]
+  granted: string[]
+  info: Record<string, { title: string; description: string; enforced: boolean; sensitive: boolean }>
 }
 
 interface ErrorRecord {
@@ -65,6 +74,7 @@ const CONTRIBUTION_BADGE_VARIANTS: Record<string, 'accent' | 'info' | 'success' 
 
 const DETAIL_TABS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'permissions', label: 'Permissions' },
   { id: 'contributions', label: 'Contributions' },
   { id: 'errors', label: 'Errors' },
   { id: 'settings', label: 'Settings' },
@@ -78,6 +88,7 @@ export function PluginDetailView({ pluginName }: Props) {
   const [showUninstallConfirm, setShowUninstallConfirm] = useState(false)
   const [settingsSchema, setSettingsSchema] = useState<SettingSchema[]>([])
   const [settingsValues, setSettingsValues] = useState<Record<string, unknown>>({})
+  const [permissions, setPermissions] = useState<PermissionState | null>(null)
   const addToast = useToastStore(s => s.addToast)
 
   const loadPlugin = async () => {
@@ -102,6 +113,28 @@ export function PluginDetailView({ pluginName }: Props) {
       })
       .catch(() => {})
   }, [pluginName])
+
+  useEffect(() => {
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_GET_PERMISSIONS, pluginName)
+      .then((state: PermissionState | null) => setPermissions(state))
+      .catch(() => {})
+  }, [pluginName])
+
+  const handleTogglePermission = async (permission: string, granted: boolean) => {
+    if (!permissions) return
+    const next = granted
+      ? [...new Set([...permissions.granted, permission])]
+      : permissions.granted.filter(p => p !== permission)
+    const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_SET_PERMISSIONS, pluginName, next)
+    setPermissions({ ...permissions, granted: result.granted })
+    if (isActive) {
+      addToast({
+        type: 'info',
+        title: 'Re-enable to apply',
+        message: 'Disable and re-enable this plugin for the permission change to take effect.',
+      })
+    }
+  }
 
   const handleActivate = async () => {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_ACTIVATE, pluginName)
@@ -201,6 +234,9 @@ export function PluginDetailView({ pluginName }: Props) {
           {activeTab === 'overview' && (
             <OverviewTab plugin={plugin} stateConfig={stateConfig} errors={errors} />
           )}
+          {activeTab === 'permissions' && (
+            <PermissionsTab permissions={permissions} onToggle={handleTogglePermission} />
+          )}
           {activeTab === 'contributions' && (
             <ContributionsTab contributions={plugin.contributions} />
           )}
@@ -294,6 +330,79 @@ function ContributionsTab({ contributions }: { contributions: string[] }) {
         })}
       </Stack>
     </Card>
+  )
+}
+
+function PermissionsTab({ permissions, onToggle }: {
+  permissions: PermissionState | null
+  onToggle: (permission: string, granted: boolean) => void
+}) {
+  if (!permissions) {
+    return <EmptyState title="Loading…" description="Reading capability requests" className="py-12" />
+  }
+
+  if (permissions.trusted) {
+    return (
+      <Stack gap="md">
+        <Alert variant="info">
+          This is a built-in plugin shipped with Verql. It is fully trusted and
+          all capabilities are granted; there is nothing to configure here.
+        </Alert>
+      </Stack>
+    )
+  }
+
+  if (permissions.declared.length === 0) {
+    return (
+      <EmptyState
+        title="No special capabilities"
+        description="This plugin does not request access to your secrets, connections, or app messaging."
+        className="py-12"
+      />
+    )
+  }
+
+  return (
+    <Stack gap="md">
+      <Alert variant="warning">
+        Third-party plugins run as code inside Verql. Only grant capabilities to
+        plugins you trust. Enforced capabilities are blocked until you grant
+        them; changes apply the next time the plugin is enabled.
+      </Alert>
+      <Card padding="md">
+        <Stack gap="md">
+          {permissions.declared.map((perm) => {
+            const info = permissions.info[perm]
+            const granted = permissions.granted.includes(perm)
+            return (
+              <Flex key={perm} direction="row" align="start" justify="between" gap="md">
+                <Box className="flex-1 min-w-0">
+                  <Flex direction="row" align="center" gap="sm" className="flex-wrap">
+                    <Text size="sm" weight="medium" color="primary">{info?.title ?? perm}</Text>
+                    <Badge size="sm" variant={info?.enforced ? 'accent' : 'default'}>
+                      {info?.enforced ? 'Enforced' : 'Advisory'}
+                    </Badge>
+                  </Flex>
+                  <Text size="xs" color="muted" as="p" className="mt-1 leading-relaxed">
+                    {info?.description ?? `Capability: ${perm}`}
+                    {info && !info.enforced && (
+                      <> Verql cannot block this for in-process plugins — it is shown for transparency.</>
+                    )}
+                  </Text>
+                </Box>
+                <Box className="shrink-0">
+                  <Switch
+                    label={info?.title ?? perm}
+                    checked={granted}
+                    onChange={(e) => onToggle(perm, e.target.checked)}
+                  />
+                </Box>
+              </Flex>
+            )
+          })}
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

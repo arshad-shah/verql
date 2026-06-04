@@ -41,14 +41,14 @@ export function mapType(
  * the orchestrator just hands the resolved column types over and returns
  * whatever DDL the driver produces.
  */
-export function generateMigrationDdl(
+export async function generateMigrationDdl(
   registry: TypeMapperRegistry,
   drivers: DriverRegistryImpl,
   tableName: string,
   columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
   from: DatabaseType,
   to: DatabaseType
-): { ddl: string; mappings: TypeMapping[] } {
+): Promise<{ ddl: string; mappings: TypeMapping[] }> {
   const mappings = columns.map(c => mapType(registry, c.dataType, from, to))
   const targetDriver = drivers.get(to)
   if (!targetDriver?.generateMigrationDdl) {
@@ -64,6 +64,6 @@ export function generateMigrationDdl(
     isPrimaryKey: c.isPrimaryKey,
     defaultValue: c.defaultValue,
   }))
-  const ddl = targetDriver.generateMigrationDdl(tableName, ddlColumns)
+  const ddl = await targetDriver.generateMigrationDdl(tableName, ddlColumns)
   return { ddl, mappings }
 }

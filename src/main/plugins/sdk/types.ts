@@ -5,7 +5,7 @@ import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
 import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
-import type { z } from 'zod'
+import type { JsonSchemaObject } from './tool-schema'
 export type { DriverCapabilities } from '@shared/driver-capabilities'
 
 // ─── Core ────────────────────────────────────────────────────────────────────
@@ -130,6 +130,10 @@ export interface DriverRegistry {
   registerConnectionMiddleware(id: string, middleware: ConnectionMiddleware): Disposable
 }
 
+/** Prepared-statement placeholder style. `'numbered'` renders `$1`, `$2`, …
+ *  (Postgres); `'positional'` renders `?` (MySQL / SQLite / Snowflake). */
+export type PlaceholderStyle = 'numbered' | 'positional'
+
 export interface DriverFactory {
   createAdapter(config: Record<string, unknown>): DbAdapter
   connectionFields: ConnectionField[]
@@ -144,11 +148,13 @@ export interface DriverFactory {
    *  `quoteIdentifier` and `generateCreateTable` take this verbatim so
    *  the main app never has to know which driver uses which character. */
   quoteChar?: string
-  /** Render a parameter placeholder for prepared statements. Postgres
-   *  numbers them (`$1`, `$2`); MySQL / SQLite use `?`. The generic
-   *  CSV-into-table importer asks the driver for the right shape
-   *  instead of hardcoding a dialect map. */
-  placeholder?(index: number): string
+  /** Prepared-statement placeholder style. `'numbered'` ⇒ `$1`, `$2`
+   *  (Postgres); `'positional'` ⇒ `?` (MySQL / SQLite / Snowflake). Declarative
+   *  (was a `placeholder(index)` function) so the descriptor is serializable and
+   *  the driver can be process-isolated — see docs/plugin-security.md. The
+   *  generic CSV-into-table importer renders placeholders from this style via
+   *  the SDK's `renderPlaceholder`. */
+  placeholderStyle?: PlaceholderStyle
   /** Monaco editor language used for queries against this driver. Defaults to
    *  'sql' when omitted. The renderer never branches on connection type. */
   editorLanguage?: string
@@ -162,8 +168,9 @@ export interface DriverFactory {
   /** Returns a sample/preview query for a table. REQUIRED for SQL drivers;
    *  non-SQL drivers (mongo, redis) implement whatever "show me some
    *  records" means for their model. The orchestrator no longer guesses
-   *  a fallback — drivers own this. */
-  sampleQuery?(table: string, schema?: string): string
+   *  a fallback — drivers own this. Async so a process-isolated driver can
+   *  answer over the RPC bridge. */
+  sampleQuery?(table: string, schema?: string): Promise<string>
   /** Reads every row of a table/collection for export. The driver decides how
    *  (SQL SELECT, Mongo find, Redis SCAN, …); the orchestrator never assumes
    *  the source is a relational database. Must use safe identifier escaping
@@ -181,7 +188,7 @@ export interface DriverFactory {
   generateMigrationDdl?(
     tableName: string,
     columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
-  ): string
+  ): Promise<string>
   /** Transaction / auto-commit / read-only capabilities. Omit ⇒ no txn UI. */
   session?: SessionCapability
   /** Execution-plan capabilities. Omit ⇒ no Explain action. */
@@ -229,7 +236,10 @@ export interface Tool {
   id: string
   name: string
   description: string
-  inputSchema: z.ZodObject<z.ZodRawShape>
+  /** JSON Schema for the tool's params — serializable, so the tool can be
+   *  registered from a process-isolated plugin. Authors typically build it with
+   *  the SDK's `toJsonSchema(z.object({ … }))`. */
+  inputSchema: JsonSchemaObject
   permission: 'read' | 'write'
   /**
    * Which surfaces may call this tool. Omitted = all surfaces (back-compat).

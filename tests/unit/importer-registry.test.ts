@@ -32,7 +32,7 @@ describe('ImporterRegistryImpl', () => {
       format: 'bson',
       extensions: ['bson'],
       displayName: 'BSON',
-      appliesTo: (t) => t === 'mongodb',
+      appliesToTypes: ['mongodb'],
       parse: () => ({ rows: [], columns: [] })
     })
     expect(reg.list('mongodb').map(i => i.format).sort()).toEqual(['bson', 'csv'])

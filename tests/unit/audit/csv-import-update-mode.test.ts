@@ -38,7 +38,7 @@ describe('importCsvToTable — onConflict="update"', () => {
         columnMapping: { id: 'id', name: 'name' },
         onConflict: 'update',
         quoteChar: '"',
-        placeholder: (i) => `$${i}`,
+        placeholderStyle: 'numbered',
       },
     )
 

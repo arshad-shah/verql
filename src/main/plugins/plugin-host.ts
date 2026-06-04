@@ -4,7 +4,7 @@ import os from 'os'
 import { execFileSync } from 'child_process'
 import { app } from 'electron'
 import type { PluginManifest, LoadedPlugin } from './types'
-import type { PluginStatus, BootReport } from './sdk/types'
+import type { PluginStatus, BootReport, PluginContext } from './sdk/types'
 import { createPluginContext, disposePluginContext } from './sdk/index'
 import { safeCall, ErrorBudget } from './sdk/safe-call'
 import type { DriverRegistryImpl } from './sdk/driver-registry'
@@ -16,6 +16,10 @@ import type { ToolRegistryImpl } from './sdk/tool-registry'
 import { SchemaAccessImpl } from './sdk/schema-access'
 import { ConnectionAccessImpl } from './sdk/connection-access'
 import { validateTheme } from './sdk/theme-registry'
+import { ALL_PERMISSIONS, effectiveGrants, isPluginPermission, type PluginPermission } from './sdk/permissions'
+import { IsolatedPlugin, canIsolate } from './isolation/isolated-plugin'
+import { spawnIsolatedWorker } from './isolation/worker-process'
+import type { Transport } from './isolation/rpc'
 import type { DbAdapter } from '../db/adapter'
 import type { ConnectionProfile } from '@shared/types'
 
@@ -50,6 +54,20 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
   }
   if (!manifest.main.endsWith('.js')) {
     return { valid: false, error: `main must end in .js (got "${manifest.main}")` }
+  }
+
+  if (manifest.permissions !== undefined) {
+    if (!Array.isArray(manifest.permissions)) {
+      return { valid: false, error: 'permissions must be an array of capability strings' }
+    }
+    for (const p of manifest.permissions) {
+      if (!isPluginPermission(p)) {
+        return {
+          valid: false,
+          error: `Unknown permission "${String(p)}". Allowed: ${ALL_PERMISSIONS.join(', ')}`,
+        }
+      }
+    }
   }
 
   const c = manifest.contributes
@@ -127,6 +145,35 @@ export function validateManifest(manifest: PluginManifest): ValidationResult {
   return { valid: true }
 }
 
+/**
+ * Walk a directory tree (using lstat, so it never follows links) and return
+ * the path of the first symbolic link found, or null. Used to refuse plugin
+ * installs that contain symlinks — a copy of which could escape the plugin
+ * sandbox. Depth-limited to avoid pathological/looping inputs.
+ */
+function findSymlink(root: string, depth = 0): string | null {
+  if (depth > 32) return null
+  let stat: fs.Stats
+  try {
+    stat = fs.lstatSync(root)
+  } catch {
+    return null
+  }
+  if (stat.isSymbolicLink()) return root
+  if (!stat.isDirectory()) return null
+  let entries: string[]
+  try {
+    entries = fs.readdirSync(root)
+  } catch {
+    return null
+  }
+  for (const entry of entries) {
+    const found = findSymlink(path.join(root, entry), depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
 // ─── Boot Coordinator ─────────────────────────────────────────────────────────
 
 interface BootDeps {
@@ -156,6 +203,17 @@ interface BootDeps {
     markDisabled(name: string): void
     markEnabled(name: string): void
   }
+  /** Persistence for the per-plugin capability grants the user has approved.
+   *  Without it, third-party plugins fall back to no grants (deny by default)
+   *  and any enforced capability they use throws. */
+  pluginGrantsStore?: {
+    getGrants(name: string): PluginPermission[]
+    setGrants(name: string, permissions: PluginPermission[]): void
+  }
+  /** Spawn the duplex channel to a fresh plugin-worker process. Injectable so
+   *  tests can drive the isolation bridge over an in-memory transport instead
+   *  of forking a real Electron utilityProcess. Defaults to `spawnIsolatedWorker`. */
+  spawnWorkerTransport?: () => Transport
 }
 
 export class PluginBootCoordinator {
@@ -303,6 +361,18 @@ export class PluginBootCoordinator {
         continue
       }
 
+      plugin.mainPath = mainPath
+
+      // Process isolation: a plugin that will run in a separate process must
+      // NOT be require()'d here — loading its code into the main process is
+      // exactly what isolation avoids. We defer the activate()-export check to
+      // the worker. In-process plugins are require()'d as before.
+      if (this.shouldIsolate(plugin)) {
+        plugin.runIsolated = true
+        plugin.status = { state: 'validated' }
+        continue
+      }
+
       try {
         const mod = require(mainPath)
         if (typeof mod.activate !== 'function') {
@@ -331,24 +401,33 @@ export class PluginBootCoordinator {
 
   // ── Phase 4: Activate ──────────────────────────────────────────────────────
 
-  async activatePlugin(plugin: LoadedPlugin): Promise<LoadedPlugin> {
-    if (!plugin.module) {
-      plugin.status = { state: 'error', error: 'No module loaded', phase: 'activate' }
-      return plugin
-    }
+  /** Should this plugin run in a separate process? Untrusted plugins whose
+   *  contributions are marshalling-compatible, when isolation is enabled. */
+  private shouldIsolate(plugin: LoadedPlugin): boolean {
+    if (plugin.path === '<bundled>') return false
+    if (this.deps.settingsStore.get('plugins.isolation') === false) return false
+    return canIsolate(plugin.manifest)
+  }
 
-    plugin.status = { state: 'activating' }
+  /** Effective capability grants for a plugin: trusted (bundled) plugins get
+   *  everything; third-party plugins get granted ∩ declared. */
+  private grantsFor(plugin: LoadedPlugin): PluginPermission[] {
+    if (plugin.path === '<bundled>') return [...ALL_PERMISSIONS]
+    return [...effectiveGrants(
+      plugin.manifest.permissions,
+      this.deps.pluginGrantsStore?.getGrants(plugin.manifest.name),
+    )]
+  }
 
-    // User explicitly enabled this plugin — clear any persisted disabled flag
-    // so it stays active across restarts.
-    this.deps.disabledPluginsStore?.markEnabled(plugin.manifest.name)
-
-    // Set the current plugin name so registries can track ownership
-    this.deps.uiRegistry.currentPluginName = plugin.manifest.name
-    this.deps.completionRegistry.currentPluginName = plugin.manifest.name
-
-    const context = createPluginContext({
+  /** Build the guarded PluginContext for a plugin. Trusted (bundled) plugins
+   *  get every capability; third-party plugins get the granted ∩ declared set. */
+  private buildPluginContext(plugin: LoadedPlugin): PluginContext {
+    const trusted = plugin.path === '<bundled>'
+    const grantedPermissions = this.grantsFor(plugin)
+    return createPluginContext({
       pluginName: plugin.manifest.name,
+      trusted,
+      grantedPermissions,
       driverRegistry: this.deps.driverRegistry,
       commandRegistry: this.deps.commandRegistry,
       panelRegistry: this.deps.panelRegistry,
@@ -368,6 +447,29 @@ export class PluginBootCoordinator {
       dragDropRegistry: this.deps.dragDropRegistry,
       toolRegistry: this.deps.toolRegistry
     })
+  }
+
+  async activatePlugin(plugin: LoadedPlugin): Promise<LoadedPlugin> {
+    if (!plugin.runIsolated && !plugin.module) {
+      plugin.status = { state: 'error', error: 'No module loaded', phase: 'activate' }
+      return plugin
+    }
+
+    plugin.status = { state: 'activating' }
+
+    // User explicitly enabled this plugin — clear any persisted disabled flag
+    // so it stays active across restarts.
+    this.deps.disabledPluginsStore?.markEnabled(plugin.manifest.name)
+
+    if (plugin.runIsolated) {
+      return this.activateIsolated(plugin)
+    }
+
+    // Set the current plugin name so registries can track ownership
+    this.deps.uiRegistry.currentPluginName = plugin.manifest.name
+    this.deps.completionRegistry.currentPluginName = plugin.manifest.name
+
+    const context = this.buildPluginContext(plugin)
     plugin.context = context
 
     try {
@@ -389,6 +491,58 @@ export class PluginBootCoordinator {
       this.activationOrder.push(plugin.manifest.name)
     }
 
+    return plugin
+  }
+
+  /** Activate an untrusted plugin in a separate process. Its code never runs in
+   *  the main process; contributions become host-side proxies and every
+   *  capability call is dispatched through the gated context (so permission
+   *  enforcement is identical to the in-process path). */
+  private async activateIsolated(plugin: LoadedPlugin): Promise<LoadedPlugin> {
+    const context = this.buildPluginContext(plugin)
+    plugin.context = context
+
+    const transport = (this.deps.spawnWorkerTransport ?? spawnIsolatedWorker)()
+    const isolated = new IsolatedPlugin(transport, {
+      pluginName: plugin.manifest.name,
+      mainPath: plugin.mainPath!,
+      grantedPermissions: this.grantsFor(plugin),
+      context,
+      commandRegistry: this.deps.commandRegistry,
+      themeRegistry: this.deps.themeRegistry,
+      onCrash: (error) => {
+        plugin.status = { state: 'error', error: error.message, phase: 'runtime' }
+        plugin.isolatedHandle = undefined
+        this.activationOrder = this.activationOrder.filter(n => n !== plugin.manifest.name)
+        this.deps.notificationBus.show({
+          kind: 'error',
+          title: `Plugin "${plugin.manifest.displayName}" stopped`,
+          message: error.message,
+          durationMs: 8000,
+        })
+      },
+    })
+
+    try {
+      await isolated.activate()
+    } catch (err) {
+      try { await isolated.deactivate() } catch { /* ignore */ }
+      disposePluginContext(context)
+      plugin.context = undefined
+      plugin.status = {
+        state: 'error',
+        error: err instanceof Error ? err.message : String(err),
+        phase: 'activate',
+      }
+      return plugin
+    }
+
+    plugin.isolatedHandle = isolated
+    const verification = this.verifyContributions(plugin)
+    plugin.status = verification
+    if (verification.state === 'active' || verification.state === 'degraded') {
+      this.activationOrder.push(plugin.manifest.name)
+    }
     return plugin
   }
 
@@ -584,7 +738,15 @@ export class PluginBootCoordinator {
 
   async deactivatePlugin(plugin: LoadedPlugin, opts: { persist?: boolean } = {}): Promise<void> {
     if (opts.persist && ESSENTIAL_BUNDLED.has(plugin.manifest.name)) return
-    if (plugin.module?.deactivate) {
+    if (plugin.isolatedHandle) {
+      // Isolated plugin: tell the worker to deactivate, then kill the process.
+      try {
+        await plugin.isolatedHandle.deactivate()
+      } catch {
+        // Ignore deactivation errors
+      }
+      plugin.isolatedHandle = undefined
+    } else if (plugin.module?.deactivate) {
       try {
         await plugin.module.deactivate()
       } catch {
@@ -636,6 +798,40 @@ export class PluginBootCoordinator {
 
   getErrorBudget(): ErrorBudget {
     return this.errorBudget
+  }
+
+  /**
+   * Capability state for a plugin, for the consent UI. `trusted` plugins
+   * (bundled) are implicitly granted everything and the user cannot change it.
+   */
+  getPermissionState(name: string): {
+    trusted: boolean
+    declared: PluginPermission[]
+    granted: PluginPermission[]
+  } | undefined {
+    const plugin = this.plugins.get(name)
+    if (!plugin) return undefined
+    const trusted = plugin.path === '<bundled>'
+    const declared = plugin.manifest.permissions ?? []
+    const granted = trusted
+      ? [...declared]
+      : [...effectiveGrants(declared, this.deps.pluginGrantsStore?.getGrants(name))]
+    return { trusted, declared, granted }
+  }
+
+  /**
+   * Persist the user's capability grants for a third-party plugin. Grants are
+   * intersected with what the manifest declared, so a plugin can never be
+   * granted something it didn't ask for. Returns the effective granted set.
+   * Trusted plugins are immutable (returns their full declared set).
+   */
+  setGrants(name: string, permissions: PluginPermission[]): PluginPermission[] {
+    const plugin = this.plugins.get(name)
+    if (!plugin) return []
+    if (plugin.path === '<bundled>') return plugin.manifest.permissions ?? []
+    const effective = [...effectiveGrants(plugin.manifest.permissions, permissions)]
+    this.deps.pluginGrantsStore?.setGrants(name, effective)
+    return effective
   }
 
   /** Wrap a plugin call with error budget tracking. Auto-deactivates on budget exceeded. */
@@ -697,6 +893,14 @@ export class PluginBootCoordinator {
         return { success: false, error: 'No plugin-manifest.json or package.json found' }
       }
 
+      if (!NAME_PATTERN.test(name)) {
+        // Defend the destination join below: `name` becomes a path segment
+        // under the plugin dir. A name like '../evil' or with separators must
+        // never escape it. validateManifest enforces this later too, but the
+        // install copy happens first, so guard here.
+        return { success: false, error: `Invalid plugin name: "${name}"` }
+      }
+
       // Same protection as discover(): refuse to install a plugin whose name
       // collides with a bundled plugin. The user is asking to drop a folder
       // onto disk, but we won't let it shadow the built-in driver of the
@@ -704,6 +908,15 @@ export class PluginBootCoordinator {
       const collidingBundled = this.plugins.get(name)
       if (collidingBundled && collidingBundled.path === '<bundled>') {
         return { success: false, error: `Cannot install: '${name}' is a bundled plugin name` }
+      }
+
+      // Reject symlinks anywhere in the source tree. fs.cpSync would otherwise
+      // copy a symlink that points at, e.g., the user's keychain dir or /etc
+      // into the trusted plugin folder, and a later read would follow it out
+      // of the sandbox. Plugins are plain files; a symlink is never legitimate.
+      const offending = findSymlink(sourcePath)
+      if (offending) {
+        return { success: false, error: `Refusing to install: contains a symlink (${offending})` }
       }
 
       const destDir = path.join(this.getPluginDir(), name)

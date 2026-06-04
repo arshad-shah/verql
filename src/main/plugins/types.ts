@@ -1,5 +1,6 @@
 // src/main/plugins/types.ts
 import type { PluginStatus, PluginContext } from './sdk/types'
+import type { PluginPermission } from './sdk/permissions'
 import type { ActivityBarContribution, StatusBarContribution, ContextMenuContribution, TabContribution, SelectorContribution } from '@shared/plugin-ui-types'
 
 export interface PluginManifest {
@@ -9,6 +10,13 @@ export interface PluginManifest {
   description: string
   main: string
   icon?: string
+  /**
+   * Sensitive capabilities this plugin needs. The user must grant them before
+   * a third-party plugin can use the enforced surfaces (keyring, connections,
+   * custom ipc). Bundled plugins are trusted and may omit this. See
+   * `src/main/plugins/sdk/permissions.ts` and `docs/plugin-security.md`.
+   */
+  permissions?: PluginPermission[]
   contributes: {
     drivers?: DriverContribution[]
     themes?: ThemeContribution[]
@@ -124,4 +132,11 @@ export interface LoadedPlugin {
   status: PluginStatus
   module?: { activate: (ctx: PluginContext) => void | Promise<void>; deactivate?: () => void | Promise<void> }
   context?: PluginContext
+  /** Set in validate phase: this (untrusted) plugin runs in a separate process
+   *  and was therefore NOT require()'d into the main process. */
+  runIsolated?: boolean
+  /** Absolute path to the compiled main entry (resolved during validation). */
+  mainPath?: string
+  /** Host-side controller for an isolated plugin's worker; present while active. */
+  isolatedHandle?: { deactivate: () => Promise<void> }
 }

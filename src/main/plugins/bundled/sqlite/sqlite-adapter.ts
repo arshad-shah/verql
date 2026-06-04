@@ -33,7 +33,7 @@ export class SqliteAdapter implements DbAdapter {
     this.db = null
   }
 
-  isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     return this.db !== null
   }
 

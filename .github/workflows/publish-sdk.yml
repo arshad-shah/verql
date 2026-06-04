@@ -1,0 +1,71 @@
+name: Publish @verql/plugin-sdk
+
+# Publishes the plugin SDK to npm when a tag like `sdk-v1.2.3` is pushed.
+# The app's own releases use `v*.*.*` tags (release.yml); the SDK is versioned
+# and released independently so its API can stabilise on its own cadence.
+#
+# Required: an `NPM_TOKEN` repo secret (an npm automation token with publish
+# rights to the @verql scope). Provenance is emitted via OIDC (`id-token`).
+on:
+  push:
+    tags:
+      - 'sdk-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-sdk-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Never publish from a fork that happens to push a tag.
+    if: ${{ github.repository == 'arshad-shah/verql' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
+        with:
+          version: 11.1.2
+
+      - name: Setup Node
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22.x
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify the tag version matches package.json
+        working-directory: packages/plugin-sdk
+        run: |
+          TAG="${GITHUB_REF_NAME#sdk-v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag version ($TAG) does not match packages/plugin-sdk/package.json ($PKG)"
+            exit 1
+          fi
+          echo "Publishing @verql/plugin-sdk@$PKG"
+
+      - name: Typecheck
+        working-directory: packages/plugin-sdk
+        run: pnpm run typecheck
+
+      - name: Build
+        working-directory: packages/plugin-sdk
+        run: pnpm run build
+
+      - name: Publish to npm
+        working-directory: packages/plugin-sdk
+        run: pnpm publish --no-git-checks --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

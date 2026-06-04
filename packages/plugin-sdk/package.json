@@ -1,0 +1,55 @@
+{
+  "name": "@verql/plugin-sdk",
+  "version": "0.9.0",
+  "description": "Public SDK for building Verql plugins — types, helpers, and the capability model third-party plugin authors code against.",
+  "license": "MIT",
+  "author": "Arshad Shah",
+  "keywords": [
+    "verql",
+    "verql-plugin",
+    "database",
+    "sdk",
+    "plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arshad-shah/verql.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "homepage": "https://github.com/arshad-shah/verql/tree/main/docs/sdk",
+  "bugs": {
+    "url": "https://github.com/arshad-shah/verql/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsup"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

@@ -105,7 +105,18 @@ export default defineConfig({
     ],
     build: {
       rollupOptions: {
-        external: nativeExternals
+        external: nativeExternals,
+        // Two main-process entries: the app (index.js) and the isolated-plugin
+        // worker (plugin-worker.js), which is forked via utilityProcess. Both
+        // land in out/main/ so worker-process.ts can resolve the worker next to
+        // the main bundle.
+        input: {
+          index: resolve('src/main/index.ts'),
+          'plugin-worker': resolve('src/main/plugins/isolation/worker-entry.ts')
+        },
+        output: {
+          entryFileNames: '[name].js'
+        }
       }
     },
     resolve: {
