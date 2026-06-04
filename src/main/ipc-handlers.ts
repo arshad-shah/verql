@@ -142,6 +142,9 @@ export function registerIpcHandlers(): void {
     completionRegistry,
     getAdapter: (id) => ctx.activeAdapters.get(id),
     getProfile: (id) => ctx.configStore.getConnection(id),
+    // Share the same instance db:connect/db:disconnect update so plugins'
+    // ctx.connections.getActiveConnectionId() reflects the active connection.
+    connectionAccess,
     keyring: ctx.keyring,
     settingsStore,
     services,

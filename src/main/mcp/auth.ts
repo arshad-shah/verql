@@ -24,6 +24,34 @@ export function isValidBearer(authHeader: string | undefined, token: string): bo
   return timingSafeEqual(provided, expected)
 }
 
+/**
+ * Guard against DNS-rebinding: even though the server binds 127.0.0.1, a
+ * malicious web page can resolve an attacker-controlled domain to 127.0.0.1
+ * and `fetch()` the loopback port. Requiring the Host header to be loopback
+ * (the address the user's own client actually uses) rejects requests that
+ * arrived via a rebound hostname. Exported for tests.
+ */
+export function isAllowedMcpHost(hostHeader: string | undefined, port: number): boolean {
+  if (!hostHeader) return false
+  // Strip the port; handle bracketed IPv6 ([::1]:port) and host:port.
+  let host = hostHeader.trim().toLowerCase()
+  if (host.startsWith('[')) {
+    const end = host.indexOf(']')
+    if (end === -1) return false
+    const portPart = host.slice(end + 1)
+    if (portPart && portPart !== `:${port}`) return false
+    host = host.slice(1, end)
+  } else {
+    const colon = host.lastIndexOf(':')
+    if (colon !== -1) {
+      const portPart = host.slice(colon + 1)
+      if (portPart && portPart !== String(port)) return false
+      host = host.slice(0, colon)
+    }
+  }
+  return host === '127.0.0.1' || host === 'localhost' || host === '::1'
+}
+
 export function validateAuth(
   req: IncomingMessage,
   token: string,

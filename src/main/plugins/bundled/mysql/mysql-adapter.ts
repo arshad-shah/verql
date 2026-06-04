@@ -68,10 +68,17 @@ export class MysqlAdapter implements DbAdapter {
 
   async isConnected(): Promise<boolean> { return this.pool !== null }
 
-  async query(sql: string, params?: unknown[]): Promise<QueryResult> {
+  async query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult> {
     if (!this.pool) throw new Error('Not connected')
     const start = performance.now()
-    const [result, fields] = await this.pool.query(sql, params)
+    const timeoutMs = opts?.timeoutMs
+    // mysql2 accepts a per-query `timeout` (in ms) on the options-object form;
+    // it bounds how long the client waits before erroring, so a runaway query
+    // can't hang the session indefinitely. The parameter was previously
+    // ignored entirely.
+    const [result, fields] = timeoutMs && timeoutMs > 0
+      ? await this.pool.query({ sql, values: params, timeout: Math.floor(timeoutMs) })
+      : await this.pool.query(sql, params)
     const duration = Math.round(performance.now() - start)
     const isRows = Array.isArray(result)
     const rows = isRows ? (result as Record<string, unknown>[]) : []

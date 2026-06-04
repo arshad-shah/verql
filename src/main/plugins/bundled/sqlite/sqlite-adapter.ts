@@ -5,6 +5,46 @@ import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, FieldInfo, Te
 
 const SQLITE_QUOTE = '"' as const
 
+/** The subset of a better-sqlite3 prepared statement we depend on. */
+export interface PreparedStatementLike {
+  /** True when the statement yields rows (SELECT, PRAGMA-that-returns,
+   *  WITH…SELECT, and crucially INSERT/UPDATE/DELETE … RETURNING). */
+  reader: boolean
+  all(...params: unknown[]): unknown[]
+  run(...params: unknown[]): { changes: number }
+  columns(): { name: string; type?: string | null }[]
+}
+
+/**
+ * Execute a prepared statement and shape the result.
+ *
+ * Branching on `stmt.reader` (not a leading-keyword guess) is required for
+ * correctness: `INSERT/UPDATE/DELETE … RETURNING` returns rows but doesn't
+ * start with SELECT/WITH/PRAGMA, so the old heuristic sent it down the
+ * `.run()` path — which discards the RETURNING result the user asked for
+ * (and, on better-sqlite3, throws "This statement returns data"). Conversely
+ * a non-returning `PRAGMA foreign_keys = ON` must use `.run()`, not `.all()`.
+ */
+export function runPreparedStatement(
+  stmt: PreparedStatementLike,
+  params: unknown[] | undefined,
+  start: number,
+): QueryResult {
+  if (stmt.reader) {
+    const rows = (params ? stmt.all(...params) : stmt.all()) as Record<string, unknown>[]
+    const duration = Math.round(performance.now() - start)
+    const fields: FieldInfo[] = stmt.columns().map((c) => ({
+      name: c.name,
+      dataType: c.type ?? 'unknown',
+      nullable: true,
+    }))
+    return { rows, fields, rowCount: rows.length, duration, affectedRows: 0 }
+  }
+  const info = params ? stmt.run(...params) : stmt.run()
+  const duration = Math.round(performance.now() - start)
+  return { rows: [], fields: [], rowCount: 0, duration, affectedRows: info.changes }
+}
+
 export class SqliteAdapter implements DbAdapter {
   private db: Database.Database | null = null
   private dbPath: string
@@ -48,26 +88,8 @@ export class SqliteAdapter implements DbAdapter {
     }
 
     const start = performance.now()
-    const trimmed = sql.trim().toUpperCase()
-    const isSelect = trimmed.startsWith('SELECT') || trimmed.startsWith('PRAGMA') || trimmed.startsWith('WITH')
-
-    if (isSelect) {
-      const stmt = this.db.prepare(sql)
-      const rows = params ? stmt.all(...params) : stmt.all()
-      const duration = Math.round(performance.now() - start)
-      const columns = stmt.columns()
-      const fields: FieldInfo[] = columns.map(c => ({
-        name: c.name,
-        dataType: c.type ?? 'unknown',
-        nullable: true
-      }))
-      return { rows: rows as Record<string, unknown>[], fields, rowCount: rows.length, duration, affectedRows: 0 }
-    } else {
-      const stmt = this.db.prepare(sql)
-      const info = params ? stmt.run(...params) : stmt.run()
-      const duration = Math.round(performance.now() - start)
-      return { rows: [], fields: [], rowCount: 0, duration, affectedRows: info.changes }
-    }
+    const stmt = this.db.prepare(sql)
+    return runPreparedStatement(stmt as unknown as PreparedStatementLike, params, start)
   }
 
   async openSession(sessionId: string, opts?: { autoCommit?: boolean }): Promise<void> {

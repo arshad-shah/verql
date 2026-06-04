@@ -2,7 +2,7 @@ import { createServer, type Server as HttpServer, type IncomingMessage, type Ser
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { BrowserWindow } from 'electron'
-import { generateToken, validateAuth } from './auth'
+import { generateToken, validateAuth, isAllowedMcpHost } from './auth'
 import { findFreePort } from './find-port'
 import { isWriteQuery, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
@@ -155,6 +155,13 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
       res.setHeader('Vary', 'Origin')
       if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
+      // DNS-rebinding guard: reject requests whose Host header isn't loopback,
+      // before auth, so a rebound hostname can't reach the local endpoint.
+      if (!isAllowedMcpHost(req.headers.host, boundPort)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Forbidden host' }))
+        return
+      }
       if (!validateAuth(req, token, res)) return
       const url = new URL(req.url ?? '/', `http://localhost:${boundPort}`)
       if (url.pathname === '/sse' && req.method === 'GET') {

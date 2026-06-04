@@ -74,17 +74,51 @@ export function installModuleSandbox(granted: Iterable<string>): () => void {
   const blocked = blockedModules(granted)
   if (blocked.size === 0) return () => {}
 
+  const restores: Array<() => void> = []
+
+  // 1) Patch the high-level require for a clear, plugin-facing error message.
   const moduleProto = Module.prototype as unknown as {
     require: (id: string) => unknown
   }
-  const original = moduleProto.require
+  const originalRequire = moduleProto.require
   moduleProto.require = function (id: string): unknown {
     if (typeof id === 'string' && blocked.has(id)) {
       throw new SandboxViolationError(id, ownerPermission(id) ?? 'unknown')
     }
-    return original.apply(this, [id] as [string])
+    return originalRequire.apply(this, [id] as [string])
   }
-  return () => {
-    moduleProto.require = original
+  restores.push(() => { moduleProto.require = originalRequire })
+
+  // 2) Patch the underlying loader too. `require` ultimately calls
+  //    `Module._load`, but so do `module.createRequire(...)(...)` and other
+  //    require vectors that don't go through `Module.prototype.require`. Gating
+  //    `_load` closes those alternative paths from a single chokepoint.
+  const moduleCtor = Module as unknown as {
+    _load: (request: string, parent: unknown, isMain: boolean) => unknown
   }
+  const originalLoad = moduleCtor._load
+  moduleCtor._load = function (request: string, parent: unknown, isMain: boolean): unknown {
+    if (typeof request === 'string' && blocked.has(request)) {
+      throw new SandboxViolationError(request, ownerPermission(request) ?? 'unknown')
+    }
+    return originalLoad.call(this, request, parent, isMain)
+  }
+  restores.push(() => { moduleCtor._load = originalLoad })
+
+  // 3) Neutralise the low-level escape hatches. `process.binding` /
+  //    `process._linkedBinding` hand back native bindings (fs, net, …) without
+  //    going through the module loader, and `process.dlopen` loads native
+  //    addons. A sandboxed plugin has no legitimate use for these, so deny them
+  //    outright while any capability is withheld.
+  const proc = process as unknown as Record<string, unknown>
+  for (const key of ['binding', '_linkedBinding', 'dlopen']) {
+    const originalFn = proc[key]
+    if (typeof originalFn !== 'function') continue
+    proc[key] = function (): never {
+      throw new SandboxViolationError(`process.${key}`, 'native')
+    }
+    restores.push(() => { proc[key] = originalFn })
+  }
+
+  return () => { for (const r of restores.reverse()) r() }
 }

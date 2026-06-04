@@ -12,7 +12,9 @@ snowflake.configure({ logLevel: 'ERROR' })
 export class SnowflakeAdapter implements DbAdapter {
   private connection: snowflake.Connection | null = null
   private connected = false
-  private activeStatementId: string | null = null
+  /** The statement currently executing, so cancelQuery() can cancel exactly
+   *  that one instead of every query on the session. */
+  private activeStatement: snowflake.RowStatement | null = null
   private readonly config: Record<string, unknown>
 
   constructor(config: Record<string, unknown>) {
@@ -119,26 +121,24 @@ export class SnowflakeAdapter implements DbAdapter {
 
     const start = performance.now()
 
-    const { rows, columns, statementId } = await new Promise<{
+    const { rows, columns } = await new Promise<{
       rows: Record<string, unknown>[]
       columns: snowflake.Column[]
-      statementId: string
     }>((resolve, reject) => {
       const stmt = this.connection!.execute({
         sqlText: sql,
         binds: params as snowflake.Binds | undefined,
         fetchAsString: ['Number'] as unknown as snowflake.DataType[],
         complete: (err, stmt, rows) => {
-          this.activeStatementId = null
+          this.activeStatement = null
           if (err) reject(err)
           else resolve({
             rows: (rows ?? []) as Record<string, unknown>[],
             columns: stmt.getColumns() ?? [],
-            statementId: stmt.getStatementId(),
           })
         },
       })
-      this.activeStatementId = stmt.getStatementId()
+      this.activeStatement = stmt
     })
 
     const duration = Math.round(performance.now() - start)
@@ -163,12 +163,18 @@ export class SnowflakeAdapter implements DbAdapter {
   }
 
   async cancelQuery(): Promise<void> {
-    if (this.connection && this.activeStatementId) {
-      this.connection.execute({
-        sqlText: `SELECT SYSTEM$CANCEL_ALL_QUERIES(CURRENT_SESSION())`,
-        complete: () => {},
+    // Cancel only the statement the user is running. The previous
+    // SYSTEM$CANCEL_ALL_QUERIES(CURRENT_SESSION()) killed every in-flight
+    // statement on the session, so cancelling an editor query would also
+    // abort concurrent background introspection queries.
+    const stmt = this.activeStatement
+    if (!stmt) return
+    await new Promise<void>((resolve) => {
+      stmt.cancel((err) => {
+        if (err) console.error('[snowflake] cancel error:', err)
+        resolve()
       })
-    }
+    })
   }
 
   async getTables(schema?: string): Promise<SchemaTable[]> {
