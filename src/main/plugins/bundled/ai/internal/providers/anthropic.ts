@@ -192,16 +192,36 @@ export class AnthropicProvider implements AIProvider {
       body.stop_sequences = request.stopSequences
     }
 
+    // Prompt caching: mark the stable portions of each request (system
+    // prompt and the tools array) with `cache_control: { type: 'ephemeral' }`.
+    // Anthropic keeps a 5-minute prefix cache keyed on these blocks; hits on
+    // cached input tokens are ~10% of the normal input price and skip
+    // re-processing on the server, which is the single biggest TTFT win for
+    // long chats. The system prompt is composed once per turn from rules +
+    // schema-name list + saved connections + notifications + app-actions
+    // catalog — turn-to-turn it's stable, so the breakpoint here amortises
+    // across the whole conversation. The tool catalog is even more stable
+    // (only changes when plugins activate/deactivate).
+    //
+    // Two breakpoints used; the API permits four.
     if (systemMessage) {
-      body.system = systemMessage.content
+      body.system = [
+        { type: 'text', text: systemMessage.content, cache_control: { type: 'ephemeral' } },
+      ]
     }
 
     if (request.tools && request.tools.length > 0) {
-      body.tools = request.tools.map(t => ({
+      const tools = request.tools.map(t => ({
         name: t.name,
         description: t.description,
         input_schema: t.parameters,
       }))
+      // The cache_control marker on the last tool tells Anthropic to cache
+      // every preceding tool definition along with it.
+      const lastIdx = tools.length - 1
+      body.tools = tools.map((t, i) =>
+        i === lastIdx ? { ...t, cache_control: { type: 'ephemeral' } } : t
+      )
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {

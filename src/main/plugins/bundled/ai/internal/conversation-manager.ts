@@ -6,6 +6,7 @@ import type { AIProviderRegistry } from './provider-registry'
 import type { ToolRegistry } from '../../../sdk/types'
 import type { PermissionManager } from './permission-manager'
 import { estimateTokens, trimMessagesToBudget } from './token-estimate'
+import { buildChatSystemPrompt } from '../prompts'
 
 interface ConversationManagerDeps {
   providerRegistry: AIProviderRegistry
@@ -91,51 +92,42 @@ export class ConversationManager {
     connectionsSummary?: string,
     notificationsSummary?: string
   ): Promise<string> {
-    // Single tight rules block — every sentence here is paid for on every
-    // turn. Avoid restating things the model already knows; trust tool
-    // schemas to document themselves.
-    const parts: string[] = [
-      `You are Verql's database assistant. Be brief. Decline non-database tasks in one sentence. Never write application code. Confirm before destructive ops. Don't invent data.`
-    ]
-
-    if (connectionMeta) {
-      parts.push(`Active connection: ${connectionMeta.driverName} (${connectionMeta.type}).`)
-    }
+    // The prompt template + fragments live in `../prompts/*.md`. This method
+    // only resolves the dynamic data (schema context, plugin-contributed
+    // context) — no prompt text lives in this file.
+    let schema = ''
+    let conversationContext = ''
 
     const connectionId = connectionIdOverride !== undefined ? connectionIdOverride : this.deps.getConnectionId()
     if (connectionId) {
       try {
-        const schemaContext = await this.deps.getSchemaContext(connectionId)
-        if (schemaContext) parts.push(schemaContext)
+        schema = await this.deps.getSchemaContext(connectionId)
       } catch {
         // Schema unavailable
       }
 
+      const ctxParts: string[] = []
       for (const cp of this.contextProviders) {
         if (cp.appliesTo(connectionId)) {
           try {
             const ctx = await cp.getContext(connectionId)
-            if (ctx) parts.push(ctx)
+            if (ctx) ctxParts.push(ctx)
           } catch {
             // Context provider failed
           }
         }
       }
+      conversationContext = ctxParts.join('\n\n')
     }
 
-    if (connectionsSummary && connectionsSummary.trim()) {
-      parts.push(`Saved connections:\n${connectionsSummary}`)
-    }
-
-    if (notificationsSummary && notificationsSummary.trim()) {
-      parts.push(`Recent notifications:\n${notificationsSummary}`)
-    }
-
-    if (appActionsCatalog && appActionsCatalog.trim()) {
-      parts.push(`Deep links: [Title](verql://action/<id>). Use the action's human title as the visible text. Available:\n${appActionsCatalog}`)
-    }
-
-    return parts.join('\n\n')
+    return buildChatSystemPrompt({
+      connection: connectionMeta,
+      schema,
+      conversationContext,
+      connectionsList: connectionsSummary,
+      notificationsList: notificationsSummary,
+      appActionsCatalog,
+    })
   }
 
   async *chat(opts?: {
