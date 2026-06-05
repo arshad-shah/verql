@@ -3,7 +3,7 @@
 // managing live sessions. Same verbs as the per-row PlugZap/Plug actions
 // inside ActiveConnectionsPanel, so the iconography reads as one family.
 import { ListTree, Plug, Activity } from 'lucide-react'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
@@ -41,9 +41,9 @@ export function SecondaryActivityBar() {
       gap="xs"
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
-      {renderButton('connections', Plug, 'Connections')}
-      {renderButton('inspector', ListTree, 'Inspector')}
-      {renderButton('activity', Activity, 'Activity')}
+      {renderButton(SECONDARY_PANEL.CONNECTIONS, Plug, 'Connections')}
+      {renderButton(SECONDARY_PANEL.INSPECTOR, ListTree, 'Inspector')}
+      {renderButton(SECONDARY_PANEL.ACTIVITY, Activity, 'Activity')}
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />
       <PluginSlot id="app.secondaryActivityBar.bottom" />

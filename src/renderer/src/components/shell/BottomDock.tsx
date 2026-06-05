@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Flex, Box, Text } from '@/primitives'
-import { useUiStore, type BottomPanelId } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
@@ -57,9 +57,9 @@ export function BottomDock() {
     .map(c => ({ id: `plugin:${c.contributionId}`, title: (c.meta.title as string) ?? c.contributionId }))
 
   const tabs: BottomTab[] = [
-    ...(showResults ? [{ id: 'results', title: 'Results' }] : []),
-    ...(hasChart ? [{ id: 'chart', title: 'Chart' }] : []),
-    ...(hasPlan ? [{ id: 'query-plan', title: 'Query Plan' }] : []),
+    ...(showResults ? [{ id: BOTTOM_PANEL.RESULTS, title: 'Results' }] : []),
+    ...(hasChart ? [{ id: BOTTOM_PANEL.CHART, title: 'Chart' }] : []),
+    ...(hasPlan ? [{ id: BOTTOM_PANEL.QUERY_PLAN, title: 'Query Plan' }] : []),
     ...bottomPluginPanels,
   ]
 
@@ -75,7 +75,7 @@ export function BottomDock() {
   }
 
   const renderBody = () => {
-    if (bottomActivePanel === 'results' && showResults && activeTab) {
+    if (bottomActivePanel === BOTTOM_PANEL.RESULTS && showResults && activeTab) {
       const t = activeTab as QueryTab
       if (t.results) {
         return <ResultsPanel results={t.results} sql={t.sql} tabId={t.id} aiExplanation={t.aiExplanation} />
@@ -89,10 +89,10 @@ export function BottomDock() {
         </Flex>
       )
     }
-    if (bottomActivePanel === 'query-plan' && hasPlan && activeTab) {
+    if (bottomActivePanel === BOTTOM_PANEL.QUERY_PLAN && hasPlan && activeTab) {
       return <QueryPlanView results={(activeTab as QueryTab).results!} />
     }
-    if (bottomActivePanel === 'chart' && hasChart && resultsForChart) {
+    if (bottomActivePanel === BOTTOM_PANEL.CHART && hasChart && resultsForChart) {
       return <ChartPanel results={resultsForChart} />
     }
     if (bottomActivePanel.startsWith('plugin:')) {

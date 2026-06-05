@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Flex, Box, Text } from '@/primitives'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
@@ -15,7 +15,7 @@ export function SecondarySidebar() {
 
   useEffect(() => { fetchContributions('panels') }, [fetchContributions])
 
-  if (active === 'notifications') {
+  if (active === SECONDARY_PANEL.NOTIFICATIONS) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
         <PanelHeader title="Notifications" />
@@ -26,7 +26,7 @@ export function SecondarySidebar() {
     )
   }
 
-  if (active === 'activity') {
+  if (active === SECONDARY_PANEL.ACTIVITY) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
         <PanelHeader title="Activity" />
@@ -37,7 +37,7 @@ export function SecondarySidebar() {
     )
   }
 
-  if (active === 'connections') {
+  if (active === SECONDARY_PANEL.CONNECTIONS) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
         <PanelHeader title="Connections" />
@@ -48,7 +48,7 @@ export function SecondarySidebar() {
     )
   }
 
-  if (active === 'inspector') {
+  if (active === SECONDARY_PANEL.INSPECTOR) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
         <PanelHeader title="Inspector" />

@@ -10,7 +10,7 @@ import { tabActions } from '@/stores/tab-actions'
 import { parseDbError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useTabsStore } from '@/stores/tabs'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
@@ -321,7 +321,7 @@ export function QueryPanel({ tab }: Props) {
         // of leaving them on the raw-rows Results tab. The BottomDock only
         // surfaces the "Query Plan" tab once the parser sees plan content,
         // which matches the output we just produced.
-        useUiStore.getState().setBottomDockActivePanel('query-plan')
+        useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.QUERY_PLAN)
       }
     } catch (err) {
       setTabError(tab.id, (err as Error).message)

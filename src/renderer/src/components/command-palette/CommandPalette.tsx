@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from 'react'
 import { Search } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { editorRegistry } from '@/stores/editor'
@@ -70,9 +70,12 @@ export function CommandPalette({ open, onClose }: Props) {
   const commands = useMemo<Command[]>(() => {
     const cmds: Command[] = [
       { id: 'new-query', title: 'New Query Tab', category: 'Query', keybinding: 'Cmd+N', action: () => addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(conn ?? null) }) },
-      { id: 'explorer', title: 'Show Explorer', category: 'View', action: () => setActivePanel('explorer') },
-      { id: 'show-schema', title: 'Show Schema', category: 'View', action: () => setActivePanel('schema') },
-      { id: 'show-plugins', title: 'Show Plugins', category: 'View', action: () => setActivePanel('plugins') },
+      { id: 'explorer', title: 'Show Explorer', category: 'View', action: () => setActivePanel(ACTIVITY_PANEL.EXPLORER) },
+      // Schema lives inside the Explorer panel — there is no separate 'schema'
+      // panel, so this must target Explorer (previously pointed at a
+      // non-existent 'schema' id and showed a blank sidebar).
+      { id: 'show-schema', title: 'Show Schema', category: 'View', action: () => setActivePanel(ACTIVITY_PANEL.EXPLORER) },
+      { id: 'show-plugins', title: 'Show Plugins', category: 'View', action: () => setActivePanel(ACTIVITY_PANEL.PLUGINS) },
     ]
     // Editor-aware run commands. Only meaningful when there's a live editor
     // (i.e. the active tab is a query). The palette is the authoritative place

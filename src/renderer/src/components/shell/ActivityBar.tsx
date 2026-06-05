@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Database, PenSquare, BarChart3, Puzzle, Settings, Radio } from 'lucide-react'
-import { useUiStore, type ActivityPanel } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
@@ -10,10 +10,10 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import type { MCPServerStatus } from '@shared/mcp'
 
 const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
-  { id: 'explorer', icon: Database, label: 'Explorer' },
-  { id: 'query', icon: PenSquare, label: 'Saved Queries' },
-  { id: 'charts', icon: BarChart3, label: 'Charts' },
-  { id: 'plugins', icon: Puzzle, label: 'Plugins' }
+  { id: ACTIVITY_PANEL.EXPLORER, icon: Database, label: 'Explorer' },
+  { id: ACTIVITY_PANEL.QUERY, icon: PenSquare, label: 'Saved Queries' },
+  { id: ACTIVITY_PANEL.CHARTS, icon: BarChart3, label: 'Charts' },
+  { id: ACTIVITY_PANEL.PLUGINS, icon: Puzzle, label: 'Plugins' }
 ]
 
 export function ActivityBar() {

@@ -1,4 +1,4 @@
-import { useUiStore, type SecondaryPanelId } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL, SECONDARY_PANEL, BOTTOM_PANEL, type SecondaryPanelId } from '@/stores/ui'
 import { SETTINGS_CATEGORY, isSettingsCategory } from '@/lib/settings-categories'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
@@ -64,7 +64,7 @@ const BUILTINS: AppAction[] = [
     title: 'Open Connections',
     description: 'Open the list of saved connections, where the user can connect to one that already exists. Use this when the user wants to connect to a database that is already saved (see the saved connections list).',
     kind: 'navigation',
-    run: () => useUiStore.getState().setSecondaryActivePanel('connections')
+    run: () => useUiStore.getState().setSecondaryActivePanel(SECONDARY_PANEL.CONNECTIONS)
   },
   {
     id: 'new-connection',
@@ -78,7 +78,7 @@ const BUILTINS: AppAction[] = [
     title: 'Open Explorer',
     description: 'Show the explorer sidebar, where connections and schema live. Point users here to add or connect to a database.',
     kind: 'navigation',
-    run: () => useUiStore.getState().setActivePanel('explorer')
+    run: () => useUiStore.getState().setActivePanel(ACTIVITY_PANEL.EXPLORER)
   },
   {
     id: 'open-secondary-panel',
@@ -98,8 +98,8 @@ const BUILTINS: AppAction[] = [
     kind: 'navigation',
     run: () => {
       const ui = useUiStore.getState()
-      if (!(ui.secondaryActivePanel === 'notifications' && ui.secondarySidebarVisible)) {
-        ui.setSecondaryActivePanel('notifications')
+      if (!(ui.secondaryActivePanel === SECONDARY_PANEL.NOTIFICATIONS && ui.secondarySidebarVisible)) {
+        ui.setSecondaryActivePanel(SECONDARY_PANEL.NOTIFICATIONS)
       }
     }
   },
@@ -257,8 +257,8 @@ const BUILTINS: AppAction[] = [
         throw new Error('Need at least two columns and one row to chart these results.')
       }
       const ui = useUiStore.getState()
-      if (!(ui.bottomDockActivePanel === 'chart' && ui.bottomDockVisible)) {
-        ui.setBottomDockActivePanel('chart')
+      if (!(ui.bottomDockActivePanel === BOTTOM_PANEL.CHART && ui.bottomDockVisible)) {
+        ui.setBottomDockActivePanel(BOTTOM_PANEL.CHART)
       }
     }
   },
@@ -283,7 +283,7 @@ const BUILTINS: AppAction[] = [
       if (!connectedIds.has(conn.id)) throw new Error(`Not connected to "${conn.name}". Connect first.`)
       const schema = await resolveSchema(conn, str(p.schema))
       const ui = useUiStore.getState()
-      if (!(ui.activePanel === 'explorer' && ui.sidebarVisible)) ui.setActivePanel('explorer')
+      if (!(ui.activePanel === ACTIVITY_PANEL.EXPLORER && ui.sidebarVisible)) ui.setActivePanel(ACTIVITY_PANEL.EXPLORER)
       // Expand the ancestor nodes so the table row renders. Cover both the
       // database-qualified and flat key shapes — an unused key is harmless.
       if (conn.database) {

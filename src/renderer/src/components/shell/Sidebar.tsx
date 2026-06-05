@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
@@ -28,11 +28,11 @@ export function Sidebar() {
   }, [])
 
   const titles: Record<string, string> = {
-    explorer: 'Explorer',
-    query: 'Saved Queries',
-    charts: 'Charts',
-    plugins: 'Plugins',
-    settings: 'Settings',
+    [ACTIVITY_PANEL.EXPLORER]: 'Explorer',
+    [ACTIVITY_PANEL.QUERY]: 'Saved Queries',
+    [ACTIVITY_PANEL.CHARTS]: 'Charts',
+    [ACTIVITY_PANEL.PLUGINS]: 'Plugins',
+    [ACTIVITY_PANEL.SETTINGS]: 'Settings',
   }
   const pluginTitles = Object.fromEntries(
     panelContributions.map((c) => [`plugin:${c.contributionId}`, c.pluginName])
@@ -51,7 +51,7 @@ export function Sidebar() {
         <Text size="xs" color="muted" className="uppercase tracking-wider">
           {allTitles[activePanel] ?? 'Explorer'}
         </Text>
-        {isConnected && activePanel === 'explorer' && (
+        {isConnected && activePanel === ACTIVITY_PANEL.EXPLORER && (
           <Tooltip content="Import data" side="left">
             <IconButton
               label="Import data"
@@ -66,10 +66,10 @@ export function Sidebar() {
         )}
       </Flex>
       <ScrollArea direction="vertical" className="flex-1">
-        {activePanel === 'explorer' && (
+        {activePanel === ACTIVITY_PANEL.EXPLORER && (
           <ExplorerTree onExportTable={(name) => setExportTable(name)} />
         )}
-        {activePanel === 'query' && (
+        {activePanel === ACTIVITY_PANEL.QUERY && (
           <Flex direction="column" className="h-full">
             {/* Segmented toggle between persisted saved queries and the
                 run-history log. Both are query-scoped lists, so they share
@@ -95,14 +95,14 @@ export function Sidebar() {
             </Box>
           </Flex>
         )}
-        {activePanel === 'charts' && (
+        {activePanel === ACTIVITY_PANEL.CHARTS && (
           isConnected ? <ChartsDashboard /> : (
             <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">
               Connect and run queries to see charts
             </Text>
           )
         )}
-        {activePanel === 'plugins' && <PluginsPanel />}
+        {activePanel === ACTIVITY_PANEL.PLUGINS && <PluginsPanel />}
         {/* Plugin-contributed panels */}
         {panelContributions
           .filter((c) => activePanel === `plugin:${c.contributionId}`)

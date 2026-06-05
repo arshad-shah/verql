@@ -1,7 +1,7 @@
 import { BarChart3 } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
 import { Stack, ScrollArea, Flex, Text, EmptyState, Box } from '@/primitives'
 
@@ -35,7 +35,7 @@ export function ChartsDashboard() {
               // Chart tab in one click — the dashboard becomes a real
               // "jump to chart" surface instead of just a tab-switcher.
               useTabsStore.getState().setActiveTab(tab.id)
-              useUiStore.getState().setBottomDockActivePanel('chart')
+              useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.CHART)
             }}
           >
             <Flex direction="row" align="center" gap="sm">

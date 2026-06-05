@@ -2,10 +2,31 @@ import { create } from 'zustand'
 import { useSettingsStore } from './settings'
 import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 
-export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'plugins' | 'settings' | (string & {})
+// Built-in panel ids, centralised so call sites stop repeating literals (the
+// types stay open with `string & {}` because plugins contribute their own
+// panel ids, e.g. `plugin:ai-chat`).
+export const ACTIVITY_PANEL = {
+  EXPLORER: 'explorer',
+  QUERY: 'query',
+  CHARTS: 'charts',
+  PLUGINS: 'plugins',
+  SETTINGS: 'settings',
+} as const
+export const SECONDARY_PANEL = {
+  INSPECTOR: 'inspector',
+  NOTIFICATIONS: 'notifications',
+  CONNECTIONS: 'connections',
+  ACTIVITY: 'activity',
+} as const
+export const BOTTOM_PANEL = {
+  RESULTS: 'results',
+  QUERY_PLAN: 'query-plan',
+  CHART: 'chart',
+} as const
 
-export type SecondaryPanelId = 'inspector' | 'notifications' | 'connections' | (string & {})
-export type BottomPanelId = 'results' | 'query-plan' | 'chart' | (string & {})
+export type ActivityPanel = (typeof ACTIVITY_PANEL)[keyof typeof ACTIVITY_PANEL] | (string & {})
+export type SecondaryPanelId = (typeof SECONDARY_PANEL)[keyof typeof SECONDARY_PANEL] | (string & {})
+export type BottomPanelId = (typeof BOTTOM_PANEL)[keyof typeof BOTTOM_PANEL] | (string & {})
 
 export type { SettingsCategoryId }
 
@@ -37,7 +58,7 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  activePanel: 'explorer',
+  activePanel: ACTIVITY_PANEL.EXPLORER,
   sidebarVisible: true,
   expandedTreeNodes: new Set<string>(),
   activeSettingsCategory: SETTINGS_CATEGORY.GENERAL,
@@ -71,7 +92,7 @@ export const useUiStore = create<UiState>((set) => ({
     }),
   collapseAllTreeNodes: () => set({ expandedTreeNodes: new Set<string>() }),
   secondarySidebarVisible: useSettingsStore.getState().settings.appearance.showSecondarySidebar,
-  secondaryActivePanel: 'inspector',
+  secondaryActivePanel: SECONDARY_PANEL.INSPECTOR,
   setSecondaryActivePanel: (panel) =>
     set((state) => ({
       secondaryActivePanel: panel,
@@ -85,7 +106,7 @@ export const useUiStore = create<UiState>((set) => ({
     useSettingsStore.getState().set('appearance.secondarySidebarWidth', clamped)
   },
   bottomDockVisible: useSettingsStore.getState().settings.appearance.showBottomDock,
-  bottomDockActivePanel: 'results',
+  bottomDockActivePanel: BOTTOM_PANEL.RESULTS,
   setBottomDockActivePanel: (panel) =>
     set((state) => ({
       bottomDockActivePanel: panel,
