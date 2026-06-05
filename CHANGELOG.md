@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.12.0
+
+### Minor Changes
+
+- [#80](https://github.com/arshad-shah/verql/pull/80) [`f7dfeb6`](https://github.com/arshad-shah/verql/commit/f7dfeb69f57ce601cb6b1c70ad460714637e5db1) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Persist AI conversations and saved queries in an internal SQLite app-data store
+  instead of renderer `localStorage`. A new main-process `AppDataStore`
+  (`${userData}/app.db`, WAL mode) reached over typed `appdata:*` IPC channels
+  removes the ~5–10MB `localStorage` quota cap that could silently drop chat
+  history, and replaces full-blob rewrites with incremental, transactional writes
+  (one write per settled message / saved query). Existing `localStorage` data is
+  migrated into the store automatically on first launch.
+
+- [#79](https://github.com/arshad-shah/verql/pull/79) [`4403452`](https://github.com/arshad-shah/verql/commit/4403452dfaeff2f9a2f08376763548496400c187) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Add native OS notifications for approval prompts. A new bundled
+  `os-notifications` plugin surfaces "your response is needed" moments — AI
+  write-tool approvals and MCP query authorizations — as desktop notifications
+  when Verql is in the background, with user toggles (master enable, only when
+  unfocused, approvals). The host gains a delivery-agnostic `attention` seam
+  (`src/main/attention/`) that approval flows publish to, and the plugin exposes
+  an `os-notifications` service so other plugins can raise desktop notifications.
+
 ## 0.11.0
 
 ### Minor Changes
