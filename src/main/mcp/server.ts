@@ -123,7 +123,10 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
           }
         }
         try {
-          const result = await tool.execute(args, { connectionId, abortSignal: new AbortController().signal })
+          // Route through the registry (not tool.execute) so the host's
+          // activity recorder logs MCP tool calls in the unified activity log,
+          // exactly like the AI loop does.
+          const result = await deps.toolRegistry.execute(tool.id, args, { connectionId, abortSignal: new AbortController().signal })
           record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: result.success ? 'ok' : 'error', durationMs: Date.now() - startedAt })
           return { content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }], isError: !result.success }
         } catch (err) {
