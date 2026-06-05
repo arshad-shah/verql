@@ -183,6 +183,13 @@ export class ConfigStore {
     let target: Record<string, unknown> = this.data.settings as unknown as Record<string, unknown>
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i]
+      // Prototype-pollution barrier at the assignment site. splitSettingsKeyPath
+      // already rejects these segments, but that cross-function `Set.has` guard
+      // isn't visible to static analysis (CodeQL); the explicit `===` check here
+      // keeps the barrier local to where the dynamic key is written.
+      if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+        throw new Error(`Settings key path '${keyPath}' contains forbidden segment '${part}'`)
+      }
       const next = target[part]
       if (next === undefined) {
         target[part] = {}
@@ -194,6 +201,9 @@ export class ConfigStore {
       target = target[part] as Record<string, unknown>
     }
     const leafKey = parts[parts.length - 1]
+    if (leafKey === '__proto__' || leafKey === 'constructor' || leafKey === 'prototype') {
+      throw new Error(`Settings key path '${keyPath}' contains forbidden segment '${leafKey}'`)
+    }
     // Skip a full-file rewrite (and listener churn) when the value is
     // unchanged. setSetting is the renderer's high-frequency path (layout
     // prefs, toggles re-applied to the same value), and each write rewrites
