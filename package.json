@@ -48,7 +48,7 @@
     "ioredis": "5.10.1",
     "lucide-react": "1.7.0",
     "mime-db": "1.52.0",
-    "mime-types": "2.1.35",
+    "mime-types": "3.0.2",
     "monaco-editor": "0.55.1",
     "mongodb": "7.1.1",
     "mysql2": "3.20.0",
