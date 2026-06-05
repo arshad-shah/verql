@@ -21,6 +21,7 @@ area you're touching → the source it points to.
 - [`docs/sdk/`](./docs/sdk/README.md) — the published `@verql/plugin-sdk` package (source under `packages/plugin-sdk/`) that external plugin authors consume, plus a getting-started walkthrough. The package re-exports the **electron-free** author surface of `src/main/plugins/sdk`; keep its curated barrel and the `sdk-public-surface` test in sync when changing public exports.
 - [`docs/guide/`](./docs/guide/README.md) — end-user (consumer) documentation. The in-app Help menu links here.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
+- [`docs/notifications.md`](./docs/notifications.md) — the notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin that turns it into native OS notifications. Diagram-rich (context, architecture, sequences, state, class/data models). Read before touching approval surfacing or adding a notification consumer.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
 
 When you change a subsystem, update its doc (and this file) in the same change

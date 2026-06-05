@@ -634,6 +634,10 @@ the *what-needs-attention* signal stays decoupled from *how it's surfaced* and a
 future plugin (window flash, dock badge, phone push) can consume the same
 events.
 
+For the full picture — system context, sequence flows, the dispatcher decision
+tree, lifecycle, and the class/data models, all as diagrams — see
+[notifications.md](./notifications.md).
+
 ## Plugin lifecycle
 
 The boot coordinator runs every plugin through a five-phase pipeline.

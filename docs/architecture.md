@@ -62,7 +62,7 @@ every call site (a CI test rejects string-literal `invoke`/`on` calls). See
 | **Database adapters** | `db/` | just the `DbAdapter` interface + a `factory.ts` shim; every driver (sqlite/postgresql/mysql included) is a plugin that registers with the SDK `DriverRegistry`, and `createAdapter` resolves through it |
 | **Plugin host** | `plugins/` | discovers, validates, activates plugins; see below |
 | **MCP server** | `mcp/` | exposes the shared tool registry to external MCP clients (e.g. Claude Code) over an approved, tokenised endpoint |
-| **Attention seam** | `attention/` | a delivery-agnostic relay for "the user's response is needed" (approval prompts, alerts). Producers (AI/MCP approvals) call `request`/`resolve`; it's provided as the `attention` service so a plugin can surface it. The bundled `os-notifications` plugin owns the delivery (native OS notifications). |
+| **Attention seam** | `attention/` | a delivery-agnostic relay for "the user's response is needed" (approval prompts, alerts). Producers (AI/MCP approvals) call `request`/`resolve`; it's provided as the `attention` service so a plugin can surface it. The bundled `os-notifications` plugin owns the delivery (native OS notifications). Full detail + diagrams: [notifications.md](./notifications.md). |
 | **Migration / updater** | `migration/`, `updater/` | schema-import migrations and auto-update |
 
 `DbAdapter` (`db/adapter.ts`) is the contract every driver implements: connect /
