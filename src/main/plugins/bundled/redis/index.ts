@@ -1,7 +1,7 @@
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import type { CompletionItem } from '@shared/plugin-ui-types'
-import { RedisAdapter } from './redis-adapter'
+import { RedisAdapter, buildRedisConnection } from './redis-adapter'
 import { getTableData, jsonExporter } from './data-format'
 
 export const manifest: PluginManifest = {
@@ -215,7 +215,10 @@ Do not use SQL syntax. Use standard Redis commands.`
   })
 
   ctx.drivers.register('redis', {
-    createAdapter: (config) => new RedisAdapter(config),
+    createAdapter: (config) => {
+      const { options, database } = buildRedisConnection(config as Record<string, unknown>)
+      return new RedisAdapter(options, database)
+    },
     editorLanguage: 'plaintext',
     sampleQuery: async (key: string) => `GET ${key}`,
     getTableData,

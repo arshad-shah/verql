@@ -2,9 +2,9 @@ import { createServer, type Server as HttpServer, type IncomingMessage, type Ser
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { BrowserWindow } from 'electron'
-import { generateToken, validateAuth } from './auth'
+import { generateToken, validateAuth, isAllowedMcpHost } from './auth'
 import { findFreePort } from './find-port'
-import { isWriteQuery, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
+import { isWriteToolCall, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
 import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
 
@@ -14,6 +14,11 @@ interface MCPServerDeps {
   toolRegistry: ToolRegistry
   getActiveConnectionId: () => string | null
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
+  /** Where the bearer token lives. Backed by the OS keyring in production so
+   *  the credential isn't sitting in plaintext in config.json (where any local
+   *  process could read it and defeat the loopback+token model). Injected so
+   *  the server stays decoupled from the keyring and is easy to test. */
+  tokenStore: { get(): string | null; set(token: string): void }
 }
 
 export interface MCPServerInstance {
@@ -42,9 +47,7 @@ export function selectExposedTools(tools: Tool[], gate: MCPGate): Tool[] {
 }
 
 export function needsApprovalForCall(tool: Tool, params: Record<string, unknown>): boolean {
-  if (tool.permission === 'write') return true
-  const sql = typeof params.sql === 'string' ? params.sql : ''
-  return sql ? isWriteQuery(sql) : false
+  return isWriteToolCall(tool.permission, params)
 }
 
 export function summarizeParams(params: Record<string, unknown>): string {
@@ -120,7 +123,10 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
           }
         }
         try {
-          const result = await tool.execute(args, { connectionId, abortSignal: new AbortController().signal })
+          // Route through the registry (not tool.execute) so the host's
+          // activity recorder logs MCP tool calls in the unified activity log,
+          // exactly like the AI loop does.
+          const result = await deps.toolRegistry.execute(tool.id, args, { connectionId, abortSignal: new AbortController().signal })
           record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: result.success ? 'ok' : 'error', durationMs: Date.now() - startedAt })
           return { content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }], isError: !result.success }
         } catch (err) {
@@ -135,9 +141,9 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
   async function start(): Promise<MCPStartResult> {
     if (httpServer) await stop()
 
-    const saved = deps.settingsStore.get('mcp.token') as string
+    const saved = deps.tokenStore.get()
     token = saved || generateToken()
-    if (!saved) deps.settingsStore.set('mcp.token', token)
+    if (!saved) deps.tokenStore.set(token)
 
     const requestedPort = (deps.settingsStore.get('mcp.port') as number) || 3100
     const autoPort = (deps.settingsStore.get('mcp.autoPort') as boolean) ?? true
@@ -155,6 +161,13 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
       res.setHeader('Vary', 'Origin')
       if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
+      // DNS-rebinding guard: reject requests whose Host header isn't loopback,
+      // before auth, so a rebound hostname can't reach the local endpoint.
+      if (!isAllowedMcpHost(req.headers.host, boundPort)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Forbidden host' }))
+        return
+      }
       if (!validateAuth(req, token, res)) return
       const url = new URL(req.url ?? '/', `http://localhost:${boundPort}`)
       if (url.pathname === '/sse' && req.method === 'GET') {
@@ -205,7 +218,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
 
   function regenerateToken(): void {
     token = generateToken()
-    deps.settingsStore.set('mcp.token', token)
+    deps.tokenStore.set(token)
   }
 
   async function reload(): Promise<void> {

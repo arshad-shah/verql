@@ -1,9 +1,26 @@
 import type { Disposable, Tool, ToolContext, ToolDefinition, ToolRegistry, ToolResult } from './types'
 import { toJsonSchema } from './tool-schema'
 
+/** Optional sink for tool-call activity. Set by the host so executions show up
+ *  in the app activity log / Activity panel. Kept generic so the registry
+ *  doesn't depend on the activity module. */
+export type ToolActivityRecorder = (info: {
+  toolId: string
+  params: Record<string, unknown>
+  success: boolean
+  durationMs: number
+  error?: string
+}) => void
+
 export class ToolRegistryImpl implements ToolRegistry {
   private tools = new Map<string, Tool>()
   private changeListeners = new Set<() => void>()
+  private activityRecorder?: ToolActivityRecorder
+
+  /** Install a recorder invoked after every execute() (success or failure). */
+  setActivityRecorder(recorder: ToolActivityRecorder | undefined): void {
+    this.activityRecorder = recorder
+  }
 
   /**
    * Registers a tool. Tool ids are a flat, un-namespaced space (the id is the
@@ -40,7 +57,20 @@ export class ToolRegistryImpl implements ToolRegistry {
   async execute(id: string, params: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
     const tool = this.tools.get(id)
     if (!tool) throw new Error(`Unknown tool: ${id}`)
-    return tool.execute(params, ctx)
+    if (!this.activityRecorder) return tool.execute(params, ctx)
+
+    const start = Date.now()
+    try {
+      const result = await tool.execute(params, ctx)
+      this.activityRecorder({ toolId: id, params, success: result.success, durationMs: Date.now() - start })
+      return result
+    } catch (err) {
+      this.activityRecorder({
+        toolId: id, params, success: false, durationMs: Date.now() - start,
+        error: err instanceof Error ? err.message : String(err),
+      })
+      throw err
+    }
   }
 
   onChange(cb: () => void): Disposable {

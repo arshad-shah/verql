@@ -89,4 +89,36 @@ describe('installModuleSandbox', () => {
     undo()
     expect(Module.prototype.require).toBe(before)
   })
+
+  it('also gates the underlying Module._load (alternative require vectors)', () => {
+    const moduleCtor = Module as unknown as { _load: (r: string, p: unknown, m: boolean) => unknown }
+    restore = installModuleSandbox([]) // no grants
+    expect(() => moduleCtor._load('net', module, false)).toThrowError(SandboxViolationError)
+    expect(() => moduleCtor._load('fs', module, false)).toThrowError(SandboxViolationError)
+  })
+
+  it('neutralises process.binding / process.dlopen escape hatches', () => {
+    const proc = process as unknown as { binding: (n: string) => unknown; dlopen: (...a: unknown[]) => unknown }
+    const beforeBinding = proc.binding
+    restore = installModuleSandbox([]) // no grants
+    expect(proc.binding).not.toBe(beforeBinding)
+    expect(() => proc.binding('fs')).toThrowError(SandboxViolationError)
+    expect(() => proc.dlopen({}, '/tmp/x.node')).toThrowError(SandboxViolationError)
+  })
+
+  it('restores process.binding on cleanup', () => {
+    const proc = process as unknown as { binding: (n: string) => unknown }
+    const before = proc.binding
+    const undo = installModuleSandbox([])
+    expect(proc.binding).not.toBe(before)
+    undo()
+    expect(proc.binding).toBe(before)
+  })
+
+  it('does not touch process.binding when fully granted', () => {
+    const proc = process as unknown as { binding: (n: string) => unknown }
+    const before = proc.binding
+    restore = installModuleSandbox(['network', 'filesystem', 'process'])
+    expect(proc.binding).toBe(before)
+  })
 })

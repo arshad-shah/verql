@@ -224,9 +224,16 @@ Be honest about what the model does and does not buy you:
    registry. "Only install plugins you trust" is currently a social control. A
    full design for this exists at
    [`proposals/signed-plugins-and-registry.md`](./proposals/signed-plugins-and-registry.md).
-4. **The worker sandbox patches the documented loader.** It closes
-   `require()` of gated builtins, but a plugin shipping a native addon or
-   reaching internal bindings is deeper escape surface — see roadmap item 2.
+4. **The worker sandbox patches the loader and the low-level escape hatches.**
+   It gates `require()` of gated builtins by patching both
+   `Module.prototype.require` and the underlying `Module._load` (covering
+   `createRequire`-style vectors), and it neutralises `process.binding`,
+   `process._linkedBinding`, and `process.dlopen` while any capability is
+   withheld. **Remaining gap:** dynamic `import()` of a gated builtin is
+   resolved by the ESM loader, not `Module._load`, so it is not yet blocked;
+   closing it needs a module customization hook installed at process spawn —
+   see roadmap item 2. A plugin shipping its own native addon is also deeper
+   escape surface.
 
 ## Roadmap
 
@@ -246,8 +253,10 @@ Remaining, in rough priority order:
    exporters, importers, formatters, tools), with the live `DbAdapter` exposed
    to the host as an RPC handle, so those plugins also run out-of-process.
 2. **Deeper worker hardening** — drop `NODE_OPTIONS`/inherited env on the
-   forked process and restrict the native-addon / internal-binding escape
-   routes the module sandbox doesn't cover.
+   forked process, block dynamic `import()` of gated builtins via a module
+   customization hook, and restrict the native-addon escape routes the module
+   sandbox doesn't cover. (`Module._load` and `process.binding`/`dlopen` are
+   now covered; see Known limitations item 4.)
 3. **Cross-platform, in-process zip extraction** to remove the `unzip`
    dependency and fully own traversal/symlink handling.
 4. **Signed plugins + a trusted registry** — verify a publisher signature or a

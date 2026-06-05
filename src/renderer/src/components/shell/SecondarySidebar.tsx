@@ -5,6 +5,7 @@ import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { NotificationsSidebar } from './NotificationsSidebar'
+import { ActivityPanel } from './ActivityPanel'
 import { ActiveConnectionsPanel } from '@/components/connections/ActiveConnectionsPanel'
 
 export function SecondarySidebar() {
@@ -20,6 +21,17 @@ export function SecondarySidebar() {
         <PanelHeader title="Notifications" />
         <Box className="flex-1 overflow-auto">
           <NotificationsSidebar />
+        </Box>
+      </Flex>
+    )
+  }
+
+  if (active === 'activity') {
+    return (
+      <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
+        <PanelHeader title="Activity" />
+        <Box className="flex-1 overflow-hidden">
+          <ActivityPanel />
         </Box>
       </Flex>
     )

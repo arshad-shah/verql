@@ -1,6 +1,6 @@
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
-import { createDbTools } from './tools'
+import { createDbTools, createActivityTool, type ActivityReaderLike } from './tools'
 
 export const manifest: PluginManifest = {
   name: 'verql-plugin-db-tools',
@@ -20,6 +20,13 @@ export function activate(ctx: PluginContext): void {
   // ctx.tools.register auto-tracks the disposable on the plugin's subscriptions.
   for (const tool of createDbTools(ctx.schema, ctx.connections, getMaxRows)) {
     ctx.tools.register(tool)
+  }
+
+  // The host provides the app activity log as a service; expose it as a
+  // read-only tool so both the AI chat and MCP clients can observe app activity.
+  const activityReader = ctx.services.consume<ActivityReaderLike>('activity-log')
+  if (activityReader) {
+    ctx.tools.register(createActivityTool(activityReader))
   }
 }
 

@@ -2,6 +2,7 @@ import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaI
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
+import type { ActivityEntry, ActivityQuery } from './activity'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -10,6 +11,18 @@ export interface IpcChannelMap {
   }
   'db:disconnect': {
     args: [profileId: string]
+    return: void
+  }
+  'db:set-active-connection': {
+    args: [profileId: string | null]
+    return: void
+  }
+  'activity:list': {
+    args: [query?: ActivityQuery]
+    return: ActivityEntry[]
+  }
+  'activity:clear': {
+    args: []
     return: void
   }
   'db:query': {
@@ -541,6 +554,9 @@ export const IPC_CHANNELS = {
   // ── Database lifecycle ─────────────────────────────────────────────────
   DB_CONNECT: 'db:connect',
   DB_DISCONNECT: 'db:disconnect',
+  DB_SET_ACTIVE_CONNECTION: 'db:set-active-connection',
+  ACTIVITY_LIST: 'activity:list',
+  ACTIVITY_CLEAR: 'activity:clear',
   DB_QUERY: 'db:query',
   DB_FORMAT_QUERY: 'db:format-query',
   DB_TEST_CONNECTION: 'db:test-connection',
@@ -683,6 +699,8 @@ export interface IpcEventMap {
   'mcp:approval-request': [request: import('./mcp').MCPApprovalRequest]
   /** MCP server recorded a tool call. */
   'mcp:activity-event': [entry: import('./mcp').MCPActivityEntry]
+  /** A new entry was appended to the app activity log. */
+  'activity:event': [entry: ActivityEntry]
   /** App menu accelerator: focus / create a new query tab. */
   'menu:new-query-tab': []
   /** App menu accelerator: open the new-connection form. */
@@ -719,6 +737,7 @@ export const IPC_EVENTS = {
   AI_EXPLAIN_EVENT: 'ai:explain:event',
   MCP_APPROVAL_REQUEST: 'mcp:approval-request',
   MCP_ACTIVITY_EVENT: 'mcp:activity-event',
+  ACTIVITY_EVENT: 'activity:event',
   MENU_NEW_QUERY_TAB: 'menu:new-query-tab',
   MENU_NEW_CONNECTION: 'menu:new-connection',
   MENU_TOGGLE_COMMAND_PALETTE: 'menu:toggle-command-palette',

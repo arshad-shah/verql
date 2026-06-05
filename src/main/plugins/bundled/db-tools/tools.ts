@@ -2,6 +2,46 @@ import { z } from 'zod'
 import type { Tool, ToolContext, ToolResult } from '../../sdk/types'
 import type { SchemaAccess, ConnectionAccess } from '../../sdk/types'
 import { toJsonSchema } from '../../sdk/tool-schema'
+import type { ActivityEntry, ActivityKind, ActivityQuery } from '@shared/activity'
+
+/** Minimal read view of the app activity log (provided by the host as the
+ *  `activity-log` service). */
+export interface ActivityReaderLike {
+  list(query?: ActivityQuery): ActivityEntry[]
+}
+
+const ACTIVITY_KINDS = ['query', 'tool-call', 'connection', 'notification', 'network'] as const
+
+/**
+ * A read-only tool that lets an agent (AI chat or MCP client) observe what's
+ * happening in the app: queries the app ran, agent tool calls, connection
+ * events and notifications. Shared across both surfaces (`surfaces` unset).
+ */
+export function createActivityTool(reader: ActivityReaderLike): Tool {
+  return {
+    id: 'get_app_activity',
+    name: 'Get App Activity',
+    description:
+      'Read the recent Verql activity log to see what has been happening in the app: SQL queries it ran (with durations, row counts and errors), agent tool calls, connection events, and user notifications. Read-only.',
+    inputSchema: toJsonSchema(
+      z.object({
+        kinds: z.array(z.enum(ACTIVITY_KINDS)).optional().describe('Restrict to these activity kinds'),
+        limit: z.number().optional().describe('Max entries, most recent first (default 50, max 500)'),
+      }),
+    ),
+    permission: 'read',
+    async execute(params: Record<string, unknown>): Promise<ToolResult> {
+      const limit = typeof params.limit === 'number' && params.limit > 0 ? Math.min(params.limit, 500) : 50
+      const kinds = Array.isArray(params.kinds) ? (params.kinds as ActivityKind[]) : undefined
+      const entries = reader.list({ kinds, limit })
+      return {
+        success: true,
+        data: entries,
+        display: `${entries.length} activity ${entries.length === 1 ? 'entry' : 'entries'}`,
+      }
+    },
+  }
+}
 
 function noConn(): ToolResult {
   return { success: false, data: null, display: 'No active database connection in Verql' }

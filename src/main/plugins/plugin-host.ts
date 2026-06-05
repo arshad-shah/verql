@@ -184,6 +184,13 @@ interface BootDeps {
   completionRegistry: CompletionRegistryImpl
   getAdapter: (connectionId: string) => DbAdapter | undefined
   getProfile: (connectionId: string) => ConnectionProfile | undefined
+  /** The single, host-wide connection-access instance whose
+   *  `setActiveConnectionId` is driven by `db:connect`/`db:disconnect`. It is
+   *  shared by every plugin context so `ctx.connections.getActiveConnectionId()`
+   *  actually reflects the active connection. When omitted (tests), the
+   *  coordinator builds one internally so all plugins still share a single
+   *  instance — it just never receives active-connection updates. */
+  connectionAccess?: ConnectionAccessImpl
   keyring: import('./sdk/types').KeyringAccess
   settingsStore: { get(key: string): unknown; set(key: string, value: unknown): void }
   services: import('./sdk/service-registry').ServiceRegistry
@@ -221,9 +228,13 @@ export class PluginBootCoordinator {
   private activationOrder: string[] = []
   private errorBudget = new ErrorBudget()
   private deps: BootDeps
+  /** Shared across all plugin contexts (see BootDeps.connectionAccess). */
+  private connectionAccess: ConnectionAccessImpl
 
   constructor(deps: BootDeps) {
     this.deps = deps
+    this.connectionAccess =
+      deps.connectionAccess ?? new ConnectionAccessImpl(deps.getAdapter, deps.getProfile)
   }
 
   // ── Phase 1: Discover ──────────────────────────────────────────────────────
@@ -434,7 +445,7 @@ export class PluginBootCoordinator {
       uiRegistry: this.deps.uiRegistry,
       completionRegistry: this.deps.completionRegistry,
       schemaAccess: new SchemaAccessImpl(this.deps.getAdapter),
-      connectionAccess: new ConnectionAccessImpl(this.deps.getAdapter, this.deps.getProfile),
+      connectionAccess: this.connectionAccess,
       settingsStore: this.deps.settingsStore,
       keyring: this.deps.keyring,
       services: this.deps.services,
@@ -542,6 +553,16 @@ export class PluginBootCoordinator {
     plugin.status = verification
     if (verification.state === 'active' || verification.state === 'degraded') {
       this.activationOrder.push(plugin.manifest.name)
+    } else {
+      // Activation produced no usable contributions. `shutdown()` only iterates
+      // `activationOrder`, so without an explicit teardown here the forked
+      // worker process (and its live RPC bridge) would leak for the whole app
+      // lifetime — a hostile plugin could fail verification on purpose to keep
+      // a child process around. Mirror the catch block's cleanup.
+      try { await isolated.deactivate() } catch { /* best-effort */ }
+      disposePluginContext(context)
+      plugin.context = undefined
+      plugin.isolatedHandle = undefined
     }
     return plugin
   }
@@ -884,21 +905,49 @@ export class PluginBootCoordinator {
       const manifestPath = path.join(sourcePath, 'plugin-manifest.json')
       const pkgPath = path.join(sourcePath, 'package.json')
 
-      let name: string
+      let manifest: PluginManifest
       if (fs.existsSync(manifestPath)) {
-        name = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')).name
+        try {
+          manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as PluginManifest
+        } catch (err) {
+          return { success: false, error: `Invalid manifest JSON: ${(err as Error).message}` }
+        }
       } else if (fs.existsSync(pkgPath)) {
-        name = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).name
+        let pkg: Record<string, unknown>
+        try {
+          pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+        } catch (err) {
+          return { success: false, error: `Invalid package.json: ${(err as Error).message}` }
+        }
+        manifest = {
+          name: pkg.name as string,
+          version: (pkg.version as string) ?? '0.0.0',
+          displayName: (pkg.displayName as string) ?? (pkg.name as string),
+          description: (pkg.description as string) ?? '',
+          main: (pkg.main as string) ?? 'index.js',
+          contributes: (pkg.contributes as PluginManifest['contributes']) ?? {},
+        }
       } else {
         return { success: false, error: 'No plugin-manifest.json or package.json found' }
       }
 
-      if (!NAME_PATTERN.test(name)) {
+      const name = manifest?.name
+      if (typeof name !== 'string' || !NAME_PATTERN.test(name)) {
         // Defend the destination join below: `name` becomes a path segment
         // under the plugin dir. A name like '../evil' or with separators must
-        // never escape it. validateManifest enforces this later too, but the
-        // install copy happens first, so guard here.
+        // never escape it.
         return { success: false, error: `Invalid plugin name: "${name}"` }
+      }
+
+      // Fully validate the manifest BEFORE copying anything into the trusted
+      // plugin directory. Otherwise a package with a bad version, an
+      // unknown/garbage `permissions` entry, a non-.js `main`, or a missing
+      // required field gets written to disk and only rejected later at
+      // validateAll() — leaving junk in the trusted folder and reporting a
+      // misleading "installed" result for a plugin that will never load.
+      const validation = validateManifest(manifest)
+      if (!validation.valid) {
+        return { success: false, error: validation.error }
       }
 
       // Same protection as discover(): refuse to install a plugin whose name
@@ -926,10 +975,10 @@ export class PluginBootCoordinator {
       fs.cpSync(sourcePath, destDir, { recursive: true })
 
       // Parse and add only the new plugin (don't clear existing state)
-      const manifest = this.parseManifest(destDir, name)
-      if (manifest) {
-        this.plugins.set(manifest.name, {
-          manifest,
+      const installedManifest = this.parseManifest(destDir, name)
+      if (installedManifest) {
+        this.plugins.set(installedManifest.name, {
+          manifest: installedManifest,
           path: destDir,
           status: { state: 'discovered' }
         })
@@ -941,9 +990,12 @@ export class PluginBootCoordinator {
   }
 
   installFromZip(zipPath: string): { success: boolean; name?: string; error?: string } {
-    const tmpDir = path.join(os.tmpdir(), `verql-plugin-${Date.now()}`)
+    // mkdtempSync atomically creates a unique, owner-only (0700) directory.
+    // A predictable name like `verql-plugin-${Date.now()}` + recursive
+    // mkdir lets a local attacker pre-create the dir (or plant a symlink
+    // inside it) on a shared machine before `unzip -o` overwrites into it.
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verql-plugin-'))
     try {
-      fs.mkdirSync(tmpDir, { recursive: true })
       execFileSync('unzip', ['-o', '-q', zipPath, '-d', tmpDir])
       // The zip may contain a single top-level directory or files at root.
       // Check if there's exactly one subdirectory — if so, install from that.

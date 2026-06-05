@@ -9,6 +9,10 @@ export interface SettingsStoreFacade {
   set(key: string, value: unknown): void
 }
 
+/** Reserved keyring namespace for the MCP bearer token. */
+const MCP_TOKEN_NS = '__mcp__'
+const MCP_TOKEN_KEY = 'token'
+
 export function registerMcpHandlers(
   ctx: IpcContext,
   handle: Handle,
@@ -16,10 +20,27 @@ export function registerMcpHandlers(
   settingsStore: SettingsStoreFacade,
   toolRegistry: ToolRegistry
 ): MCPServerInstance {
+  // One-time migration: earlier builds stored the token in plaintext in
+  // config.json. Move any such token into the keyring and scrub the on-disk
+  // copy so the credential no longer sits readable on disk.
+  const legacyToken = ctx.configStore.getSetting('mcp.token') as string | undefined
+  if (legacyToken) {
+    if (!ctx.keyring.has(MCP_TOKEN_NS, MCP_TOKEN_KEY)) {
+      ctx.keyring.storeSync(MCP_TOKEN_NS, MCP_TOKEN_KEY, legacyToken)
+    }
+    ctx.configStore.setSetting('mcp.token', '')
+  }
+
+  const tokenStore = {
+    get: (): string | null => ctx.keyring.retrieveSync(MCP_TOKEN_NS, MCP_TOKEN_KEY),
+    set: (t: string): void => ctx.keyring.storeSync(MCP_TOKEN_NS, MCP_TOKEN_KEY, t),
+  }
+
   const mcpServer = createMCPServer({
     toolRegistry,
     getActiveConnectionId: () => connectionAccess.getActiveConnectionId(),
     settingsStore,
+    tokenStore,
   })
 
   handle('mcp:start', async () => {
