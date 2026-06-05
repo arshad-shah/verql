@@ -193,7 +193,13 @@ export class ConfigStore {
       }
       target = target[part] as Record<string, unknown>
     }
-    target[parts[parts.length - 1]] = value
+    const leafKey = parts[parts.length - 1]
+    // Skip a full-file rewrite (and listener churn) when the value is
+    // unchanged. setSetting is the renderer's high-frequency path (layout
+    // prefs, toggles re-applied to the same value), and each write rewrites
+    // the whole connections+settings file synchronously on the main thread.
+    if (Object.is(target[leafKey], value)) return
+    target[leafKey] = value
     this.save()
     this.notifyListeners(keyPath, value)
   }

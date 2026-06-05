@@ -65,6 +65,19 @@ export function registerDbHandlers(
     return attempt
   })
 
+  // The renderer owns "which connection the user is looking at". When the user
+  // switches between two *already-connected* connections in the UI, no
+  // db:connect fires, so without this the main process's active-connection
+  // (which AI tools and the MCP server read) would stay pinned to the previous
+  // one and operate on the wrong database. The renderer pushes every active
+  // change here so the two stay in sync.
+  handle('db:set-active-connection', async (profileId: string | null) => {
+    // Ignore stale ids for connections that aren't actually open; null (no
+    // active connection) is always allowed.
+    if (profileId !== null && !ctx.activeAdapters.has(profileId)) return
+    connectionAccess.setActiveConnectionId(profileId)
+  })
+
   handle('db:disconnect', async (profileId: string) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter) {

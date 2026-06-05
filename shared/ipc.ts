@@ -12,6 +12,10 @@ export interface IpcChannelMap {
     args: [profileId: string]
     return: void
   }
+  'db:set-active-connection': {
+    args: [profileId: string | null]
+    return: void
+  }
   'db:query': {
     args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
@@ -541,6 +545,7 @@ export const IPC_CHANNELS = {
   // ── Database lifecycle ─────────────────────────────────────────────────
   DB_CONNECT: 'db:connect',
   DB_DISCONNECT: 'db:disconnect',
+  DB_SET_ACTIVE_CONNECTION: 'db:set-active-connection',
   DB_QUERY: 'db:query',
   DB_FORMAT_QUERY: 'db:format-query',
   DB_TEST_CONNECTION: 'db:test-connection',
