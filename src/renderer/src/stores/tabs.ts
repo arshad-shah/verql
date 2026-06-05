@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
+import { useUiStore } from './ui'
+import type { SettingsCategoryId } from '@/lib/settings-categories'
 
 let tabCounter = 0
 
@@ -79,7 +81,8 @@ interface TabsState {
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
   openInstallPlugin: () => string
-  openSettings: () => string
+  /** Open the settings tab, optionally focusing a specific category. */
+  openSettings: (category?: SettingsCategoryId) => string
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
@@ -359,7 +362,10 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     return id
   },
 
-  openSettings: () => {
+  openSettings: (category) => {
+    // Focus the requested category first so the tab opens on it (the body reads
+    // useUiStore.activeSettingsCategory). Omitting it preserves the last view.
+    if (category) useUiStore.getState().setActiveSettingsCategory(category)
     const id = 'settings'
     const existing = get().tabs.find((t) => t.id === id)
     if (existing) {

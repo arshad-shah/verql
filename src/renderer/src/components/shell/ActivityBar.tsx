@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Database, PenSquare, BarChart3, Puzzle, Settings, Radio } from 'lucide-react'
 import { useUiStore, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
+import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
@@ -86,7 +87,7 @@ export function ActivityBar() {
             label="MCP Server"
             size="lg"
             variant="ghost"
-            onClick={openSettings}
+            onClick={() => openSettings(SETTINGS_CATEGORY.MCP)}
             className="rounded-lg transition-colors text-green-400 hover:text-green-300 hover:bg-white/5"
           >
             <Radio size={18} />
@@ -98,7 +99,7 @@ export function ActivityBar() {
           label="Settings"
           size="lg"
           variant="ghost"
-          onClick={openSettings}
+          onClick={() => openSettings()}
           className={cn(
             'rounded-lg transition-colors',
             activeTabType === 'settings'

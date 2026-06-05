@@ -1,4 +1,5 @@
-import { useUiStore, type SettingsCategoryId, type SecondaryPanelId } from '@/stores/ui'
+import { useUiStore, type SecondaryPanelId } from '@/stores/ui'
+import { SETTINGS_CATEGORY, isSettingsCategory } from '@/lib/settings-categories'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
@@ -47,15 +48,15 @@ const BUILTINS: AppAction[] = [
   {
     id: 'open-settings',
     title: 'Open Settings',
-    description: 'Open the settings screen, optionally at a category (general, appearance, editor, connections, data-display, keybindings, ai, mcp, plugins). Use category "plugins" to let the user enable or configure installed plugins.',
+    description: `Open the settings screen, optionally at a category (${Object.values(SETTINGS_CATEGORY).join(', ')}). Use category "${SETTINGS_CATEGORY.PLUGINS}" to let the user enable or configure installed plugins.`,
     kind: 'navigation',
     params: { category: { type: 'string', description: 'Settings category id' } },
     run: (p) => {
-      // Settings live in a dedicated editor tab (SettingsTab), not the
-      // left sidebar panel. Set the category first so the tab opens on it.
+      // Settings live in a dedicated editor tab (SettingsTab), not the left
+      // sidebar panel. openSettings focuses the category when one is given;
+      // ignore an unrecognised category rather than landing on a blank id.
       const category = str(p.category)
-      if (category) useUiStore.getState().setActiveSettingsCategory(category as SettingsCategoryId)
-      useTabsStore.getState().openSettings()
+      useTabsStore.getState().openSettings(isSettingsCategory(category) ? category : undefined)
     }
   },
   {

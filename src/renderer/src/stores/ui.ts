@@ -1,14 +1,13 @@
 import { create } from 'zustand'
 import { useSettingsStore } from './settings'
+import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 
 export type ActivityPanel = 'explorer' | 'query' | 'charts' | 'plugins' | 'settings' | (string & {})
 
 export type SecondaryPanelId = 'inspector' | 'notifications' | 'connections' | (string & {})
 export type BottomPanelId = 'results' | 'query-plan' | 'chart' | (string & {})
 
-export type SettingsCategoryId =
-  | 'general' | 'appearance' | 'editor' | 'connections'
-  | 'data-display' | 'keybindings' | 'ai' | 'mcp' | 'plugins'
+export type { SettingsCategoryId }
 
 interface UiState {
   activePanel: ActivityPanel
@@ -41,7 +40,7 @@ export const useUiStore = create<UiState>((set) => ({
   activePanel: 'explorer',
   sidebarVisible: true,
   expandedTreeNodes: new Set<string>(),
-  activeSettingsCategory: 'general',
+  activeSettingsCategory: SETTINGS_CATEGORY.GENERAL,
   setActivePanel: (panel) =>
     set((state) => ({
       activePanel: panel,

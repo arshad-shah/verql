@@ -1,7 +1,8 @@
 import { JSX, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Flex, Box, ScrollArea, Text, Divider, Input, IconButton } from '@/primitives'
-import { useUiStore, type SettingsCategoryId } from '@/stores/ui'
+import { useUiStore } from '@/stores/ui'
+import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 import { useToastStore } from '@/stores/toast'
 import { useTabsStore } from '@/stores/tabs'
 import { tabActions } from '@/stores/tab-actions'
@@ -18,15 +19,15 @@ import { AISettings } from './categories/AISettings'
 import { MCPSettings } from './categories/MCPSettings'
 
 const categoryComponents: Record<SettingsCategoryId, () => JSX.Element> = {
-  general: GeneralSettings,
-  appearance: AppearanceSettings,
-  editor: EditorSettings,
-  connections: ConnectionSettings,
-  'data-display': DataDisplaySettings,
-  keybindings: KeybindingsSettings,
-  ai: AISettings,
-  mcp: MCPSettings,
-  plugins: PluginSettings,
+  [SETTINGS_CATEGORY.GENERAL]: GeneralSettings,
+  [SETTINGS_CATEGORY.APPEARANCE]: AppearanceSettings,
+  [SETTINGS_CATEGORY.EDITOR]: EditorSettings,
+  [SETTINGS_CATEGORY.CONNECTIONS]: ConnectionSettings,
+  [SETTINGS_CATEGORY.DATA_DISPLAY]: DataDisplaySettings,
+  [SETTINGS_CATEGORY.KEYBINDINGS]: KeybindingsSettings,
+  [SETTINGS_CATEGORY.AI]: AISettings,
+  [SETTINGS_CATEGORY.MCP]: MCPSettings,
+  [SETTINGS_CATEGORY.PLUGINS]: PluginSettings,
 }
 
 /**

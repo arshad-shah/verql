@@ -6,6 +6,7 @@ import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
+import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import {
   getInlineAIState,
   subscribeInlineAIState,
@@ -134,7 +135,7 @@ export function AIStatusSegment() {
       <div className="flex gap-1 pt-1 border-t border-border-default">
         <ActionBtn icon={Minimize2} label="Compact"   onClick={() => { void compact() }} />
         <ActionBtn icon={Maximize2} label="Open chat" onClick={() => setSecondaryActivePanel('plugin:ai-chat')} />
-        <ActionBtn icon={Settings}  label="Settings"  onClick={() => openSettings()} />
+        <ActionBtn icon={Settings}  label="Settings"  onClick={() => openSettings(SETTINGS_CATEGORY.AI)} />
       </div>
     </div>
   )
