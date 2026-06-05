@@ -71,11 +71,6 @@ export interface EditorSettings {
   highlightActiveLine: boolean
 }
 
-export interface ConnectionDefaultSettings {
-  autoReconnect: boolean
-  defaultSslMode: 'disable' | 'prefer' | 'require'
-}
-
 export interface DataDisplaySettings {
   nullDisplay: string
   dateFormat: 'iso' | 'locale' | 'custom'
@@ -122,7 +117,6 @@ export interface AppSettings {
   general: GeneralSettings
   appearance: AppearanceSettings
   editor: EditorSettings
-  connectionDefaults: ConnectionDefaultSettings
   dataDisplay: DataDisplaySettings
   ai: AISettings
   mcp: MCPSettings
@@ -181,10 +175,6 @@ export const defaultSettings: AppSettings = {
     smoothCursor: false,
     autoClosingBrackets: true,
     highlightActiveLine: true,
-  },
-  connectionDefaults: {
-    autoReconnect: false,
-    defaultSslMode: 'prefer',
   },
   dataDisplay: {
     nullDisplay: 'NULL',
