@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron'
+import { IPC_EVENTS } from '@shared/ipc'
 import type { Handle } from './context'
 import type { UpdaterRegistry } from '../updater'
 import type { UpdateProgress } from '../updater/types'
@@ -32,7 +33,7 @@ export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistr
 
     const broadcast = (payload: UpdateProgress) => {
       for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send('updater:progress', payload)
+        if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.UPDATER_PROGRESS, payload)
       }
     }
 

@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, nativeImage, shell, type MenuItemConstructorO
 import path from 'path'
 import fs from 'fs'
 import { registerIpcHandlers } from './ipc-handlers'
+import { IPC_EVENTS } from '@shared/ipc'
 
 const isDev = !app.isPackaged
 const APP_NAME = 'Verql'
@@ -59,13 +60,13 @@ function buildAppMenu(): void {
         {
           label: 'New Query Tab',
           accelerator: 'CmdOrCtrl+N',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-query-tab'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_NEW_QUERY_TAB),
         },
         { type: 'separator' },
         {
           label: 'New Connection',
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-connection'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_NEW_CONNECTION),
         },
         { type: 'separator' },
         process.platform === 'darwin'
@@ -91,7 +92,7 @@ function buildAppMenu(): void {
         {
           label: 'Command Palette',
           accelerator: 'CmdOrCtrl+Shift+P',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:toggle-command-palette'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE),
         },
         { type: 'separator' },
         { role: 'togglefullscreen' },

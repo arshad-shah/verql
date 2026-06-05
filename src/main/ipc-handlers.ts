@@ -139,7 +139,7 @@ export function registerIpcHandlers(): void {
         detail: n.message,
       })
       for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send('notifications:show', n)
+        if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.NOTIFICATIONS_SHOW, n)
       }
     }
   }
@@ -285,7 +285,7 @@ export function registerIpcHandlers(): void {
   // activation / deactivation) so the renderer can refetch + reinject.
   themeRegistry.onChange(() => {
     for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send('themes:changed')
+      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.THEMES_CHANGED)
     }
   })
 
