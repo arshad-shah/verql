@@ -18,6 +18,7 @@ interface BundledPluginModule {
 }
 
 import * as ai from './ai'
+import * as osNotifications from './os-notifications'
 import * as dbTools from './db-tools'
 import * as coreThemes from './core-themes'
 import * as coreFormats from './core-formats'
@@ -31,6 +32,7 @@ import * as sqlite from './sqlite'
 
 export const bundledPlugins: BundledPluginModule[] = [
   ai,
+  osNotifications,
   dbTools,
   coreThemes,
   coreFormats,

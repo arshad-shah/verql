@@ -2,6 +2,7 @@
 import type { PluginContext } from '../../sdk/types'
 import type { PluginManifest } from '../../types'
 import { AI_SERVICE_ID } from '../../sdk/ai-access'
+import { ATTENTION_SERVICE_ID, type AttentionHub } from '../../../attention/attention-hub'
 import { startAIModule, type AIModule } from './internal'
 
 export const manifest: PluginManifest = {
@@ -60,7 +61,10 @@ export function activate(ctx: PluginContext): void {
     settingsStore: ctx.rootSettings,
     ipc: ctx.ipc,
     broadcast: ctx.broadcast,
-    toolRegistry: ctx.tools
+    toolRegistry: ctx.tools,
+    // Host-provided seam; lets a pending write-tool approval reach the
+    // os-notifications plugin so the user is alerted when the window is hidden.
+    attention: ctx.services.consume<AttentionHub>(ATTENTION_SERVICE_ID) ?? undefined
   })
 
   // 2. Expose the AI service so other plugins' provider / context-provider

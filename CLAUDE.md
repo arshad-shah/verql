@@ -85,7 +85,7 @@ Plugins live in `src/main/plugins/`. Each plugin has a `manifest.json` declaring
 
 **Plugin SDK** (`src/main/plugins/sdk/`): provides registries (DriverRegistry, ToolRegistry, CommandRegistry, PanelRegistry, ExporterRegistry, …) and access objects (SchemaAccess, ConnectionAccess, PluginSettings) via `PluginContext`. The `ToolRegistry` is shared by the AI assistant and the MCP server — register a tool once and both surfaces see it (gated by the tool's `surfaces` field).
 
-**Bundled plugins** in `src/main/plugins/bundled/`: the native drivers (`sqlite`, `postgresql`, `mysql` — each implements `DbAdapter` and registers via the SDK), `db-tools` (the canonical query/schema tools), `ai` (the assistant — see `docs/ai.md`), `core-formats` (CSV/JSON/SQL exporters + importers), `core-themes`, `ssh-tunnel` (connection middleware), `mongodb`, `redis`, `snowflake`.
+**Bundled plugins** in `src/main/plugins/bundled/`: the native drivers (`sqlite`, `postgresql`, `mysql` — each implements `DbAdapter` and registers via the SDK), `db-tools` (the canonical query/schema tools), `ai` (the assistant — see `docs/ai.md`), `core-formats` (CSV/JSON/SQL exporters + importers), `core-themes`, `ssh-tunnel` (connection middleware), `os-notifications` (surfaces approval/attention requests as native OS notifications via the host **attention seam** — `src/main/attention/` — and exposes an `os-notifications` service for other plugins), `mongodb`, `redis`, `snowflake`.
 
 ### AI Assistant & Tooling
 

@@ -14,6 +14,7 @@ import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
 import { OllamaProvider } from './providers/ollama'
 import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess, ToolRegistry } from '../../../sdk/types'
+import type { AttentionHub } from '../../../../attention/attention-hub'
 import { createAIEnhancements } from './enhancements'
 import { pickCheapestModel } from './pick-cheapest-model'
 
@@ -27,6 +28,9 @@ export interface AIDeps {
   ipc: PluginIpc
   broadcast: BroadcastFn
   toolRegistry: ToolRegistry
+  /** Optional attention seam — announces a pending write-tool approval so the
+   *  user can be alerted (e.g. an OS notification) when the window isn't focused. */
+  attention?: AttentionHub
 }
 
 export interface AIService {
@@ -131,7 +135,8 @@ export function startAIModule(deps: AIDeps): AIModule {
     toolRegistry,
     permissionManager,
     getSchemaContext,
-    getConnectionId: () => deps.connectionAccess.getActiveConnectionId()
+    getConnectionId: () => deps.connectionAccess.getActiveConnectionId(),
+    attention: deps.attention
   })
 
   const enhancements = createAIEnhancements({

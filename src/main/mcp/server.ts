@@ -6,6 +6,7 @@ import { generateToken, validateAuth, isAllowedMcpHost } from './auth'
 import { findFreePort } from './find-port'
 import { isWriteToolCall, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
+import type { AttentionHub } from '../attention/attention-hub'
 import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
 
 interface MCPGate { disabledTools: string[]; readOnly: boolean }
@@ -19,6 +20,10 @@ interface MCPServerDeps {
    *  process could read it and defeat the loopback+token model). Injected so
    *  the server stays decoupled from the keyring and is easy to test. */
   tokenStore: { get(): string | null; set(token: string): void }
+  /** Optional attention seam — when present, a pending approval is announced so
+   *  the user can be alerted (e.g. an OS notification) while the window is in the
+   *  background. The MCP client may be headless, so this is the only nudge. */
+  attention?: AttentionHub
 }
 
 export interface MCPServerInstance {
@@ -93,15 +98,29 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
         permission: tool.permission,
       }
       win.webContents.send('mcp:approval-request', req)
+      deps.attention?.request({
+        id: requestId,
+        kind: 'approval',
+        source: 'mcp',
+        title: 'MCP query approval',
+        body: `${tool.name}: ${req.sql.slice(0, 200)}`,
+      })
       setTimeout(() => {
-        if (pendingApprovals.delete(requestId)) resolve(false)
+        if (pendingApprovals.delete(requestId)) {
+          deps.attention?.resolve(requestId)
+          resolve(false)
+        }
       }, 5 * 60 * 1000)
     })
   }
 
   function resolveApproval(requestId: string, approved: boolean): void {
     const resolver = pendingApprovals.get(requestId)
-    if (resolver) { resolver(approved); pendingApprovals.delete(requestId) }
+    if (resolver) {
+      deps.attention?.resolve(requestId)
+      resolver(approved)
+      pendingApprovals.delete(requestId)
+    }
   }
 
   function buildMcpServer(): McpServer {

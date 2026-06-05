@@ -5,6 +5,7 @@ import type { AIContextProvider } from './types'
 import type { AIProviderRegistry } from './provider-registry'
 import type { ToolRegistry } from '../../../sdk/types'
 import type { PermissionManager } from './permission-manager'
+import type { AttentionHub } from '../../../../attention/attention-hub'
 import { estimateTokens, trimMessagesToBudget } from './token-estimate'
 import { buildChatSystemPrompt } from '../prompts'
 
@@ -14,6 +15,9 @@ interface ConversationManagerDeps {
   permissionManager: PermissionManager
   getSchemaContext: (connectionId: string) => Promise<string>
   getConnectionId: () => string | null
+  /** Optional attention seam; announces a pending approval so it can be
+   *  surfaced (e.g. an OS notification) while the window is in the background. */
+  attention?: AttentionHub
   /** Token budget for the history sent each round (system prompt excluded from
    *  this cap, but its size is subtracted from the available window). Keeps a
    *  long conversation from growing the request unboundedly. */
@@ -241,6 +245,13 @@ export class ConversationManager {
             const requestId = this.deps.permissionManager.createApprovalRequest(
               tool.id, params, display
             )
+            this.deps.attention?.request({
+              id: requestId,
+              kind: 'approval',
+              source: 'ai',
+              title: 'AI action needs approval',
+              body: tool.description,
+            })
             yield { type: 'approval-request', request: {
               requestId,
               toolName: tool.name,
@@ -249,7 +260,12 @@ export class ConversationManager {
               display
             }}
 
-            const approved = await this.deps.permissionManager.waitForApproval(requestId)
+            let approved: boolean
+            try {
+              approved = await this.deps.permissionManager.waitForApproval(requestId)
+            } finally {
+              this.deps.attention?.resolve(requestId)
+            }
             if (!approved) {
               const resultContent = JSON.stringify({ error: 'User rejected this action' })
               toolCalls.push({ call: chunk.toolCall, resultContent })
