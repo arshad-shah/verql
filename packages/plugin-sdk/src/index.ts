@@ -32,9 +32,6 @@ export { importCsvToTable } from '../../../src/main/plugins/sdk/csv-into-table'
 export type { CsvIntoTableOptions } from '../../../src/main/plugins/sdk/csv-into-table'
 export { createRelationalGetTableData } from '../../../src/main/plugins/sdk/relational-helpers'
 
-// ─── Driver capability serialisation ─────────────────────────────────────────
-export { serializeStaticCapabilities } from '../../../src/main/plugins/sdk/capabilities'
-
 // ─── Theme registration + validation ─────────────────────────────────────────
 export {
   validateTheme,

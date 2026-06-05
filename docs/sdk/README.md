@@ -26,7 +26,6 @@ npm install @verql/plugin-sdk
 | **Types** | `PluginContext`, `DriverFactory`, `DbAdapter`, `Tool`, `ConnectionField`, `RegisteredTheme`, … | The full type surface a plugin codes against. Erased at runtime. |
 | **Authoring** | `definePlugin`, `PluginModule` | Typed identity helper that pins your `manifest` + `activate`/`deactivate` shape. |
 | **SQL helpers** | `quoteIdentifier`, `validateIdentifier`, `formatSqlValue`, `generateCreateTable`, `generateInsertStatements`, `splitSqlStatements`, `importCsvToTable`, `createRelationalGetTableData` | Parameterised on your driver's quote char — compose them instead of hardcoding a dialect. |
-| **Capabilities** | `serializeStaticCapabilities` | Advertise what your driver supports (transactions, explain, …). |
 | **Themes** | `validateTheme`, `REQUIRED_THEME_TOKENS`, `RECOMMENDED_THEME_TOKENS` | Validate a theme with the same checker the host uses. |
 | **Tools** | `isWriteQuery`, `toJsonSchema` | Build AI/MCP tool schemas. |
 | **Errors** | `safeCall`, `ErrorBudget`, `PluginError` | Match the host's error-handling contract. |
