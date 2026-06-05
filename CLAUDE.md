@@ -74,6 +74,8 @@ Zustand stores in `src/renderer/src/stores/`:
 - `ai.ts` — AI chat: messages, providers/models, and conversation history persisted to the internal SQLite app-data store via IPC (see `docs/ai.md`)
 - `selection.ts` / `notifications.ts` / `toast.ts` — inspector selection, notification center, transient toasts
 - `editor.ts` / `tab-actions.ts` — non-reactive registries of mounted Monaco editors and per-tab save/transaction handlers (refs, not reactive state)
+- `query-history.ts` — recorded query runs (mirror of the SQLite app-data `query_history` table), capped to `general.maxHistoryItems`; surfaced via the Saved/History toggle in the query sidebar panel
+- `tab-persistence.ts` — debounced localStorage snapshot of open query tabs, restored on startup when `general.restoreTabsOnStartup` is on
 
 ### Database Adapters
 

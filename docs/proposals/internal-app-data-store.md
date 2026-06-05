@@ -156,7 +156,26 @@ CREATE TABLE saved_queries (
   updated_at       INTEGER NOT NULL
 );
 CREATE INDEX idx_saved_queries_updated_at ON saved_queries(updated_at DESC);
+
+-- Query history (added in migration v2) ------------------------
+CREATE TABLE query_history (
+  id               TEXT PRIMARY KEY,
+  sql              TEXT NOT NULL,
+  connection_id    TEXT,
+  connection_type  TEXT,
+  status           TEXT NOT NULL,            -- 'ok' | 'error'
+  duration_ms      INTEGER,
+  row_count        INTEGER,
+  error            TEXT,
+  executed_at      INTEGER NOT NULL
+);
+CREATE INDEX idx_query_history_executed_at ON query_history(executed_at DESC);
 ```
+
+> Query history is capped to the user's `general.maxHistoryItems` preference:
+> every insert prunes to the newest N rows in the same transaction (N passed
+> from the renderer, clamped to ≥ 1). Unlike conversations/saved queries it has
+> no localStorage predecessor, so there is no migration import.
 
 **Design notes.**
 
@@ -246,6 +265,10 @@ follows the `domain:action` convention.
 | `appdata:saved-queries:upsert` | `[SavedQuery]` | `void` |
 | `appdata:saved-queries:delete` | `[id]` | `void` |
 | `appdata:saved-queries:import` | `[SavedQuery[]]` | `{ imported: number }` |
+| `appdata:query-history:list` | `[limit?]` | `QueryHistoryEntry[]` |
+| `appdata:query-history:add` | `[QueryHistoryEntry, maxItems]` | `void` (prunes server-side) |
+| `appdata:query-history:delete` | `[id]` | `void` |
+| `appdata:query-history:clear` | `[]` | `void` |
 
 `list` deliberately returns **summaries without message bodies** so the
 conversation switcher stays cheap; full messages load lazily via `get` on
