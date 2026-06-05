@@ -1,5 +1,41 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 
+/** Hosts that are never a legitimate Ollama endpoint but are classic SSRF
+ *  targets (cloud metadata, wildcard binds). */
+const BLOCKED_OLLAMA_HOSTS = new Set([
+  '169.254.169.254',          // AWS/GCP/Azure instance metadata
+  'metadata.google.internal',
+  '0.0.0.0',
+  '::',
+])
+
+/**
+ * The Ollama endpoint is a plain, renderer-writable setting
+ * (`ai.ollamaEndpoint`). The main process then issues `fetch()` against it, so
+ * without validation a renderer could point it at internal services and turn
+ * the trusted main process into an SSRF gadget (e.g. the cloud metadata IP).
+ * This rejects non-http(s) schemes, embedded credentials, and known-dangerous
+ * link-local / metadata hosts before any request is made. Exported for tests.
+ */
+export function assertSafeOllamaEndpoint(endpoint: string): void {
+  let url: URL
+  try {
+    url = new URL(endpoint)
+  } catch {
+    throw new Error(`Invalid Ollama endpoint URL: "${endpoint}"`)
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`Ollama endpoint must use http(s) (got "${url.protocol}")`)
+  }
+  if (url.username || url.password) {
+    throw new Error('Ollama endpoint must not contain embedded credentials')
+  }
+  const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  if (BLOCKED_OLLAMA_HOSTS.has(host) || /^169\.254\./.test(host)) {
+    throw new Error(`Ollama endpoint host is not allowed: "${host}"`)
+  }
+}
+
 export class OllamaProvider implements AIProvider {
   readonly id = 'ollama'
   readonly name = 'Ollama'
@@ -10,9 +46,16 @@ export class OllamaProvider implements AIProvider {
     this.endpoint = endpoint ?? 'http://localhost:11434'
   }
 
+  /** Validate the endpoint before every outbound request, then return it for
+   *  string interpolation (preserving any user-configured base path). */
+  private safeBase(): string {
+    assertSafeOllamaEndpoint(this.endpoint)
+    return this.endpoint
+  }
+
   async models(): Promise<AIProviderModel[]> {
     try {
-      const response = await fetch(`${this.endpoint}/api/tags`)
+      const response = await fetch(`${this.safeBase()}/api/tags`)
       if (!response.ok) return []
       const data = (await response.json()) as { models?: Array<{ name: string; details?: { parameter_size?: string } }> }
       const tags = data.models ?? []
@@ -39,7 +82,7 @@ export class OllamaProvider implements AIProvider {
 
   private async fetchContextLength(name: string): Promise<number> {
     try {
-      const response = await fetch(`${this.endpoint}/api/show`, {
+      const response = await fetch(`${this.safeBase()}/api/show`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: name }),
@@ -92,7 +135,7 @@ export class OllamaProvider implements AIProvider {
 
     let response: Response
     try {
-      response = await fetch(`${this.endpoint}/api/chat`, {
+      response = await fetch(`${this.safeBase()}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -46,15 +46,19 @@ describe('summarizeParams', () => {
 describe('createMCPServer.regenerateToken', () => {
   it('mints + persists a fresh token reflected in status while stopped', () => {
     const store = new Map<string, unknown>()
+    let tokenStored: string | null = null
     const server = createMCPServer({
       toolRegistry: new ToolRegistryImpl(),
       getActiveConnectionId: () => null,
       settingsStore: { get: (k) => store.get(k), set: (k, v) => { store.set(k, v) } },
+      tokenStore: { get: () => tokenStored, set: (t) => { tokenStored = t } },
     })
     expect(server.getStatus().token).toBe('')
     server.regenerateToken()
     const token = server.getStatus().token
     expect(token).toMatch(/\S/)            // non-empty
-    expect(store.get('mcp.token')).toBe(token) // persisted, matches status
+    expect(tokenStored).toBe(token)        // persisted via tokenStore, matches status
+    // The token must NOT be written to plaintext settings.
+    expect(store.get('mcp.token')).toBeUndefined()
   })
 })

@@ -2,7 +2,7 @@
 // distinct — Explorer is for browsing schema objects, Connections is for
 // managing live sessions. Same verbs as the per-row PlugZap/Plug actions
 // inside ActiveConnectionsPanel, so the iconography reads as one family.
-import { ListTree, Plug } from 'lucide-react'
+import { ListTree, Plug, Activity } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
@@ -43,6 +43,7 @@ export function SecondaryActivityBar() {
     >
       {renderButton('connections', Plug, 'Connections')}
       {renderButton('inspector', ListTree, 'Inspector')}
+      {renderButton('activity', Activity, 'Activity')}
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />
       <PluginSlot id="app.secondaryActivityBar.bottom" />

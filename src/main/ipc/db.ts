@@ -1,5 +1,6 @@
 import type { ConnectionProfile } from '@shared/types'
 import type { DbAdapter } from '../db/adapter'
+import type { ActivityLog } from '../activity/log'
 import { createAdapter } from '../db/factory'
 import { safeCall } from '../plugins/sdk/safe-call'
 import { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
@@ -10,13 +11,16 @@ import { serializeStaticCapabilities } from '../plugins/sdk/capabilities'
 export function registerDbHandlers(
   ctx: IpcContext,
   handle: Handle,
-  connectionAccess: ConnectionAccessImpl
+  connectionAccess: ConnectionAccessImpl,
+  activity?: ActivityLog
 ): void {
   const requireAdapter = (profileId: string): DbAdapter => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (!adapter) throw new Error('Not connected — select a connection from the sidebar first')
     return adapter
   }
+
+  const connName = (id: string): string => ctx.configStore.getConnection(id)?.name ?? id
 
   // Tracks in-flight connect() calls per profile so concurrent renderer
   // requests share one adapter instead of each constructing their own and
@@ -32,6 +36,7 @@ export function registerDbHandlers(
     if (existing) return existing
 
     const attempt = (async () => {
+      let adapter: DbAdapter | null = null
       try {
         let profile = ctx.configStore.getConnection(profileId)
         if (!profile) return { success: false as const, error: 'Connection profile not found — it may have been deleted' }
@@ -42,13 +47,22 @@ export function registerDbHandlers(
           }
         }
 
-        const adapter = createAdapter(profile)
+        adapter = createAdapter(profile)
         await adapter.connect()
         ctx.activeAdapters.set(profileId, adapter)
         connectionAccess.setActiveConnectionId(profileId)
+        activity?.record({ kind: 'connection', level: 'success', title: `Connected to ${profile.name}`, source: profileId })
         return { success: true as const }
       } catch (err) {
-        return { success: false as const, error: err instanceof Error ? err.message : String(err) }
+        // connect() can partially initialise a pool/socket (e.g. pg.Pool with
+        // background reconnect timers) before throwing. If we never stored the
+        // adapter, release it here so each failed attempt doesn't leak a pool.
+        if (adapter && ctx.activeAdapters.get(profileId) !== adapter) {
+          await adapter.disconnect().catch(() => { /* best-effort cleanup */ })
+        }
+        const message = err instanceof Error ? err.message : String(err)
+        activity?.record({ kind: 'connection', level: 'error', title: `Connection to ${connName(profileId)} failed`, detail: message, source: profileId })
+        return { success: false as const, error: message }
       } finally {
         inFlightConnects.delete(profileId)
       }
@@ -58,11 +72,25 @@ export function registerDbHandlers(
     return attempt
   })
 
+  // The renderer owns "which connection the user is looking at". When the user
+  // switches between two *already-connected* connections in the UI, no
+  // db:connect fires, so without this the main process's active-connection
+  // (which AI tools and the MCP server read) would stay pinned to the previous
+  // one and operate on the wrong database. The renderer pushes every active
+  // change here so the two stay in sync.
+  handle('db:set-active-connection', async (profileId: string | null) => {
+    // Ignore stale ids for connections that aren't actually open; null (no
+    // active connection) is always allowed.
+    if (profileId !== null && !ctx.activeAdapters.has(profileId)) return
+    connectionAccess.setActiveConnectionId(profileId)
+  })
+
   handle('db:disconnect', async (profileId: string) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter) {
       await adapter.disconnect()
       ctx.activeAdapters.delete(profileId)
+      activity?.record({ kind: 'connection', title: `Disconnected from ${connName(profileId)}`, source: profileId })
     }
     if (connectionAccess.getActiveConnectionId() === profileId) {
       connectionAccess.setActiveConnectionId(null)
@@ -80,9 +108,25 @@ export function registerDbHandlers(
     }
   })
 
-  handle('db:query', async (profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }) =>
-    requireAdapter(profileId).query(sql, params, opts)
-  )
+  handle('db:query', async (profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }) => {
+    if (!activity) return requireAdapter(profileId).query(sql, params, opts)
+    try {
+      const result = await requireAdapter(profileId).query(sql, params, opts)
+      activity.record({
+        kind: 'query', level: 'success',
+        title: `${result.rowCount} row(s) · ${result.duration}ms`,
+        detail: sql, source: connName(profileId), durationMs: result.duration,
+      })
+      return result
+    } catch (err) {
+      activity.record({
+        kind: 'query', level: 'error', title: 'Query failed',
+        detail: `${sql}\n\n${err instanceof Error ? err.message : String(err)}`,
+        source: connName(profileId),
+      })
+      throw err
+    }
+  })
 
   const resolveProfile = (profile: ConnectionProfile): ConnectionProfile => {
     const secretKeys = getSecretFieldKeys(ctx.driverRegistry)

@@ -51,9 +51,11 @@ const BUILTINS: AppAction[] = [
     kind: 'navigation',
     params: { category: { type: 'string', description: 'Settings category id' } },
     run: (p) => {
-      useUiStore.getState().setActivePanel('settings')
+      // Settings live in a dedicated editor tab (SettingsTab), not the
+      // left sidebar panel. Set the category first so the tab opens on it.
       const category = str(p.category)
       if (category) useUiStore.getState().setActiveSettingsCategory(category as SettingsCategoryId)
+      useTabsStore.getState().openSettings()
     }
   },
   {

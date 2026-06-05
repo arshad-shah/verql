@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import type { Tool } from '../../../sdk/types'
+import { isWriteToolCall } from '../../../sdk/tool-schema'
 
 export type PermissionProfile = 'read-only' | 'ask-write' | 'auto'
 
@@ -25,20 +26,31 @@ export class PermissionManager {
   }
 
   /**
+   * Resolve the effective write-ness of a call. A tool is a write if its
+   * (possibly overridden) declared permission is `write`, OR — mirroring the
+   * MCP server's `needsApprovalForCall` — if it's a `read` tool whose `sql`
+   * param is itself a write/DDL statement. Without the content check, a
+   * `read` tool like `explain_query` can smuggle `EXPLAIN ANALYZE DELETE …`
+   * or `SELECT 1; DROP …` past the permission gate.
+   */
+  private isEffectiveWrite(tool: Tool, params?: Record<string, unknown>): boolean {
+    const declared = this.overrides.get(tool.id) ?? tool.permission
+    return isWriteToolCall(declared, params)
+  }
+
+  /**
    * True only when the active profile refuses write tools outright (read-only).
    * Callers should short-circuit before opening an approval prompt and return
    * a blocked-write error to the model so it surfaces in the transcript.
    */
-  isWriteBlocked(tool: Tool): boolean {
-    const effective = this.overrides.get(tool.id) ?? tool.permission
-    return this.profile === 'read-only' && effective === 'write'
+  isWriteBlocked(tool: Tool, params?: Record<string, unknown>): boolean {
+    return this.profile === 'read-only' && this.isEffectiveWrite(tool, params)
   }
 
-  needsApproval(tool: Tool): boolean {
-    const effective = this.overrides.get(tool.id) ?? tool.permission
+  needsApproval(tool: Tool, params?: Record<string, unknown>): boolean {
     if (this.profile === 'auto') return false
     if (this.profile === 'read-only') return false
-    return effective === 'write'
+    return this.isEffectiveWrite(tool, params)
   }
 
   setOverride(toolId: string, permission: 'read' | 'write'): void {

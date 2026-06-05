@@ -107,6 +107,22 @@ export class PostgresAdapter implements DbAdapter {
       const result = await session.client.query(sql, params)
       return this.shape(result, Math.round(performance.now() - start))
     }
+    const timeoutMs = opts?.timeoutMs
+    if (timeoutMs && timeoutMs > 0) {
+      // Enforce a server-side statement_timeout on a dedicated client so a
+      // runaway query is bounded. Reset it before releasing the client back to
+      // the pool (statement_timeout otherwise persists on the reused
+      // connection). Numeric coercion keeps this injection-safe.
+      const client = await this.pool.connect()
+      try {
+        await client.query(`SET statement_timeout TO ${Math.floor(timeoutMs)}`)
+        const result = await client.query(sql, params)
+        return this.shape(result, Math.round(performance.now() - start))
+      } finally {
+        try { await client.query('SET statement_timeout TO DEFAULT') } catch { /* client may be dead */ }
+        client.release()
+      }
+    }
     const result = await this.pool.query(sql, params)
     return this.shape(result, Math.round(performance.now() - start))
   }

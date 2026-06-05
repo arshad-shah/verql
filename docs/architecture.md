@@ -69,6 +69,23 @@ query / introspect (`getTables`, `getColumns`, `getSchemas`, …) plus optional
 session/transaction methods (`openSession`, `beginTransaction`, `commit`, …) for
 drivers that support manual transactions.
 
+Per-query timeouts (`opts.timeoutMs`) are honoured by the pooled SQL drivers:
+Postgres sets a server-side `statement_timeout` on a dedicated client, MySQL
+uses mysql2's per-query `timeout`.
+
+> **Known limitation — SQLite runs synchronously on the main thread.** The
+> `sqlite` plugin uses `better-sqlite3`, whose API is synchronous by design, and
+> the adapter runs in the main process. A long-running query against a large
+> SQLite file therefore blocks the main process — freezing the UI and all IPC
+> until it returns — and a per-query timeout can't be enforced for SQLite
+> (a JS timer can't fire mid-statement on the blocked thread, and `interrupt()`
+> would have to come from another thread). Snowflake's `queryTimeout` is
+> likewise not yet applied. The fix is to move the SQLite engine into a worker
+> (the build already ships a second main-process worker entry — `plugin-worker`
+> via `utilityProcess` — so the pattern is proven); it's deferred because the
+> production worker-spawn + packaged native-module path needs verification in a
+> real Electron build. Tracked as a follow-up.
+
 ## Renderer
 
 A React 19 SPA. Two pillars: Zustand stores for state and a CVA-based primitives

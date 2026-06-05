@@ -30,7 +30,13 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
   connectedIds: new Set(),
   loading: false,
   setConnections: (connections) => set({ connections }),
-  setActiveConnection: (id) => set({ activeConnectionId: id }),
+  setActiveConnection: (id) => {
+    set({ activeConnectionId: id })
+    // Mirror the active connection into the main process so AI tools and the
+    // MCP server target the connection the user is actually looking at — even
+    // when switching between two already-connected connections (no db:connect).
+    void window.electronAPI?.invoke(IPC_CHANNELS.DB_SET_ACTIVE_CONNECTION, id)
+  },
   addConnected: (id) => set((s) => ({ connectedIds: new Set([...s.connectedIds, id]) })),
   removeConnected: (id) => set((s) => {
     const next = new Set(s.connectedIds)

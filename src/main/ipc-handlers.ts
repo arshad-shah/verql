@@ -13,10 +13,11 @@ import { ServiceRegistryImpl } from './plugins/sdk/service-registry'
 import { ExporterRegistryImpl } from './plugins/sdk/exporter-registry'
 import { ImporterRegistryImpl } from './plugins/sdk/importer-registry'
 import { FormatterRegistryImpl } from './plugins/sdk/formatter-registry'
-import { IPC_CHANNELS } from '@shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
+import { ActivityLog } from './activity/log'
 import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
@@ -89,8 +90,38 @@ export function registerIpcHandlers(): void {
   const typeMapperRegistry = new TypeMapperRegistryImpl()
   const themeRegistry = new ThemeRegistryImpl()
   const dragDropRegistry = new DragDropRegistryImpl()
+  // Unified app activity log. Owned by the orchestrator (glue); recording
+  // happens at the points where things occur (queries, connections, tool
+  // calls, notifications). Exposed to plugins as a read service so a tool can
+  // surface it, streamed to the renderer for the Activity panel.
+  const activityLog = new ActivityLog()
+  services.provide('activity-log', activityLog)
+  activityLog.subscribe((entry) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.ACTIVITY_EVENT, entry)
+    }
+  })
+  // Log every AI/MCP tool execution (the AI loop routes through
+  // toolRegistry.execute; the MCP server records its own path below).
+  toolRegistry.setActivityRecorder(({ toolId, params, success, durationMs, error }) => {
+    activityLog.record({
+      kind: 'tool-call',
+      level: success ? 'success' : 'error',
+      title: `${toolId} · ${durationMs}ms`,
+      detail: error ?? JSON.stringify(params),
+      source: toolId,
+      durationMs,
+    })
+  })
+
   const notificationBus = {
     show(n: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }): void {
+      activityLog.record({
+        kind: 'notification',
+        level: n.kind === 'warning' ? 'warn' : (n.kind ?? 'info'),
+        title: n.title,
+        detail: n.message,
+      })
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) win.webContents.send('notifications:show', n)
       }
@@ -110,7 +141,10 @@ export function registerIpcHandlers(): void {
   registerConnectionHandlers(ctx, handle)
   registerSettingsHandlers(ctx, handle)
   registerKeyringHandlers(ctx, handle)
-  registerDbHandlers(ctx, handle, connectionAccess)
+  registerDbHandlers(ctx, handle, connectionAccess, activityLog)
+
+  handle(IPC_CHANNELS.ACTIVITY_LIST, async (query) => activityLog.list(query))
+  handle(IPC_CHANNELS.ACTIVITY_CLEAR, async () => activityLog.clear())
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
 
   // Query formatting is plugin-owned: each driver contributes a formatter for
@@ -142,6 +176,9 @@ export function registerIpcHandlers(): void {
     completionRegistry,
     getAdapter: (id) => ctx.activeAdapters.get(id),
     getProfile: (id) => ctx.configStore.getConnection(id),
+    // Share the same instance db:connect/db:disconnect update so plugins'
+    // ctx.connections.getActiveConnectionId() reflects the active connection.
+    connectionAccess,
     keyring: ctx.keyring,
     settingsStore,
     services,
