@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- Add an Activity Panel and harden the app against a batch of security and correctness defects.
+
+  - **Activity Panel** — a new secondary-sidebar panel that surfaces recent app activity (connections, queries, errors, and warnings) so you can see what's been happening at a glance.
+
+  Security & correctness fixes:
+
+  - **Secrets never written in cleartext** — saving settings, resetting a category, or deleting a connection no longer rewrites every connection's password into `config.json` in plaintext; keyring-backed fields are stripped before any disk write.
+  - **Keyring redaction bypass closed** — the renderer can no longer read AI API keys or DB passwords back out of the keyring; secret-field access is gated and the reserved AI namespace is refused.
+  - **AI "explain" stays read-only** — `explain_query` can no longer run writes (e.g. `EXPLAIN ANALYZE DELETE …`) without approval; the same write-detection used by the MCP server now applies.
+  - **Constant-time MCP auth** — the MCP bearer token is now compared with a timing-safe check instead of `!==`.
+  - **Redis SSL & database honored** — enabling SSL now actually uses TLS, and the selected database number is respected instead of always connecting to db0 in plaintext.
+  - **Tighter plugin isolation** — isolated plugins can only call an explicit allowlist of capability methods, and plugin installs use an atomic private temp dir to avoid symlink/clobber races.
+  - **No leaked pools on failed connect** — a failed `db:connect` now releases its adapter instead of leaking a connection pool on every failed attempt.
+
 ## 0.10.0
 
 ### Minor Changes

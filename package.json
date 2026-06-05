@@ -1,8 +1,8 @@
 {
   "name": "verql",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
-  "description": "Verql \u2014 a fast, extensible desktop database client.",
+  "description": "Verql — a fast, extensible desktop database client.",
   "license": "MIT",
   "author": "Arshad Shah",
   "repository": {
