@@ -35,6 +35,19 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
 
 const MAX_RECENTLY_CLOSED = 10
 
+/** Minimal, serialisable shape of a query tab — what we persist for
+ *  restore-on-startup. Transient runtime state (results, execution, txn status)
+ *  is intentionally dropped; restored tabs come back clean and idle. */
+export interface QueryTabSnapshot {
+  title: string
+  sql: string
+  connectionId: string | null
+  database: string | null
+  schema: string | null
+  savedQueryId?: string
+  autoCommit: boolean
+}
+
 interface TabsState {
   tabs: Tab[]
   activeTabId: string | null
@@ -70,6 +83,10 @@ interface TabsState {
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
+  /** Re-create query tabs from a persisted snapshot at boot. Restored tabs are
+   *  clean (savedSnapshot === sql) and idle. `activeIndex` selects which one is
+   *  focused, falling back to the first. */
+  restoreQueryTabs: (snapshots: QueryTabSnapshot[], activeIndex: number | null) => void
   /** Called when a connection profile is deleted. Query tabs lose their
    *  pointer so the next execute lands in the "pick a connection" state
    *  instead of failing silently against a gone profile. ER-diagram and
@@ -388,6 +405,38 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         activeTabId: tab.id,
         recentlyClosed: rest
       }
+    })
+  },
+
+  restoreQueryTabs: (snapshots, activeIndex) => {
+    if (snapshots.length === 0) return
+    const restored: QueryTab[] = snapshots.map((s) => {
+      tabCounter++
+      return {
+        id: `query-${tabCounter}-${Date.now()}`,
+        type: 'query',
+        title: s.title,
+        connectionId: s.connectionId,
+        database: s.database,
+        schema: s.schema,
+        sql: s.sql,
+        results: null,
+        isExecuting: false,
+        error: null,
+        isDirty: false,
+        aiExplanation: null,
+        savedSnapshot: s.sql,
+        ...(s.savedQueryId ? { savedQueryId: s.savedQueryId } : {}),
+        txn: { autoCommit: s.autoCommit, status: 'none', readOnly: false },
+      }
+    })
+    set((state) => {
+      const tabs = [...state.tabs, ...restored]
+      const active =
+        activeIndex != null && restored[activeIndex]
+          ? restored[activeIndex].id
+          : (state.activeTabId ?? restored[0].id)
+      return { tabs, activeTabId: active }
     })
   },
 

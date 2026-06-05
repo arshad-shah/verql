@@ -7,6 +7,7 @@ import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import { useAIStore } from '@/stores/ai'
 import { useQueryHistoryStore } from '@/stores/query-history'
+import { initTabPersistence, restoreOpenTabs } from '@/stores/tab-persistence'
 import { hydrateSavedQueries } from '@/components/saved-queries/SavedQueriesPanel'
 import './styles/globals.css'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -48,6 +49,13 @@ function AppLoader() {
 
       await hydrate()
       initSettingsListener()
+      // Restore the previous session's query tabs before the shell paints,
+      // gated by the user's preference. Persistence runs regardless so the
+      // snapshot stays fresh if they enable restore later.
+      if (useSettingsStore.getState().settings.general.restoreTabsOnStartup) {
+        restoreOpenTabs()
+      }
+      initTabPersistence()
       // Load app-data-store–backed state (AI conversations, saved queries),
       // migrating any legacy localStorage payload on first run. Non-blocking
       // for first paint — these populate the AI panel and saved-queries list.
