@@ -1,6 +1,7 @@
 import { Stack, Divider, Flex, Button, Text, Switch } from '@/primitives'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 import { UpdatesSection } from '../UpdatesSection'
@@ -9,12 +10,13 @@ export function GeneralSettings() {
   const general = useSettingsStore((s) => s.settings.general)
   const setSetting = useSettingsStore((s) => s.set)
   const resetCategory = useSettingsStore((s) => s.resetCategory)
+  const { t } = useTranslation()
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">Basic application settings</Text>
+      <Text size="xs" color="muted">{t('settings.general.blurb')}</Text>
 
-      <SettingRow label="Query Timeout" description="Maximum time in seconds before a query is cancelled">
+      <SettingRow label={t('settings.general.queryTimeout.label')} description={t('settings.general.queryTimeout.description')}>
         <NumberInput
           value={general.queryTimeout}
           onChange={(v) => setSetting('general.queryTimeout', v)}
@@ -25,7 +27,7 @@ export function GeneralSettings() {
         />
       </SettingRow>
 
-      <SettingRow label="Max History Items" description="Number of recent queries to keep in history">
+      <SettingRow label={t('settings.general.maxHistoryItems.label')} description={t('settings.general.maxHistoryItems.description')}>
         <NumberInput
           value={general.maxHistoryItems}
           onChange={(v) => setSetting('general.maxHistoryItems', v)}
@@ -37,7 +39,7 @@ export function GeneralSettings() {
         />
       </SettingRow>
 
-      <SettingRow label="Default Page Size" description="Number of rows to fetch per page when browsing tables">
+      <SettingRow label={t('settings.general.defaultPageSize.label')} description={t('settings.general.defaultPageSize.description')}>
         <Select
           value={String(general.defaultPageSize)}
           onChange={(val) => setSetting('general.defaultPageSize', parseInt(val))}
@@ -56,33 +58,33 @@ export function GeneralSettings() {
       <Divider />
 
       <SettingRow
-        label="Confirm destructive queries"
-        description="Show a confirmation dialog before running DELETE, DROP, TRUNCATE, or UPDATE without WHERE"
+        label={t('settings.general.confirmDestructive.label')}
+        description={t('settings.general.confirmDestructive.description')}
       >
         <Switch
-          label="Confirm destructive queries"
+          label={t('settings.general.confirmDestructive.label')}
           checked={general.confirmDestructiveQueries}
           onChange={(e) => setSetting('general.confirmDestructiveQueries', e.target.checked)}
         />
       </SettingRow>
 
       <SettingRow
-        label="Confirm on unsaved close"
-        description="Ask before closing a tab that has unsaved changes"
+        label={t('settings.general.confirmUnsavedClose.label')}
+        description={t('settings.general.confirmUnsavedClose.description')}
       >
         <Switch
-          label="Confirm on unsaved close"
+          label={t('settings.general.confirmUnsavedClose.label')}
           checked={general.confirmOnUnsavedClose}
           onChange={(e) => setSetting('general.confirmOnUnsavedClose', e.target.checked)}
         />
       </SettingRow>
 
       <SettingRow
-        label="Restore tabs on startup"
-        description="Re-open the tabs that were active when the app last quit"
+        label={t('settings.general.restoreTabs.label')}
+        description={t('settings.general.restoreTabs.description')}
       >
         <Switch
-          label="Restore tabs on startup"
+          label={t('settings.general.restoreTabs.label')}
           checked={general.restoreTabsOnStartup}
           onChange={(e) => setSetting('general.restoreTabsOnStartup', e.target.checked)}
         />
@@ -98,7 +100,7 @@ export function GeneralSettings() {
 
       <Flex justify="end">
         <Button variant="outline" size="sm" onClick={() => resetCategory('general')}>
-          Reset to Defaults
+          {t('common.resetToDefaults')}
         </Button>
       </Flex>
     </Stack>

@@ -1,0 +1,15 @@
+export const menu = {
+  file: 'File',
+  edit: 'Edit',
+  view: 'View',
+  window: 'Window',
+  help: 'Help',
+  newQueryTab: 'New Query Tab',
+  newConnection: 'New Connection',
+  commandPalette: 'Command Palette',
+  userGuide: '{appName} User Guide',
+  buildPlugin: 'Build a Plugin (SDK)',
+  reportIssue: 'Report an Issue',
+  about: 'About {appName}',
+  version: '{appName} v{version}',
+} as const

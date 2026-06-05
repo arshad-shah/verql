@@ -5,6 +5,7 @@ import { useToastStore } from './toast'
 import { useSchemaStore } from './schema'
 import { useTabsStore } from './tabs'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { t } from '@shared/i18n'
 import { useDriverCapabilitiesStore } from './driver-capabilities'
 
 interface ConnectionsState {
@@ -73,8 +74,8 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     const toastId = toast.addToast({
       id: `connect-${id}`,
       type: 'info',
-      title: `Connecting to ${name}...`,
-      message: 'Establishing connection',
+      title: t('connections.connecting', { name }),
+      message: t('connections.establishing'),
       persistent: true,
     })
 
@@ -87,27 +88,27 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
       }
       toast.updateToast(toastId, {
         type: 'success',
-        title: `Connected to ${name}`,
+        title: t('connections.connected', { name }),
         message: undefined,
         persistent: false,
       })
       useNotificationsStore.getState().addNotification({
         type: 'success',
-        title: 'Connection established',
-        message: `Connected to ${name}`,
+        title: t('connections.connectionEstablished'),
+        message: t('connections.connected', { name }),
         source: { type: 'connection', id, label: name },
       })
     } else {
       toast.updateToast(toastId, {
         type: 'error',
-        title: `Connection failed`,
-        message: result.error ?? 'Unknown error',
+        title: t('connections.connectionFailed'),
+        message: result.error ?? t('connections.unknownError'),
         persistent: false,
       })
       useNotificationsStore.getState().addNotification({
         type: 'error',
-        title: 'Connection failed',
-        message: result.error ?? 'Unknown error',
+        title: t('connections.connectionFailed'),
+        message: result.error ?? t('connections.unknownError'),
         source: { type: 'connection', id, label: name },
       })
     }
@@ -120,7 +121,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     toast.addToast({
       id: `disconnect-${id}`,
       type: 'info',
-      title: `Disconnected from ${name}`,
+      title: t('connections.disconnectedFrom', { name }),
     })
     await window.electronAPI.invoke(IPC_CHANNELS.DB_DISCONNECT, id)
     get().removeConnected(id)
@@ -132,8 +133,8 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     useSchemaStore.getState().clearCache(id)
     useNotificationsStore.getState().addNotification({
       type: 'info',
-      title: 'Disconnected',
-      message: `Disconnected from ${name}`,
+      title: t('connections.disconnected'),
+      message: t('connections.disconnectedFrom', { name }),
       source: { type: 'connection', id, label: name },
     })
     if (get().activeConnectionId === id) set({ activeConnectionId: null })

@@ -6,6 +6,8 @@
 export type Theme = string
 
 export interface GeneralSettings {
+  /** UI language (BCP-47 / locale id). 'en' is the in-bundle default. */
+  language: string
   queryTimeout: number
   maxHistoryItems: number
   defaultPageSize: number
@@ -155,6 +157,7 @@ export interface AppSettings {
 
 export const defaultSettings: AppSettings = {
   general: {
+    language: 'en',
     queryTimeout: 30,
     maxHistoryItems: 200,
     defaultPageSize: 100,

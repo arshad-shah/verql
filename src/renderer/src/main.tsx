@@ -2,6 +2,7 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from './components/shell/ErrorBoundary'
 import { ThemeProvider } from './primitives/theme/ThemeProvider'
+import { I18nProvider } from './i18n/I18nProvider'
 import { SplashScreen } from './components/shell/SplashScreen'
 import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
@@ -76,7 +77,9 @@ function AppLoader() {
 
   return (
     <ThemeProvider>
-      <App />
+      <I18nProvider>
+        <App />
+      </I18nProvider>
     </ThemeProvider>
   )
 }
