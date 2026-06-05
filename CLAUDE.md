@@ -24,6 +24,7 @@ area you're touching → the source it points to.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
 - [`docs/notifications.md`](./docs/notifications.md) — the notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin that turns it into native OS notifications. Diagram-rich (context, architecture, sequences, state, class/data models). Read before touching approval surfacing or adding a notification consumer.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
+- [`docs/i18n.md`](./docs/i18n.md) — internationalization: the homegrown, dependency-free, cross-process message catalogue (`shared/i18n`), the typed `t()` / `MessageKey`, the renderer `<I18nProvider>`/`useTranslation`, key-naming convention, interpolation/plural syntax, and how locales + plugin catalogues register. Diagram-rich. Read before adding or changing user-facing strings.
 
 When you change a subsystem, update its doc (and this file) in the same change
 so the docs never drift from the code.
