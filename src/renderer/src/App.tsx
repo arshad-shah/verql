@@ -47,9 +47,18 @@ import { usePluginCommands } from '@/stores/plugin-commands'
 import { matchesAccelerator } from '@/lib/accelerators'
 
 export function App() {
-  const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
+  // Subscribe per-field (not the whole store): App renders the entire shell, so
+  // a whole-store subscription re-rendered it on every tab mutation — including
+  // per-keystroke updateTabSql. Actions are stable refs, so selecting them
+  // individually is free.
+  const tabs = useTabsStore(s => s.tabs)
+  const activeTabId = useTabsStore(s => s.activeTabId)
+  const addQueryTab = useTabsStore(s => s.addQueryTab)
+  const closeTab = useTabsStore(s => s.closeTab)
+  const reopenTab = useTabsStore(s => s.reopenTab)
   const openConnectionForm = useTabsStore(s => s.openConnectionForm)
-  const { sidebarVisible, setSidebarWidth } = useUiStore()
+  const sidebarVisible = useUiStore(s => s.sidebarVisible)
+  const setSidebarWidth = useUiStore(s => s.setSidebarWidth)
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
   const showStatusBar = useSettingsStore(s => s.settings.appearance.showStatusBar)
