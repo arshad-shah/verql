@@ -17,6 +17,10 @@ means writing a plugin, not editing the core.
 - [Build, packaging, and testing](#build-packaging-and-testing)
 - [Directory map](#directory-map)
 
+> **Prefer pictures?** [`diagrams.md`](./diagrams.md) is a diagram-first visual
+> tour of every subsystem below (context, components, sequences, state machines,
+> class and data models) — a companion to this prose.
+
 ## Process model
 
 Standard three-layer Electron split:
