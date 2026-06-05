@@ -21,6 +21,26 @@ export function isWriteQuery(sql: string): boolean {
   return WRITE_KEYWORDS_RE.test(stripped)
 }
 
+/**
+ * Single source of truth for "does this tool call perform a write?" — shared
+ * by the AI permission manager and the MCP server so the two surfaces can't
+ * drift (they previously each re-implemented this, which is how the MCP
+ * explain-write guard ended up missing on the AI side). A call is a write when
+ * its effective permission is `write`, OR when it's a read tool whose `sql`
+ * argument is itself a write/DDL statement.
+ *
+ * `effectivePermission` is the caller's already-resolved permission (after any
+ * per-tool override), so the shared rule stays agnostic to where overrides live.
+ */
+export function isWriteToolCall(
+  effectivePermission: 'read' | 'write',
+  params: Record<string, unknown> | undefined,
+): boolean {
+  if (effectivePermission === 'write') return true
+  const sql = params && typeof params.sql === 'string' ? params.sql : ''
+  return sql ? isWriteQuery(sql) : false
+}
+
 export interface JsonSchemaObject {
   type?: string
   properties?: Record<string, unknown>

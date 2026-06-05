@@ -8,7 +8,7 @@ import { getSecretFieldKeys } from './secrets'
  * boolean `ai:keys:has` reader); exposing them through `keyring:retrieve`
  * would hand a compromised renderer every configured API key.
  */
-const RESERVED_NAMESPACES = new Set(['__ai__'])
+const RESERVED_NAMESPACES = new Set(['__ai__', '__mcp__'])
 
 /**
  * Gate access to the generic keyring IPC channels. The renderer may only

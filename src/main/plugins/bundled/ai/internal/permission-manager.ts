@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import type { Tool } from '../../../sdk/types'
-import { isWriteQuery } from '../../../sdk/tool-schema'
+import { isWriteToolCall } from '../../../sdk/tool-schema'
 
 export type PermissionProfile = 'read-only' | 'ask-write' | 'auto'
 
@@ -35,9 +35,7 @@ export class PermissionManager {
    */
   private isEffectiveWrite(tool: Tool, params?: Record<string, unknown>): boolean {
     const declared = this.overrides.get(tool.id) ?? tool.permission
-    if (declared === 'write') return true
-    const sql = params && typeof params.sql === 'string' ? params.sql : ''
-    return sql ? isWriteQuery(sql) : false
+    return isWriteToolCall(declared, params)
   }
 
   /**
