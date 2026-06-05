@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { AppDataStore } from '../../src/main/appdata/store'
-import type { StoredConversation, SavedQuery } from '../../shared/appdata'
+import type { StoredConversation, SavedQuery, QueryHistoryEntry } from '../../shared/appdata'
 import type { AIChatMessage } from '../../shared/ai-types'
 
 function conv(id: string, messages: AIChatMessage[] = []): StoredConversation {
@@ -170,6 +170,91 @@ describe('AppDataStore', () => {
       expect(store.importSavedQueries([sq('a'), sq('b')])).toBe(2)
       expect(store.importSavedQueries([sq('c')])).toBe(0)
       expect(store.listSavedQueries()).toHaveLength(2)
+    })
+  })
+
+  describe('query history', () => {
+    const qh = (id: string, over: Partial<QueryHistoryEntry> = {}): QueryHistoryEntry => ({
+      id,
+      sql: 'SELECT 1',
+      status: 'ok',
+      executedAt: Date.now(),
+      ...over,
+    })
+
+    it('starts empty', () => {
+      expect(store.listQueryHistory()).toEqual([])
+    })
+
+    it('records a run with all fields round-tripped', () => {
+      store.addQueryHistory(
+        qh('a', {
+          sql: 'SELECT * FROM t',
+          connectionId: 'c1',
+          connectionType: 'postgresql',
+          status: 'ok',
+          durationMs: 12,
+          rowCount: 5,
+          executedAt: 1000,
+        }),
+        100,
+      )
+      const [row] = store.listQueryHistory()
+      expect(row).toEqual({
+        id: 'a',
+        sql: 'SELECT * FROM t',
+        connectionId: 'c1',
+        connectionType: 'postgresql',
+        status: 'ok',
+        durationMs: 12,
+        rowCount: 5,
+        executedAt: 1000,
+      })
+    })
+
+    it('records error runs with the message and omits optional fields', () => {
+      store.addQueryHistory(qh('a', { status: 'error', error: 'boom', executedAt: 1 }), 100)
+      const [row] = store.listQueryHistory()
+      expect(row.status).toBe('error')
+      expect(row.error).toBe('boom')
+      expect(row.rowCount).toBeUndefined()
+      expect(row.durationMs).toBeUndefined()
+    })
+
+    it('returns newest-first', () => {
+      store.addQueryHistory(qh('old', { executedAt: 1000 }), 100)
+      store.addQueryHistory(qh('new', { executedAt: 2000 }), 100)
+      expect(store.listQueryHistory().map((r) => r.id)).toEqual(['new', 'old'])
+    })
+
+    it('prunes to the newest maxItems on insert', () => {
+      for (let i = 0; i < 5; i++) {
+        store.addQueryHistory(qh(`q${i}`, { executedAt: 1000 + i }), 3)
+      }
+      const ids = store.listQueryHistory().map((r) => r.id)
+      expect(ids).toEqual(['q4', 'q3', 'q2'])
+    })
+
+    it('clamps a maxItems of 0 to keep at least the latest row', () => {
+      store.addQueryHistory(qh('a', { executedAt: 1 }), 0)
+      store.addQueryHistory(qh('b', { executedAt: 2 }), 0)
+      expect(store.listQueryHistory().map((r) => r.id)).toEqual(['b'])
+    })
+
+    it('honours the list limit argument', () => {
+      for (let i = 0; i < 5; i++) {
+        store.addQueryHistory(qh(`q${i}`, { executedAt: 1000 + i }), 100)
+      }
+      expect(store.listQueryHistory(2).map((r) => r.id)).toEqual(['q4', 'q3'])
+    })
+
+    it('deletes one entry and clears all', () => {
+      store.addQueryHistory(qh('a', { executedAt: 1 }), 100)
+      store.addQueryHistory(qh('b', { executedAt: 2 }), 100)
+      store.deleteQueryHistory('a')
+      expect(store.listQueryHistory().map((r) => r.id)).toEqual(['b'])
+      store.clearQueryHistory()
+      expect(store.listQueryHistory()).toEqual([])
     })
   })
 })

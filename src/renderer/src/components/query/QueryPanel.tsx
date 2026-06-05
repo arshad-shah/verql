@@ -14,6 +14,7 @@ import { useUiStore } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
+import { useQueryHistoryStore } from '@/stores/query-history'
 import { useSchemaStore } from '@/stores/schema'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import type { QueryTab } from '@shared/types'
@@ -148,6 +149,14 @@ export function QueryPanel({ tab }: Props) {
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
       if (result) setTabResults(tab.id, result)
+      useQueryHistoryStore.getState().record({
+        sql,
+        connectionId: tab.connectionId ?? undefined,
+        connectionType: dbType,
+        status: 'ok',
+        durationMs: Math.round(performance.now() - startedAt),
+        rowCount: result?.rowCount ?? undefined,
+      })
       if (isSchemaMutatingSql(sql) && tab.connectionId) {
         useSchemaStore.getState().clearCache(tab.connectionId)
       }
@@ -164,6 +173,14 @@ export function QueryPanel({ tab }: Props) {
         tabActions.recordRunResult(tab.id, singleStmt, { kind: 'error', durationMs, rowCount: null })
       }
       const raw = (err as Error).message
+      useQueryHistoryStore.getState().record({
+        sql,
+        connectionId: tab.connectionId ?? undefined,
+        connectionType: dbType,
+        status: 'error',
+        durationMs,
+        error: raw,
+      })
       const parsed = parseDbError(raw)
       // Tab stores the raw text so the QueryErrorView can re-parse and show
       // both the friendly summary and the original driver message — keeps
@@ -180,7 +197,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus])
 
   const handleExecute = useCallback(() => runSql(), [runSql])
 

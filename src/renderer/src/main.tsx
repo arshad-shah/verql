@@ -6,6 +6,7 @@ import { SplashScreen } from './components/shell/SplashScreen'
 import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import { useAIStore } from '@/stores/ai'
+import { useQueryHistoryStore } from '@/stores/query-history'
 import { hydrateSavedQueries } from '@/components/saved-queries/SavedQueriesPanel'
 import './styles/globals.css'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -52,6 +53,7 @@ function AppLoader() {
       // for first paint — these populate the AI panel and saved-queries list.
       void useAIStore.getState().hydrate()
       void hydrateSavedQueries()
+      void useQueryHistoryStore.getState().hydrate()
     }
     init()
   }, [hydrate])

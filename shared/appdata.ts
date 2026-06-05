@@ -43,3 +43,23 @@ export interface SavedQuery {
   /** Epoch milliseconds. */
   updatedAt: number
 }
+
+/** One executed query, recorded for the History panel. Capped to the user's
+ *  `general.maxHistoryItems` preference (oldest entries pruned on insert). */
+export interface QueryHistoryEntry {
+  id: string
+  sql: string
+  /** Connection the query ran against, when known. */
+  connectionId?: string
+  /** Driver type (postgresql/mysql/…) for the connection badge. */
+  connectionType?: string
+  status: 'ok' | 'error'
+  /** Wall-clock duration in ms, when measured. */
+  durationMs?: number
+  /** Row count for successful SELECTs, when reported. */
+  rowCount?: number
+  /** Driver error message for failed runs. */
+  error?: string
+  /** Epoch milliseconds. */
+  executedAt: number
+}

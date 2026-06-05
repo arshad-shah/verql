@@ -5,12 +5,13 @@ import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
+import { QueryHistoryPanel } from '@/components/query-history/QueryHistoryPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
 import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
+import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
 
 export function Sidebar() {
   const { activePanel } = useUiStore()
@@ -18,6 +19,7 @@ export function Sidebar() {
 
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
+  const [queryView, setQueryView] = useState<'saved' | 'history'>('saved')
 
   const panelContributions = usePluginUIStore(selectContributions('panels'))
 
@@ -67,7 +69,32 @@ export function Sidebar() {
         {activePanel === 'explorer' && (
           <ExplorerTree onExportTable={(name) => setExportTable(name)} />
         )}
-        {activePanel === 'query' && <SavedQueriesPanel />}
+        {activePanel === 'query' && (
+          <Flex direction="column" className="h-full">
+            {/* Segmented toggle between persisted saved queries and the
+                run-history log. Both are query-scoped lists, so they share
+                this sidebar slot rather than taking a second activity icon. */}
+            <Flex gap="xs" className="px-2 pt-2 pb-1">
+              {(['saved', 'history'] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setQueryView(view)}
+                  className={`flex-1 rounded-md px-2 py-1 text-xs capitalize transition-colors ${
+                    queryView === view
+                      ? 'bg-bg-tertiary text-text-primary'
+                      : 'text-text-muted hover:text-text-primary hover:bg-white/5'
+                  }`}
+                >
+                  {view}
+                </button>
+              ))}
+            </Flex>
+            <Box className="flex-1 min-h-0">
+              {queryView === 'saved' ? <SavedQueriesPanel /> : <QueryHistoryPanel />}
+            </Box>
+          </Flex>
+        )}
         {activePanel === 'charts' && (
           isConnected ? <ChartsDashboard /> : (
             <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">

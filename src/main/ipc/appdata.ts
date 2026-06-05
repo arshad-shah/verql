@@ -23,4 +23,15 @@ export function registerAppDataHandlers(handle: Handle, appData: AppDataStore): 
   handle(IPC_CHANNELS.APPDATA_SAVED_QUERIES_IMPORT, async (queries) => ({
     imported: appData.importSavedQueries(queries),
   }))
+
+  handle(IPC_CHANNELS.APPDATA_QUERY_HISTORY_LIST, async (limit) =>
+    appData.listQueryHistory(limit),
+  )
+  handle(IPC_CHANNELS.APPDATA_QUERY_HISTORY_ADD, async (entry, maxItems) =>
+    appData.addQueryHistory(entry, maxItems),
+  )
+  handle(IPC_CHANNELS.APPDATA_QUERY_HISTORY_DELETE, async (id) =>
+    appData.deleteQueryHistory(id),
+  )
+  handle(IPC_CHANNELS.APPDATA_QUERY_HISTORY_CLEAR, async () => appData.clearQueryHistory())
 }
