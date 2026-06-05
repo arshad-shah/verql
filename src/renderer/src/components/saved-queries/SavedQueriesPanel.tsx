@@ -1,42 +1,76 @@
 import { useState, useSyncExternalStore } from 'react'
 import { Search, Play, Trash2, Clock } from 'lucide-react'
+import type { SavedQuery } from '@shared/appdata'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input } from '@/primitives'
 
-interface SavedQuery {
-  id: string
-  name: string
-  sql: string
-  createdAt: string
-  updatedAt: string
-  connectionType?: string
+// Saved queries persist in the SQLite app-data store (main process). This module
+// keeps a synchronous in-memory mirror — so existing callers like `saveQuery`
+// and `findSavedQuery` stay synchronous — and write-through to the store via
+// IPC. The mirror is loaded once on boot by `hydrateSavedQueries`.
+// See docs/proposals/internal-app-data-store.md.
+const LEGACY_KEY = 'verql:saved-queries'
+const listeners = new Set<() => void>()
+let savedQueries: SavedQuery[] = []
+let hydrated = false
+
+const hasIpc = (): boolean => typeof window !== 'undefined' && !!window.electronAPI
+
+function notify() { for (const l of listeners) l() }
+function subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn) } }
+function snapshot() { return savedQueries }
+
+function upsertRemote(q: SavedQuery) {
+  if (hasIpc()) void window.electronAPI.invoke(IPC_CHANNELS.APPDATA_SAVED_QUERIES_UPSERT, q)
+}
+function deleteRemote(id: string) {
+  if (hasIpc()) void window.electronAPI.invoke(IPC_CHANNELS.APPDATA_SAVED_QUERIES_DELETE, id)
 }
 
-const STORAGE_KEY = 'verql:saved-queries'
-const listeners = new Set<() => void>()
-
-function load(): SavedQuery[] {
+/** Read the pre-SQLite localStorage payload for one-time migration. Legacy
+ *  timestamps were ISO strings; coerce them to epoch ms. */
+function readLegacy(): SavedQuery[] | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as SavedQuery[]
-    return Array.isArray(parsed) ? parsed : []
+    if (typeof localStorage === 'undefined') return null
+    const raw = localStorage.getItem(LEGACY_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Array<Record<string, unknown>>
+    if (!Array.isArray(parsed)) return null
+    const toMs = (v: unknown): number =>
+      typeof v === 'number' ? v : (Date.parse(String(v)) || Date.now())
+    return parsed.map((q) => ({
+      id: String(q.id),
+      name: String(q.name),
+      sql: String(q.sql),
+      ...(q.connectionType ? { connectionType: String(q.connectionType) } : {}),
+      createdAt: toMs(q.createdAt),
+      updatedAt: toMs(q.updatedAt),
+    }))
   } catch {
-    return []
+    return null
   }
 }
 
-let savedQueries: SavedQuery[] = load()
-
-function persist() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(savedQueries)) } catch { /* quota */ }
-  for (const l of listeners) l()
+/** Load the saved-query mirror from the app-data store, migrating any legacy
+ *  localStorage payload on first run. Called once during app boot. */
+export async function hydrateSavedQueries(): Promise<void> {
+  if (hydrated || !hasIpc()) return
+  hydrated = true
+  let list = await window.electronAPI.invoke(IPC_CHANNELS.APPDATA_SAVED_QUERIES_LIST)
+  if (list.length === 0) {
+    const legacy = readLegacy()
+    if (legacy && legacy.length > 0) {
+      await window.electronAPI.invoke(IPC_CHANNELS.APPDATA_SAVED_QUERIES_IMPORT, legacy)
+      try { localStorage.removeItem(LEGACY_KEY) } catch { /* ignore */ }
+      list = legacy
+    }
+  }
+  savedQueries = list
+  notify()
 }
-
-function subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn) } }
-function snapshot() { return savedQueries }
 
 export function useSavedQueries(): SavedQuery[] {
   return useSyncExternalStore(subscribe, snapshot, snapshot)
@@ -51,10 +85,7 @@ export function SavedQueriesPanel() {
 
   const handleOpenQuery = (query: SavedQuery) => { openSavedQuery(query) }
 
-  const handleDelete = (id: string) => {
-    savedQueries = savedQueries.filter(q => q.id !== id)
-    persist()
-  }
+  const handleDelete = (id: string) => removeSavedQuery(id)
 
   return (
     <Stack className="h-full">
@@ -128,22 +159,33 @@ export function saveQuery(opts: {
   sql: string
   connectionType?: string
 }): string {
-  const now = new Date().toISOString()
+  const now = Date.now()
   const existingIdx = opts.id ? savedQueries.findIndex(q => q.id === opts.id) : -1
   if (existingIdx >= 0) {
     const prev = savedQueries[existingIdx]
+    const updated: SavedQuery = { ...prev, name: opts.name, sql: opts.sql, connectionType: opts.connectionType ?? prev.connectionType, updatedAt: now }
     savedQueries = [
       ...savedQueries.slice(0, existingIdx),
-      { ...prev, name: opts.name, sql: opts.sql, connectionType: opts.connectionType ?? prev.connectionType, updatedAt: now },
+      updated,
       ...savedQueries.slice(existingIdx + 1)
     ]
-    persist()
+    upsertRemote(updated)
+    notify()
     return prev.id
   }
   const id = `sq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-  savedQueries = [...savedQueries, { id, name: opts.name, sql: opts.sql, createdAt: now, updatedAt: now, connectionType: opts.connectionType }]
-  persist()
+  const created: SavedQuery = { id, name: opts.name, sql: opts.sql, createdAt: now, updatedAt: now, connectionType: opts.connectionType }
+  savedQueries = [...savedQueries, created]
+  upsertRemote(created)
+  notify()
   return id
+}
+
+/** Delete a saved query from the mirror and the app-data store. */
+export function removeSavedQuery(id: string): void {
+  savedQueries = savedQueries.filter(q => q.id !== id)
+  deleteRemote(id)
+  notify()
 }
 
 export function findSavedQueryByName(name: string): SavedQuery | undefined {

@@ -1,10 +1,14 @@
 # Internal SQLite app-data store
 
-> **Status: PROPOSAL / future work — not implemented.** This document is a
-> design specification for moving Verql's *high-growth* renderer
-> `localStorage` datasets (AI conversations, saved queries) onto a dedicated,
-> main-process SQLite database. It is detailed enough to implement from, but no
-> code in this repository implements it yet.
+> **Status: IMPLEMENTED.** This document specified moving Verql's *high-growth*
+> renderer `localStorage` datasets (AI conversations, saved queries) onto a
+> dedicated, main-process SQLite database, and that work has landed. The store
+> is `src/main/appdata/store.ts` (`AppDataStore`, file `${userData}/app.db`),
+> wired through the `appdata:*` IPC channels (`src/main/ipc/appdata.ts`); the
+> renderer consumes it from `stores/ai.ts` and the saved-queries module, both of
+> which migrate their legacy `localStorage` payload on first launch. The
+> document is retained as the design record; the section below describes what was
+> built.
 
 **Summary.** Verql persists app data in three places today: a JSON config file
 (`config.json`) and an encrypted keyring blob (`credentials.enc`) in the main

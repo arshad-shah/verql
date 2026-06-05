@@ -51,6 +51,7 @@ interface AIState {
   permissionProfile: 'read-only' | 'ask-write' | 'auto'
 
   // Actions
+  hydrate: () => Promise<void>
   togglePanel: () => void
   openPanel: () => void
   sendMessage: (message: string, connectionId?: string, connectionMeta?: { type: string; driverName: string }) => Promise<void>
@@ -84,7 +85,10 @@ interface AIState {
 
 const EMPTY_STATS: SessionStats = { totalInputTokens: 0, totalOutputTokens: 0, toolCallCount: 0 }
 
-const CONV_STORAGE_KEY = 'verql:ai-conversations'
+// Legacy localStorage key, read once on hydrate and migrated into the SQLite
+// app-data store (see docs/proposals/internal-app-data-store.md). Conversations
+// now persist in the main process; nothing writes this key anymore.
+const LEGACY_CONV_KEY = 'verql:ai-conversations'
 const DEFAULT_TITLE = 'New chat'
 
 function createConversation(): Conversation {
@@ -99,57 +103,52 @@ function deriveTitle(content: string): string {
   return firstLine.length > 48 ? `${firstLine.slice(0, 47)}…` : firstLine
 }
 
-function loadConversations(): { conversations: Conversation[]; activeConversationId: string | null } {
+const hasIpc = (): boolean => typeof window !== 'undefined' && !!window.electronAPI
+
+/** Replace one conversation (and its messages) in the app-data store. */
+function persistConversation(c: Conversation): void {
+  if (!hasIpc()) return
+  void window.electronAPI.invoke(IPC_CHANNELS.APPDATA_CONVERSATIONS_UPSERT, c)
+}
+
+/** Remember the active conversation across restarts. */
+function persistActiveId(id: string | null): void {
+  if (!hasIpc()) return
+  void window.electronAPI.invoke(IPC_CHANNELS.APPDATA_CONVERSATIONS_SET_ACTIVE, id)
+}
+
+function deleteConversationRemote(id: string): void {
+  if (!hasIpc()) return
+  void window.electronAPI.invoke(IPC_CHANNELS.APPDATA_CONVERSATIONS_DELETE, id)
+}
+
+/** Read the pre-SQLite localStorage payload for one-time migration. */
+function readLegacyConversations(): { conversations: Conversation[]; activeConversationId: string | null } | null {
   try {
-    if (typeof localStorage === 'undefined') return { conversations: [], activeConversationId: null }
-    const raw = localStorage.getItem(CONV_STORAGE_KEY)
-    if (!raw) return { conversations: [], activeConversationId: null }
+    if (typeof localStorage === 'undefined') return null
+    const raw = localStorage.getItem(LEGACY_CONV_KEY)
+    if (!raw) return null
     const parsed = JSON.parse(raw) as { conversations?: Conversation[]; activeConversationId?: string | null }
     return {
       conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
-      activeConversationId: parsed.activeConversationId ?? null
+      activeConversationId: parsed.activeConversationId ?? null,
     }
   } catch {
-    return { conversations: [], activeConversationId: null }
+    return null
   }
 }
 
-function persistConversations(conversations: Conversation[], activeConversationId: string | null): void {
-  try {
-    if (typeof localStorage === 'undefined') return
-    localStorage.setItem(CONV_STORAGE_KEY, JSON.stringify({ conversations, activeConversationId }))
-  } catch {
-    // storage quota or unavailable — in-memory state remains the source of truth
-  }
-}
-
-function initConversations(): {
-  conversations: Conversation[]
-  activeConversationId: string
-  messages: AIChatMessage[]
-  sessionStats: SessionStats
-} {
-  const loaded = loadConversations()
-  let conversations = loaded.conversations
-  let activeId = loaded.activeConversationId
-  if (conversations.length === 0) {
-    const c = createConversation()
-    conversations = [c]
-    activeId = c.id
-  }
-  if (!activeId || !conversations.some((c) => c.id === activeId)) {
-    activeId = conversations[0].id
-  }
-  const active = conversations.find((c) => c.id === activeId)!
+// Synchronous placeholder so the store is valid before `hydrate()` resolves.
+// The real conversation set loads from the main process on app boot.
+const initialConversations = (() => {
+  const c = createConversation()
   return {
-    conversations,
-    activeConversationId: activeId,
-    messages: active.messages,
-    sessionStats: { ...active.stats }
+    conversations: [c],
+    activeConversationId: c.id,
+    messages: [] as AIChatMessage[],
+    sessionStats: { ...EMPTY_STATS },
   }
-}
-
-const initialConversations = initConversations()
+})()
 
 export const useAIStore = create<AIState>((set, get) => ({
   messages: initialConversations.messages,
@@ -171,6 +170,57 @@ export const useAIStore = create<AIState>((set, get) => ({
   permissionProfile: 'ask-write',
   lastPreCompactMessages: null,
   autoCompactSuppressed: {},
+
+  hydrate: async () => {
+    if (!hasIpc()) return
+    const snapshot = await window.electronAPI.invoke(IPC_CHANNELS.APPDATA_CONVERSATIONS_LIST)
+    let conversations = snapshot.conversations as Conversation[]
+    let activeId = snapshot.activeConversationId
+
+    // One-time migration: if the store is empty but a legacy localStorage blob
+    // exists, import it into SQLite, then drop the legacy key. Only delete the
+    // source after the import IPC resolves so a failure retries next launch.
+    if (conversations.length === 0) {
+      const legacy = readLegacyConversations()
+      if (legacy && legacy.conversations.length > 0) {
+        await window.electronAPI.invoke(
+          IPC_CHANNELS.APPDATA_CONVERSATIONS_IMPORT,
+          legacy.conversations,
+          legacy.activeConversationId,
+        )
+        try { localStorage.removeItem(LEGACY_CONV_KEY) } catch { /* ignore */ }
+        conversations = legacy.conversations
+        activeId = legacy.activeConversationId
+      }
+    }
+
+    // Nothing stored yet — seed a fresh conversation and persist it.
+    if (conversations.length === 0) {
+      const c = createConversation()
+      conversations = [c]
+      activeId = c.id
+      persistConversation(c)
+      persistActiveId(c.id)
+    }
+
+    if (!activeId || !conversations.some((c) => c.id === activeId)) {
+      activeId = conversations[0].id
+    }
+    const active = conversations.find((c) => c.id === activeId)!
+    set({
+      conversations,
+      activeConversationId: activeId,
+      messages: active.messages,
+      sessionStats: { ...active.stats },
+    })
+
+    // The main process starts each launch with no chat history. Seed it with the
+    // restored active conversation so continuing it after a restart keeps full
+    // context (otherwise only the next message would be sent).
+    if (active.messages.length > 0) {
+      await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, active.messages)
+    }
+  },
 
   togglePanel: () => {
     const ui = useUiStore.getState()
@@ -251,7 +301,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       pendingApproval: null
     }))
     void window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_CLEAR)
-    persistConversations(get().conversations, c.id)
+    persistConversation(c)
+    persistActiveId(c.id)
   },
 
   switchConversation: async (id) => {
@@ -269,13 +320,17 @@ export const useAIStore = create<AIState>((set, get) => ({
       lastPreCompactMessages: null,
     })
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, target.messages)
-    persistConversations(get().conversations, id)
+    persistActiveId(id)
   },
 
   deleteConversation: async (id) => {
-    let next = get().conversations.filter((c) => c.id !== id)
-    if (next.length === 0) next = [createConversation()]
+    const filtered = get().conversations.filter((c) => c.id !== id)
+    // Deleting the last conversation leaves a fresh empty one in its place.
+    const replacement = filtered.length === 0 ? createConversation() : null
+    const next = replacement ? [replacement] : filtered
     set({ conversations: next })
+    deleteConversationRemote(id)
+    if (replacement) persistConversation(replacement)
     if (get().activeConversationId === id) {
       if (get().isStreaming) await get().abort()
       const fallback = next[0]
@@ -288,7 +343,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       })
       await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, fallback.messages)
     }
-    persistConversations(get().conversations, get().activeConversationId)
+    persistActiveId(get().activeConversationId)
   },
 
   renameConversation: (id, title) => {
@@ -297,7 +352,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       c.id === id ? { ...c, title: trimmed || c.title, updatedAt: Date.now() } : c
     )
     set({ conversations: next })
-    persistConversations(next, get().activeConversationId)
+    const renamed = next.find((c) => c.id === id)
+    if (renamed) persistConversation(renamed)
   },
 
   isCompacting: false,
@@ -344,7 +400,8 @@ export const useAIStore = create<AIState>((set, get) => ({
         lastPreCompactMessages: snapshot,
       })
       await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, newMessages)
-      persistConversations(nextConversations, activeConversationId)
+      const compacted = nextConversations.find((c) => c.id === activeConversationId)
+      if (compacted) persistConversation(compacted)
     } finally {
       set({ isCompacting: false })
     }
@@ -362,7 +419,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       lastPreCompactMessages: null,
     })
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, lastPreCompactMessages)
-    persistConversations(nextConversations, activeConversationId)
+    const restored = nextConversations.find((c) => c.id === activeConversationId)
+    if (restored) persistConversation(restored)
   },
 
   suppressAutoCompactForActive: () => {
@@ -401,7 +459,8 @@ export const useAIStore = create<AIState>((set, get) => ({
       pendingApproval: null
     }))
     await window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, prefix)
-    persistConversations(get().conversations, branched.id)
+    persistConversation(branched)
+    persistActiveId(branched.id)
   },
 
   retryLast: () => {
@@ -652,9 +711,12 @@ useAIStore.subscribe((state, prev) => {
     if (firstUser) title = deriveTitle(firstUser.content)
   }
   const next = [...conversations]
-  next[idx] = { ...existing, title, messages, stats: sessionStats, updatedAt: Date.now() }
+  const updated = { ...existing, title, messages, stats: sessionStats, updatedAt: Date.now() }
+  next[idx] = updated
   useAIStore.setState({ conversations: next })
-  persistConversations(next, activeConversationId)
+  // Write only the active conversation — not the whole list. This is the hot
+  // path (one write per settled message); SQLite handles it transactionally.
+  persistConversation(updated)
 })
 
 // Set up IPC listeners
@@ -670,11 +732,4 @@ if (typeof window !== 'undefined' && window.electronAPI) {
   window.electronAPI.on(IPC_EVENTS.MCP_APPROVAL_REQUEST, (request: unknown) => {
     useAIStore.setState({ mcpPendingApproval: request as MCPApprovalRequest })
   })
-
-  // The main process starts each launch with no chat history. Seed it with the
-  // restored active conversation so continuing it after a restart keeps full
-  // context (otherwise only the next message would be sent).
-  if (initialConversations.messages.length > 0) {
-    void window.electronAPI.invoke(IPC_CHANNELS.AI_MESSAGES_SET, initialConversations.messages)
-  }
 }

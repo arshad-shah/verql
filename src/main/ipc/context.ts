@@ -3,11 +3,13 @@ import type { IpcChannelMap } from '@shared/ipc'
 import type { DbAdapter } from '../db/adapter'
 import type { ConfigStore } from '../config/store'
 import type { KeyringService } from '../keyring'
+import type { AppDataStore } from '../appdata/store'
 import type { DriverRegistryImpl } from '../plugins/sdk/driver-registry'
 
 export interface IpcContext {
   configStore: ConfigStore
   keyring: KeyringService
+  appData: AppDataStore
   driverRegistry: DriverRegistryImpl
   activeAdapters: Map<string, DbAdapter>
 }

@@ -148,9 +148,15 @@ database the user is actually looking at.
 
 ## Conversation history
 
-The renderer owns conversations and persists them to `localStorage`
-(`verql:ai-conversations`), the same pattern as saved queries. State and actions
-live in `stores/ai.ts`:
+The renderer owns conversations and persists them to the **internal SQLite
+app-data store** in the main process (`appdata:conversations:*` IPC →
+`src/main/appdata/store.ts`, file `${userData}/app.db`). This replaced the
+former `localStorage` blob (`verql:ai-conversations`), which hit the browser
+storage quota and rewrote the entire history on every message; the store now
+takes one transactional write per settled message. The legacy `localStorage`
+payload is migrated into the store on first launch (see
+[`docs/proposals/internal-app-data-store.md`](./proposals/internal-app-data-store.md)).
+State and actions live in `stores/ai.ts`:
 
 ```ts
 interface Conversation {
@@ -170,7 +176,9 @@ interface Conversation {
   on a message) forks a new conversation containing the history up to that
   message, leaving the original intact.
 - A module-level store subscription keeps the active conversation in sync with
-  the live message/stat state and writes through to `localStorage`.
+  the live message/stat state and writes it through to the app-data store
+  (`appdata:conversations:upsert`) — only the active conversation, not the whole
+  list. `hydrate()` loads the set (and runs the one-time migration) on app boot.
 
 Because the main process starts each launch with no history, the renderer pushes
 the relevant transcript to main via **`ai:messages:set`** (→
