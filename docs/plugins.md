@@ -595,6 +595,49 @@ under any category it likes.
 Settings are scoped per-plugin (`plugins.<name>.queryTimeoutMs`) and
 accessed via `ctx.settings.get('queryTimeoutMs')`.
 
+### 13. Desktop notifications & the attention seam
+
+Two related mechanisms let a plugin reach the user *outside* the window — the
+in-app notification bus (a toast), and native OS notifications.
+
+**In-app toast** — `ctx.notifications.show({ kind, title, message })` pushes a
+transient toast (and records an activity-log entry). Use it for soft, in-window
+feedback.
+
+**Native OS notification** — owned by the bundled `os-notifications` plugin,
+which publishes an `os-notifications` **service**. Any plugin can consume it:
+
+```ts
+import type { OsNotificationService } from '../os-notifications'
+
+const notifier = ctx.services.consume<OsNotificationService>('os-notifications')
+notifier?.notify({
+  title: 'Export finished',
+  body: 'orders.csv is ready',
+  category: 'completion',           // 'approval' | 'alert' | 'completion' | 'info'
+  onClick: () => { /* runs in main; defaults to focusing the window */ },
+})
+```
+
+The plugin owns *policy* — a master toggle, an "only when Verql isn't focused"
+guard, and a per-category approval toggle (all in its settings) — so consumers
+just describe *what* to say, never *whether* to say it.
+
+**The attention seam.** Approval prompts (an AI write tool, an MCP query
+authorization) are surfaced automatically: the host owns a delivery-agnostic
+`attention` service (`src/main/attention/`) that producers publish to —
+`hub.request({ id, kind: 'approval', title, body })` when a prompt is raised and
+`hub.resolve(id)` when it's answered — and `os-notifications` subscribes and
+turns those into notifications (dismissing them when resolved). Wire a new
+approval flow into the seam rather than calling `os-notifications` directly, so
+the *what-needs-attention* signal stays decoupled from *how it's surfaced* and a
+future plugin (window flash, dock badge, phone push) can consume the same
+events.
+
+For the full picture — system context, sequence flows, the dispatcher decision
+tree, lifecycle, and the class/data models, all as diagrams — see
+[notifications.md](./notifications.md).
+
 ## Plugin lifecycle
 
 The boot coordinator runs every plugin through a five-phase pipeline.

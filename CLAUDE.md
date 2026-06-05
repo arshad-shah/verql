@@ -16,11 +16,13 @@ Read order: `docs/architecture.md` (the whole picture) → the topic doc for the
 area you're touching → the source it points to.
 
 - [`docs/architecture.md`](./docs/architecture.md) — end-to-end architecture: process model, the `shared/` boundary, main subsystems, renderer stores + design system, the plugin model, and data-flow walkthroughs. **Start here.**
+- [`docs/diagrams.md`](./docs/diagrams.md) — a diagram-first visual tour of every subsystem (overall → process/IPC → main → database → plugins → security → renderer → AI → MCP → build). 30 Mermaid diagrams across flowchart, sequence, class, ER, state, and mindmap types. The companion to `architecture.md`.
 - [`docs/plugins.md`](./docs/plugins.md) — every contribution surface (driver, exporter, importer, formatter, type mapper, theme, panel, command, AI provider, …) and how to write a plugin.
 - [`docs/plugin-security.md`](./docs/plugin-security.md) — the plugin trust boundary: bundled (trusted) vs third-party (untrusted), the enforced/advisory capability model (`keyring`/`connections`/`ipc` gating + manifest `permissions`), **process isolation** (untrusted command/theme plugins run in a `utilityProcess` via the RPC bridge in `src/main/plugins/isolation/`; capability calls are dispatched through the gated context so enforcement stays in one place), install hardening, and known limitations. Read before touching anything that grants a plugin access to secrets, connections, or IPC.
 - [`docs/sdk/`](./docs/sdk/README.md) — the published `@verql/plugin-sdk` package (source under `packages/plugin-sdk/`) that external plugin authors consume, plus a getting-started walkthrough. The package re-exports the **electron-free** author surface of `src/main/plugins/sdk`; keep its curated barrel and the `sdk-public-surface` test in sync when changing public exports.
 - [`docs/guide/`](./docs/guide/README.md) — end-user (consumer) documentation. The in-app Help menu links here.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
+- [`docs/notifications.md`](./docs/notifications.md) — the notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin that turns it into native OS notifications. Diagram-rich (context, architecture, sequences, state, class/data models). Read before touching approval surfacing or adding a notification consumer.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
 
 When you change a subsystem, update its doc (and this file) in the same change
@@ -85,7 +87,7 @@ Plugins live in `src/main/plugins/`. Each plugin has a `manifest.json` declaring
 
 **Plugin SDK** (`src/main/plugins/sdk/`): provides registries (DriverRegistry, ToolRegistry, CommandRegistry, PanelRegistry, ExporterRegistry, …) and access objects (SchemaAccess, ConnectionAccess, PluginSettings) via `PluginContext`. The `ToolRegistry` is shared by the AI assistant and the MCP server — register a tool once and both surfaces see it (gated by the tool's `surfaces` field).
 
-**Bundled plugins** in `src/main/plugins/bundled/`: the native drivers (`sqlite`, `postgresql`, `mysql` — each implements `DbAdapter` and registers via the SDK), `db-tools` (the canonical query/schema tools), `ai` (the assistant — see `docs/ai.md`), `core-formats` (CSV/JSON/SQL exporters + importers), `core-themes`, `ssh-tunnel` (connection middleware), `mongodb`, `redis`, `snowflake`.
+**Bundled plugins** in `src/main/plugins/bundled/`: the native drivers (`sqlite`, `postgresql`, `mysql` — each implements `DbAdapter` and registers via the SDK), `db-tools` (the canonical query/schema tools), `ai` (the assistant — see `docs/ai.md`), `core-formats` (CSV/JSON/SQL exporters + importers), `core-themes`, `ssh-tunnel` (connection middleware), `os-notifications` (surfaces approval/attention requests as native OS notifications via the host **attention seam** — `src/main/attention/` — and exposes an `os-notifications` service for other plugins), `mongodb`, `redis`, `snowflake`.
 
 ### AI Assistant & Tooling
 

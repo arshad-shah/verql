@@ -38,6 +38,7 @@ import { registerExportImportHandlers } from './ipc/export-import'
 import { registerDialogHandlers } from './ipc/dialog'
 import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
+import { AttentionHubImpl, ATTENTION_SERVICE_ID } from './attention/attention-hub'
 import { registerPluginHandlers } from './ipc/plugins'
 import { registerThemesHandlers } from './ipc/themes'
 import { registerAppHandlers } from './ipc/app'
@@ -96,6 +97,12 @@ export function registerIpcHandlers(): void {
   // surface it, streamed to the renderer for the Activity panel.
   const activityLog = new ActivityLog()
   services.provide('activity-log', activityLog)
+  // Attention seam: a delivery-agnostic relay for "the user's response is
+  // needed" (approval prompts, alerts). Producers (AI/MCP approvals) publish
+  // to it; the bundled `os-notifications` plugin subscribes and surfaces them
+  // as native notifications. Provided as a service so plugins reach it.
+  const attentionHub = new AttentionHubImpl()
+  services.provide(ATTENTION_SERVICE_ID, attentionHub)
   activityLog.subscribe((entry) => {
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.ACTIVITY_EVENT, entry)
@@ -165,7 +172,7 @@ export function registerIpcHandlers(): void {
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
 
-  const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry)
+  const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry, attentionHub)
 
   const pluginCoordinator = new PluginBootCoordinator({
     driverRegistry: ctx.driverRegistry,

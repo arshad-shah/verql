@@ -1,6 +1,7 @@
 import { createMCPServer, type MCPServerInstance } from '../mcp/server'
 import type { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import type { ToolRegistry } from '../plugins/sdk/types'
+import type { AttentionHub } from '../attention/attention-hub'
 import type { MCPToolInfo } from '@shared/mcp'
 import type { IpcContext, Handle } from './context'
 
@@ -18,7 +19,8 @@ export function registerMcpHandlers(
   handle: Handle,
   connectionAccess: ConnectionAccessImpl,
   settingsStore: SettingsStoreFacade,
-  toolRegistry: ToolRegistry
+  toolRegistry: ToolRegistry,
+  attention?: AttentionHub
 ): MCPServerInstance {
   // One-time migration: earlier builds stored the token in plaintext in
   // config.json. Move any such token into the keyring and scrub the on-disk
@@ -41,6 +43,7 @@ export function registerMcpHandlers(
     getActiveConnectionId: () => connectionAccess.getActiveConnectionId(),
     settingsStore,
     tokenStore,
+    attention,
   })
 
   handle('mcp:start', async () => {
