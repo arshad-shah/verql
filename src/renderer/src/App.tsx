@@ -42,6 +42,7 @@ registerBuiltinStatementContributions()
 registerBuiltinAppActions()
 initAppActionBridge()
 import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
+import { KEYBINDING_ACTION } from '@shared/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { matchesAccelerator } from '@/lib/accelerators'
 
@@ -93,17 +94,17 @@ export function App() {
       // Save dispatches to whichever tab is in front via tabActions so it works
       // for query, settings, and any future tab kind.
       const actions: Record<string, () => void> = {
-        'new-tab': () => {
+        [KEYBINDING_ACTION.NEW_TAB]: () => {
           const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
           addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
         },
-        'close-tab': () => { if (activeTabId) requestCloseTab(activeTabId) },
-        'command-palette': () => setPaletteOpen(prev => !prev),
-        'save-query': () => { if (activeTabId) void tabActions.save(activeTabId) },
-        'toggle-sidebar': () => useUiStore.getState().toggleSidebar(),
-        'focus-editor': () => editorRegistry.get()?.editor.focus(),
-        'toggle-secondary-sidebar': () => useUiStore.getState().toggleSecondarySidebar(),
-        'toggle-bottom-dock': () => useUiStore.getState().toggleBottomDock(),
+        [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },
+        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => setPaletteOpen(prev => !prev),
+        [KEYBINDING_ACTION.SAVE_QUERY]: () => { if (activeTabId) void tabActions.save(activeTabId) },
+        [KEYBINDING_ACTION.TOGGLE_SIDEBAR]: () => useUiStore.getState().toggleSidebar(),
+        [KEYBINDING_ACTION.FOCUS_EDITOR]: () => editorRegistry.get()?.editor.focus(),
+        [KEYBINDING_ACTION.TOGGLE_SECONDARY_SIDEBAR]: () => useUiStore.getState().toggleSecondarySidebar(),
+        [KEYBINDING_ACTION.TOGGLE_BOTTOM_DOCK]: () => useUiStore.getState().toggleBottomDock(),
       }
       const keybindings = useSettingsStore.getState().settings.keybindings
       for (const kb of keybindings) {

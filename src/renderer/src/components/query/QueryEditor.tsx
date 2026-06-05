@@ -12,6 +12,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { Flex, Text, useTheme } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { KEYBINDING_ACTION } from '@shared/settings'
 
 interface Props {
   tabId: string
@@ -137,23 +138,23 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
 
     const actions: { id: string; label: string; bindingId: string; fallback: number; run: () => void }[] = [
       {
-        id: 'execute-query', label: 'Execute Query', bindingId: 'execute-query',
+        id: KEYBINDING_ACTION.EXECUTE_QUERY, label: 'Execute Query', bindingId: KEYBINDING_ACTION.EXECUTE_QUERY,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
         run: () => onExecute()
       },
     ]
     if (onSave) {
       actions.push({
-        id: 'save-query', label: 'Save Query', bindingId: 'save-query',
+        id: KEYBINDING_ACTION.SAVE_QUERY, label: 'Save Query', bindingId: KEYBINDING_ACTION.SAVE_QUERY,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
         run: () => onSave()
       })
     }
     if (language === 'sql') {
       actions.push({
-        id: 'ai-inline-trigger',
+        id: KEYBINDING_ACTION.AI_INLINE_TRIGGER,
         label: 'Trigger AI Suggestion',
-        bindingId: 'ai-inline-trigger',
+        bindingId: KEYBINDING_ACTION.AI_INLINE_TRIGGER,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Backslash,
         run: () => editorInstance.trigger('verql', 'editor.action.inlineSuggest.trigger', null),
       })

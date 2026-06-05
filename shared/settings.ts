@@ -84,6 +84,26 @@ export interface DataDisplaySettings {
   truncateTextAt: number
 }
 
+/** Central registry of built-in keybinding action ids — the single source of
+ *  truth shared by the defaults below, the App-level shortcut dispatch, and the
+ *  Monaco editor's action bindings. Plugin commands use composite ids
+ *  (`pluginId:commandId`) and are not listed here. */
+export const KEYBINDING_ACTION = {
+  EXECUTE_QUERY: 'execute-query',
+  SAVE_QUERY: 'save-query',
+  NEW_TAB: 'new-tab',
+  CLOSE_TAB: 'close-tab',
+  TOGGLE_SIDEBAR: 'toggle-sidebar',
+  COMMAND_PALETTE: 'command-palette',
+  FOCUS_EDITOR: 'focus-editor',
+  TOGGLE_SECONDARY_SIDEBAR: 'toggle-secondary-sidebar',
+  TOGGLE_BOTTOM_DOCK: 'toggle-bottom-dock',
+  /** Editor-only (no default user binding row); referenced by QueryEditor. */
+  AI_INLINE_TRIGGER: 'ai-inline-trigger',
+} as const
+
+export type KeybindingActionId = (typeof KEYBINDING_ACTION)[keyof typeof KEYBINDING_ACTION]
+
 export interface KeyBinding {
   id: string
   label: string
@@ -202,15 +222,15 @@ export const defaultSettings: AppSettings = {
     disabledTools: [],
   },
   keybindings: [
-    { id: 'execute-query', label: 'Execute Query', keys: ['Ctrl+Enter', 'Cmd+Enter'], category: 'Query Execution' },
-    { id: 'new-tab', label: 'New Tab', keys: ['Ctrl+T', 'Cmd+T'], category: 'Navigation' },
-    { id: 'close-tab', label: 'Close Tab', keys: ['Ctrl+W', 'Cmd+W'], category: 'Navigation' },
-    { id: 'toggle-sidebar', label: 'Toggle Sidebar', keys: ['Ctrl+B', 'Cmd+B'], category: 'Panels' },
-    { id: 'command-palette', label: 'Command Palette', keys: ['Ctrl+Shift+P', 'Cmd+Shift+P'], category: 'Navigation' },
-    { id: 'focus-editor', label: 'Focus Editor', keys: ['Ctrl+1', 'Cmd+1'], category: 'Editor' },
-    { id: 'save-query', label: 'Save Query', keys: ['Ctrl+S', 'Cmd+S'], category: 'Query Execution' },
-    { id: 'toggle-secondary-sidebar', label: 'Toggle Secondary Sidebar', keys: ['Ctrl+Alt+B', 'Cmd+Alt+B'], category: 'Panels' },
-    { id: 'toggle-bottom-dock', label: 'Toggle Bottom Dock', keys: ['Ctrl+J', 'Cmd+J'], category: 'Panels' },
+    { id: KEYBINDING_ACTION.EXECUTE_QUERY, label: 'Execute Query', keys: ['Ctrl+Enter', 'Cmd+Enter'], category: 'Query Execution' },
+    { id: KEYBINDING_ACTION.NEW_TAB, label: 'New Tab', keys: ['Ctrl+T', 'Cmd+T'], category: 'Navigation' },
+    { id: KEYBINDING_ACTION.CLOSE_TAB, label: 'Close Tab', keys: ['Ctrl+W', 'Cmd+W'], category: 'Navigation' },
+    { id: KEYBINDING_ACTION.TOGGLE_SIDEBAR, label: 'Toggle Sidebar', keys: ['Ctrl+B', 'Cmd+B'], category: 'Panels' },
+    { id: KEYBINDING_ACTION.COMMAND_PALETTE, label: 'Command Palette', keys: ['Ctrl+Shift+P', 'Cmd+Shift+P'], category: 'Navigation' },
+    { id: KEYBINDING_ACTION.FOCUS_EDITOR, label: 'Focus Editor', keys: ['Ctrl+1', 'Cmd+1'], category: 'Editor' },
+    { id: KEYBINDING_ACTION.SAVE_QUERY, label: 'Save Query', keys: ['Ctrl+S', 'Cmd+S'], category: 'Query Execution' },
+    { id: KEYBINDING_ACTION.TOGGLE_SECONDARY_SIDEBAR, label: 'Toggle Secondary Sidebar', keys: ['Ctrl+Alt+B', 'Cmd+Alt+B'], category: 'Panels' },
+    { id: KEYBINDING_ACTION.TOGGLE_BOTTOM_DOCK, label: 'Toggle Bottom Dock', keys: ['Ctrl+J', 'Cmd+J'], category: 'Panels' },
   ],
   plugins: {},
   disabledPlugins: [],
