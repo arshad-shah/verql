@@ -12,6 +12,7 @@ import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
+import { editorRegistry } from '@/stores/editor'
 import { tabActions, requestCloseTab as routeCloseTab, usePendingClose } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -85,39 +86,40 @@ export function App() {
   // Keyboard shortcuts + native menu events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Built-in shortcuts are data-driven from the user's keybindings setting
+      // (Settings → Keybindings), so a rebind there takes effect immediately.
+      // `execute-query` is owned by the Monaco editor (it registers the binding
+      // itself, also from this setting) and intentionally has no entry here.
+      // Save dispatches to whichever tab is in front via tabActions so it works
+      // for query, settings, and any future tab kind.
+      const actions: Record<string, () => void> = {
+        'new-tab': () => {
+          const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+          addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
+        },
+        'close-tab': () => { if (activeTabId) requestCloseTab(activeTabId) },
+        'command-palette': () => setPaletteOpen(prev => !prev),
+        'save-query': () => { if (activeTabId) void tabActions.save(activeTabId) },
+        'toggle-sidebar': () => useUiStore.getState().toggleSidebar(),
+        'focus-editor': () => editorRegistry.get()?.editor.focus(),
+        'toggle-secondary-sidebar': () => useUiStore.getState().toggleSecondarySidebar(),
+        'toggle-bottom-dock': () => useUiStore.getState().toggleBottomDock(),
+      }
+      const keybindings = useSettingsStore.getState().settings.keybindings
+      for (const kb of keybindings) {
+        const handler = actions[kb.id]
+        if (!handler) continue
+        if (kb.keys.some(k => matchesAccelerator(e, k))) {
+          e.preventDefault()
+          handler()
+          return
+        }
+      }
+      // Reopen-closed-tab isn't a user-configurable binding; keep it fixed.
       const mod = e.metaKey || e.ctrlKey
-      if (mod && e.shiftKey && e.key === 'p') {
-        e.preventDefault()
-        setPaletteOpen(prev => !prev)
-      }
-      if (mod && e.key === 'w') {
-        e.preventDefault()
-        if (activeTabId) requestCloseTab(activeTabId)
-      }
-      // Global save: dispatches to whichever tab is in front. Settings, query,
-      // any future tab kind — they all participate by registering with
-      // tabActions. Capture phase + preventDefault keeps the browser's
-      // default "Save Page As" dialog out of the way.
-      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        if (activeTabId) void tabActions.save(activeTabId)
-      }
-      if (mod && e.key === 't' && !e.shiftKey) {
-        e.preventDefault()
-        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
-        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
-      }
-      if (mod && e.shiftKey && e.key === 't') {
+      if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
         e.preventDefault()
         reopenTab()
-      }
-      if (mod && e.altKey && e.key.toLowerCase() === 'b') {
-        e.preventDefault()
-        useUiStore.getState().toggleSecondarySidebar()
-      }
-      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'j') {
-        e.preventDefault()
-        useUiStore.getState().toggleBottomDock()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
