@@ -27,9 +27,8 @@ function AppLoader() {
       // One-time migration from localStorage to settings store
       const oldTheme = localStorage.getItem('verql-theme')
       const oldSidebarWidth = localStorage.getItem('verql-sidebar-width')
-      const oldSplitRatio = localStorage.getItem('verql-split-ratio')
 
-      if (oldTheme || oldSidebarWidth || oldSplitRatio) {
+      if (oldTheme || oldSidebarWidth) {
         if (oldTheme) {
           await window.electronAPI.invoke(IPC_CHANNELS.SETTINGS_SET, 'appearance.theme', oldTheme)
         }
@@ -40,15 +39,9 @@ function AppLoader() {
             parseFloat(oldSidebarWidth)
           )
         }
-        if (oldSplitRatio) {
-          await window.electronAPI.invoke(
-            'settings:set',
-            'appearance.splitRatio',
-            parseFloat(oldSplitRatio)
-          )
-        }
         localStorage.removeItem('verql-theme')
         localStorage.removeItem('verql-sidebar-width')
+        // Legacy split-ratio key is no longer used; clear it if present.
         localStorage.removeItem('verql-split-ratio')
       }
 

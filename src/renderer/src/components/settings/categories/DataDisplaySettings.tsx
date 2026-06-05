@@ -32,6 +32,37 @@ export function DataDisplaySettings() {
         />
       </SettingRow>
 
+      {display.dateFormat === 'custom' && (
+        <SettingRow
+          label="Custom Date Pattern"
+          description="Tokens: yyyy MM dd HH mm ss SSS — e.g. yyyy-MM-dd HH:mm:ss"
+        >
+          <Input
+            value={display.customDateFormat}
+            onChange={(e) => setSetting('dataDisplay.customDateFormat', e.target.value)}
+            size="sm"
+            className="w-48"
+            aria-label="Custom date pattern"
+          />
+        </SettingRow>
+      )}
+
+      <SettingRow label="Boolean Display" description="How boolean values are rendered in results">
+        <Select
+          value={display.booleanDisplay}
+          onChange={(val) => setSetting('dataDisplay.booleanDisplay', val)}
+          size="sm"
+          className="w-32"
+          aria-label="Boolean display"
+          options={[
+            { value: 'true_false', label: 'true / false' },
+            { value: 'one_zero', label: '1 / 0' },
+            { value: 'yes_no', label: 'Yes / No' },
+            { value: 'checkmark', label: '✓ / ✗' },
+          ]}
+        />
+      </SettingRow>
+
       <SettingRow label="Number Format" description="How numeric values are formatted">
         <Select
           value={display.numberFormat}
@@ -48,6 +79,10 @@ export function DataDisplaySettings() {
 
       <SettingRow label="Max Column Width" description="Maximum width in pixels for result columns">
         <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" className="w-24" />
+      </SettingRow>
+
+      <SettingRow label="Truncate Text At" description="Trim long text cells to this many characters; the full value shows in a tooltip. 0 disables.">
+        <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} min={0} max={2000} step={50} size="sm" className="w-24" />
       </SettingRow>
 
       <PluginContributedSettings category="data-display" />

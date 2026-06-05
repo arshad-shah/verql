@@ -20,7 +20,6 @@ interface UiState {
   setActiveSettingsCategory: (category: SettingsCategoryId) => void
   toggleSidebar: () => void
   setSidebarWidth: (width: number) => void
-  setSplitRatio: (ratio: number) => void
   toggleTreeNode: (path: string) => void
   expandTreeNode: (path: string) => void
   collapseAllTreeNodes: () => void
@@ -53,10 +52,6 @@ export const useUiStore = create<UiState>((set) => ({
   setSidebarWidth: (width) => {
     const clamped = Math.min(480, Math.max(180, width))
     useSettingsStore.getState().set('appearance.sidebarWidth', clamped)
-  },
-  setSplitRatio: (ratio) => {
-    const clamped = Math.min(80, Math.max(20, ratio))
-    useSettingsStore.getState().set('appearance.splitRatio', clamped)
   },
   toggleTreeNode: (path) =>
     set((state) => {

@@ -17,6 +17,7 @@
  */
 import { create } from 'zustand'
 import { useStatementStatus, hashStatement, type StatementStatus } from '@/stores/statement-status'
+import { useSettingsStore } from '@/stores/settings'
 
 export interface TabActions {
   /** Persist the tab's content. Receives no args — implementations read their own state. */
@@ -114,7 +115,12 @@ export const usePendingClose = create<PendingCloseState>((set) => ({
  * the tabs store (which would otherwise create an import cycle).
  */
 export function requestCloseTab(tabId: string, actuallyClose: (id: string) => void): void {
-  if (tabActions.isDirty(tabId) || tabActions.hasOpenTransaction(tabId)) {
+  // The unsaved-changes confirm is opt-out via Settings → General. An open,
+  // uncommitted transaction always prompts regardless: discarding it loses
+  // committed-looking work and isn't covered by the "unsaved edits" toggle.
+  const confirmUnsaved = useSettingsStore.getState().settings.general.confirmOnUnsavedClose
+  const dirtyBlocks = confirmUnsaved && tabActions.isDirty(tabId)
+  if (dirtyBlocks || tabActions.hasOpenTransaction(tabId)) {
     usePendingClose.getState().request(tabId)
   } else {
     actuallyClose(tabId)

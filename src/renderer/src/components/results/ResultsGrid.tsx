@@ -6,6 +6,32 @@ import { useSelectionStore } from '@/stores/selection'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
 import { Box } from '@/primitives'
+import type { DataDisplaySettings } from '@shared/settings'
+import { formatBoolean, formatWithPattern, truncateText } from '@/lib/format-cell'
+
+/** Render a raw cell value to its full (untruncated) display string,
+ *  honouring the user's data-display preferences. */
+function formatCellValue(value: unknown, dd: DataDisplaySettings): string {
+  if (value === null || value === undefined) return dd.nullDisplay
+  if (typeof value === 'boolean') return formatBoolean(value, dd.booleanDisplay)
+  if (
+    value instanceof Date ||
+    (typeof value === 'string' && !isNaN(Date.parse(value)) && /^\d{4}-\d{2}/.test(value))
+  ) {
+    const date = value instanceof Date ? value : new Date(value as string)
+    if (!isNaN(date.getTime())) {
+      if (dd.dateFormat === 'locale') return date.toLocaleString()
+      if (dd.dateFormat === 'custom') return formatWithPattern(date, dd.customDateFormat)
+      return date.toISOString()
+    }
+  }
+  if (typeof value === 'number') {
+    if (dd.numberFormat === 'locale') return value.toLocaleString()
+    return String(value)
+  }
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -63,22 +89,16 @@ export function ResultsGrid({ results, tabId }: Props) {
         }
         return undefined
       }) as ColDef['cellStyle'],
-      valueFormatter: (params: any) => {
-        if (params.value === null || params.value === undefined) return dataDisplay.nullDisplay
-        if (params.value instanceof Date || (typeof params.value === 'string' && !isNaN(Date.parse(params.value)) && /^\d{4}-\d{2}/.test(params.value))) {
-          const date = params.value instanceof Date ? params.value : new Date(params.value)
-          if (!isNaN(date.getTime())) {
-            if (dataDisplay.dateFormat === 'locale') return date.toLocaleString()
-            return date.toISOString()
-          }
-        }
-        if (typeof params.value === 'number') {
-          if (dataDisplay.numberFormat === 'locale') return params.value.toLocaleString()
-          return String(params.value)
-        }
-        if (typeof params.value === 'object') return JSON.stringify(params.value)
-        return String(params.value)
-      }
+      valueFormatter: (params: any) =>
+        truncateText(formatCellValue(params.value, dataDisplay), dataDisplay.truncateTextAt),
+      // Surface the full value in a tooltip only when the cell was truncated,
+      // so we don't pop a redundant tooltip on every short cell.
+      tooltipValueGetter: (params: any) => {
+        const full = formatCellValue(params.value, dataDisplay)
+        return dataDisplay.truncateTextAt > 0 && full.length > dataDisplay.truncateTextAt
+          ? full
+          : null
+      },
     }))
   }, [results.fields, dataDisplay])
 

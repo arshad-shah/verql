@@ -37,7 +37,6 @@ export interface AppearanceSettings {
   sidebarPosition: 'left' | 'right'
   accentColor: string
   sidebarWidth: number
-  splitRatio: number
   /** Show the status bar at the bottom of the window. */
   showStatusBar: boolean
   /** Use animated transitions for menus, dropdowns, banners. */
@@ -80,6 +79,8 @@ export interface ConnectionDefaultSettings {
 export interface DataDisplaySettings {
   nullDisplay: string
   dateFormat: 'iso' | 'locale' | 'custom'
+  /** Token pattern used when `dateFormat` is `custom` (e.g. `yyyy-MM-dd HH:mm:ss`). */
+  customDateFormat: string
   numberFormat: 'raw' | 'locale'
   maxColumnWidth: number
   /** How to render booleans in result grids. */
@@ -131,6 +132,11 @@ export interface AppSettings {
    *  choice survives app restarts — without this, every boot re-activates
    *  every resolved plugin. */
   disabledPlugins: string[]
+  /** Per-plugin permission grants the user has approved, keyed by plugin name.
+   *  Values are `PluginPermission` ids (typed as strings here to keep `shared/`
+   *  decoupled from the main-process SDK). Persisted so granted capabilities
+   *  survive restarts. */
+  pluginGrants: Record<string, string[]>
 }
 
 export const defaultSettings: AppSettings = {
@@ -154,7 +160,6 @@ export const defaultSettings: AppSettings = {
     // switches — user opt-in customisation).
     accentColor: '',
     sidebarWidth: 240,
-    splitRatio: 50,
     showStatusBar: true,
     animations: true,
     showSecondarySidebar: false,
@@ -184,6 +189,7 @@ export const defaultSettings: AppSettings = {
   dataDisplay: {
     nullDisplay: 'NULL',
     dateFormat: 'iso',
+    customDateFormat: 'yyyy-MM-dd HH:mm:ss',
     numberFormat: 'raw',
     maxColumnWidth: 300,
     booleanDisplay: 'true_false',
@@ -218,6 +224,7 @@ export const defaultSettings: AppSettings = {
   ],
   plugins: {},
   disabledPlugins: [],
+  pluginGrants: {},
 }
 
 /** Accent values that were the *default* (not user-chosen) in past versions.
@@ -232,7 +239,12 @@ const LEGACY_DEFAULT_ACCENTS = new Set([
 export function mergeWithDefaults(persisted: Partial<AppSettings>): AppSettings {
   const result = { ...defaultSettings }
   for (const key of Object.keys(defaultSettings) as (keyof AppSettings)[]) {
-    if (key === 'keybindings' || key === 'plugins' || key === 'disabledPlugins') {
+    if (
+      key === 'keybindings' ||
+      key === 'plugins' ||
+      key === 'disabledPlugins' ||
+      key === 'pluginGrants'
+    ) {
       if (persisted[key] !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(result as any)[key] = persisted[key]
