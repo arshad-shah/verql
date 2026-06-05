@@ -71,7 +71,7 @@ Zustand stores in `src/renderer/src/stores/`:
 - `tabs.ts` — Open tabs (discriminated union: `QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab | SettingsTab`)
 - `schema.ts` — Schema metadata cache (tables, columns, indexes) keyed by connection+schema
 - `ui.ts` — Sidebar/secondary-sidebar/bottom-dock state, active panel, layout dimensions (persisted to localStorage)
-- `ai.ts` — AI chat: messages, providers/models, and persisted conversation history (see `docs/ai.md`)
+- `ai.ts` — AI chat: messages, providers/models, and conversation history persisted to the internal SQLite app-data store via IPC (see `docs/ai.md`)
 - `selection.ts` / `notifications.ts` / `toast.ts` — inspector selection, notification center, transient toasts
 - `editor.ts` / `tab-actions.ts` — non-reactive registries of mounted Monaco editors and per-tab save/transaction handlers (refs, not reactive state)
 

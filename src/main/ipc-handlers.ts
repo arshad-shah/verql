@@ -20,6 +20,7 @@ import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
 import { ActivityLog } from './activity/log'
 import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
+import { AppDataStore } from './appdata/store'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
 import { PluginBootCoordinator } from './plugins/plugin-host'
 import type { PluginPermission } from './plugins/sdk/permissions'
@@ -38,6 +39,7 @@ import { registerExportImportHandlers } from './ipc/export-import'
 import { registerDialogHandlers } from './ipc/dialog'
 import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
+import { registerAppDataHandlers } from './ipc/appdata'
 import { AttentionHubImpl, ATTENTION_SERVICE_ID } from './attention/attention-hub'
 import { registerPluginHandlers } from './ipc/plugins'
 import { registerThemesHandlers } from './ipc/themes'
@@ -53,6 +55,7 @@ export function registerIpcHandlers(): void {
   const ctx: IpcContext = {
     configStore: new ConfigStore(configPath, keyring),
     keyring,
+    appData: new AppDataStore(path.join(app.getPath('userData'), 'app.db')),
     driverRegistry: new DriverRegistryImpl(),
     activeAdapters: new Map<string, DbAdapter>()
   }
@@ -73,6 +76,12 @@ export function registerIpcHandlers(): void {
       ctx.activeAdapters.clear()
       app.quit()
     })
+  })
+
+  // Flush + close the SQLite app-data handle on the way out (WAL checkpoint).
+  // will-quit fires after before-quit's async adapter teardown resolves.
+  app.on('will-quit', () => {
+    try { ctx.appData.close() } catch { /* already closed / never opened */ }
   })
 
   setDriverRegistry(ctx.driverRegistry)
@@ -148,6 +157,7 @@ export function registerIpcHandlers(): void {
   registerConnectionHandlers(ctx, handle)
   registerSettingsHandlers(ctx, handle)
   registerKeyringHandlers(ctx, handle)
+  registerAppDataHandlers(handle, ctx.appData)
   registerDbHandlers(ctx, handle, connectionAccess, activityLog)
 
   handle(IPC_CHANNELS.ACTIVITY_LIST, async (query) => activityLog.list(query))

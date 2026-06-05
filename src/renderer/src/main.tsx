@@ -5,6 +5,8 @@ import { ThemeProvider } from './primitives/theme/ThemeProvider'
 import { SplashScreen } from './components/shell/SplashScreen'
 import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
+import { useAIStore } from '@/stores/ai'
+import { hydrateSavedQueries } from '@/components/saved-queries/SavedQueriesPanel'
 import './styles/globals.css'
 import { IPC_CHANNELS } from '@shared/ipc'
 
@@ -52,6 +54,11 @@ function AppLoader() {
 
       await hydrate()
       initSettingsListener()
+      // Load app-data-store–backed state (AI conversations, saved queries),
+      // migrating any legacy localStorage payload on first run. Non-blocking
+      // for first paint — these populate the AI panel and saved-queries list.
+      void useAIStore.getState().hydrate()
+      void hydrateSavedQueries()
     }
     init()
   }, [hydrate])

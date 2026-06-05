@@ -3,6 +3,7 @@ import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
 import type { ActivityEntry, ActivityQuery } from './activity'
+import type { ConversationsSnapshot, StoredConversation, SavedQuery } from './appdata'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -473,6 +474,50 @@ export interface IpcChannelMap {
     args: [profile: 'read-only' | 'ask-write' | 'auto']
     return: void
   }
+  // ─── App-data store (SQLite) ─────────────────────────────────────────────────
+  // Durable home for high-growth datasets that used to live in renderer
+  // localStorage. See docs/proposals/internal-app-data-store.md.
+  /** All conversations (with messages) plus the last-active id. */
+  'appdata:conversations:list': {
+    args: []
+    return: ConversationsSnapshot
+  }
+  /** Replace one conversation and its messages in a single transaction. */
+  'appdata:conversations:upsert': {
+    args: [conversation: StoredConversation]
+    return: void
+  }
+  'appdata:conversations:delete': {
+    args: [id: string]
+    return: void
+  }
+  /** Remember which conversation is active across restarts. */
+  'appdata:conversations:set-active': {
+    args: [id: string | null]
+    return: void
+  }
+  /** One-time migration import. No-ops when conversations already exist. */
+  'appdata:conversations:import': {
+    args: [conversations: StoredConversation[], activeConversationId: string | null]
+    return: { imported: number }
+  }
+  'appdata:saved-queries:list': {
+    args: []
+    return: SavedQuery[]
+  }
+  'appdata:saved-queries:upsert': {
+    args: [query: SavedQuery]
+    return: void
+  }
+  'appdata:saved-queries:delete': {
+    args: [id: string]
+    return: void
+  }
+  /** One-time migration import. No-ops when saved queries already exist. */
+  'appdata:saved-queries:import': {
+    args: [queries: SavedQuery[]]
+    return: { imported: number }
+  }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
     args: []
@@ -656,6 +701,16 @@ export const IPC_CHANNELS = {
   AI_CONVERSATION_SUMMARIZE: 'ai:conversation:summarize',
   AI_PERMISSION_GET_PROFILE: 'ai:permission:get-profile',
   AI_PERMISSION_SET_PROFILE: 'ai:permission:set-profile',
+  // ── App-data store (SQLite) ────────────────────────────────────────────
+  APPDATA_CONVERSATIONS_LIST: 'appdata:conversations:list',
+  APPDATA_CONVERSATIONS_UPSERT: 'appdata:conversations:upsert',
+  APPDATA_CONVERSATIONS_DELETE: 'appdata:conversations:delete',
+  APPDATA_CONVERSATIONS_SET_ACTIVE: 'appdata:conversations:set-active',
+  APPDATA_CONVERSATIONS_IMPORT: 'appdata:conversations:import',
+  APPDATA_SAVED_QUERIES_LIST: 'appdata:saved-queries:list',
+  APPDATA_SAVED_QUERIES_UPSERT: 'appdata:saved-queries:upsert',
+  APPDATA_SAVED_QUERIES_DELETE: 'appdata:saved-queries:delete',
+  APPDATA_SAVED_QUERIES_IMPORT: 'appdata:saved-queries:import',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',
