@@ -28,6 +28,7 @@ in-app **Help → Verql User Guide** menu links here.
 | [i18n.md](./i18n.md) | Internationalization: the dependency-free, cross-process message catalogue (`shared/i18n`), the typed `t()` / `MessageKey`, the renderer `<I18nProvider>`/`useTranslation`, key naming, interpolation/plurals, and how locales + plugin catalogues register. |
 | [ai.md](./ai.md) | The AI assistant subsystem: providers, the shared tool registry (AI + MCP), the App-Action registry (deep-link chips + agentic UI), the orchestration loop with token budgeting, and persisted/branchable conversation history. |
 | [notifications.md](./notifications.md) | The notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin. Read before touching approval surfacing. |
+| [activity.md](./activity.md) | The activity & logging subsystem: the unified in-memory activity stream (queries, tool calls, connections, notifications, network, `log` diagnostics) for users and devs, the `logger` service, IPC **batching** + renderer **pause** for performance, and the filter/search/export **Activity panel**. |
 | [plugin-audit.md](./plugin-audit.md) | How the plugin permission/capability audit works and what it checks. |
 
 **Design records** live in [proposals/](./proposals/): the internal app-data

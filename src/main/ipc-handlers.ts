@@ -18,6 +18,8 @@ import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
 import { ActivityLog } from './activity/log'
+import { ActivityBatcher } from './activity/batcher'
+import { createLogger } from './logging/logger'
 import { BrowserWindow } from 'electron'
 import { KeyringService } from './keyring'
 import { AppDataStore } from './appdata/store'
@@ -112,11 +114,20 @@ export function registerIpcHandlers(): void {
   // as native notifications. Provided as a service so plugins reach it.
   const attentionHub = new AttentionHubImpl()
   services.provide(ATTENTION_SERVICE_ID, attentionHub)
-  activityLog.subscribe((entry) => {
+  // Stream activity to the renderer in coalesced batches: a busy stream (a
+  // migration, a chatty AI loop, verbose logging) becomes a few IPC
+  // round-trips instead of one per entry, keeping the Activity panel smooth.
+  const activityBatcher = new ActivityBatcher((entries) => {
     for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.ACTIVITY_EVENT, entry)
+      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.ACTIVITY_BATCH, entries)
     }
   })
+  activityLog.subscribe(activityBatcher.push)
+  // App logger (glue): mirrors to the console AND records into the activity
+  // stream as `log` entries, so diagnostics are readable/filterable/exportable
+  // from the in-app Activity panel. Exposed as a service for plugins.
+  const logger = createLogger(activityLog)
+  services.provide('logger', logger)
   // Log every AI/MCP tool execution (the AI loop routes through
   // toolRegistry.execute; the MCP server records its own path below).
   toolRegistry.setActivityRecorder(({ toolId, params, success, durationMs, error }) => {
@@ -252,7 +263,7 @@ export function registerIpcHandlers(): void {
       // registry. Starting earlier (at handler-registration time) would expose
       // an empty tool set.
       if (ctx.configStore.getSetting('mcp.enabled') as boolean) {
-        mcpServer.start().catch(err => console.error('[mcp] Auto-start failed:', err))
+        mcpServer.start().catch(err => logger.child('mcp').error('Auto-start failed', err))
       }
       // One-time inline-secrets migration: pre-encryption builds wrote passwords
       // directly into config.json. Sweep them into the keyring so config.json
@@ -270,7 +281,7 @@ export function registerIpcHandlers(): void {
         ctx.configStore.saveConnection(profile, secretKeys)
       }
     })
-    .catch(err => console.error('[plugins] Boot failed:', err))
+    .catch(err => logger.child('plugins').error('Boot failed', err))
 
   registerPluginHandlers(ctx, handle, {
     uiRegistry,
@@ -298,7 +309,7 @@ export function registerIpcHandlers(): void {
       await provider.onDrop({ filePath, fileName: name, extension: ext.toLowerCase() })
       return { handled: true }
     } catch (err) {
-      console.error('[plugins] drag-drop handler failed:', err)
+      logger.child('plugins').error('drag-drop handler failed', err)
       return { handled: false }
     }
   })
