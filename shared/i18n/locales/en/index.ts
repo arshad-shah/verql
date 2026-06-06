@@ -11,6 +11,10 @@ import { command } from './command'
 import { settings } from './settings'
 import { connections } from './connections'
 import { menu } from './menu'
+import { actions } from './actions'
+import { errors } from './errors'
+import { explorer } from './explorer'
+import { query } from './query'
 
 export const en = {
   common,
@@ -18,4 +22,8 @@ export const en = {
   settings,
   connections,
   menu,
+  actions,
+  errors,
+  explorer,
+  query,
 } as const

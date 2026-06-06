@@ -20,6 +20,8 @@ import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import type { QueryTab } from '@shared/types'
 import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
+import { t as coreT } from '@shared/i18n'
 
 interface Props {
   tab: QueryTab
@@ -41,12 +43,13 @@ function isSchemaMutatingSql(sql: string): boolean {
 
 function destructiveReason(sql: string): string | null {
   const clean = stripSqlNoise(sql)
-  if (DESTRUCTIVE_PATTERN.test(clean)) return 'This query contains DELETE, DROP, or TRUNCATE.'
-  if (UPDATE_NO_WHERE_PATTERN.test(clean)) return 'This UPDATE has no WHERE clause — every row will be affected.'
+  if (DESTRUCTIVE_PATTERN.test(clean)) return coreT('query.destructive.deleteDropTruncate')
+  if (UPDATE_NO_WHERE_PATTERN.test(clean)) return coreT('query.destructive.updateNoWhere')
   return null
 }
 
 export function QueryPanel({ tab }: Props) {
+  const { t } = useTranslation()
   const { updateTabSql, setTabExecuting, setTabResults, setTabError, markTabSaved,
     setTabAutoCommit, setTabTxnStatus, setTabIsolation, setTabReadOnly } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
@@ -97,7 +100,7 @@ export function QueryPanel({ tab }: Props) {
     if (!sql) return
     if (confirmDestructive) {
       const reason = destructiveReason(sql)
-      if (reason && !window.confirm(`${reason}\n\nRun anyway?`)) return
+      if (reason && !window.confirm(t('query.destructive.runAnyway', { reason }))) return
     }
     // Only single-statement runs (e.g. statement gutter) carry an override.
     // We record per-statement status only in that case — multi-statement runs
@@ -145,7 +148,7 @@ export function QueryPanel({ tab }: Props) {
       const txnOpts = useSession ? { sessionId: tab.id } : undefined
       const queryPromise = executeWithSchema(sql, txnOpts)
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Query timed out after ${queryTimeout}s`)), timeoutMs)
+        setTimeout(() => reject(new Error(t('query.timeout.message', { seconds: queryTimeout }))), timeoutMs)
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
       if (result) setTabResults(tab.id, result)
@@ -197,7 +200,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, t])
 
   const handleExecute = useCallback(() => runSql(), [runSql])
 
@@ -279,21 +282,21 @@ export function QueryPanel({ tab }: Props) {
     if (!current || current.type !== 'query') return
     const sql = current.sql.trim()
     if (!sql) {
-      useToastStore.getState().addToast({ type: 'info', title: 'Nothing to save', message: 'Editor is empty' })
+      useToastStore.getState().addToast({ type: 'info', title: t('query.save.nothingToSaveTitle'), message: t('query.save.nothingToSaveMessage') })
       return
     }
     if (current.savedQueryId) {
       saveQuery({ id: current.savedQueryId, name: current.title, sql, connectionType: dbType })
       markTabSaved(current.id)
-      useToastStore.getState().addToast({ type: 'success', title: 'Saved', message: current.title })
+      useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedTitle'), message: current.title })
       return
     }
     // First-time save: open the in-app prompt (window.prompt is unsupported in
     // Electron's renderer and throws).
     pendingSqlRef.current = sql
-    setSaveDialogName(current.title?.trim() || `Query ${new Date().toLocaleString()}`)
+    setSaveDialogName(current.title?.trim() || t('query.save.defaultName', { timestamp: new Date().toLocaleString() }))
     setSaveDialogOpen(true)
-  }, [tab.id, dbType, markTabSaved])
+  }, [tab.id, dbType, markTabSaved, t])
 
   const confirmSaveDialog = useCallback(() => {
     const name = saveDialogName.trim()
@@ -304,9 +307,9 @@ export function QueryPanel({ tab }: Props) {
     }
     const id = saveQuery({ name, sql, connectionType: dbType })
     markTabSaved(tab.id, { title: name, savedQueryId: id })
-    useToastStore.getState().addToast({ type: 'success', title: 'Query saved', message: name })
+    useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedQueryTitle'), message: name })
     setSaveDialogOpen(false)
-  }, [saveDialogName, dbType, markTabSaved, tab.id])
+  }, [saveDialogName, dbType, markTabSaved, tab.id, t])
 
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
@@ -408,26 +411,26 @@ export function QueryPanel({ tab }: Props) {
           className="p-4 flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1">
-            <div className="text-sm font-medium">Save query</div>
+            <div className="text-sm font-medium">{t('query.save.title')}</div>
             <div className="text-xs text-text-tertiary">
-              Give this query a name to find it again in the Saved panel.
+              {t('query.save.description')}
             </div>
           </div>
           <Input
             autoFocus
             value={saveDialogName}
             onChange={(e) => setSaveDialogName(e.target.value)}
-            placeholder="Query name"
+            placeholder={t('query.save.namePlaceholder')}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setSaveDialogOpen(false)
             }}
           />
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" size="sm" onClick={() => setSaveDialogOpen(false)}>
-              Cancel
+              {t('query.save.cancel')}
             </Button>
             <Button type="submit" variant="solid" size="sm" disabled={!saveDialogName.trim()}>
-              Save
+              {t('query.save.save')}
             </Button>
           </div>
         </form>

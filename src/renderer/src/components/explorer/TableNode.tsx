@@ -13,6 +13,7 @@ import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface TableNodeProps {
   tableName: string
@@ -37,6 +38,7 @@ export function TableNode({
   onExportTable,
   highlightQuery,
 }: TableNodeProps) {
+  const { t } = useTranslation()
   const nodeKey = `table:${connectionId}:${schema}:${tableName}`
   const cacheKey = `${connectionId}:${schema}:${tableName}`
 
@@ -90,34 +92,34 @@ export function TableNode({
 
   function copyTableName() {
     navigator.clipboard.writeText(tableName).then(() => {
-      addToast({ type: 'success', title: 'Copied table name' })
+      addToast({ type: 'success', title: t('explorer.toast.copiedTableName') })
     })
   }
 
   async function copySampleQuery() {
     const query = await getSampleQuery()
     navigator.clipboard.writeText(query).then(() => {
-      addToast({ type: 'success', title: 'Copied sample query' })
+      addToast({ type: 'success', title: t('explorer.toast.copiedSampleQuery') })
     })
   }
 
   const menuItems = [
     {
-      label: 'Open in query tab',
+      label: t('explorer.menu.openInQueryTab'),
       onSelect: openInQueryTab,
     },
     {
-      label: 'Copy table name',
+      label: t('explorer.menu.copyTableName'),
       onSelect: copyTableName,
     },
     {
-      label: 'Copy sample query',
+      label: t('explorer.menu.copySampleQuery'),
       onSelect: copySampleQuery,
     },
     ...(onExportTable
       ? [
           {
-            label: 'Export table',
+            label: t('explorer.menu.exportTable'),
             onSelect: () => onExportTable(tableName),
           },
         ]
@@ -173,9 +175,9 @@ export function TableNode({
             className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip content="Open in new tab" side="top">
+            <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
               <IconButton
-                label="Open in query tab"
+                label={t('explorer.action.openInQueryTab')}
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
@@ -184,9 +186,9 @@ export function TableNode({
                 <ExternalLink size={10} />
               </IconButton>
             </Tooltip>
-            <Tooltip content="Copy sample query" side="top">
+            <Tooltip content={t('explorer.tooltip.copySampleQuery')} side="top">
               <IconButton
-                label="Copy sample query"
+                label={t('explorer.action.copySampleQuery')}
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
@@ -253,7 +255,7 @@ export function TableNode({
                   color: 'var(--color-text-secondary)',
                 }}
               >
-                {formatRowCount(rowCount)} rows
+                {t('explorer.table.rows', { value: formatRowCount(rowCount), n: rowCount })}
               </span>
             )}
             {tableIndexes.length > 0 && (
@@ -264,7 +266,7 @@ export function TableNode({
                   color: 'var(--color-text-secondary)',
                 }}
               >
-                {tableIndexes.length} idx
+                {t('explorer.table.indexes', { value: tableIndexes.length, n: tableIndexes.length })}
               </span>
             )}
           </span>
@@ -274,9 +276,9 @@ export function TableNode({
             className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip content="Open in new tab" side="top">
+            <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
               <IconButton
-                label="Open in query tab"
+                label={t('explorer.action.openInQueryTab')}
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
@@ -286,9 +288,9 @@ export function TableNode({
               </IconButton>
             </Tooltip>
             {onExportTable && (
-              <Tooltip content="Export table" side="top">
+              <Tooltip content={t('explorer.tooltip.exportTable')} side="top">
                 <IconButton
-                  label="Export table"
+                  label={t('explorer.action.exportTable')}
                   size="xs"
                   variant="ghost"
                   className="h-5 w-5"
@@ -308,7 +310,7 @@ export function TableNode({
               className="px-3 py-1 text-xs"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              Loading columns…
+              {t('explorer.loading.columns')}
             </p>
           ) : (
             tableColumns.map((col) => (

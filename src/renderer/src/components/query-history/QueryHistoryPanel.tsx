@@ -8,6 +8,7 @@ import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
   Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, Tooltip,
 } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 /** Compact relative time ("3m", "2h", "5d"); falls back to a date for old rows. */
 function relativeTime(ms: number): string {
@@ -41,6 +42,7 @@ function openHistoryEntry(entry: QueryHistoryEntry): void {
 }
 
 export function QueryHistoryPanel() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const entries = useQueryHistoryStore((s) => s.entries)
   const remove = useQueryHistoryStore((s) => s.remove)
@@ -58,14 +60,14 @@ export function QueryHistoryPanel() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search history..."
+            placeholder={t('query.history.searchPlaceholder')}
             size="sm"
             className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
           {entries.length > 0 && (
-            <Tooltip content="Clear all history" side="left">
+            <Tooltip content={t('query.history.clearAll')} side="left">
               <IconButton
-                label="Clear all history"
+                label={t('query.history.clearAll')}
                 size="xs"
                 variant="ghost"
                 onClick={() => clear()}
@@ -82,8 +84,8 @@ export function QueryHistoryPanel() {
         {filtered.length === 0 && (
           <EmptyState
             icon={<History size={20} className="text-text-muted" />}
-            title={entries.length === 0 ? 'No query history yet' : 'No matches'}
-            description={entries.length === 0 ? 'Queries you run will show up here' : undefined}
+            title={entries.length === 0 ? t('query.history.emptyTitle') : t('query.history.noMatches')}
+            description={entries.length === 0 ? t('query.history.emptyDescription') : undefined}
             className="py-8"
           />
         )}
@@ -111,18 +113,18 @@ export function QueryHistoryPanel() {
                 )}
                 {entry.status === 'ok' && entry.rowCount != null && (
                   <Text size="xs" color="muted" className="shrink-0 text-[10px]">
-                    {entry.rowCount} rows
+                    {t('query.history.rows', { count: entry.rowCount })}
                   </Text>
                 )}
                 {entry.durationMs != null && (
                   <Text size="xs" color="muted" className="shrink-0 text-[10px]">
-                    {entry.durationMs}ms
+                    {t('query.history.duration', { ms: entry.durationMs })}
                   </Text>
                 )}
               </Flex>
               <Flex className="hidden group-hover:flex items-center gap-0.5 shrink-0">
                 <IconButton
-                  label="Open in new tab"
+                  label={t('query.history.openInNewTab')}
                   size="xs"
                   variant="ghost"
                   onClick={(e) => { e.stopPropagation(); openHistoryEntry(entry) }}
@@ -131,7 +133,7 @@ export function QueryHistoryPanel() {
                   <Play size={10} />
                 </IconButton>
                 <IconButton
-                  label="Remove from history"
+                  label={t('query.history.remove')}
                   size="xs"
                   variant="ghost"
                   onClick={(e) => { e.stopPropagation(); remove(entry.id) }}

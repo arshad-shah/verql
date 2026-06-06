@@ -10,12 +10,14 @@ import { SchemaNode } from './SchemaNode'
 import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
 import { fuzzyMatch } from '@/lib/fuzzy-match'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ExplorerTreeProps {
   onExportTable?: (tableName: string) => void
 }
 
 export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
+  const { t } = useTranslation()
   const activeConnectionId = useConnectionsStore((s) => s.activeConnectionId)
   const connectedIds = useConnectionsStore((s) => s.connectedIds)
 
@@ -87,8 +89,8 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
       {!isConnected ? (
         <div className="flex-1 flex items-center justify-center p-4">
           <EmptyState
-            title="No connection"
-            description="Open the Connections panel (right sidebar) or click the status bar to connect."
+            title={t('explorer.empty.noConnection.title')}
+            description={t('explorer.empty.noConnection.description')}
             icon={<Database size={32} className="text-[var(--color-text-disabled)]" />}
           />
         </div>
@@ -111,10 +113,10 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
               {filteredTables.length === 0 && filteredViews.length === 0 && (
                 <Text size="xs" color="muted" className="px-4 py-2">
                   {allTables.length === 0
-                    ? 'Loading tables…'
+                    ? t('explorer.loading.tables')
                     : filterText
-                    ? `No matches for "${filterText}"`
-                    : 'No tables'}
+                    ? t('explorer.status.noMatchesFor', { query: filterText })
+                    : t('explorer.status.noTables')}
                 </Text>
               )}
               {filteredTables.length > 0 && (
@@ -125,7 +127,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                     weight="medium"
                     className="uppercase tracking-wider opacity-40 px-4 py-1"
                   >
-                    Tables
+                    {t('explorer.group.tables')}
                   </Text>
                   {filteredTables.map((t) => (
                     <TableNode
@@ -148,7 +150,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                     weight="medium"
                     className="uppercase tracking-wider opacity-40 px-4 py-1"
                   >
-                    Views
+                    {t('explorer.group.views')}
                   </Text>
                   {filteredViews.map((v) => (
                     <ViewNode

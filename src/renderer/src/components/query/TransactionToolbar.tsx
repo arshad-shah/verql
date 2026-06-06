@@ -2,6 +2,7 @@ import { Flex, Button, Badge, Select } from '@/primitives'
 import { Switch } from '@/primitives/forms/Switch'
 import type { DriverCapabilities } from '@/stores/driver-capabilities'
 import type { QueryTabTxnState } from '@shared/types'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export interface TransactionToolbarProps {
   caps: DriverCapabilities['session'] | undefined
@@ -22,19 +23,20 @@ export function TransactionToolbar({
   onIsolationChange,
   onReadOnlyChange,
 }: TransactionToolbarProps) {
+  const { t } = useTranslation()
   // No transaction UX to show
   if (!caps?.autoCommit && !caps?.manualTransactions) return null
 
-  const txnLabel = caps.transactionLabel ?? 'Transaction'
-  const rollbackLabel = caps.rollbackKind === 'discard' ? 'Discard' : 'Rollback'
+  const txnLabel = caps.transactionLabel ?? t('query.txn.transaction')
+  const rollbackLabel = caps.rollbackKind === 'discard' ? t('query.txn.discard') : t('query.txn.rollback')
   const isActive = txn.status === 'active'
 
   const statusBadgeVariant = isActive ? 'warning' : 'default'
   const statusText = isActive
-    ? `${txnLabel} active`
+    ? t('query.txn.statusActive', { label: txnLabel })
     : txn.autoCommit
-      ? 'Auto-commit'
-      : 'Idle'
+      ? t('query.txn.statusAutoCommit')
+      : t('query.txn.statusIdle')
 
   const isolationOptions = (caps.isolationLevels ?? []).map((level) => ({
     value: level,
@@ -52,11 +54,11 @@ export function TransactionToolbar({
       {caps.autoCommit && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            label="Auto-commit"
+            label={t('query.txn.autoCommit')}
             checked={txn.autoCommit}
             onChange={(e) => onToggleAutoCommit(e.target.checked)}
           />
-          <span className="text-xs text-text-secondary">Auto-commit</span>
+          <span className="text-xs text-text-secondary">{t('query.txn.autoCommit')}</span>
         </label>
       )}
 
@@ -65,7 +67,7 @@ export function TransactionToolbar({
           would silently no-op and mislead the user. */}
       {isolationOptions.length > 0 && (
         <Select
-          aria-label="Isolation level"
+          aria-label={t('query.txn.isolationLevel')}
           value={txn.isolationLevel ?? ''}
           onChange={(value) => onIsolationChange?.(value)}
           options={isolationOptions}
@@ -80,12 +82,12 @@ export function TransactionToolbar({
       {caps.readOnly && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            label="Read-only"
+            label={t('query.txn.readOnly')}
             checked={txn.readOnly}
             onChange={(e) => onReadOnlyChange?.(e.target.checked)}
             disabled={isActive}
           />
-          <span className="text-xs text-text-secondary">Read-only</span>
+          <span className="text-xs text-text-secondary">{t('query.txn.readOnly')}</span>
         </label>
       )}
 
@@ -99,7 +101,7 @@ export function TransactionToolbar({
             onClick={onCommit}
             className="bg-success/10 text-success hover:bg-success/20 border-0 disabled:opacity-40"
           >
-            Commit
+            {t('query.txn.commit')}
           </Button>
           <Button
             variant="outline"

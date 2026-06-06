@@ -3,6 +3,7 @@ import { Play, Square, FileSearch } from 'lucide-react'
 import { Flex, Button, Spinner, Spacer } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   onExecute: () => void
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, connectionType }: Props) {
+  const { t } = useTranslation()
   const toolbarContributions = usePluginUIStore(selectContributions('toolbar'))
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
           className="flex items-center gap-1.5 bg-error/10 text-error hover:bg-error/20 border-0"
         >
           <Spinner size="xs" />
-          <Square size={12} /> Cancel
+          <Square size={12} /> {t('query.toolbar.cancel')}
         </Button>
       ) : (
         <Button
@@ -38,7 +40,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
           onClick={onExecute}
           className="flex items-center gap-1.5 bg-success/10 text-success hover:bg-success/20 border-0"
         >
-          <Play size={12} /> Run
+          <Play size={12} /> {t('query.toolbar.run')}
         </Button>
       )}
 
@@ -49,7 +51,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
         disabled={isExecuting}
         className="flex items-center gap-1.5"
       >
-        <FileSearch size={12} /> Explain
+        <FileSearch size={12} /> {t('query.toolbar.explain')}
       </Button>
 
       <Spacer />

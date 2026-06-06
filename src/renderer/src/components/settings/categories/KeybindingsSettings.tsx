@@ -6,8 +6,10 @@ import { useSettingsStore } from '@/stores/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { defaultSettings, type KeyBinding } from '@shared/settings'
 import { chordFromEvent } from '@/lib/capture-keybinding'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function KeybindingsSettings() {
+  const { t } = useTranslation()
   const builtinKeybindings = useSettingsStore((s) => s.settings.keybindings)
   const setSetting = useSettingsStore((s) => s.set)
   const pluginCommands = usePluginCommands((s) => s.commands)
@@ -106,16 +108,14 @@ export function KeybindingsSettings() {
   return (
     <Stack gap="md">
       <Text size="xs" color="muted">
-        Customise shortcuts for built-in actions. Click the pencil and press a key
-        combination (with Cmd/Ctrl) to rebind. Plugin shortcuts are owned by their
-        plugin and shown for reference.
+        {t('settings.keybindings.blurb')}
       </Text>
 
       <SearchInput
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onClear={() => setSearch('')}
-        placeholder="Search keybindings..."
+        placeholder={t('settings.keybindings.searchPlaceholder')}
         size="sm"
       />
 
@@ -127,9 +127,9 @@ export function KeybindingsSettings() {
           <Table>
             <Table.Header>
               <Table.Row>
-                <Table.Head>Action</Table.Head>
-                <Table.Head>Shortcut</Table.Head>
-                <Table.Head className="w-20 text-right">Edit</Table.Head>
+                <Table.Head>{t('settings.keybindings.columnAction')}</Table.Head>
+                <Table.Head>{t('settings.keybindings.columnShortcut')}</Table.Head>
+                <Table.Head className="w-20 text-right">{t('settings.keybindings.columnEdit')}</Table.Head>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -141,7 +141,7 @@ export function KeybindingsSettings() {
                   <Table.Cell>
                     {recordingId === kb.id ? (
                       <Text size="sm" color="accent" className="italic">
-                        Press shortcut… (Esc to cancel)
+                        {t('settings.keybindings.pressShortcut')}
                       </Text>
                     ) : (
                       renderKeys(kb.keys)
@@ -149,9 +149,9 @@ export function KeybindingsSettings() {
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap="xs" justify="end">
-                      <Tooltip content="Rebind" side="left">
+                      <Tooltip content={t('settings.keybindings.rebind')} side="left">
                         <IconButton
-                          label={`Rebind ${kb.label}`}
+                          label={t('settings.keybindings.rebindAria', { label: kb.label })}
                           size="xs"
                           variant="ghost"
                           onClick={() => setRecordingId(recordingId === kb.id ? null : kb.id)}
@@ -160,9 +160,9 @@ export function KeybindingsSettings() {
                         </IconButton>
                       </Tooltip>
                       {isCustom(kb) && (
-                        <Tooltip content="Reset to default" side="left">
+                        <Tooltip content={t('settings.keybindings.resetToDefault')} side="left">
                           <IconButton
-                            label={`Reset ${kb.label}`}
+                            label={t('settings.keybindings.resetAria', { label: kb.label })}
                             size="xs"
                             variant="ghost"
                             onClick={() => resetBinding(kb.id)}
@@ -189,8 +189,8 @@ export function KeybindingsSettings() {
           <Table>
             <Table.Header>
               <Table.Row>
-                <Table.Head>Action</Table.Head>
-                <Table.Head>Shortcut</Table.Head>
+                <Table.Head>{t('settings.keybindings.columnAction')}</Table.Head>
+                <Table.Head>{t('settings.keybindings.columnShortcut')}</Table.Head>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -214,7 +214,7 @@ export function KeybindingsSettings() {
           size="sm"
           onClick={() => void setSetting('keybindings', defaultSettings.keybindings)}
         >
-          Reset all to defaults
+          {t('settings.keybindings.resetAll')}
         </Button>
       </Flex>
     </Stack>

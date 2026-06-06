@@ -3,6 +3,7 @@ import { Key, Link, Hash } from 'lucide-react'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { useToastStore } from '@/stores/toast'
 import type { SchemaColumn } from '@shared/types'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ColumnRowProps {
   column: SchemaColumn
@@ -96,24 +97,25 @@ function ConstraintBadge({ column }: { column: SchemaColumn }) {
 // ─── ColumnRow ─────────────────────────────────────────────────────────────────
 
 export function ColumnRow({ column, tableName }: ColumnRowProps) {
+  const { t } = useTranslation()
   const addToast = useToastStore((s) => s.addToast)
 
   const qualifiedName = `${tableName}.${column.name}`
 
   const menuItems = [
     {
-      label: 'Copy column name',
+      label: t('explorer.menu.copyColumnName'),
       onSelect: () => {
         navigator.clipboard.writeText(column.name).then(() => {
-          addToast({ type: 'success', title: 'Copied column name' })
+          addToast({ type: 'success', title: t('explorer.toast.copiedColumnName') })
         })
       },
     },
     {
-      label: 'Copy qualified name',
+      label: t('explorer.menu.copyQualifiedName'),
       onSelect: () => {
         navigator.clipboard.writeText(qualifiedName).then(() => {
-          addToast({ type: 'success', title: 'Copied qualified name' })
+          addToast({ type: 'success', title: t('explorer.toast.copiedQualifiedName') })
         })
       },
     },

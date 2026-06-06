@@ -6,6 +6,7 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 // Saved queries persist in the SQLite app-data store (main process). This module
 // keeps a synchronous in-memory mirror — so existing callers like `saveQuery`
@@ -77,6 +78,7 @@ export function useSavedQueries(): SavedQuery[] {
 }
 
 export function SavedQueriesPanel() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const queries = useSavedQueries()
   const filtered = search.trim()
@@ -95,7 +97,7 @@ export function SavedQueriesPanel() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search queries..."
+            placeholder={t('query.saved.searchPlaceholder')}
             size="sm"
             className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
@@ -106,8 +108,8 @@ export function SavedQueriesPanel() {
         {filtered.length === 0 && (
           <EmptyState
             icon={<Clock size={20} className="text-text-muted" />}
-            title={queries.length === 0 ? 'No saved queries yet' : 'No matches'}
-            description={queries.length === 0 ? 'Save queries from the editor with Cmd+S' : undefined}
+            title={queries.length === 0 ? t('query.saved.emptyTitle') : t('query.saved.noMatches')}
+            description={queries.length === 0 ? t('query.saved.emptyDescription') : undefined}
             className="py-8"
           />
         )}
@@ -122,7 +124,7 @@ export function SavedQueriesPanel() {
               <Text size="xs" color="primary" truncate className="flex-1">{query.name}</Text>
               <Flex className="hidden group-hover:flex items-center gap-0.5">
                 <IconButton
-                  label="Open in new tab"
+                  label={t('query.saved.openInNewTab')}
                   size="xs"
                   variant="ghost"
                   onClick={(e) => { e.stopPropagation(); handleOpenQuery(query) }}
@@ -131,7 +133,7 @@ export function SavedQueriesPanel() {
                   <Play size={10} />
                 </IconButton>
                 <IconButton
-                  label="Delete"
+                  label={t('query.saved.delete')}
                   size="xs"
                   variant="ghost"
                   onClick={(e) => { e.stopPropagation(); handleDelete(query.id) }}

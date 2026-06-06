@@ -24,6 +24,8 @@
  * don't regress UX.
  */
 
+import { t } from '@shared/i18n'
+
 export type DbErrorCode =
   | 'COLUMN_NOT_FOUND'
   | 'TABLE_NOT_FOUND'
@@ -90,102 +92,102 @@ const PATTERNS: Pattern[] = [
   // ─── Column / table not found ────────────────────────────────────────────
   {
     code: 'COLUMN_NOT_FOUND',
-    title: 'Column not found',
+    title: t('errors.COLUMN_NOT_FOUND.title'),
     // Postgres: `column "name" does not exist`
     // MySQL:    `Unknown column 'name' in 'field list'`
     // SQLite:   `no such column: name`
     match: /(?:column ["'`]?([^"'`]+)["'`]? does not exist|Unknown column ['"`]?([^'"`]+)['"`]?|no such column:\s*([^\s]+))/i,
     message: (g) => {
       const name = g?.[1] || g?.[2] || g?.[3] || 'referenced'
-      return `The column \`${name}\` doesn't exist in any of the tables in this query.`
+      return t('errors.COLUMN_NOT_FOUND.message', { name })
     },
-    hint: 'Check the spelling, confirm the column belongs to a table you\'ve referenced, and that you\'re using the right alias if columns share names.'
+    hint: t('errors.COLUMN_NOT_FOUND.hint')
   },
   {
     code: 'TABLE_NOT_FOUND',
-    title: 'Table not found',
+    title: t('errors.TABLE_NOT_FOUND.title'),
     // Postgres: `relation "name" does not exist`
     // MySQL:    `Table 'db.name' doesn't exist`
     // SQLite:   `no such table: name`
     match: /(?:relation ["'`]?([^"'`]+)["'`]? does not exist|Table ['"`]?[^.'"`]+\.([^'"`]+)['"`]? doesn['']?t exist|no such table:\s*([^\s]+))/i,
     message: (g) => {
       const name = g?.[1] || g?.[2] || g?.[3] || 'referenced'
-      return `The table \`${name}\` doesn't exist in the active schema.`
+      return t('errors.TABLE_NOT_FOUND.message', { name })
     },
-    hint: 'Verify the table name and the schema/database selector at the top of the tab.'
+    hint: t('errors.TABLE_NOT_FOUND.hint')
   },
   {
     code: 'SCHEMA_NOT_FOUND',
-    title: 'Schema not found',
+    title: t('errors.SCHEMA_NOT_FOUND.title'),
     match: /schema ["'`]?([^"'`]+)["'`]? does not exist/i,
-    message: (g) => `The schema \`${g?.[1] ?? '?'}\` doesn't exist on this connection.`,
-    hint: 'Pick a schema from the selector, or check that you connected to the right database.'
+    message: (g) => t('errors.SCHEMA_NOT_FOUND.message', { name: g?.[1] ?? '?' }),
+    hint: t('errors.SCHEMA_NOT_FOUND.hint')
   },
 
   // ─── Syntax ──────────────────────────────────────────────────────────────
   {
     code: 'SYNTAX_ERROR',
-    title: 'SQL syntax error',
+    title: t('errors.SYNTAX_ERROR.title'),
     // Postgres: `syntax error at or near "X"`
     // MySQL:    `You have an error in your SQL syntax; ...near 'X' at line N`
     // SQLite:   `near "X": syntax error`
     match: /(?:syntax error at or near ["'`]?([^"'`]+)["'`]?|near ["'`]?([^"'`]+)["'`]?\s*[:,]\s*syntax error|You have an error in your SQL syntax.*?near ['"`]?([^'"`]+)['"`]?)/i,
     message: (g) => {
       const tok = g?.[1] || g?.[2] || g?.[3]
-      return tok ? `The parser choked near \`${tok}\`.` : 'The SQL parser couldn\'t make sense of this query.'
+      return tok ? t('errors.SYNTAX_ERROR.message', { token: tok }) : t('errors.SYNTAX_ERROR.messageGeneric')
     },
-    hint: 'Look just before the highlighted token — most SQL syntax errors come from the line above, not the line reported.'
+    hint: t('errors.SYNTAX_ERROR.hint')
   },
 
   // ─── Permissions / connectivity ──────────────────────────────────────────
   {
     code: 'PERMISSION_DENIED',
-    title: 'Permission denied',
+    title: t('errors.PERMISSION_DENIED.title'),
     match: /permission denied|access denied|insufficient privilege/i,
-    message: () => 'Your database user isn\'t allowed to run this query.',
-    hint: 'Use a role with the required privileges, or grant them explicitly (GRANT SELECT, ...).'
+    message: () => t('errors.PERMISSION_DENIED.message'),
+    hint: t('errors.PERMISSION_DENIED.hint')
   },
   {
     code: 'AUTH_FAILED',
-    title: 'Authentication failed',
+    title: t('errors.AUTH_FAILED.title'),
     match: /password authentication failed|Access denied for user|authentication failed|invalid password/i,
-    message: () => 'The database refused the credentials for this connection.',
-    hint: 'Re-enter the password in the connection editor, or check that the user still exists.'
+    message: () => t('errors.AUTH_FAILED.message'),
+    hint: t('errors.AUTH_FAILED.hint')
   },
   {
     code: 'CONNECTION_REFUSED',
-    title: 'Can\'t reach the database',
+    title: t('errors.CONNECTION_REFUSED.title'),
     match: /ECONNREFUSED|connection refused|getaddrinfo (?:ENOTFOUND|EAI_AGAIN)/i,
-    message: () => 'No database is listening at the configured host and port.',
-    hint: 'Confirm the host/port, the database is running, and a firewall isn\'t blocking the connection.'
+    message: () => t('errors.CONNECTION_REFUSED.message'),
+    hint: t('errors.CONNECTION_REFUSED.hint')
   },
   {
     code: 'CONNECTION_LOST',
-    title: 'Connection lost',
+    title: t('errors.CONNECTION_LOST.title'),
     match: /(?:server closed the connection|Connection lost|connection terminated|ECONNRESET|read ECONNRESET|server has gone away|connection ended)/i,
-    message: () => 'The database closed the connection unexpectedly.',
-    hint: 'Reconnect from the connection picker. If this keeps happening, check the server\'s idle-timeout / max-connections settings.'
+    message: () => t('errors.CONNECTION_LOST.message'),
+    hint: t('errors.CONNECTION_LOST.hint')
   },
 
   // ─── Timing ──────────────────────────────────────────────────────────────
   {
     code: 'TIMEOUT',
-    title: 'Query timed out',
+    title: t('errors.TIMEOUT.title'),
     match: /timed out after|query timeout|statement timeout|canceling statement due to statement timeout/i,
-    message: () => 'The query ran longer than the configured timeout.',
-    hint: 'Increase the query timeout in Settings → General, or narrow the query (add a WHERE / LIMIT).'
+    message: () => t('errors.TIMEOUT.message'),
+    hint: t('errors.TIMEOUT.hint')
   },
   {
     code: 'QUERY_CANCELLED',
-    title: 'Query cancelled',
+    title: t('errors.QUERY_CANCELLED.title'),
     match: /(?:cancell?ing statement due to user request|query was cancelled|Interrupted)/i,
-    message: () => 'You cancelled this query before it finished.',
+    message: () => t('errors.QUERY_CANCELLED.message'),
   },
 
   // ─── Constraints ─────────────────────────────────────────────────────────
   {
     code: 'UNIQUE_VIOLATION',
-    title: 'Duplicate value',
+    title: t('errors.UNIQUE_VIOLATION.title'),
     // Postgres: `duplicate key value violates unique constraint "name"`
     // MySQL:    `Duplicate entry 'X' for key 'name'`
     // SQLite:   `UNIQUE constraint failed: t.c`
@@ -193,74 +195,76 @@ const PATTERNS: Pattern[] = [
     message: (g) => {
       const detail = g?.[1] || g?.[3] || g?.[4]
       return detail
-        ? `A row with this value already exists (constraint \`${detail}\`).`
-        : 'A row with this value already exists.'
+        ? t('errors.UNIQUE_VIOLATION.message', { constraint: detail })
+        : t('errors.UNIQUE_VIOLATION.messageGeneric')
     },
-    hint: 'Use a different unique value, or update the existing row instead of inserting.'
+    hint: t('errors.UNIQUE_VIOLATION.hint')
   },
   {
     code: 'NOT_NULL_VIOLATION',
-    title: 'Required column missing',
+    title: t('errors.NOT_NULL_VIOLATION.title'),
     match: /null value in column ["'`]?([^"'`]+)["'`]?|Column ['"`]?([^'"`]+)['"`]? cannot be null|NOT NULL constraint failed:\s*([^\s]+)/i,
     message: (g) => {
       const col = g?.[1] || g?.[2] || g?.[3]
       return col
-        ? `Column \`${col}\` is required but no value was provided.`
-        : 'A required column is missing a value.'
+        ? t('errors.NOT_NULL_VIOLATION.message', { column: col })
+        : t('errors.NOT_NULL_VIOLATION.messageGeneric')
     }
   },
   {
     code: 'FOREIGN_KEY_VIOLATION',
-    title: 'Foreign key constraint failed',
+    title: t('errors.FOREIGN_KEY_VIOLATION.title'),
     match: /violates foreign key constraint|Cannot add or update a child row|FOREIGN KEY constraint failed|REFERENCES constraint failed/i,
-    message: () => 'A referenced row in another table doesn\'t exist (or you\'re deleting a row that other tables still point to).',
-    hint: 'Insert the parent row first, or remove the referencing rows before deleting.'
+    message: () => t('errors.FOREIGN_KEY_VIOLATION.message'),
+    hint: t('errors.FOREIGN_KEY_VIOLATION.hint')
   },
   {
     code: 'CHECK_VIOLATION',
-    title: 'Check constraint failed',
+    title: t('errors.CHECK_VIOLATION.title'),
     match: /violates check constraint|CHECK constraint failed/i,
-    message: () => 'A column value violates a CHECK constraint defined on the table.',
+    message: () => t('errors.CHECK_VIOLATION.message'),
   },
   {
     code: 'TYPE_MISMATCH',
-    title: 'Type mismatch',
+    title: t('errors.TYPE_MISMATCH.title'),
     match: /invalid input syntax for type|Incorrect (?:integer|decimal|datetime) value|datatype mismatch/i,
-    message: () => 'A value doesn\'t match the column\'s declared type.',
-    hint: 'Cast explicitly (e.g. `value::int`) or fix the input — quoted numbers, malformed dates, and NULL where NOT NULL is expected are the usual culprits.'
+    message: () => t('errors.TYPE_MISMATCH.message'),
+    hint: t('errors.TYPE_MISMATCH.hint')
   },
 
   // ─── Runtime ─────────────────────────────────────────────────────────────
   {
     code: 'DIVISION_BY_ZERO',
-    title: 'Division by zero',
+    title: t('errors.DIVISION_BY_ZERO.title'),
     match: /division by zero/i,
-    message: () => 'Something in the query divided by zero.',
-    hint: 'Guard the denominator with NULLIF(x, 0) or a CASE.'
+    message: () => t('errors.DIVISION_BY_ZERO.message'),
+    hint: t('errors.DIVISION_BY_ZERO.hint')
   },
   {
     code: 'DEADLOCK',
-    title: 'Deadlock',
+    title: t('errors.DEADLOCK.title'),
     match: /deadlock detected|Deadlock found when trying to get lock/i,
-    message: () => 'Two transactions blocked each other and the database aborted one of them.',
-    hint: 'Retry the query — deadlocks are usually transient.'
+    message: () => t('errors.DEADLOCK.message'),
+    hint: t('errors.DEADLOCK.hint')
   },
   {
     code: 'TRANSACTION_ABORTED',
-    title: 'Transaction aborted',
+    title: t('errors.TRANSACTION_ABORTED.title'),
     match: /current transaction is aborted/i,
-    message: () => 'An earlier statement in this transaction failed and the whole transaction is now poisoned.',
-    hint: 'Run `ROLLBACK` to clear the transaction, then re-run your statements.'
+    message: () => t('errors.TRANSACTION_ABORTED.message'),
+    hint: t('errors.TRANSACTION_ABORTED.hint')
   },
   {
     code: 'DUPLICATE_TABLE',
-    title: 'Table already exists',
+    title: t('errors.DUPLICATE_TABLE.title'),
     match: /relation ["'`]?([^"'`]+)["'`]? already exists|Table ['"`]?([^'"`]+)['"`]? already exists/i,
     message: (g) => {
-      const t = g?.[1] || g?.[2]
-      return t ? `A table named \`${t}\` already exists.` : 'A table with that name already exists.'
+      const name = g?.[1] || g?.[2]
+      return name
+        ? t('errors.DUPLICATE_TABLE.message', { name })
+        : t('errors.DUPLICATE_TABLE.messageGeneric')
     },
-    hint: 'Use `CREATE TABLE IF NOT EXISTS` or drop the existing one first.'
+    hint: t('errors.DUPLICATE_TABLE.hint')
   },
 
   // ─── App / IPC layer ─────────────────────────────────────────────────────
@@ -269,56 +273,56 @@ const PATTERNS: Pattern[] = [
   // making every caller write friendly strings inline.
   {
     code: 'KEYRING_DECRYPT_FAILED',
-    title: 'Couldn\'t unlock saved credentials',
+    title: t('errors.KEYRING_DECRYPT_FAILED.title'),
     // Electron safeStorage error after the OS keychain key rotates (laptop
     // password change, restore from backup, dev rebuilds with a new identity).
     match: /Error while decrypting the ciphertext|safeStorage\.decryptString|EncryptionAvailable/i,
-    message: () => 'The OS keychain refused to decrypt the credentials Verql has on file.',
-    hint: 'Open the connection or AI provider settings and re-enter the password / API key.'
+    message: () => t('errors.KEYRING_DECRYPT_FAILED.message'),
+    hint: t('errors.KEYRING_DECRYPT_FAILED.hint')
   },
   {
     code: 'AI_KEY_MISSING',
-    title: 'AI provider not configured',
+    title: t('errors.AI_KEY_MISSING.title'),
     match: /(?:OPENAI_API_KEY|ANTHROPIC_API_KEY).*?(?:missing|not set|required)|No (?:OpenAI|Anthropic) API key configured|API key (?:is )?(?:missing|required|not set)/i,
-    message: () => 'No API key is configured for the selected AI provider.',
-    hint: 'Open Settings → AI and paste your provider key, then try again.'
+    message: () => t('errors.AI_KEY_MISSING.message'),
+    hint: t('errors.AI_KEY_MISSING.hint')
   },
   {
     code: 'AI_RATE_LIMITED',
-    title: 'AI rate limit hit',
+    title: t('errors.AI_RATE_LIMITED.title'),
     match: /rate.?limit|429|too many requests/i,
-    message: () => 'The AI provider is rate-limiting requests from your key.',
-    hint: 'Wait a few seconds and retry, or switch to a different provider/model in Settings → AI.'
+    message: () => t('errors.AI_RATE_LIMITED.message'),
+    hint: t('errors.AI_RATE_LIMITED.hint')
   },
   {
     code: 'AI_QUOTA_EXCEEDED',
-    title: 'AI quota exhausted',
+    title: t('errors.AI_QUOTA_EXCEEDED.title'),
     match: /quota|insufficient_quota|billing|exceeded your current quota/i,
-    message: () => 'Your AI provider account is out of credits.',
-    hint: 'Top up at the provider dashboard, or switch providers in Settings → AI.'
+    message: () => t('errors.AI_QUOTA_EXCEEDED.message'),
+    hint: t('errors.AI_QUOTA_EXCEEDED.hint')
   },
   {
     code: 'AI_PROVIDER_ERROR',
-    title: 'AI provider error',
+    title: t('errors.AI_PROVIDER_ERROR.title'),
     // Catches generic 5xx and provider names appearing in error text. Specific
     // patterns above (rate-limit, quota, key) take precedence by ordering.
     match: /(?:OpenAI|Anthropic|Gemini|provider).*?(?:error|failed|unavailable)|5\d{2}\s*(?:Internal Server Error|Bad Gateway|Service Unavailable)/i,
-    message: () => 'The AI provider returned an error.',
-    hint: 'Try again in a moment, or switch models if the error persists.'
+    message: () => t('errors.AI_PROVIDER_ERROR.message'),
+    hint: t('errors.AI_PROVIDER_ERROR.hint')
   },
   {
     code: 'NETWORK_ERROR',
-    title: 'Network error',
+    title: t('errors.NETWORK_ERROR.title'),
     match: /fetch failed|network (?:error|request failed)|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|getaddrinfo/i,
-    message: () => 'Couldn\'t reach the remote service over the network.',
-    hint: 'Check your internet connection. If you\'re behind a VPN or proxy, verify it\'s configured.'
+    message: () => t('errors.NETWORK_ERROR.message'),
+    hint: t('errors.NETWORK_ERROR.hint')
   },
   {
     code: 'FILE_NOT_FOUND',
-    title: 'File not found',
+    title: t('errors.FILE_NOT_FOUND.title'),
     match: /ENOENT|no such file or directory/i,
-    message: () => 'The file Verql tried to open isn\'t at that path anymore.',
-    hint: 'Confirm the file still exists and you have read access to it.'
+    message: () => t('errors.FILE_NOT_FOUND.message'),
+    hint: t('errors.FILE_NOT_FOUND.hint')
   },
 ]
 
@@ -351,7 +355,7 @@ export function parseDbError(input: string | Error | unknown): DbError {
 
   return {
     code: 'UNKNOWN',
-    title: 'Something went wrong',
+    title: t('errors.UNKNOWN.title'),
     message: raw,
     raw
   }

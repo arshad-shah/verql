@@ -11,6 +11,7 @@ import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
 import { HighlightedText } from './HighlightedText'
 import { fuzzyMatch } from '@/lib/fuzzy-match'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface SchemaNodeProps {
   schemaName: string
@@ -21,6 +22,7 @@ interface SchemaNodeProps {
 }
 
 export function SchemaNode({ schemaName, connectionId, databaseName, depth, onExportTable }: SchemaNodeProps) {
+  const { t } = useTranslation()
   const nodeKey = databaseName
     ? `schema:${connectionId}:${databaseName}:${schemaName}`
     : `schema:${connectionId}:${schemaName}`
@@ -74,22 +76,22 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     try {
       clearCache(connectionId)
       await loadAll()
-      addToast({ type: 'success', title: 'Schema refreshed' })
+      addToast({ type: 'success', title: t('explorer.toast.schemaRefreshed') })
     } catch {
-      addToast({ type: 'error', title: 'Failed to refresh schema' })
+      addToast({ type: 'error', title: t('explorer.toast.schemaRefreshFailed') })
     }
   }
 
   function handleCopySchemaName() {
     navigator.clipboard.writeText(schemaName).then(() => {
-      addToast({ type: 'success', title: 'Copied schema name' })
+      addToast({ type: 'success', title: t('explorer.toast.copiedSchemaName') })
     })
   }
 
   const menuItems = [
-    { label: 'Open ER Diagram', onSelect: () => openErDiagram(connectionId, schemaName) },
-    { label: 'Refresh', onSelect: handleRefresh },
-    { label: 'Copy schema name', onSelect: handleCopySchemaName },
+    { label: t('explorer.menu.openErDiagram'), onSelect: () => openErDiagram(connectionId, schemaName) },
+    { label: t('explorer.menu.refresh'), onSelect: handleRefresh },
+    { label: t('explorer.menu.copySchemaName'), onSelect: handleCopySchemaName },
   ]
 
   const matches = (name: string) => !filterText || fuzzyMatch(filterText, name) !== null
@@ -153,9 +155,9 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
             className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5"
           >
             <span onClick={(e) => { e.stopPropagation(); openErDiagram(connectionId, schemaName) }}>
-              <Tooltip content="ER Diagram" side="top">
+              <Tooltip content={t('explorer.tooltip.erDiagram')} side="top">
                 <IconButton
-                  label="ER Diagram"
+                  label={t('explorer.action.erDiagram')}
                   size="xs"
                   variant="ghost"
                   className="h-5 w-5"
@@ -166,9 +168,9 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
               </Tooltip>
             </span>
             <span onClick={(e) => { e.stopPropagation(); handleRefresh() }}>
-              <Tooltip content="Refresh schema" side="top">
+              <Tooltip content={t('explorer.tooltip.refreshSchema')} side="top">
                 <IconButton
-                  label="Refresh schema"
+                  label={t('explorer.action.refreshSchema')}
                   size="xs"
                   variant="ghost"
                   className="h-5 w-5"
@@ -189,20 +191,20 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 className="py-1 text-xs"
                 style={{ paddingLeft: groupLabelPaddingLeft, color: 'var(--color-text-tertiary)' }}
               >
-                Loading…
+                {t('explorer.loading.generic')}
               </p>
             ) : filteredTables.length === 0 && filteredViews.length === 0 ? (
               <p
                 className="py-1 text-xs"
                 style={{ paddingLeft: groupLabelPaddingLeft, color: 'var(--color-text-tertiary)' }}
               >
-                No matches
+                {t('explorer.status.noMatches')}
               </p>
             ) : (
               <>
                 <SchemaGroup
                   storageKey={`${tableCacheKey}:tables`}
-                  label="Tables"
+                  label={t('explorer.group.tables')}
                   count={filteredTables.length}
                   icon={<Table2 size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -223,7 +225,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
 
                 <SchemaGroup
                   storageKey={`${tableCacheKey}:views`}
-                  label="Views"
+                  label={t('explorer.group.views')}
                   count={filteredViews.length}
                   icon={<Eye size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -242,7 +244,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
 
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:mvs`}
-                  label="Materialized Views"
+                  label={t('explorer.group.materializedViews')}
                   items={matViews.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Layers size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -250,12 +252,14 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:indexes`}
-                  label="Indexes"
+                  label={t('explorer.group.indexes')}
                   items={indexes.map((o) => ({
                     key: `${o.parent ?? ''}.${o.name}`,
                     label: o.name,
                     sub: o.parent
-                      ? `on ${o.parent}${o.returnType ? ' • ' + o.returnType : ''}`
+                      ? o.returnType
+                        ? t('explorer.object.indexOnWithType', { parent: o.parent, type: o.returnType })
+                        : t('explorer.object.indexOn', { parent: o.parent })
                       : o.returnType ?? undefined
                   }))}
                   icon={<KeySquare size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
@@ -264,11 +268,11 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:functions`}
-                  label="Functions"
+                  label={t('explorer.group.functions')}
                   items={functions.map((o) => ({
                     key: `${o.name}${o.signature ?? ''}`,
                     label: `${o.name}${o.signature ?? ''}`,
-                    sub: o.returnType ? `→ ${o.returnType}` : undefined,
+                    sub: o.returnType ? t('explorer.object.functionReturns', { type: o.returnType }) : undefined,
                   }))}
                   icon={<FunctionSquare size={12} style={{ color: 'var(--color-info)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -276,7 +280,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:procedures`}
-                  label="Procedures"
+                  label={t('explorer.group.procedures')}
                   items={procedures.map((o) => ({
                     key: `${o.name}${o.signature ?? ''}`,
                     label: `${o.name}${o.signature ?? ''}`,
@@ -287,11 +291,11 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:triggers`}
-                  label="Triggers"
+                  label={t('explorer.group.triggers')}
                   items={triggers.map((o) => ({
                     key: `${o.parent ?? ''}.${o.name}`,
                     label: o.name,
-                    sub: o.parent ? `on ${o.parent}` : undefined,
+                    sub: o.parent ? t('explorer.object.triggerOn', { parent: o.parent }) : undefined,
                   }))}
                   icon={<Zap size={12} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -299,7 +303,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:sequences`}
-                  label="Sequences"
+                  label={t('explorer.group.sequences')}
                   items={sequences.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Hash size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}
@@ -307,7 +311,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
                 />
                 <SchemaObjectGroup
                   storageKey={`${tableCacheKey}:extensions`}
-                  label="Extensions"
+                  label={t('explorer.group.extensions')}
                   items={extensions.map((o) => ({ key: o.name, label: o.name }))}
                   icon={<Package size={12} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}

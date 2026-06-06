@@ -11,6 +11,7 @@ import {
   type LensActionContext,
 } from '@/lib/statement-registry'
 import { useStatementStatus, hashStatement, type StatementStatus } from '@/stores/statement-status'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   editor: editor.IStandaloneCodeEditor
@@ -167,11 +168,12 @@ function GutterRow({
 }
 
 function StatusChip({ status }: { status: StatementStatus }) {
+  const { t } = useTranslation()
   if (status.kind === 'running') {
     return (
       <Text as="span" size="xs" color="muted" className="ml-2 inline-flex items-center gap-1">
         <Loader2 size={10} className="animate-spin" />
-        running
+        {t('query.statement.running')}
       </Text>
     )
   }
@@ -179,7 +181,7 @@ function StatusChip({ status }: { status: StatementStatus }) {
     return (
       <Text as="span" size="xs" color="error" className="ml-2 inline-flex items-center gap-1">
         <AlertCircle size={10} />
-        failed
+        {t('query.statement.failed')}
         {status.durationMs != null ? ` · ${formatMs(status.durationMs)}` : null}
       </Text>
     )
@@ -187,9 +189,9 @@ function StatusChip({ status }: { status: StatementStatus }) {
   return (
     <Text as="span" size="xs" color="success" className="ml-2 inline-flex items-center gap-1">
       <Check size={10} />
-      {status.durationMs != null ? formatMs(status.durationMs) : 'ok'}
+      {status.durationMs != null ? formatMs(status.durationMs) : t('query.statement.ok')}
       {status.rowCount != null
-        ? ` · ${status.rowCount} row${status.rowCount === 1 ? '' : 's'}`
+        ? ` · ${t('query.statement.rows', { count: status.rowCount })}`
         : null}
     </Text>
   )

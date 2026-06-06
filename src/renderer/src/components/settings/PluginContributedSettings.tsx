@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, Divider, Stack, Text, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
@@ -32,6 +33,7 @@ interface Props {
  * disappear from the host's Settings UI without a restart.
  */
 export function PluginContributedSettings({ category }: Props) {
+  const { t } = useTranslation()
   const [contributions, setContributions] = useState<PluginContribution[]>([])
 
   const reload = useCallback(async () => {
@@ -67,7 +69,7 @@ export function PluginContributedSettings({ category }: Props) {
           <Divider />
           <Box className="py-3">
             <Text size="xs" color="muted" weight="bold" className="uppercase tracking-wider">
-              From {c.pluginDisplayName}
+              {t('settings.contributed.from', { plugin: c.pluginDisplayName })}
             </Text>
           </Box>
           {c.schema.map((s) => (

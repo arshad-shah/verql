@@ -1,23 +1,25 @@
 import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { NumberInput, Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function EditorSettings() {
+  const { t } = useTranslation()
   const editor = useSettingsStore((s) => s.settings.editor)
   const setSetting = useSettingsStore((s) => s.set)
   const resetCategory = useSettingsStore((s) => s.resetCategory)
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">Configure the SQL editor</Text>
+      <Text size="xs" color="muted">{t('settings.editor.blurb')}</Text>
 
-      <SettingRow label="Font Size" description="Editor font size in pixels">
+      <SettingRow label={t('settings.editor.fontSize.label')} description={t('settings.editor.fontSize.description')}>
         <NumberInput value={editor.fontSize} onChange={(v) => setSetting('editor.fontSize', v)} min={10} max={24} size="sm" className="w-20" />
       </SettingRow>
 
-      <SettingRow label="Font Family" description="Font used in the editor">
+      <SettingRow label={t('settings.editor.fontFamily.label')} description={t('settings.editor.fontFamily.description')}>
         <Select
           value={editor.fontFamily}
           onChange={(val) => setSetting('editor.fontFamily', val)}
@@ -25,16 +27,16 @@ export function EditorSettings() {
           className="w-48"
           aria-label="Font family"
           options={[
-            { value: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace", label: 'JetBrains Mono' },
-            { value: "'SF Mono', 'Fira Code', monospace", label: 'SF Mono' },
-            { value: "'Fira Code', monospace", label: 'Fira Code' },
-            { value: "'Cascadia Code', monospace", label: 'Cascadia Code' },
-            { value: 'monospace', label: 'System Monospace' },
+            { value: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace", label: t('settings.editor.fontFamily.jetBrainsMono') },
+            { value: "'SF Mono', 'Fira Code', monospace", label: t('settings.editor.fontFamily.sfMono') },
+            { value: "'Fira Code', monospace", label: t('settings.editor.fontFamily.firaCode') },
+            { value: "'Cascadia Code', monospace", label: t('settings.editor.fontFamily.cascadiaCode') },
+            { value: 'monospace', label: t('settings.editor.fontFamily.systemMonospace') },
           ]}
         />
       </SettingRow>
 
-      <SettingRow label="Tab Size" description="Number of spaces per tab">
+      <SettingRow label={t('settings.editor.tabSize.label')} description={t('settings.editor.tabSize.description')}>
         <Select
           value={String(editor.tabSize)}
           onChange={(val) => setSetting('editor.tabSize', parseInt(val))}
@@ -42,13 +44,13 @@ export function EditorSettings() {
           className="w-24"
           aria-label="Tab size"
           options={[
-            { value: '2', label: '2 spaces' },
-            { value: '4', label: '4 spaces' },
+            { value: '2', label: t('settings.editor.tabSize.two') },
+            { value: '4', label: t('settings.editor.tabSize.four') },
           ]}
         />
       </SettingRow>
 
-      <SettingRow label="Cursor Style" description="Shape of the editor cursor">
+      <SettingRow label={t('settings.editor.cursorStyle.label')} description={t('settings.editor.cursorStyle.description')}>
         <Select
           value={editor.cursorStyle}
           onChange={(val) => setSetting('editor.cursorStyle', val)}
@@ -56,62 +58,62 @@ export function EditorSettings() {
           className="w-28"
           aria-label="Cursor style"
           options={[
-            { value: 'line', label: 'Line' },
-            { value: 'block', label: 'Block' },
-            { value: 'underline', label: 'Underline' },
+            { value: 'line', label: t('settings.editor.cursorStyle.line') },
+            { value: 'block', label: t('settings.editor.cursorStyle.block') },
+            { value: 'underline', label: t('settings.editor.cursorStyle.underline') },
           ]}
         />
       </SettingRow>
 
       <Divider />
 
-      <SettingRow label="Word Wrap" description="Wrap long lines in the editor">
-        <Switch label="Word wrap" checked={editor.wordWrap} onChange={(e) => setSetting('editor.wordWrap', e.target.checked)} />
+      <SettingRow label={t('settings.editor.wordWrap.label')} description={t('settings.editor.wordWrap.description')}>
+        <Switch label={t('settings.editor.wordWrap.label')} checked={editor.wordWrap} onChange={(e) => setSetting('editor.wordWrap', e.target.checked)} />
       </SettingRow>
 
-      <SettingRow label="Minimap" description="Show code minimap on the right side">
-        <Switch label="Minimap" checked={editor.minimap} onChange={(e) => setSetting('editor.minimap', e.target.checked)} />
+      <SettingRow label={t('settings.editor.minimap.label')} description={t('settings.editor.minimap.description')}>
+        <Switch label={t('settings.editor.minimap.label')} checked={editor.minimap} onChange={(e) => setSetting('editor.minimap', e.target.checked)} />
       </SettingRow>
 
-      <SettingRow label="Line Numbers" description="Show line numbers in the gutter">
-        <Switch label="Line numbers" checked={editor.lineNumbers} onChange={(e) => setSetting('editor.lineNumbers', e.target.checked)} />
+      <SettingRow label={t('settings.editor.lineNumbers.label')} description={t('settings.editor.lineNumbers.description')}>
+        <Switch label={t('settings.editor.lineNumbers.label')} checked={editor.lineNumbers} onChange={(e) => setSetting('editor.lineNumbers', e.target.checked)} />
       </SettingRow>
 
-      <SettingRow label="Bracket Matching" description="Highlight matching brackets">
-        <Switch label="Bracket matching" checked={editor.bracketMatching} onChange={(e) => setSetting('editor.bracketMatching', e.target.checked)} />
+      <SettingRow label={t('settings.editor.bracketMatching.label')} description={t('settings.editor.bracketMatching.description')}>
+        <Switch label={t('settings.editor.bracketMatching.label')} checked={editor.bracketMatching} onChange={(e) => setSetting('editor.bracketMatching', e.target.checked)} />
       </SettingRow>
 
-      <SettingRow label="Ligatures" description="Enable font ligatures">
-        <Switch label="Ligatures" checked={editor.ligatures} onChange={(e) => setSetting('editor.ligatures', e.target.checked)} />
+      <SettingRow label={t('settings.editor.ligatures.label')} description={t('settings.editor.ligatures.description')}>
+        <Switch label={t('settings.editor.ligatures.label')} checked={editor.ligatures} onChange={(e) => setSetting('editor.ligatures', e.target.checked)} />
       </SettingRow>
 
-      <SettingRow label="Highlight active line" description="Tint the row the cursor is on">
+      <SettingRow label={t('settings.editor.highlightActiveLine.label')} description={t('settings.editor.highlightActiveLine.description')}>
         <Switch
-          label="Highlight active line"
+          label={t('settings.editor.highlightActiveLine.label')}
           checked={editor.highlightActiveLine}
           onChange={(e) => setSetting('editor.highlightActiveLine', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Auto-close brackets" description="Automatically insert the matching bracket or quote">
+      <SettingRow label={t('settings.editor.autoClosingBrackets.label')} description={t('settings.editor.autoClosingBrackets.description')}>
         <Switch
-          label="Auto-close brackets"
+          label={t('settings.editor.autoClosingBrackets.label')}
           checked={editor.autoClosingBrackets}
           onChange={(e) => setSetting('editor.autoClosingBrackets', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Smooth cursor" description="Animate cursor movement">
+      <SettingRow label={t('settings.editor.smoothCursor.label')} description={t('settings.editor.smoothCursor.description')}>
         <Switch
-          label="Smooth cursor"
+          label={t('settings.editor.smoothCursor.label')}
           checked={editor.smoothCursor}
           onChange={(e) => setSetting('editor.smoothCursor', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Scroll past end" description="Allow scrolling beyond the last line">
+      <SettingRow label={t('settings.editor.scrollPastEnd.label')} description={t('settings.editor.scrollPastEnd.description')}>
         <Switch
-          label="Scroll past end"
+          label={t('settings.editor.scrollPastEnd.label')}
           checked={editor.scrollPastEnd}
           onChange={(e) => setSetting('editor.scrollPastEnd', e.target.checked)}
         />
@@ -122,7 +124,7 @@ export function EditorSettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('editor')}>Reset to Defaults</Button>
+        <Button variant="outline" size="sm" onClick={() => resetCategory('editor')}>{t('common.resetToDefaults')}</Button>
       </Flex>
     </Stack>
   )

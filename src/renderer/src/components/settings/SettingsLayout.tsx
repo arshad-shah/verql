@@ -6,6 +6,7 @@ import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categ
 import { useToastStore } from '@/stores/toast'
 import { useTabsStore } from '@/stores/tabs'
 import { tabActions } from '@/stores/tab-actions'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
 import { SETTINGS_CATEGORIES, SettingsCategoryNav } from './SettingsCategoryNav'
 import { GeneralSettings } from './categories/GeneralSettings'
@@ -48,9 +49,11 @@ const categoryComponents: Record<SettingsCategoryId, () => JSX.Element> = {
  *     silently doing nothing.
  */
 export function SettingsLayout() {
+  const { t } = useTranslation()
   const activeCategory = useUiStore((s) => s.activeSettingsCategory)
   const ActiveComponent = categoryComponents[activeCategory] ?? GeneralSettings
-  const currentLabel = SETTINGS_CATEGORIES.find((c) => c.id === activeCategory)?.label ?? 'Settings'
+  const currentLabel =
+    SETTINGS_CATEGORIES.find((c) => c.id === activeCategory)?.label ?? t('settings.layout.fallbackTitle')
 
   const [query, setQuery] = useState('')
 
@@ -73,10 +76,10 @@ export function SettingsLayout() {
   useEffect(() => {
     if (!activeTabId) return
     // Confirm this tab is actually the settings one before claiming the slot.
-    const t = useTabsStore.getState().tabs.find(t => t.id === activeTabId)
-    if (t?.type !== 'settings') return
+    const tab = useTabsStore.getState().tabs.find(t => t.id === activeTabId)
+    if (tab?.type !== 'settings') return
     tabActions.register(activeTabId, {
-      label: 'Settings',
+      label: t('settings.layout.fallbackTitle'),
       // Settings auto-save; nothing to flush. We still register so Cmd+S
       // feels acknowledged and `tabActions.isDirty(id)` returns false
       // (no confirm prompt on close).
@@ -84,13 +87,13 @@ export function SettingsLayout() {
       onSave: () => {
         useToastStore.getState().addToast({
           type: 'info',
-          title: 'Auto-saved',
-          message: 'Settings apply immediately — no save required.',
+          title: t('settings.layout.autoSaveToastTitle'),
+          message: t('settings.layout.autoSaveToastMessage'),
         })
       },
     })
     return () => tabActions.unregister(activeTabId)
-  }, [activeTabId])
+  }, [activeTabId, t])
 
   return (
     <Flex direction="row" className="h-full">
@@ -105,13 +108,13 @@ export function SettingsLayout() {
             <Input
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search settings"
+              placeholder={t('settings.layout.searchPlaceholder')}
               size="sm"
               className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
             />
             {query && (
               <IconButton
-                label="Clear search"
+                label={t('settings.layout.clearSearch')}
                 size="xs"
                 variant="ghost"
                 onClick={() => setQuery('')}
@@ -125,7 +128,7 @@ export function SettingsLayout() {
         <ScrollArea direction="vertical" className="flex-1">
           <Box paddingY="sm">
             <Text size="xs" color="muted" weight="bold" className="px-4 py-2 uppercase tracking-wider">
-              {query ? `Matches (${filteredCategories.length})` : 'Categories'}
+              {query ? t('settings.layout.matches', { count: filteredCategories.length }) : t('settings.layout.categories')}
             </Text>
           </Box>
           <Divider />
@@ -142,7 +145,7 @@ export function SettingsLayout() {
                 single scope today, so we just confirm the auto-save behaviour
                 instead — keeps users from looking for a save button. */}
             <Text size="xs" color="muted" className="italic">
-              Changes save automatically
+              {t('settings.layout.autoSaveHint')}
             </Text>
           </Flex>
         </Box>
@@ -152,7 +155,7 @@ export function SettingsLayout() {
               with breakpoint so the body breathes when the user widens the
               tab. */}
           <Box className="w-full max-w-[1280px] mx-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10">
-            <SectionErrorBoundary label={`${currentLabel} settings`} resetKey={activeCategory}>
+            <SectionErrorBoundary label={t('settings.layout.sectionLabel', { label: currentLabel })} resetKey={activeCategory}>
               <ActiveComponent />
             </SectionErrorBoundary>
           </Box>

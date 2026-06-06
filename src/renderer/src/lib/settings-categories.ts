@@ -2,6 +2,7 @@
 // category ids, mirroring how `IPC_CHANNELS` centralises channel names. Every
 // place that opens settings at a category, renders the category nav, or maps a
 // category to a body component imports from here instead of repeating literals.
+import { t } from '@shared/i18n'
 
 export const SETTINGS_CATEGORY = {
   GENERAL: 'general',
@@ -26,15 +27,15 @@ export interface SettingsCategoryDef {
 
 /** Ordered catalogue rendered by the settings category nav. */
 export const SETTINGS_CATEGORIES: SettingsCategoryDef[] = [
-  { id: SETTINGS_CATEGORY.GENERAL, label: 'General' },
-  { id: SETTINGS_CATEGORY.APPEARANCE, label: 'Appearance' },
-  { id: SETTINGS_CATEGORY.EDITOR, label: 'Editor' },
-  { id: SETTINGS_CATEGORY.CONNECTIONS, label: 'Connections' },
-  { id: SETTINGS_CATEGORY.DATA_DISPLAY, label: 'Data Display' },
-  { id: SETTINGS_CATEGORY.KEYBINDINGS, label: 'Keybindings' },
-  { id: SETTINGS_CATEGORY.AI, label: 'AI', ownedBy: 'verql-plugin-ai' },
-  { id: SETTINGS_CATEGORY.MCP, label: 'MCP Server' },
-  { id: SETTINGS_CATEGORY.PLUGINS, label: 'Plugins' },
+  { id: SETTINGS_CATEGORY.GENERAL, label: t('settings.nav.general') },
+  { id: SETTINGS_CATEGORY.APPEARANCE, label: t('settings.nav.appearance') },
+  { id: SETTINGS_CATEGORY.EDITOR, label: t('settings.nav.editor') },
+  { id: SETTINGS_CATEGORY.CONNECTIONS, label: t('settings.nav.connections') },
+  { id: SETTINGS_CATEGORY.DATA_DISPLAY, label: t('settings.nav.data-display') },
+  { id: SETTINGS_CATEGORY.KEYBINDINGS, label: t('settings.nav.keybindings') },
+  { id: SETTINGS_CATEGORY.AI, label: t('settings.nav.ai'), ownedBy: 'verql-plugin-ai' },
+  { id: SETTINGS_CATEGORY.MCP, label: t('settings.nav.mcp') },
+  { id: SETTINGS_CATEGORY.PLUGINS, label: t('settings.nav.plugins') },
 ]
 
 const CATEGORY_IDS = new Set<string>(Object.values(SETTINGS_CATEGORY))

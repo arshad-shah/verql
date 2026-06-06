@@ -2,12 +2,14 @@ import { useRef, useEffect, useState, type ChangeEvent } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { SearchInput, Box } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface SearchFilterProps {
   resultCount?: number
 }
 
 export function SearchFilter({ resultCount }: SearchFilterProps) {
+  const { t } = useTranslation()
   const filterText = useSchemaStore((s) => s.filterText)
   const setFilterText = useSchemaStore((s) => s.setFilterText)
   const activeConnectionId = useConnectionsStore((s) => s.activeConnectionId)
@@ -39,7 +41,7 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
         <SearchInput
           ref={inputRef}
           size="sm"
-          placeholder="Fuzzy search tables, views…"
+          placeholder={t('explorer.search.placeholder')}
           value={localValue}
           onChange={handleChange}
           onClear={handleClear}

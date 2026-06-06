@@ -1,23 +1,25 @@
 import { Stack, Divider, Flex, Button, Text } from '@/primitives'
 import { Input, Select, NumberInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function DataDisplaySettings() {
+  const { t } = useTranslation()
   const display = useSettingsStore((s) => s.settings.dataDisplay)
   const setSetting = useSettingsStore((s) => s.set)
   const resetCategory = useSettingsStore((s) => s.resetCategory)
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">How query results and table data are displayed</Text>
+      <Text size="xs" color="muted">{t('settings.dataDisplay.blurb')}</Text>
 
-      <SettingRow label="Null Display" description="Text shown for NULL values in results">
+      <SettingRow label={t('settings.dataDisplay.nullDisplay.label')} description={t('settings.dataDisplay.nullDisplay.description')}>
         <Input value={display.nullDisplay} onChange={(e) => setSetting('dataDisplay.nullDisplay', e.target.value)} size="sm" className="w-24" />
       </SettingRow>
 
-      <SettingRow label="Date Format" description="How date values are formatted">
+      <SettingRow label={t('settings.dataDisplay.dateFormat.label')} description={t('settings.dataDisplay.dateFormat.description')}>
         <Select
           value={display.dateFormat}
           onChange={(val) => setSetting('dataDisplay.dateFormat', val)}
@@ -25,17 +27,17 @@ export function DataDisplaySettings() {
           className="w-28"
           aria-label="Date format"
           options={[
-            { value: 'iso', label: 'ISO 8601' },
-            { value: 'locale', label: 'Locale' },
-            { value: 'custom', label: 'Custom' },
+            { value: 'iso', label: t('settings.dataDisplay.dateFormat.iso') },
+            { value: 'locale', label: t('settings.dataDisplay.dateFormat.locale') },
+            { value: 'custom', label: t('settings.dataDisplay.dateFormat.custom') },
           ]}
         />
       </SettingRow>
 
       {display.dateFormat === 'custom' && (
         <SettingRow
-          label="Custom Date Pattern"
-          description="Tokens: yyyy MM dd HH mm ss SSS — e.g. yyyy-MM-dd HH:mm:ss"
+          label={t('settings.dataDisplay.customDatePattern.label')}
+          description={t('settings.dataDisplay.customDatePattern.description')}
         >
           <Input
             value={display.customDateFormat}
@@ -47,7 +49,7 @@ export function DataDisplaySettings() {
         </SettingRow>
       )}
 
-      <SettingRow label="Boolean Display" description="How boolean values are rendered in results">
+      <SettingRow label={t('settings.dataDisplay.booleanDisplay.label')} description={t('settings.dataDisplay.booleanDisplay.description')}>
         <Select
           value={display.booleanDisplay}
           onChange={(val) => setSetting('dataDisplay.booleanDisplay', val)}
@@ -55,15 +57,15 @@ export function DataDisplaySettings() {
           className="w-32"
           aria-label="Boolean display"
           options={[
-            { value: 'true_false', label: 'true / false' },
-            { value: 'one_zero', label: '1 / 0' },
-            { value: 'yes_no', label: 'Yes / No' },
-            { value: 'checkmark', label: '✓ / ✗' },
+            { value: 'true_false', label: t('settings.dataDisplay.booleanDisplay.trueFalse') },
+            { value: 'one_zero', label: t('settings.dataDisplay.booleanDisplay.oneZero') },
+            { value: 'yes_no', label: t('settings.dataDisplay.booleanDisplay.yesNo') },
+            { value: 'checkmark', label: t('settings.dataDisplay.booleanDisplay.checkmark') },
           ]}
         />
       </SettingRow>
 
-      <SettingRow label="Number Format" description="How numeric values are formatted">
+      <SettingRow label={t('settings.dataDisplay.numberFormat.label')} description={t('settings.dataDisplay.numberFormat.description')}>
         <Select
           value={display.numberFormat}
           onChange={(val) => setSetting('dataDisplay.numberFormat', val)}
@@ -71,17 +73,17 @@ export function DataDisplaySettings() {
           className="w-28"
           aria-label="Number format"
           options={[
-            { value: 'raw', label: 'Raw' },
-            { value: 'locale', label: 'Locale' },
+            { value: 'raw', label: t('settings.dataDisplay.numberFormat.raw') },
+            { value: 'locale', label: t('settings.dataDisplay.numberFormat.locale') },
           ]}
         />
       </SettingRow>
 
-      <SettingRow label="Max Column Width" description="Maximum width in pixels for result columns">
+      <SettingRow label={t('settings.dataDisplay.maxColumnWidth.label')} description={t('settings.dataDisplay.maxColumnWidth.description')}>
         <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" className="w-24" />
       </SettingRow>
 
-      <SettingRow label="Truncate Text At" description="Trim long text cells to this many characters; the full value shows in a tooltip. 0 disables.">
+      <SettingRow label={t('settings.dataDisplay.truncateTextAt.label')} description={t('settings.dataDisplay.truncateTextAt.description')}>
         <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} min={0} max={2000} step={50} size="sm" className="w-24" />
       </SettingRow>
 
@@ -90,7 +92,7 @@ export function DataDisplaySettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('dataDisplay')}>Reset to Defaults</Button>
+        <Button variant="outline" size="sm" onClick={() => resetCategory('dataDisplay')}>{t('common.resetToDefaults')}</Button>
       </Flex>
     </Stack>
   )

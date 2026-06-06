@@ -1,14 +1,13 @@
 import { Stack, Text } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 
 export function ConnectionSettings() {
+  const { t } = useTranslation()
   return (
     <Stack gap="md">
       <Text size="xs" color="muted">
-        Connection options are owned by the database driver plugins. Per-driver
-        settings (SSL, ports, driver-specific options) live with the driver and
-        only show here while that plugin is active. Configure SSL and similar
-        options per connection in the connection form.
+        {t('settings.connections.blurb')}
       </Text>
 
       <PluginContributedSettings category="connections" />
