@@ -1,0 +1,65 @@
+import { ipcMain, BrowserWindow, Menu, type IpcMainInvokeEvent } from 'electron'
+import { IPC_CHANNELS } from '@shared/ipc'
+
+/** Resolve the window that issued the IPC call — multi-window safe, unlike
+ *  `getFocusedWindow()` which can be wrong if focus moved mid-flight. */
+function windowFor(event: IpcMainInvokeEvent): BrowserWindow | null {
+  return BrowserWindow.fromWebContents(event.sender)
+}
+
+/**
+ * Window-control handlers backing the custom title bar. These are registered
+ * with `ipcMain.handle` directly (not the typed `handle` wrapper) because each
+ * one needs the sender to act on the *requesting* window. The channels are
+ * still the shared `IPC_CHANNELS` constants, so the coverage test and renderer
+ * typings stay in force.
+ */
+export function registerWindowHandlers(): void {
+  ipcMain.handle(IPC_CHANNELS.WINDOW_MINIMIZE, (event) => {
+    windowFor(event)?.minimize()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_MAXIMIZE, (event) => {
+    const win = windowFor(event)
+    if (!win) return false
+    if (win.isMaximized()) win.unmaximize()
+    else win.maximize()
+    return win.isMaximized()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE, (event) => {
+    windowFor(event)?.close()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_IS_MAXIMIZED, (event) => {
+    return windowFor(event)?.isMaximized() ?? false
+  })
+
+  // ── Application menu (Windows/Linux title-bar menu bar) ──────────────────
+  // The custom title bar hides the native in-window menu bar, so the renderer
+  // renders its own menu *buttons* that pop the real native submenus. The menu
+  // template (built in index.ts) stays the single source of truth.
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_MENU_LIST, () => {
+    const menu = Menu.getApplicationMenu()
+    if (!menu) return []
+    return menu.items
+      .map((item, id) => ({ item, id }))
+      // Only top-level items that actually open a submenu and are visible.
+      .filter(({ item }) => item.type === 'submenu' && item.visible !== false)
+      .map(({ item, id }) => ({ id, label: item.label, enabled: item.enabled }))
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.WINDOW_MENU_POPUP,
+    (event, { id, x, y }: { id: number; x: number; y: number }) => {
+      const menu = Menu.getApplicationMenu()
+      const item = menu?.items[id]
+      const win = windowFor(event)
+      if (!item?.submenu || !win) return
+      // Coords arrive as viewport (renderer) pixels, which map 1:1 to the
+      // window content area; round to satisfy Electron's integer requirement.
+      item.submenu.popup({ window: win, x: Math.round(x), y: Math.round(y) })
+    },
+  )
+}

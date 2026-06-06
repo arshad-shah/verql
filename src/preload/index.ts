@@ -2,6 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcChannelMap } from '@shared/ipc'
 
 const electronAPI = {
+  /** Host OS, so the renderer can lay out the title bar / window controls to
+   *  match each platform's conventions without an extra IPC round-trip. */
+  platform: process.platform,
+
   invoke: <K extends keyof IpcChannelMap>(
     channel: K,
     ...args: IpcChannelMap[K]['args']

@@ -6,7 +6,22 @@ import { IPC_EVENTS } from '@shared/ipc'
 import { t } from '@shared/i18n'
 
 const isDev = !app.isPackaged
+const isMac = process.platform === 'darwin'
+const isWindows = process.platform === 'win32'
 const APP_NAME = 'Verql'
+
+// The renderer owns the title bar on every platform (see TitleBar.tsx). How we
+// strip the OS frame differs by platform:
+//   • macOS  — hidden inset bar with the native traffic lights overlaid (Mac
+//     users expect them; they sit in the reserved left inset).
+//   • Windows — hidden caption; the renderer draws its own min/max/close
+//     controls. The native Window Controls Overlay was avoided because its
+//     button height couldn't be matched to our bar under display scaling
+//     (buttons overflowed the bar); app-drawn controls are pixel-exact and
+//     match VS Code's Windows behaviour.
+//   • Linux  — no overlay API exists, so the window is frameless and the
+//     renderer draws its own controls too.
+// Windows/Linux controls are driven via the window:* IPC channels.
 /**
  * Identity used for on-disk storage (`app.getPath('userData')`) and the macOS
  * keychain service that backs `safeStorage`. From v0.1.0 onwards this MUST
@@ -187,8 +202,11 @@ function createWindow(): BrowserWindow {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 15, y: 10 },
+    ...(isMac
+      ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 15, y: 10 } }
+      : isWindows
+        ? { titleBarStyle: 'hidden' as const }
+        : { frame: false }),
     backgroundColor: '#0d0d1a',
     icon,
     webPreferences: {
@@ -221,6 +239,14 @@ function createWindow(): BrowserWindow {
       : url.startsWith('file://')
     if (!allowed) event.preventDefault()
   })
+
+  // Keep the renderer's maximise/restore icon in sync with the real window
+  // state (covers OS-level changes too: double-clicking the drag region,
+  // snap/aero, the window menu — not just our own toggle button).
+  const emitMaximizeState = (): void =>
+    win.webContents.send(IPC_EVENTS.WINDOW_MAXIMIZE_CHANGED, win.isMaximized())
+  win.on('maximize', emitMaximizeState)
+  win.on('unmaximize', emitMaximizeState)
 
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])

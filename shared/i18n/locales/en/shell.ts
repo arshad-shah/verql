@@ -1,6 +1,10 @@
 export const shell = {
   titleBar: {
     appName: 'Verql',
+    minimize: 'Minimize',
+    maximize: 'Maximize',
+    restore: 'Restore',
+    close: 'Close',
   },
   tabBar: {
     close: 'Close',
