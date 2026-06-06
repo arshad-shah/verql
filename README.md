@@ -7,7 +7,14 @@ as a bundled plugin.
 
 > **Status:** Pre-1.0. Expect rough edges and breaking changes between
 > minor versions. The contribution surfaces (plugin APIs, IPC channels)
-> are documented in [docs/](./docs/) and will be stabilised before 1.0.
+> are documented at **[verql.arshadshah.com](https://verql.arshadshah.com)**
+> and will be stabilised before 1.0.
+
+📚 **Documentation:** **[verql.arshadshah.com](https://verql.arshadshah.com)** —
+a [user guide](https://verql.arshadshah.com/guide/) for everyday use and
+[developer docs](https://verql.arshadshah.com/develop/architecture/) for the
+architecture and [plugin SDK](https://verql.arshadshah.com/plugins/). The site
+is built from [`docs/`](./docs/); its source lives in [`site/`](./site/).
 
 ![CI](https://github.com/arshad-shah/verql/actions/workflows/ci.yml/badge.svg)
 
@@ -67,9 +74,9 @@ and the plugin host. Everything dialect-specific lives in a plugin under
 process through typed IPC channels declared in `shared/ipc.ts`.
 
 To add a new database type, file format, AI provider, or UI panel: write
-a plugin. See [docs/plugins.md](./docs/plugins.md).
+a plugin. See [Writing Plugins](https://verql.arshadshah.com/plugins/).
 
-To add or change an IPC channel: see [docs/ipc.md](./docs/ipc.md).
+To add or change an IPC channel: see [IPC channels](https://verql.arshadshah.com/develop/ipc/).
 
 ## Contributing
 

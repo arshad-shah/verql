@@ -1,0 +1,11 @@
+# Standalone workspace root for the Verql docs site.
+#
+# Without this file, `pnpm install` run inside site/ climbs up to the repo's
+# root pnpm-workspace.yaml and tries to install the whole Electron app
+# (electron, better-sqlite3, ssh2, …). This empty workspace file pins pnpm's
+# root here, so the site installs only its own deps — which is exactly what
+# Cloudflare Pages does when its "root directory" is set to `site`.
+packages: []
+onlyBuiltDependencies:
+  - sharp
+  - esbuild

@@ -1,0 +1,93 @@
+---
+title: Verql
+description: A fast, extensible desktop database client. Developer docs for the app and plugin SDK, plus a guide for everyday users.
+template: splash
+editUrl: false
+hero:
+  tagline: A fast, extensible desktop database client — built on Electron + React, with a plugin for every driver, format, theme, and AI integration.
+  image:
+    alt: The Verql V-bars mark
+    file: ../../assets/verql-icon.svg
+  actions:
+    - text: User Guide
+      link: /guide/
+      icon: right-arrow
+      variant: primary
+    - text: Developer Docs
+      link: /develop/architecture/
+      icon: open-book
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/arshad-shah/verql
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+
+## Two doors, one client
+
+Verql is two audiences in one project. **Use** it to talk to your databases, or
+**extend** it — every database driver, import/export format, theme, and AI
+provider ships as a plugin on top of a small orchestrator core.
+
+<CardGrid>
+  <Card title="I'm using Verql" icon="laptop">
+    Connect to PostgreSQL, MySQL, SQLite, MongoDB, Redis, and Snowflake. Write
+    SQL with autocomplete, browse schemas and ER diagrams, move data in and out,
+    and lean on the built-in AI assistant.
+
+    [Open the User Guide →](/guide/)
+  </Card>
+  <Card title="I'm building on Verql" icon="puzzle">
+    Learn the architecture, the `shared/` process boundary, the plugin trust
+    model, and the `@verql/plugin-sdk`. Write a driver, exporter, panel, command,
+    or AI provider.
+
+    [Read the Developer Docs →](/develop/architecture/)
+  </Card>
+</CardGrid>
+
+## Start here
+
+<CardGrid>
+  <LinkCard
+    title="Install & connect"
+    description="Get Verql running on macOS, Linux, or Windows and create your first connection."
+    href="/guide/installation/"
+  />
+  <LinkCard
+    title="Architecture overview"
+    description="The whole picture: process model, subsystems, stores, and data-flow walkthroughs."
+    href="/develop/architecture/"
+  />
+  <LinkCard
+    title="Write a plugin"
+    description="Every contribution surface and how to build against the published plugin SDK."
+    href="/plugins/"
+  />
+  <LinkCard
+    title="Plugin security model"
+    description="Bundled vs third-party trust, the capability model, and process isolation."
+    href="/plugins/security/"
+  />
+</CardGrid>
+
+## Why Verql
+
+<CardGrid>
+  <Card title="Native drivers" icon="seti:db">
+    PostgreSQL, MySQL, SQLite, plus MongoDB, Redis, and Snowflake — each a
+    bundled plugin, not core code.
+  </Card>
+  <Card title="Plugin-first" icon="puzzle">
+    The main app is glue: registries, IPC, and UI. Plugins own the domain logic.
+  </Card>
+  <Card title="AI + MCP built in" icon="rocket">
+    OpenAI, Anthropic, and Ollama providers, with a built-in MCP server that
+    exposes the same gated tools to Claude Code.
+  </Card>
+  <Card title="Open source" icon="heart">
+    MIT licensed. Read the source, file an issue, or ship a plugin.
+  </Card>
+</CardGrid>

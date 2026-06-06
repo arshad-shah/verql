@@ -1,0 +1,58 @@
+---
+// Override of Starlight's Footer. We re-render the stock footer and append a
+// client script that renders any Mermaid diagrams on the page. Footer mounts
+// on every docs page, so this is a convenient, override-once seam.
+import Default from '@astrojs/starlight/components/Footer.astro'
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+<script>
+  import mermaid from 'mermaid'
+
+  function activeTheme(): 'dark' | 'neutral' {
+    return document.documentElement.dataset.theme === 'light' ? 'neutral' : 'dark'
+  }
+
+  async function renderMermaid() {
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLPreElement>('pre.mermaid'),
+    )
+    if (nodes.length === 0) return
+
+    for (const node of nodes) {
+      // Stash the original source the first time we see this node so we can
+      // re-render cleanly when the theme toggles.
+      if (node.dataset.src === undefined) {
+        node.dataset.src = node.textContent ?? ''
+      } else {
+        node.removeAttribute('data-processed')
+        node.innerHTML = node.dataset.src
+      }
+    }
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: activeTheme(),
+      securityLevel: 'strict',
+      fontFamily: 'inherit',
+    })
+
+    try {
+      await mermaid.run({ nodes })
+    } catch {
+      // A single malformed diagram shouldn't take the page down.
+    }
+  }
+
+  void renderMermaid()
+
+  // Re-render when the user toggles light/dark.
+  new MutationObserver(() => void renderMermaid()).observe(
+    document.documentElement,
+    { attributes: true, attributeFilter: ['data-theme'] },
+  )
+
+  // Re-render after client-side navigation (Starlight view transitions).
+  document.addEventListener('astro:page-load', () => void renderMermaid())
+</script>

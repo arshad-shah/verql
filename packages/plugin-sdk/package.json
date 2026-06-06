@@ -16,7 +16,7 @@
     "url": "git+https://github.com/arshad-shah/verql.git",
     "directory": "packages/plugin-sdk"
   },
-  "homepage": "https://github.com/arshad-shah/verql/tree/main/docs/sdk",
+  "homepage": "https://verql.arshadshah.com/plugins/sdk/",
   "bugs": {
     "url": "https://github.com/arshad-shah/verql/issues"
   },
