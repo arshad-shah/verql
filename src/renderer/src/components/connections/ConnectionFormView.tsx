@@ -110,7 +110,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       // Fetch ALL fetchable fields in one connection (single browser auth)
       const fieldKeys = fetchableFields.map(f => f.key)
       const options = await window.electronAPI.invoke(
-        'db:connection-options',
+        IPC_CHANNELS.DB_CONNECTION_OPTIONS,
         profile as unknown as ConnectionProfile,
         fieldKeys
       )

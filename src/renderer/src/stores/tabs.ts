@@ -36,6 +36,20 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
   }
 }
 
+/** Patch the query tab with `id`; non-matching and non-query tabs are untouched.
+ *  Collapses the otherwise-identical per-field setters into one shape. */
+function patchQueryTab(tabs: Tab[], id: string, patch: Partial<QueryTab>): Tab[] {
+  return tabs.map((t) => (t.id === id && t.type === 'query' ? { ...t, ...patch } : t))
+}
+
+/** Patch the transaction sub-state of the query tab with `id` (no-op if it has
+ *  no open txn record). */
+function patchTabTxn(tabs: Tab[], id: string, patch: Partial<QueryTabTxnState>): Tab[] {
+  return tabs.map((t) =>
+    t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, ...patch } } : t,
+  )
+}
+
 const MAX_RECENTLY_CLOSED = 10
 
 /** Minimal, serialisable shape of a query tab — what we persist for
@@ -188,11 +202,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     }))
   },
 
-  setTabDirty: (id, dirty) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, isDirty: dirty } : t)
-    }))
-  },
+  setTabDirty: (id, dirty) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { isDirty: dirty }) })),
 
   markTabSaved: (id, opts) => {
     set((s) => ({
@@ -209,79 +219,32 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     }))
   },
 
-  setTabConnection: (id, connectionId) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, connectionId } : t)
-    }))
-  },
+  setTabConnection: (id, connectionId) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { connectionId }) })),
 
-  setTabDatabase: (id, database) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, database } : t)
-    }))
-  },
+  setTabDatabase: (id, database) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { database }) })),
 
-  setTabSchema: (id, schema) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, schema } : t)
-    }))
-  },
+  setTabSchema: (id, schema) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { schema }) })),
 
-  setTabExecuting: (id, executing) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, isExecuting: executing, ...(executing ? { error: null } : {}) }
-          : t
-      )
-    }))
-  },
-
-  setTabResults: (id, results) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, results, isExecuting: false, error: null, isDirty: false, aiExplanation: null }
-          : t
-      )
-    }))
-  },
-
-  setTabError: (id, error) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, error, isExecuting: false }
-          : t
-      )
-    }))
-  },
-
-  setTabAiExplanation: (id, explanation) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, aiExplanation: explanation }
-          : t
-      )
-    }))
-  },
-
-  setTabAutoCommit: (id, autoCommit) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, autoCommit } } : t),
+  setTabExecuting: (id, executing) => set((s) => ({
+    // Clear any prior error when starting a run, but leave it on completion.
+    tabs: patchQueryTab(s.tabs, id, { isExecuting: executing, ...(executing ? { error: null } : {}) }),
   })),
 
-  setTabTxnStatus: (id, status) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, status } } : t),
+  setTabResults: (id, results) => set((s) => ({
+    tabs: patchQueryTab(s.tabs, id, { results, isExecuting: false, error: null, isDirty: false, aiExplanation: null }),
   })),
 
-  setTabIsolation: (id, isolationLevel) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, isolationLevel } } : t),
-  })),
+  setTabError: (id, error) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { error, isExecuting: false }) })),
 
-  setTabReadOnly: (id, readOnly) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, readOnly } } : t),
-  })),
+  setTabAiExplanation: (id, explanation) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { aiExplanation: explanation }) })),
+
+  setTabAutoCommit: (id, autoCommit) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { autoCommit }) })),
+
+  setTabTxnStatus: (id, status) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { status }) })),
+
+  setTabIsolation: (id, isolationLevel) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { isolationLevel }) })),
+
+  setTabReadOnly: (id, readOnly) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { readOnly }) })),
 
   openErDiagram: (connectionId: string, schema: string) => {
     const id = `er-${connectionId}-${schema}`

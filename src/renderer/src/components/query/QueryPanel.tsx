@@ -22,29 +22,17 @@ import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { t as coreT } from '@shared/i18n'
+import { isSchemaMutatingSql, destructiveKind } from '@/lib/sql-classify'
 
 interface Props {
   tab: QueryTab
 }
 
-const DDL_PATTERN = /(^|;)\s*(CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT|GRANT|REVOKE)\b/i
-const DESTRUCTIVE_PATTERN = /(^|;)\s*(DELETE|DROP|TRUNCATE)\b/i
-const UPDATE_NO_WHERE_PATTERN = /(^|;)\s*UPDATE\b(?![\s\S]*\bWHERE\b)/i
-
-function stripSqlNoise(sql: string): string {
-  return sql
-    .replace(/--[^\n]*/g, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-}
-
-function isSchemaMutatingSql(sql: string): boolean {
-  return DDL_PATTERN.test(stripSqlNoise(sql))
-}
-
+/** Localized confirm message for a destructive statement, or null when safe. */
 function destructiveReason(sql: string): string | null {
-  const clean = stripSqlNoise(sql)
-  if (DESTRUCTIVE_PATTERN.test(clean)) return coreT('query.destructive.deleteDropTruncate')
-  if (UPDATE_NO_WHERE_PATTERN.test(clean)) return coreT('query.destructive.updateNoWhere')
+  const kind = destructiveKind(sql)
+  if (kind === 'delete-drop-truncate') return coreT('query.destructive.deleteDropTruncate')
+  if (kind === 'update-no-where') return coreT('query.destructive.updateNoWhere')
   return null
 }
 
