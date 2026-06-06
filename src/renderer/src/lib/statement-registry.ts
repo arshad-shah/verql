@@ -1,7 +1,9 @@
 /**
- * Per-DB statement contributions. Each plugin (or bundled DB module) registers
- * a splitter + an ordered list of lens actions keyed by dbType. The
- * StatementGutter overlay is the only consumer.
+ * Statement contributions keyed by **statement-syntax id** (e.g. `'sql'`,
+ * `'redis'`, `'mongodb'`), which each driver declares via its `statementSyntax`
+ * capability. A splitter + ordered lens actions per syntax. The StatementGutter
+ * overlay is the only consumer; it resolves a connection's syntax from the
+ * driver capability (never from a hardcoded db-type list).
  */
 import type { LucideIcon } from 'lucide-react'
 
@@ -36,16 +38,16 @@ export interface StatementContribution {
 
 const contributions = new Map<string, StatementContribution>()
 
-export function registerStatementContribution(dbType: string, c: StatementContribution): void {
-  contributions.set(dbType, c)
+export function registerStatementContribution(syntax: string, c: StatementContribution): void {
+  contributions.set(syntax, c)
 }
 
-export function getStatementContribution(dbType: string): StatementContribution | undefined {
-  return contributions.get(dbType)
+export function getStatementContribution(syntax: string): StatementContribution | undefined {
+  return contributions.get(syntax)
 }
 
-export function invokeLensAction(dbType: string, actionId: string, ctx: LensActionContext): void {
-  const c = contributions.get(dbType)
+export function invokeLensAction(syntax: string, actionId: string, ctx: LensActionContext): void {
+  const c = contributions.get(syntax)
   if (!c) return
   const action = c.lensActions.find((a) => a.id === actionId)
   if (!action) return

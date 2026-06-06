@@ -17,7 +17,11 @@ interface Props {
   editor: editor.IStandaloneCodeEditor
   tabId: string
   connectionId: string | null
+  /** Real db type — passed through to lens-action handlers via the context. */
   dbType: string | undefined
+  /** Driver-declared statement syntax (capability) used to select the splitter +
+   *  lens actions. No gutter renders when the driver declares none. */
+  statementSyntax: string | undefined
 }
 
 interface ZoneEntry {
@@ -26,14 +30,14 @@ interface ZoneEntry {
   stmt: Statement
 }
 
-export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) {
+export function StatementGutter({ editor, tabId, connectionId, dbType, statementSyntax }: Props) {
   const entriesRef = useRef<ZoneEntry[]>([])
   const [, setTick] = useState(0)
   const bump = () => setTick((n) => n + 1)
 
   useEffect(() => {
-    if (!dbType) return
-    const contribution = getStatementContribution(dbType)
+    if (!statementSyntax) return
+    const contribution = getStatementContribution(statementSyntax)
     if (!contribution) return
 
     const reconcile = () => {
@@ -105,10 +109,12 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
         entriesRef.current = []
       })
     }
-  }, [editor, dbType])
+  }, [editor, statementSyntax])
 
-  if (!dbType) return null
-  const contribution = getStatementContribution(dbType)
+  // Need the syntax (to pick the splitter/actions) and the real db type (passed
+  // to lens-action handlers via the context).
+  if (!statementSyntax || !dbType) return null
+  const contribution = getStatementContribution(statementSyntax)
   if (!contribution) return null
 
   return (

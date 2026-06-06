@@ -123,6 +123,7 @@ export function activate(ctx: PluginContext): void {
     quoteChar: PG_QUOTE,
     placeholderStyle: 'numbered',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
     defaultSchemaCandidates: ['public'],
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },

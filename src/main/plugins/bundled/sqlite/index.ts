@@ -140,6 +140,7 @@ export function activate(ctx: PluginContext): void {
     quoteChar: SQLITE_QUOTE,
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
     defaultSchemaCandidates: ['main'],
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },

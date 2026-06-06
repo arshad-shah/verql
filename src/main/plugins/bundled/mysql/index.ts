@@ -136,6 +136,7 @@ export function activate(ctx: PluginContext): void {
     quoteChar: MY_QUOTE,
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
     defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },

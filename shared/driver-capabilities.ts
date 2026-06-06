@@ -45,6 +45,12 @@ export interface DriverCapabilities {
    *  see tests/unit/export-import-no-hardcoding.test.ts. */
   sqlDialect?: string
   editorLanguage?: string
+  /** Which built-in statement-splitting dialect the renderer's statement gutter
+   *  (CodeLens "Run/Explain" overlay) should use for this driver — e.g. `'sql'`,
+   *  `'redis'`, `'mongodb'`. The driver *declares* it; the renderer owns the
+   *  generic, Monaco-coupled splitter implementations and selects one by this id
+   *  (no hardcoded db-type enumeration). Omit for drivers with no statements. */
+  statementSyntax?: string
   defaultSchemaUseConnectionDatabase?: boolean
   defaultSchemaCandidates?: string[]
   hasSampleQuery: boolean

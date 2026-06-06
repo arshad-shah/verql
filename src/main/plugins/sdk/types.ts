@@ -158,6 +158,12 @@ export interface DriverFactory {
   /** Monaco editor language used for queries against this driver. Defaults to
    *  'sql' when omitted. The renderer never branches on connection type. */
   editorLanguage?: string
+  /** Built-in statement-splitting dialect for the renderer's statement gutter
+   *  (CodeLens "Run/Explain" per statement): `'sql'`, `'redis'`, or `'mongodb'`.
+   *  The driver declares which generic splitter the renderer should use; the
+   *  renderer owns the (Monaco-coupled) splitter implementations. Omit to
+   *  disable the per-statement gutter for this driver. */
+  statementSyntax?: string
   /** When true, prefer the connection's `database` field as the default
    *  schema in the renderer (MySQL semantics: schemas == databases). */
   defaultSchemaUseConnectionDatabase?: boolean

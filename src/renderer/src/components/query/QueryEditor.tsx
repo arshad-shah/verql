@@ -269,6 +269,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
           tabId={tabId}
           connectionId={connectionId}
           dbType={databaseType}
+          statementSyntax={cachedCaps?.statementSyntax}
         />
       ) : null}
     </>

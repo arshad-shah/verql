@@ -220,6 +220,7 @@ Do not use SQL syntax. Use standard Redis commands.`
       return new RedisAdapter(options, database)
     },
     editorLanguage: 'plaintext',
+    statementSyntax: 'redis',
     sampleQuery: async (key: string) => `GET ${key}`,
     getTableData,
     connectionFields: [
