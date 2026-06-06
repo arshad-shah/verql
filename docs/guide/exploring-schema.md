@@ -32,9 +32,18 @@ just like query output.
 ## The inspector panel
 
 The **inspector** reflects whatever you currently have selected — a row, a
-column, or a schema object — and lays out its details in a readable form. Select
-a row in any grid to see its full set of values, which is handy when a row is too
-wide to read comfortably across the grid.
+table, or a schema object — and lays out its details in a readable form.
+
+- **Row** — select a row in any grid to see its full set of values, which is
+  handy when a row is too wide to read comfortably across the grid. Values are
+  formatted by type (JSON is pretty-printed, `NULL` is called out), each field
+  has a hover **copy** button, and the toolbar can copy the whole row as **JSON**
+  or as a ready-to-paste **`INSERT`** statement.
+- **Table** — select a table (in the ER diagram or the explorer) to see its row
+  count, columns (with data type, nullability, default value, and PK/FK badges),
+  its indexes (with the indexed columns and a `UNIQUE` marker), and its foreign
+  keys (which column references which target). Quick actions let you **View data**
+  in a new query tab or open the table **in the ER diagram**.
 
 ## Chart panel
 
