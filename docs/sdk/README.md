@@ -31,6 +31,19 @@ npm install @verql/plugin-sdk
 | **Errors** | `safeCall`, `ErrorBudget`, `PluginError` | Match the host's error-handling contract. |
 | **Permissions** | `ALL_PERMISSIONS`, `PERMISSION_INFO`, `PermissionDeniedError`, `hasPermission`, `effectiveGrants`, `isPluginPermission`, type `PluginPermission` | The capability model your manifest declares against. |
 
+### Driver capabilities (declared, never branched on)
+
+The host treats every driver generically; a driver expresses dialect behaviour by
+declaring serializable capabilities on its `DriverFactory` (and a couple of
+optional adapter methods), not by the host special-casing its type:
+
+- `statementSyntax` — which statement splitter the CodeLens gutter uses (`'sql'` / `'redis'` / `'mongodb'`).
+- `errorRules` — regex rules that classify query errors into a `DbErrorCode` (the host owns the friendly message).
+- `parseQueryPlan(result)` on the adapter — parse EXPLAIN output into a `PlanNode` tree for the Query Plan view.
+- plus `sqlDialect`, `quoteChar`, `placeholderStyle`, `editorLanguage`, `defaultSchemaCandidates`, `session`, `explain`, …
+
+See [../plugins.md](../plugins.md) for the full driver example.
+
 ### What's deliberately *not* exported
 
 `createPluginContext` and the registry **implementations** (`DriverRegistryImpl`,

@@ -45,8 +45,11 @@ way to reach the OS.
 | `ipc.ts` | every IPC channel + event, as a typed map and `SCREAMING_SNAKE_CASE` constants |
 | `types.ts` | domain types: `ConnectionProfile`, `QueryResult`, `Tab`, schema metadata |
 | `ai-types.ts` | chat messages, stream events, the chat-start request |
-| `settings.ts` | `AppSettings` shape + defaults |
-| `driver-capabilities.ts`, `mcp.ts`, `plugin-ui-types.ts` | capability flags, MCP, plugin UI |
+| `settings.ts` | `AppSettings` shape + defaults (+ centralized `KEYBINDING_ACTION` ids) |
+| `driver-capabilities.ts` | serializable driver capability flags — incl. `statementSyntax`, `errorRules`, plan/session/explain support |
+| `db-errors.ts` | `DbErrorCode` taxonomy + serializable `DbErrorRule` (driver-contributed error classification) |
+| `i18n/` | the message catalogue + framework-free `t()` / `MessageKey` (see [i18n.md](./i18n.md)) |
+| `mcp.ts`, `plugin-ui-types.ts`, `appdata.ts` | MCP types, plugin UI contracts, app-data-store record types |
 
 All renderer↔main traffic goes through `ipc.ts`. The constant is mandatory at
 every call site (a CI test rejects string-literal `invoke`/`on` calls). See
@@ -72,7 +75,17 @@ every call site (a CI test rejects string-literal `invoke`/`on` calls). See
 `DbAdapter` (`db/adapter.ts`) is the contract every driver implements: connect /
 query / introspect (`getTables`, `getColumns`, `getSchemas`, …) plus optional
 session/transaction methods (`openSession`, `beginTransaction`, `commit`, …) for
-drivers that support manual transactions.
+drivers that support manual transactions, and an optional
+`parseQueryPlan(result)` so EXPLAIN parsing stays in the driver.
+
+**Drivers own their dialect knowledge end-to-end — the renderer never branches on
+db type.** Beyond SQL generation, a driver declares serializable capabilities the
+renderer consumes generically: `statementSyntax` (which statement splitter the
+CodeLens gutter uses), `errorRules` (regexes that classify query errors —
+messages stay in the renderer's i18n catalogue), `explain`/`session` support, and
+`parseQueryPlan` for plan trees. This is enforced by the `export-import-no-hardcoding`
+test, which fails if a db-type literal/branch reappears in the orchestrator or the
+key renderer files. See [proposals/db-boundary-renderer-migration.md](./proposals/db-boundary-renderer-migration.md).
 
 Per-query timeouts (`opts.timeoutMs`) are honoured by the pooled SQL drivers:
 Postgres sets a server-side `statement_timeout` on a dedicated client, MySQL
@@ -106,9 +119,22 @@ design system for UI.
 | `ui.ts` | panel layout, sidebars, bottom dock, settings category (persisted) |
 | `ai.ts` | AI chat: messages, providers/models, **conversations + history** |
 | `editor.ts`, `tab-actions.ts` | non-reactive registries of mounted Monaco editors / per-tab save+txn handlers |
+| `query-history.ts` | recorded query runs (mirror of the SQLite app-data `query_history` table), capped to `general.maxHistoryItems` |
+| `tab-persistence.ts` | debounced localStorage snapshot of open query tabs, restored on startup when `general.restoreTabsOnStartup` is on |
 | `selection.ts`, `notifications.ts`, `toast.ts` | inspector selection, the notification center, transient toasts |
 | `driver-capabilities.ts`, `themes.ts`, `settings.ts` | capability flags, theme list, settings mirror |
 | `plugin-*.ts` | plugin-contributed commands / panels / lifecycle |
+
+**Settings** (`general.*`, `appearance.*`, `editor.*`, …) flow UI → `settings`
+store → `settings:set` IPC → `ConfigStore` (atomic JSON, secrets to keyring) →
+broadcast back; every setting is consumed somewhere (editor options, result
+formatting, query history, tab restore, keybindings). Full pipeline + per-setting
+consumers: [settings.md](./settings.md).
+
+**Internationalization.** All user-facing strings resolve through `t()` from the
+cross-process catalogue in `shared/i18n`; the renderer wraps it with
+`<I18nProvider>` / `useTranslation` (locale synced from `general.language`). See
+[i18n.md](./i18n.md).
 
 **Design system** (`src/renderer/src/primitives/`) is organised by category
 (`forms/`, `layout/`, `surfaces/`, `data-display/`, …) and styled with
@@ -120,7 +146,7 @@ applied via a `data-theme` attribute by `ThemeProvider`.
 `lib/monaco-sql.ts`), AG Grid (results), `@xyflow/react` (ER diagrams), Recharts
 (chart panel).
 
-**Query editor.** The query editor renders per-statement actions through a `StatementGutter` overlay rather than Monaco's built-in CodeLens. Drivers contribute `splitStatements(source)` and `lensActions` (a list of `{ id, title, icon, when, handler }`) via the renderer-side statement registry; the gutter component owns the view-zone + content-widget lifecycle and reads execution results from the new `statement-status` store to show a per-statement chip (last run duration, row count, error). The plugin-facing API didn't change — only the renderer surface did.
+**Query editor.** The query editor renders per-statement actions through a `StatementGutter` overlay rather than Monaco's built-in CodeLens. The splitter + lens actions are keyed by **statement syntax** (`'sql'` / `'redis'` / `'mongodb'`), which each driver declares via its `statementSyntax` capability — the renderer resolves the syntax from capabilities and looks up the matching contribution (no hardcoded db-type list). The gutter owns the view-zone + content-widget lifecycle and reads execution results from the `statement-status` store to show a per-statement chip (last run duration, row count, error).
 
 ## Plugin system
 

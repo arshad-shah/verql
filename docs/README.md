@@ -22,8 +22,18 @@ in-app **Help → Verql User Guide** menu links here.
 | Doc | What's inside |
 |-----|---------------|
 | [architecture.md](./architecture.md) | The whole picture: process model, the `shared/` boundary, main-process subsystems, renderer stores + design system, the plugin model, and two end-to-end data-flow walkthroughs. **Start here.** |
+| [diagrams.md](./diagrams.md) | A diagram-first visual tour of every subsystem (30 Mermaid diagrams across flowchart, sequence, class, ER, state, mindmap). The companion to `architecture.md`. |
 | [ipc.md](./ipc.md) | How the renderer talks to the main process. Read this when you need to add or rename an IPC channel. |
+| [settings.md](./settings.md) | The settings subsystem: the UI → store → IPC → `ConfigStore` pipeline, every category, where each setting is consumed, and the query-history / tab-restore / keybinding-rebind features. |
+| [i18n.md](./i18n.md) | Internationalization: the dependency-free, cross-process message catalogue (`shared/i18n`), the typed `t()` / `MessageKey`, the renderer `<I18nProvider>`/`useTranslation`, key naming, interpolation/plurals, and how locales + plugin catalogues register. |
 | [ai.md](./ai.md) | The AI assistant subsystem: providers, the shared tool registry (AI + MCP), the App-Action registry (deep-link chips + agentic UI), the orchestration loop with token budgeting, and persisted/branchable conversation history. |
+| [notifications.md](./notifications.md) | The notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin. Read before touching approval surfacing. |
+| [plugin-audit.md](./plugin-audit.md) | How the plugin permission/capability audit works and what it checks. |
+
+**Design records** live in [proposals/](./proposals/): the internal app-data
+store, the DB-boundary renderer→plugin migration (plan parsing, error
+classification, statement splitting), and signed-plugins/registry. They capture
+intent + status for larger changes.
 
 The architecture is **orchestrator + plugins**: `src/main/` is the
 orchestrator (window management, IPC plumbing, plugin host) and almost
