@@ -53,7 +53,19 @@ visibility) — **both synchronous** over `results.rows`.
 5. Delete `lib/plan-parser.ts`; extend `export-import-no-hardcoding` guard to
    assert no `Node Type`/`cost=` literals in the renderer.
 
-## #2 — `lib/db-error.ts` (PG/MySQL/SQLite error patterns) — HIGH
+## #2 — `lib/db-error.ts` (PG/MySQL/SQLite error patterns) — ✅ DONE
+
+Shipped: `DbErrorCode` + serializable `DbErrorRule` moved to `shared/db-errors`;
+`errorRules` added to `DriverFactory` + `DriverCapabilities` (+ serialize). The
+postgresql/mysql/sqlite plugins declare their dialect's query-semantic rules
+(`bundled/*/error-rules.ts`). `parseDbError(raw, dbType?)` applies the active
+driver's rules first (regex from the driver, message from the renderer i18n),
+then host rules for connection/auth/app-layer errors that span drivers. Threaded
+`dbType` through QueryPanel + QueryErrorView (+ BottomDock). A 42-case
+characterization test pins classification across all dialects + host. Original
+analysis retained below.
+
+---
 
 **Problem.** The `PATTERNS` table hardcodes driver-specific error text. New
 drivers get no classification and can't contribute patterns. (The IPC/AI/network

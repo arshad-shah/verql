@@ -1,5 +1,6 @@
 import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
+import { sqliteErrorRules } from './error-rules'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { SqliteAdapter } from './sqlite-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
@@ -141,6 +142,7 @@ export function activate(ctx: PluginContext): void {
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
     statementSyntax: 'sql',
+    errorRules: sqliteErrorRules,
     defaultSchemaCandidates: ['main'],
     connectionFields: [
       { key: 'database', label: 'Database File', type: 'file', required: true },

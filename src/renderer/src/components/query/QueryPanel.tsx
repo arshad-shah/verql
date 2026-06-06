@@ -186,7 +186,7 @@ export function QueryPanel({ tab }: Props) {
         durationMs,
         error: raw,
       })
-      const parsed = parseDbError(raw)
+      const parsed = parseDbError(raw, dbType)
       // Tab stores the raw text so the QueryErrorView can re-parse and show
       // both the friendly summary and the original driver message — keeps
       // classification logic in one place.

@@ -7,6 +7,8 @@ import { useTranslation } from '@/i18n/I18nProvider'
 interface Props {
   /** Raw error message as caught from the IPC boundary. */
   error: string
+  /** Active connection's driver type, so driver error rules classify the error. */
+  dbType?: string
 }
 
 /**
@@ -21,9 +23,9 @@ interface Props {
  * errors surface; if we ever add another error surface (connection test,
  * import) it can reuse this verbatim.
  */
-export function QueryErrorView({ error }: Props) {
+export function QueryErrorView({ error, dbType }: Props) {
   const { t } = useTranslation()
-  const parsed = parseDbError(error)
+  const parsed = parseDbError(error, dbType)
   const [showRaw, setShowRaw] = useState(false)
   const isUnknown = parsed.code === 'UNKNOWN'
 

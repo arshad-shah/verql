@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Flex, Box, Text } from '@/primitives'
 import { useUiStore, BOTTOM_PANEL, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { QueryErrorView } from '@/components/results/QueryErrorView'
@@ -26,6 +27,7 @@ export function useHasBottomPanels(): boolean {
 export function BottomDock() {
   const { t } = useTranslation()
   const activeTab = useTabsStore(s => s.tabs.find(tab => tab.id === s.activeTabId))
+  const connections = useConnectionsStore(s => s.connections)
   const bottomActivePanel = useUiStore(s => s.bottomDockActivePanel)
   const setBottomActivePanel = useUiStore(s => s.setBottomDockActivePanel)
   const toggleBottomDock = useUiStore(s => s.toggleBottomDock)
@@ -83,7 +85,8 @@ export function BottomDock() {
         return <ResultsPanel results={qt.results} sql={qt.sql} tabId={qt.id} aiExplanation={qt.aiExplanation} />
       }
       if (qt.error) {
-        return <QueryErrorView error={qt.error} />
+        const dbType = connections.find(c => c.id === qt.connectionId)?.type
+        return <QueryErrorView error={qt.error} dbType={dbType} />
       }
       return (
         <Flex align="center" justify="center" className="h-full">

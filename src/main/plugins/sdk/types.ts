@@ -5,6 +5,7 @@ import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
 import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
+import type { DbErrorRule } from '@shared/db-errors'
 import type { JsonSchemaObject } from './tool-schema'
 export type { DriverCapabilities } from '@shared/driver-capabilities'
 
@@ -164,6 +165,13 @@ export interface DriverFactory {
    *  renderer owns the (Monaco-coupled) splitter implementations. Omit to
    *  disable the per-statement gutter for this driver. */
   statementSyntax?: string
+  /** Error-classification rules for this dialect's query-semantic errors
+   *  (bad column/table/schema, syntax, constraint violations, type mismatch,
+   *  duplicate table, division-by-zero, deadlock, aborted txn). The renderer
+   *  matches them (driver rules first, then host app/connection rules) to show a
+   *  friendly message — so per-dialect error text lives in the driver, not the
+   *  host. See shared/db-errors.ts. */
+  errorRules?: DbErrorRule[]
   /** When true, prefer the connection's `database` field as the default
    *  schema in the renderer (MySQL semantics: schemas == databases). */
   defaultSchemaUseConnectionDatabase?: boolean

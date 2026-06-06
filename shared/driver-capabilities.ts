@@ -1,3 +1,5 @@
+import type { DbErrorRule } from './db-errors'
+
 /** What transaction semantics a driver supports. All fields are data-only
  *  (no functions) so this serializes cleanly over IPC. */
 export interface SessionCapability {
@@ -51,6 +53,11 @@ export interface DriverCapabilities {
    *  generic, Monaco-coupled splitter implementations and selects one by this id
    *  (no hardcoded db-type enumeration). Omit for drivers with no statements. */
   statementSyntax?: string
+  /** Driver-contributed error-classification rules for this dialect's
+   *  query-semantic errors (bad column/table, syntax, constraints, …). The
+   *  renderer matches them to classify errors and pick a friendly message,
+   *  instead of hardcoding per-dialect error text. */
+  errorRules?: DbErrorRule[]
   defaultSchemaUseConnectionDatabase?: boolean
   defaultSchemaCandidates?: string[]
   hasSampleQuery: boolean
