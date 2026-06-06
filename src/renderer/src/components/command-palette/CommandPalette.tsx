@@ -224,7 +224,7 @@ export function CommandPalette({ open, onClose }: Props) {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a command..."
+            placeholder={t('command.searchPlaceholder')}
             size="sm"
             className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
           />
@@ -233,7 +233,7 @@ export function CommandPalette({ open, onClose }: Props) {
         {/* Results */}
         <ScrollArea direction="vertical" className="max-h-72 py-1">
           {filtered.length === 0 && (
-            <Text size="xs" color="muted" as="p" className="px-4 py-3 text-center">No matching commands</Text>
+            <Text size="xs" color="muted" as="p" className="px-4 py-3 text-center">{t('command.noMatch')}</Text>
           )}
           {filtered.map((cmd, i) => (
             <Button

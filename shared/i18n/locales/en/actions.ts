@@ -90,5 +90,24 @@ export const actions = {
     title: 'Install a Plugin',
     description:
       'Open the plugin install screen. To enable or configure already-installed plugins instead, use open-settings with category "plugins".'
+  },
+  errors: {
+    provideSavedQuery: 'Provide a saved query name or id.',
+    noSavedQueryMatch: 'No saved query matches "{arg}".',
+    noActiveEditor: 'No active editor. Open or focus a query tab first.',
+    noEditorContent: 'No editor content to format.',
+    provideSql: 'Provide SQL to insert.',
+    noActiveSqlEditor: 'No active SQL editor. Open or focus a query tab first.',
+    noMatchingConnection: 'No matching saved connection. Use a name or id from the saved connections list.',
+    couldntConnect: 'Couldn\'t connect to "{name}".',
+    noConnectionToDisconnect: 'No connection to disconnect. Specify one by name or id.',
+    formatMustBe: 'Format must be "csv" or "json".',
+    noResultsToExport: 'No query results to export. Run a query first.',
+    noResultsToChart: 'No query results to chart. Run a query first.',
+    needColumnsToChart: 'Need at least two columns and one row to chart these results.',
+    provideTable: 'Provide a table name.',
+    noActiveConnection: 'No active connection. Connect to a database first.',
+    notConnected: 'Not connected to "{name}". Connect first.',
+    notConnectedEr: 'Not connected to "{name}". Connect first, then open the ER diagram.',
   }
 } as const

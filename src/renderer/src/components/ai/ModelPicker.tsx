@@ -3,6 +3,7 @@ import type { AIProviderInfo, AIModelInfo } from '@shared/ai-types'
 import { Text } from '@/primitives/typography/Text'
 import { Card } from '@/primitives/surfaces/Card'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ModelPickerProps {
   providers: AIProviderInfo[]
@@ -14,6 +15,7 @@ interface ModelPickerProps {
 }
 
 export function ModelPicker({ providers, models, activeModel, onSelect, onSelectProvider, onDismiss }: ModelPickerProps) {
+  const { t } = useTranslation()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
           ))}
           {providers.length === 0 && (
             <div className="px-2 py-3">
-              <Text size="xs" color="muted">No providers configured. Add API keys in Settings.</Text>
+              <Text size="xs" color="muted">{t('aiui.chat.providersEmpty')}</Text>
             </div>
           )}
         </ScrollArea>

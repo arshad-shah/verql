@@ -184,10 +184,10 @@ export function ChatPanelHeader() {
                   <>
                     <Text size="xs" truncate className="flex-1">{c.title}</Text>
                     <div className="hidden group-hover:flex items-center gap-0.5">
-                      <IconButton label="Rename conversation" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }}>
+                      <IconButton label={t('aiui.header.rename')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }}>
                         <Pencil size={11} />
                       </IconButton>
-                      <IconButton label="Delete conversation" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); void deleteConversation(c.id) }}>
+                      <IconButton label={t('aiui.header.delete')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); void deleteConversation(c.id) }}>
                         <Trash2 size={11} />
                       </IconButton>
                     </div>
@@ -207,7 +207,7 @@ export function ChatPanelHeader() {
             className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs"
             onClick={() => { setEditingId(active.id); setDraft(active.title); setHistoryOpen(true); setMoreOpen(false) }}
           >
-            <Pencil size={12} /> Rename
+            <Pencil size={12} /> {t('aiui.header.renameAction')}
           </button>
           <button
             type="button"
@@ -215,14 +215,14 @@ export function ChatPanelHeader() {
             className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => { setMoreOpen(false); void compactConversation() }}
           >
-            <Minimize2 size={12} /> Compact conversation
+            <Minimize2 size={12} /> {t('aiui.header.compactAction')}
           </button>
           <button
             type="button"
             className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-xs text-error"
             onClick={() => { setMoreOpen(false); void deleteConversation(active.id) }}
           >
-            <Trash2 size={12} /> Delete
+            <Trash2 size={12} /> {t('aiui.header.deleteAction')}
           </button>
         </div>
       )}

@@ -45,7 +45,7 @@ export function GeneralSettings() {
           onChange={(val) => setSetting('general.defaultPageSize', parseInt(val))}
           size="sm"
           className="w-24"
-          aria-label="Default page size"
+          aria-label={t('settings.general.defaultPageSize.label')}
           options={[
             { value: '50', label: '50' },
             { value: '100', label: '100' },

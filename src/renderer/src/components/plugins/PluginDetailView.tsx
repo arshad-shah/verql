@@ -408,8 +408,9 @@ function ErrorsTab({ errors, expandedError, onToggleError }: {
   expandedError: number | null
   onToggleError: (i: number | null) => void
 }) {
+  const { t } = useTranslation()
   if (errors.length === 0) {
-    return <EmptyState title="No errors" description="No errors have been recorded for this plugin" className="py-12" />
+    return <EmptyState title={t('plugins.detail.errors.emptyTitle')} description={t('plugins.detail.errors.emptyDescription')} className="py-12" />
   }
 
   return (
@@ -447,8 +448,9 @@ function SettingsTab({ schema, values, onChange }: {
   values: Record<string, unknown>
   onChange: (key: string, value: unknown) => void
 }) {
+  const { t } = useTranslation()
   if (schema.length === 0) {
-    return <EmptyState title="No settings" description="This plugin has no configurable settings" className="py-12" />
+    return <EmptyState title={t('plugins.detail.settings.emptyTitle')} description={t('plugins.detail.settings.emptyDescription')} className="py-12" />
   }
 
   return (

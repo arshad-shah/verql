@@ -25,7 +25,7 @@ export function DataDisplaySettings() {
           onChange={(val) => setSetting('dataDisplay.dateFormat', val)}
           size="sm"
           className="w-28"
-          aria-label="Date format"
+          aria-label={t('settings.dataDisplay.dateFormat.label')}
           options={[
             { value: 'iso', label: t('settings.dataDisplay.dateFormat.iso') },
             { value: 'locale', label: t('settings.dataDisplay.dateFormat.locale') },
@@ -44,7 +44,7 @@ export function DataDisplaySettings() {
             onChange={(e) => setSetting('dataDisplay.customDateFormat', e.target.value)}
             size="sm"
             className="w-48"
-            aria-label="Custom date pattern"
+            aria-label={t('settings.dataDisplay.customDatePattern.label')}
           />
         </SettingRow>
       )}
@@ -55,7 +55,7 @@ export function DataDisplaySettings() {
           onChange={(val) => setSetting('dataDisplay.booleanDisplay', val)}
           size="sm"
           className="w-32"
-          aria-label="Boolean display"
+          aria-label={t('settings.dataDisplay.booleanDisplay.label')}
           options={[
             { value: 'true_false', label: t('settings.dataDisplay.booleanDisplay.trueFalse') },
             { value: 'one_zero', label: t('settings.dataDisplay.booleanDisplay.oneZero') },
@@ -71,7 +71,7 @@ export function DataDisplaySettings() {
           onChange={(val) => setSetting('dataDisplay.numberFormat', val)}
           size="sm"
           className="w-28"
-          aria-label="Number format"
+          aria-label={t('settings.dataDisplay.numberFormat.label')}
           options={[
             { value: 'raw', label: t('settings.dataDisplay.numberFormat.raw') },
             { value: 'locale', label: t('settings.dataDisplay.numberFormat.locale') },

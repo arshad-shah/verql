@@ -1,4 +1,6 @@
 export const command = {
+  searchPlaceholder: 'Type a command...',
+  noMatch: 'No matching commands',
   category: {
     query: 'Query',
     view: 'View',

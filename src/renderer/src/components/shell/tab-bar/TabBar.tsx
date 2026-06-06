@@ -8,8 +8,10 @@ import { Flex, IconButton, Tooltip, cn } from '@/primitives'
 import { TabItem } from './TabItem'
 import { useTabScroll } from './useTabScroll'
 import { useTabDrag } from './useTabDrag'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function TabBar() {
+  const { t } = useTranslation()
   const {
     tabs,
     activeTabId,
@@ -39,15 +41,15 @@ export function TabBar() {
   }, [activeTabId, scrollIntoView])
 
   const getContextMenuItems = (tabId: string, index: number) => {
-    const tab = tabs.find(t => t.id === tabId)
+    const tab = tabs.find(item => item.id === tabId)
     return [
-      { label: 'Close', onSelect: () => requestCloseTab(tabId, closeTab) },
-      { label: 'Close Others', onSelect: () => closeOtherTabs(tabId), disabled: tabs.length <= 1 },
-      { label: 'Close to the Right', onSelect: () => closeTabsToRight(tabId), disabled: index >= tabs.length - 1 },
-      { label: 'Close All', onSelect: () => closeAllTabs() },
-      { label: 'Duplicate Tab', onSelect: () => duplicateTab(tabId), disabled: tab?.type !== 'query' },
+      { label: t('shell.tabBar.close'), onSelect: () => requestCloseTab(tabId, closeTab) },
+      { label: t('shell.tabBar.closeOthers'), onSelect: () => closeOtherTabs(tabId), disabled: tabs.length <= 1 },
+      { label: t('shell.tabBar.closeToRight'), onSelect: () => closeTabsToRight(tabId), disabled: index >= tabs.length - 1 },
+      { label: t('shell.tabBar.closeAll'), onSelect: () => closeAllTabs() },
+      { label: t('shell.tabBar.duplicate'), onSelect: () => duplicateTab(tabId), disabled: tab?.type !== 'query' },
       {
-        label: 'Copy Title',
+        label: t('shell.tabBar.copyTitle'),
         onSelect: () => navigator.clipboard.writeText(tab?.title ?? ''),
       },
     ]
@@ -62,7 +64,7 @@ export function TabBar() {
       {/* Scroll left arrow */}
       {canScrollLeft && (
         <IconButton
-          label="Scroll tabs left"
+          label={t('shell.tabBar.scrollLeft')}
           size="xs"
           variant="ghost"
           onClick={scrollLeft}
@@ -102,7 +104,7 @@ export function TabBar() {
       {/* Scroll right arrow */}
   { canScrollRight && (
     <IconButton
-      label="Scroll tabs right"
+      label={t('shell.tabBar.scrollRight')}
       size="xs"
       variant="ghost"
       onClick={scrollRight}
@@ -115,9 +117,9 @@ export function TabBar() {
       </IconButton>)}
 
       {/* New tab button */}
-      <Tooltip content="New Query Tab" side="bottom">
+      <Tooltip content={t('shell.tabBar.newTab')} side="bottom">
         <IconButton
-          label="New Query Tab"
+          label={t('shell.tabBar.newTab')}
           size="xs"
           variant="ghost"
           onClick={() => addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })}

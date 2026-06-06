@@ -3,6 +3,7 @@ import { useAIStore } from '@/stores/ai'
 import { Text } from '@/primitives/typography/Text'
 import { Avatar } from '@/primitives/data-display/Avatar'
 import { MarkdownContent } from './MarkdownContent'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 /**
  * Single slot for "the assistant is producing a response". Mounts as soon as
@@ -11,6 +12,7 @@ import { MarkdownContent } from './MarkdownContent'
  * and during, so the transition has no visual jump.
  */
 export function StreamingResponse() {
+  const { t } = useTranslation()
   const isAwaiting = useAIStore((s) => s.isAwaitingResponse)
   const streaming = useAIStore((s) => s.streamingContent)
 
@@ -21,7 +23,7 @@ export function StreamingResponse() {
   return (
     <div className="group flex gap-2 mb-2.5">
       <Avatar
-        name="Assistant"
+        name={t('aiui.chat.assistant')}
         size="sm"
         icon={<Sparkles className="h-3.5 w-3.5" />}
         className="shrink-0 mt-0.5"
@@ -43,12 +45,13 @@ export function StreamingResponse() {
 }
 
 function SkeletonLines() {
+  const { t } = useTranslation()
   return (
     <div className="space-y-1.5 py-1">
       <div className="h-2.5 rounded bg-bg-tertiary animate-pulse w-[90%]" />
       <div className="h-2.5 rounded bg-bg-tertiary animate-pulse w-[75%]" />
       <div className="h-2.5 rounded bg-bg-tertiary animate-pulse w-[60%]" />
-      <Text size="xs" color="muted" className="pt-1 block">Working…</Text>
+      <Text size="xs" color="muted" className="pt-1 block">{t('aiui.chat.working')}</Text>
     </div>
   )
 }

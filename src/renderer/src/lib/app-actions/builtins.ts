@@ -20,7 +20,7 @@ const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v 
 /** The active query tab's current results, or null when there's nothing to act on. */
 function activeQueryResults() {
   const { tabs, activeTabId } = useTabsStore.getState()
-  const tab = tabs.find((t) => t.id === activeTabId)
+  const tab = tabs.find((item) => item.id === activeTabId)
   return tab && tab.type === 'query' ? tab.results : null
 }
 
@@ -131,9 +131,9 @@ const BUILTINS: AppAction[] = [
     params: { query: { type: 'string', required: true, description: 'Saved query name or id' } },
     run: (p) => {
       const arg = str(p.query)
-      if (!arg) throw new Error('Provide a saved query name or id.')
+      if (!arg) throw new Error(t('actions.errors.provideSavedQuery'))
       const q = findSavedQuery(arg)
-      if (!q) throw new Error(`No saved query matches "${arg}".`)
+      if (!q) throw new Error(t('actions.errors.noSavedQueryMatch', { arg }))
       openSavedQuery(q)
     }
   },
@@ -144,13 +144,13 @@ const BUILTINS: AppAction[] = [
     kind: 'navigation',
     run: async () => {
       const reg = editorRegistry.get()
-      if (!reg) throw new Error('No active editor. Open or focus a query tab first.')
+      if (!reg) throw new Error(t('actions.errors.noActiveEditor'))
       const model = reg.editor.getModel()
-      if (!model) throw new Error('No editor content to format.')
+      if (!model) throw new Error(t('actions.errors.noEditorContent'))
       const source = model.getValue()
       if (!source.trim()) return
       const { tabs } = useTabsStore.getState()
-      const tab = tabs.find((t) => t.id === reg.tabId)
+      const tab = tabs.find((item) => item.id === reg.tabId)
       const { activeConnectionId, connections } = useConnectionsStore.getState()
       const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
       const connType = connections.find((c) => c.id === connId)?.type ?? ''
@@ -170,9 +170,9 @@ const BUILTINS: AppAction[] = [
     params: { sql: { type: 'string', required: true, description: 'SQL text to insert' } },
     run: (p) => {
       const sql = str(p.sql)
-      if (!sql) throw new Error('Provide SQL to insert.')
+      if (!sql) throw new Error(t('actions.errors.provideSql'))
       const reg = editorRegistry.get()
-      if (!reg) throw new Error('No active SQL editor. Open or focus a query tab first.')
+      if (!reg) throw new Error(t('actions.errors.noActiveSqlEditor'))
       const { editor } = reg
       const selection = editor.getSelection()
       const pos = editor.getPosition()
@@ -193,9 +193,9 @@ const BUILTINS: AppAction[] = [
     params: { connection: { type: 'string', required: true, description: 'Saved connection name or id' } },
     run: async (p) => {
       const conn = resolveConnection(useConnectionsStore.getState().connections, str(p.connection))
-      if (!conn) throw new Error('No matching saved connection. Use a name or id from the saved connections list.')
+      if (!conn) throw new Error(t('actions.errors.noMatchingConnection'))
       const res = await useConnectionsStore.getState().connect(conn.id)
-      if (!res.success) throw new Error(res.error ?? `Couldn't connect to "${conn.name}".`)
+      if (!res.success) throw new Error(res.error ?? t('actions.errors.couldntConnect', { name: conn.name }))
     }
   },
   {
@@ -210,7 +210,7 @@ const BUILTINS: AppAction[] = [
       const conn = arg
         ? resolveConnection(state.connections, arg)
         : state.connections.find((c) => c.id === state.activeConnectionId)
-      if (!conn) throw new Error('No connection to disconnect. Specify one by name or id.')
+      if (!conn) throw new Error(t('actions.errors.noConnectionToDisconnect'))
       await useConnectionsStore.getState().disconnect(conn.id)
     }
   },
@@ -223,12 +223,12 @@ const BUILTINS: AppAction[] = [
     run: async (p) => {
       const state = useConnectionsStore.getState()
       const conn = resolveConnection(state.connections, str(p.connection))
-      if (!conn) throw new Error('No matching saved connection. Use a name or id from the saved connections list.')
+      if (!conn) throw new Error(t('actions.errors.noMatchingConnection'))
       if (state.connectedIds.has(conn.id)) {
         state.setActiveConnection(conn.id)
       } else {
         const res = await useConnectionsStore.getState().connect(conn.id)
-        if (!res.success) throw new Error(res.error ?? `Couldn't connect to "${conn.name}".`)
+        if (!res.success) throw new Error(res.error ?? t('actions.errors.couldntConnect', { name: conn.name }))
       }
     }
   },
@@ -242,9 +242,9 @@ const BUILTINS: AppAction[] = [
     params: { format: { type: 'string', description: 'csv or json (defaults to csv)' } },
     run: async (p) => {
       const format = (str(p.format) ?? 'csv').toLowerCase()
-      if (format !== 'csv' && format !== 'json') throw new Error('Format must be "csv" or "json".')
+      if (format !== 'csv' && format !== 'json') throw new Error(t('actions.errors.formatMustBe'))
       const results = activeQueryResults()
-      if (!results) throw new Error('No query results to export. Run a query first.')
+      if (!results) throw new Error(t('actions.errors.noResultsToExport'))
       const fields = results.fields.map((f) => f.name)
       await window.electronAPI.invoke(IPC_CHANNELS.EXPORT_QUERY_RESULT, results.rows, fields, format)
     }
@@ -256,9 +256,9 @@ const BUILTINS: AppAction[] = [
     kind: 'navigation',
     run: () => {
       const results = activeQueryResults()
-      if (!results) throw new Error('No query results to chart. Run a query first.')
+      if (!results) throw new Error(t('actions.errors.noResultsToChart'))
       if (results.fields.length < 2 || results.rows.length === 0) {
-        throw new Error('Need at least two columns and one row to chart these results.')
+        throw new Error(t('actions.errors.needColumnsToChart'))
       }
       const ui = useUiStore.getState()
       if (!(ui.bottomDockActivePanel === BOTTOM_PANEL.CHART && ui.bottomDockVisible)) {
@@ -280,11 +280,11 @@ const BUILTINS: AppAction[] = [
     },
     run: async (p) => {
       const table = str(p.table)
-      if (!table) throw new Error('Provide a table name.')
+      if (!table) throw new Error(t('actions.errors.provideTable'))
       const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
       const conn = connections.find((c) => c.id === activeConnectionId)
-      if (!conn) throw new Error('No active connection. Connect to a database first.')
-      if (!connectedIds.has(conn.id)) throw new Error(`Not connected to "${conn.name}". Connect first.`)
+      if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
+      if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnected', { name: conn.name }))
       const schema = await resolveSchema(conn, str(p.schema))
       const ui = useUiStore.getState()
       if (!(ui.activePanel === ACTIVITY_PANEL.EXPLORER && ui.sidebarVisible)) ui.setActivePanel(ACTIVITY_PANEL.EXPLORER)
@@ -311,8 +311,8 @@ const BUILTINS: AppAction[] = [
     run: async (p) => {
       const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
       const conn = connections.find((c) => c.id === activeConnectionId)
-      if (!conn) throw new Error('No active connection. Connect to a database first.')
-      if (!connectedIds.has(conn.id)) throw new Error(`Not connected to "${conn.name}". Connect first, then open the ER diagram.`)
+      if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
+      if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnectedEr', { name: conn.name }))
       const schema = (await resolveSchema(conn, str(p.schema))) || ''
       useTabsStore.getState().openErDiagram(conn.id, schema)
       const table = str(p.table)

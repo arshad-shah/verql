@@ -25,7 +25,7 @@ export function EditorSettings() {
           onChange={(val) => setSetting('editor.fontFamily', val)}
           size="sm"
           className="w-48"
-          aria-label="Font family"
+          aria-label={t('settings.editor.fontFamily.label')}
           options={[
             { value: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace", label: t('settings.editor.fontFamily.jetBrainsMono') },
             { value: "'SF Mono', 'Fira Code', monospace", label: t('settings.editor.fontFamily.sfMono') },
@@ -42,7 +42,7 @@ export function EditorSettings() {
           onChange={(val) => setSetting('editor.tabSize', parseInt(val))}
           size="sm"
           className="w-24"
-          aria-label="Tab size"
+          aria-label={t('settings.editor.tabSize.label')}
           options={[
             { value: '2', label: t('settings.editor.tabSize.two') },
             { value: '4', label: t('settings.editor.tabSize.four') },
@@ -56,7 +56,7 @@ export function EditorSettings() {
           onChange={(val) => setSetting('editor.cursorStyle', val)}
           size="sm"
           className="w-28"
-          aria-label="Cursor style"
+          aria-label={t('settings.editor.cursorStyle.label')}
           options={[
             { value: 'line', label: t('settings.editor.cursorStyle.line') },
             { value: 'block', label: t('settings.editor.cursorStyle.block') },

@@ -4,6 +4,7 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
 import { useUiStore } from './ui'
 import type { SettingsCategoryId } from '@/lib/settings-categories'
+import { t } from '@shared/i18n'
 
 let tabCounter = 0
 
@@ -21,7 +22,7 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
   return {
     id: `query-${tabCounter}-${Date.now()}`,
     type: 'query',
-    title: `Query ${tabCounter}`,
+    title: t('shell.tabs.queryTitle', { n: tabCounter }),
     connectionId,
     database: null,
     schema,
@@ -292,7 +293,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: import('@shared/types').ErDiagramTab = {
       id,
       type: 'er-diagram',
-      title: `ER: ${schema}`,
+      title: t('shell.tabs.erTitle', { schema }),
       connectionId,
       schema
     }
@@ -313,7 +314,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: ConnectionFormTab = {
       id: formId,
       type: 'connection-form',
-      title: editingId ? 'Edit Connection' : 'New Connection',
+      title: editingId ? t('shell.tabs.editConnection') : t('shell.tabs.newConnection'),
       editingId
     }
     set((s) => ({
@@ -353,7 +354,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: InstallPluginTab = {
       id,
       type: 'install-plugin',
-      title: 'Install Plugin'
+      title: t('shell.tabs.installPlugin')
     }
     set((s) => ({
       tabs: [...s.tabs, tab],
@@ -372,7 +373,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       set({ activeTabId: id })
       return id
     }
-    const tab: SettingsTab = { id, type: 'settings', title: 'Settings' }
+    const tab: SettingsTab = { id, type: 'settings', title: t('shell.tabs.settings') }
     set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
     return id
   },

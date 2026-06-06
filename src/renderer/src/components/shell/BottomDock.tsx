@@ -11,6 +11,7 @@ import { parsePlanFromResult } from '@/lib/plan-parser'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function useHasBottomPanels(): boolean {
   const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
@@ -23,7 +24,8 @@ export function useHasBottomPanels(): boolean {
 }
 
 export function BottomDock() {
-  const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
+  const { t } = useTranslation()
+  const activeTab = useTabsStore(s => s.tabs.find(tab => tab.id === s.activeTabId))
   const bottomActivePanel = useUiStore(s => s.bottomDockActivePanel)
   const setBottomActivePanel = useUiStore(s => s.setBottomDockActivePanel)
   const toggleBottomDock = useUiStore(s => s.toggleBottomDock)
@@ -57,15 +59,15 @@ export function BottomDock() {
     .map(c => ({ id: `plugin:${c.contributionId}`, title: (c.meta.title as string) ?? c.contributionId }))
 
   const tabs: BottomTab[] = [
-    ...(showResults ? [{ id: BOTTOM_PANEL.RESULTS, title: 'Results' }] : []),
-    ...(hasChart ? [{ id: BOTTOM_PANEL.CHART, title: 'Chart' }] : []),
-    ...(hasPlan ? [{ id: BOTTOM_PANEL.QUERY_PLAN, title: 'Query Plan' }] : []),
+    ...(showResults ? [{ id: BOTTOM_PANEL.RESULTS, title: t('shell.bottomDock.results') }] : []),
+    ...(hasChart ? [{ id: BOTTOM_PANEL.CHART, title: t('shell.bottomDock.chart') }] : []),
+    ...(hasPlan ? [{ id: BOTTOM_PANEL.QUERY_PLAN, title: t('shell.bottomDock.queryPlan') }] : []),
     ...bottomPluginPanels,
   ]
 
   useEffect(() => {
     if (tabs.length === 0) return
-    if (!tabs.find(t => t.id === bottomActivePanel)) {
+    if (!tabs.find(tab => tab.id === bottomActivePanel)) {
       setBottomActivePanel(tabs[0].id as BottomPanelId)
     }
   }, [tabs, bottomActivePanel, setBottomActivePanel])
@@ -76,16 +78,16 @@ export function BottomDock() {
 
   const renderBody = () => {
     if (bottomActivePanel === BOTTOM_PANEL.RESULTS && showResults && activeTab) {
-      const t = activeTab as QueryTab
-      if (t.results) {
-        return <ResultsPanel results={t.results} sql={t.sql} tabId={t.id} aiExplanation={t.aiExplanation} />
+      const qt = activeTab as QueryTab
+      if (qt.results) {
+        return <ResultsPanel results={qt.results} sql={qt.sql} tabId={qt.id} aiExplanation={qt.aiExplanation} />
       }
-      if (t.error) {
-        return <QueryErrorView error={t.error} />
+      if (qt.error) {
+        return <QueryErrorView error={qt.error} />
       }
       return (
         <Flex align="center" justify="center" className="h-full">
-          <Text color="muted" size="sm">Run a query to see results</Text>
+          <Text color="muted" size="sm">{t('shell.bottomDock.runToSeeResults')}</Text>
         </Flex>
       )
     }

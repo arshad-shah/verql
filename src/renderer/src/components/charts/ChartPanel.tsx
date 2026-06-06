@@ -3,19 +3,22 @@ import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
 import { Flex, Box, Button, Text, Label, Select } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
 interface Props {
   results: QueryResult
 }
 
-const CHART_TYPES: { value: ChartType; label: string }[] = [
-  { value: 'bar', label: 'Bar' },
-  { value: 'line', label: 'Line' },
-  { value: 'pie', label: 'Pie' },
-  { value: 'scatter', label: 'Scatter' }
+const CHART_TYPES: { value: ChartType; label: MessageKey }[] = [
+  { value: 'bar', label: 'shell.chartPanel.typeBar' },
+  { value: 'line', label: 'shell.chartPanel.typeLine' },
+  { value: 'pie', label: 'shell.chartPanel.typePie' },
+  { value: 'scatter', label: 'shell.chartPanel.typeScatter' }
 ]
 
 export function ChartPanel({ results }: Props) {
+  const { t } = useTranslation()
   const detected = useMemo(() => detectChartType(results.fields, results.rows), [results])
   const suggestedAxes = useMemo(() => suggestAxes(results.fields, results.rows), [results])
 
@@ -26,7 +29,7 @@ export function ChartPanel({ results }: Props) {
   if (results.fields.length < 2) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text size="sm" color="muted">Need at least 2 columns to chart</Text>
+        <Text size="sm" color="muted">{t('shell.chartPanel.needTwoColumns')}</Text>
       </Flex>
     )
   }
@@ -42,26 +45,26 @@ export function ChartPanel({ results }: Props) {
               size="xs"
               onClick={() => setChartType(ct.value)}
             >
-              {ct.label}
+              {t(ct.label)}
             </Button>
           ))}
         </Flex>
         <Flex align="center" gap="sm" className="text-xs ml-auto">
-          <Label className="text-text-muted">X:</Label>
+          <Label className="text-text-muted">{t('shell.chartPanel.xAxisLabel')}</Label>
           <Select
             value={xKey}
             onChange={setXKey}
             size="xs"
             options={results.fields.map(f => ({ value: f.name, label: f.name }))}
-            aria-label="X axis"
+            aria-label={t('shell.chartPanel.xAxis')}
           />
-          <Label className="text-text-muted">Y:</Label>
+          <Label className="text-text-muted">{t('shell.chartPanel.yAxisLabel')}</Label>
           <Select
             value={yKey}
             onChange={setYKey}
             size="xs"
             options={results.fields.map(f => ({ value: f.name, label: f.name }))}
-            aria-label="Y axis"
+            aria-label={t('shell.chartPanel.yAxis')}
           />
         </Flex>
       </Flex>

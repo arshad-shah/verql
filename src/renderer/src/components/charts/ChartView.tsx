@@ -4,6 +4,7 @@ import { addTheme } from '@arshad-shah/swift-chart'
 import type { ChartType } from './chart-detect'
 import { Flex, Text } from '@/primitives'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const THEME_NAME = 'verql'
 
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export function ChartView({ type, data, xKey, yKey }: Props) {
+  const { t } = useTranslation()
   const { theme } = useTheme()
 
   // Re-register the palette whenever the active theme id changes so
@@ -61,7 +63,7 @@ export function ChartView({ type, data, xKey, yKey }: Props) {
   if (type === 'none' || data.length === 0) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text size="sm" color="muted">No chart available</Text>
+        <Text size="sm" color="muted">{t('shell.charts.noChartAvailable')}</Text>
       </Flex>
     )
   }

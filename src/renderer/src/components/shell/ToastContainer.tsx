@@ -1,6 +1,7 @@
 import { X, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { Stack, Flex, Text, IconButton, Box, cn } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const icons = {
   error: AlertCircle,
@@ -27,6 +28,7 @@ const iconStyles = {
 }
 
 export function ToastContainer() {
+  const { t } = useTranslation()
   const { toasts, removeToast } = useToastStore()
 
   if (toasts.length === 0) return null
@@ -63,7 +65,7 @@ export function ToastContainer() {
               )}
             </Box>
             <IconButton
-              label="Dismiss"
+              label={t('shell.toast.dismiss')}
               size="xs"
               variant="ghost"
               onClick={() => removeToast(toast.id)}

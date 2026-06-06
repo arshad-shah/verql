@@ -5,6 +5,7 @@ import { Text } from '@/primitives/typography/Text'
 import { IconButton } from '@/primitives/forms/Button'
 import { Avatar } from '@/primitives/data-display/Avatar'
 import { useAIStore } from '@/stores/ai'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { MarkdownContent } from './MarkdownContent'
 import { isWideMessageContent } from './message-content-width'
 
@@ -13,11 +14,12 @@ interface MessageBubbleProps {
 }
 
 function BranchButton({ messageId }: { messageId: string }) {
+  const { t } = useTranslation()
   const branchConversation = useAIStore((s) => s.branchConversation)
   const isStreaming = useAIStore((s) => s.isStreaming)
   return (
     <IconButton
-      label="Branch a new conversation from here"
+      label={t('aiui.chat.branch')}
       variant="ghost"
       size="xs"
       disabled={isStreaming}
@@ -29,10 +31,11 @@ function BranchButton({ messageId }: { messageId: string }) {
 }
 
 function CopyButton({ content }: { content: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   return (
     <IconButton
-      label={copied ? 'Copied' : 'Copy message'}
+      label={copied ? t('aiui.chat.copied') : t('aiui.chat.copyMessage')}
       variant="ghost"
       size="xs"
       onClick={() => {
@@ -47,6 +50,7 @@ function CopyButton({ content }: { content: string }) {
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+  const { t } = useTranslation()
   const isUser = message.role === 'user'
   const isError = message.role === 'assistant' && message.isError === true
   const retryLast = useAIStore((s) => s.retryLast)
@@ -74,7 +78,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className="group flex gap-2 mb-2.5">
       <Avatar
-        name="Assistant"
+        name={t('aiui.chat.assistant')}
         size="sm"
         icon={isError ? <AlertTriangle className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
         className={isError ? 'shrink-0 mt-0.5 bg-error/10 text-error ring-error/30' : 'shrink-0 mt-0.5'}
@@ -94,7 +98,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
         <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <CopyButton content={message.content} />
-          <IconButton label="Retry" variant="ghost" size="xs" disabled={isStreaming} onClick={retryLast}>
+          <IconButton label={t('aiui.chat.retry')} variant="ghost" size="xs" disabled={isStreaming} onClick={retryLast}>
             <RotateCcw className="h-3 w-3" />
           </IconButton>
           {!isError && <BranchButton messageId={message.id} />}
