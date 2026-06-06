@@ -5,7 +5,6 @@ import { Switch } from './Switch'
 const meta: Meta<typeof Switch> = {
   title: 'Primitives/Forms/Switch',
   component: Switch,
-  tags: ['autodocs'],
   argTypes: {
     disabled: { control: 'boolean' },
     defaultChecked: { control: 'boolean' },

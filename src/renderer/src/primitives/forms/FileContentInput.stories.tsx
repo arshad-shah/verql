@@ -5,7 +5,6 @@ import { FileContentInput } from './FileContentInput'
 const meta: Meta<typeof FileContentInput> = {
   title: 'Primitives/Forms/FileContentInput',
   component: FileContentInput,
-  tags: ['autodocs'],
   decorators: [(Story) => <div className="w-80"><Story /></div>],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },

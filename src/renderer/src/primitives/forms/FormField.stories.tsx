@@ -6,7 +6,6 @@ import { Input } from './Input'
 const meta: Meta<typeof FormField> = {
   title: 'Primitives/Forms/FormField',
   component: FormField,
-  tags: ['autodocs'],
   argTypes: {
     label: { control: 'text' },
     error: { control: 'text' },

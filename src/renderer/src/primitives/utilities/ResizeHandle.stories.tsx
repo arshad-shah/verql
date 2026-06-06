@@ -6,7 +6,6 @@ import { ResizeHandle } from './ResizeHandle'
 const meta = {
   title: 'Primitives/Utilities/ResizeHandle',
   component: ResizeHandle,
-  tags: ['autodocs'],
   argTypes: {
     direction: {
       control: 'select',

@@ -5,7 +5,6 @@ import { PasswordInput } from './PasswordInput'
 const meta: Meta<typeof PasswordInput> = {
   title: 'Primitives/Forms/PasswordInput',
   component: PasswordInput,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     error: { control: 'boolean' },

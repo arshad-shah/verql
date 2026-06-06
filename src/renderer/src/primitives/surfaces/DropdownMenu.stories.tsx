@@ -7,7 +7,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Surfaces/DropdownMenu',
   component: DropdownMenu,
-  tags: ['autodocs'],
 } satisfies Meta<typeof DropdownMenu>
 
 export default meta

@@ -5,7 +5,6 @@ import { ContextMenu } from './ContextMenu'
 const meta = {
   title: 'Primitives/Surfaces/ContextMenu',
   component: ContextMenu,
-  tags: ['autodocs'],
 } satisfies Meta<typeof ContextMenu>
 
 export default meta

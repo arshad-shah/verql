@@ -10,7 +10,6 @@ const DemoBox = ({ children }: { children: string }) => (
 const meta = {
   title: 'Primitives/Layout/Flex',
   component: Flex,
-  tags: ['autodocs'],
   argTypes: {
     direction: {
       control: 'select',

@@ -6,7 +6,6 @@ import { DatePicker } from './DatePicker'
 const meta: Meta<typeof DatePicker> = {
   title: 'Primitives/Forms/DatePicker',
   component: DatePicker,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     disabled: { control: 'boolean' },

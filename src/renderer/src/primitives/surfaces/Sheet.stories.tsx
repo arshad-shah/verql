@@ -7,7 +7,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Surfaces/Sheet',
   component: Sheet,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Sheet>
 
 export default meta

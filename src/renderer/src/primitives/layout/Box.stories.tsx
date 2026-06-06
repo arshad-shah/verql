@@ -4,7 +4,6 @@ import { Box } from './Box'
 const meta = {
   title: 'Primitives/Layout/Box',
   component: Box,
-  tags: ['autodocs'],
   argTypes: {
     padding: {
       control: 'select',

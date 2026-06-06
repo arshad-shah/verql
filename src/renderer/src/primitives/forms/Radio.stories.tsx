@@ -5,7 +5,6 @@ import { Radio } from './Radio'
 const meta: Meta<typeof Radio> = {
   title: 'Primitives/Forms/Radio',
   component: Radio,
-  tags: ['autodocs'],
   argTypes: {
     disabled: { control: 'boolean' },
   },

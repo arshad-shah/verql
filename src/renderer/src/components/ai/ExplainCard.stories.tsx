@@ -31,7 +31,6 @@ function withExplainState(
 const meta: Meta<typeof ExplainResult> = {
   title: 'Components/AI/ExplainCard',
   component: ExplainResult,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 480, padding: 16, background: 'var(--color-bg-primary)' }}>

@@ -5,7 +5,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Surfaces/Tooltip',
   component: Tooltip,
-  tags: ['autodocs'],
   argTypes: {
     side: {
       control: 'select',

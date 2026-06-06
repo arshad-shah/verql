@@ -36,7 +36,6 @@ const PROFILES: ConnectionProfile[] = [
 const meta: Meta<typeof ActiveConnectionsPanel> = {
   title: 'Components/Connections/ActiveConnectionsPanel',
   component: ActiveConnectionsPanel,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       // Sized to the real secondary-sidebar width so spacing/truncation read true.

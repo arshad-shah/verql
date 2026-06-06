@@ -6,7 +6,6 @@ import { TagsInput } from './TagsInput'
 const meta: Meta<typeof TagsInput> = {
   title: 'Primitives/Forms/TagsInput',
   component: TagsInput,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     maxTags: { control: 'number' },

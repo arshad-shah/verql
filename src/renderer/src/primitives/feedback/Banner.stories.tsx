@@ -6,7 +6,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Feedback/Banner',
   component: Banner,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

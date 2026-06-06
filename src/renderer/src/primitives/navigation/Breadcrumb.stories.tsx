@@ -5,7 +5,6 @@ import { Breadcrumb } from './Breadcrumb'
 const meta = {
   title: 'Primitives/Navigation/Breadcrumb',
   component: Breadcrumb,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Breadcrumb>
 
 export default meta

@@ -50,7 +50,6 @@ function seed(patch: {
 const meta: Meta<typeof AutoCompactBanner> = {
   title: 'Components/AI/AutoCompactBanner',
   component: AutoCompactBanner,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 380, background: 'var(--color-bg-primary)' }}>

@@ -5,7 +5,6 @@ import { Checkbox } from './Checkbox'
 const meta: Meta<typeof Checkbox> = {
   title: 'Primitives/Forms/Checkbox',
   component: Checkbox,
-  tags: ['autodocs'],
   argTypes: {
     disabled: { control: 'boolean' },
     defaultChecked: { control: 'boolean' },

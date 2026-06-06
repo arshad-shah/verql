@@ -6,7 +6,6 @@ import { Tabs } from './Tabs'
 const meta = {
   title: 'Primitives/Navigation/Tabs',
   component: Tabs,
-  tags: ['autodocs'],
   args: {
     onTabChange: fn(),
   },

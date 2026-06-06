@@ -6,7 +6,6 @@ import { ColorInput } from './ColorInput'
 const meta: Meta<typeof ColorInput> = {
   title: 'Primitives/Forms/ColorInput',
   component: ColorInput,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     disabled: { control: 'boolean' },

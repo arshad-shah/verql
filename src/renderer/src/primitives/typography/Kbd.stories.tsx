@@ -5,7 +5,6 @@ import { KbdGroup } from './KbdGroup'
 const meta = {
   title: 'Primitives/Typography/Kbd',
   component: Kbd,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
     variant: { control: 'inline-radio', options: ['solid', 'outline', 'ghost'] },

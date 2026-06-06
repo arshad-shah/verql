@@ -4,7 +4,6 @@ import { Container } from './Container'
 const meta = {
   title: 'Primitives/Layout/Container',
   component: Container,
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

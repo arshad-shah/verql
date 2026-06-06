@@ -5,7 +5,6 @@ import { Table2 } from 'lucide-react'
 const meta = {
   title: 'Primitives/Data Display/List',
   component: List,
-  tags: ['autodocs'],
 } satisfies Meta<typeof List>
 
 export default meta

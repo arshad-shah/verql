@@ -26,7 +26,6 @@ function seed(patch: { isAwaitingResponse?: boolean; streamingContent?: string }
 const meta: Meta<typeof StreamingResponse> = {
   title: 'Components/AI/StreamingResponse',
   component: StreamingResponse,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 380, padding: 16, background: 'var(--color-bg-primary)' }}>

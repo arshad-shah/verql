@@ -32,7 +32,6 @@ const groupedOptions: SelectItem[] = [
 const meta: Meta<typeof Select> = {
   title: 'Primitives/Forms/Select',
   component: Select,
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

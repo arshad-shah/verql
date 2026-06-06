@@ -4,7 +4,6 @@ import { Badge } from './Badge'
 const meta = {
   title: 'Primitives/Data Display/Badge',
   component: Badge,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

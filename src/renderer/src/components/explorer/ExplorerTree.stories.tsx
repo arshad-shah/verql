@@ -186,7 +186,6 @@ const meta = {
   title: 'Components/Explorer/ExplorerTree',
   component: TreeStory,
   parameters: { layout: 'centered' },
-  tags: ['autodocs'],
 } satisfies Meta<typeof TreeStory>
 
 export default meta

@@ -29,7 +29,6 @@ const EXISTING: ConnectionProfile = {
 const meta: Meta<typeof ConnectionFormView> = {
   title: 'Patterns/ConnectionForm',
   component: ConnectionFormView,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="w-160 h-175 bg-bg-primary border border-border-default rounded-md overflow-auto">

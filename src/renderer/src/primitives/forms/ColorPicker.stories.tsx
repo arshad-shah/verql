@@ -8,7 +8,6 @@ const onChangeMock = fn()
 const meta: Meta<typeof ColorPicker> = {
   title: 'Primitives/Forms/ColorPicker',
   component: ColorPicker,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ padding: 24, background: 'var(--color-bg-primary)' }}>

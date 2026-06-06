@@ -8,7 +8,6 @@ const onPageChange = fn()
 const meta = {
   title: 'Primitives/Navigation/Pagination',
   component: Pagination,
-  tags: ['autodocs'],
   argTypes: {
     page: { control: 'number' },
     totalPages: { control: 'number' },

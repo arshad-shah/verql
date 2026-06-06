@@ -4,7 +4,6 @@ import { CodeView } from './CodeView'
 const meta = {
   title: 'Primitives/Data Display/CodeView',
   component: CodeView,
-  tags: ['autodocs'],
 } satisfies Meta<typeof CodeView>
 
 export default meta

@@ -31,7 +31,6 @@ const BellIcon = () => (
 const meta = {
   title: 'Primitives/Data Display/BadgeIndicator',
   component: BadgeIndicator,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',
