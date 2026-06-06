@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
 import { Spinner } from '@/primitives'
 import { usePluginUIStore } from '@/stores/plugin-ui'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
@@ -49,6 +50,7 @@ function SettingControl({ schema, value, onChange }: { schema: PluginSettingSche
 }
 
 export function PluginSettings() {
+  const { t } = useTranslation()
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [pluginSettings, setPluginSettings] = useState<Record<string, PluginSettingsBundle>>({})
@@ -120,7 +122,7 @@ export function PluginSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">Manage installed plugins</Text>
+      <Text size="xs" color="muted">{t('settings.plugins.blurb')}</Text>
 
       {plugins.map((plugin) => {
         const bundle = pluginSettings[plugin.name]
@@ -132,9 +134,9 @@ export function PluginSettings() {
               <div className="flex-1 min-w-0 mr-4">
                 <Flex direction="row" align="center" gap="sm">
                   <Text size="sm" weight="semibold">{plugin.displayName}</Text>
-                  <Text size="xs" color="muted">v{plugin.version}</Text>
+                  <Text size="xs" color="muted">{t('settings.plugins.version', { version: plugin.version })}</Text>
                   {plugin.bundled && (
-                    <Text size="xs" color="accent" className="bg-accent/10 px-1.5 py-0.5 rounded">Bundled</Text>
+                    <Text size="xs" color="accent" className="bg-accent/10 px-1.5 py-0.5 rounded">{t('settings.plugins.bundled')}</Text>
                   )}
                 </Flex>
                 <Text size="xs" color="secondary" className="mt-0.5">{plugin.description}</Text>
@@ -157,7 +159,7 @@ export function PluginSettings() {
                 )}
               </div>
               <Switch
-                label={`Toggle ${plugin.displayName}`}
+                label={t('settings.plugins.toggleAria', { plugin: plugin.displayName })}
                 checked={isActive}
                 onChange={(e) => handleToggle(plugin.name, e.target.checked)}
               />
