@@ -4,7 +4,6 @@ import { Avatar } from './Avatar'
 const meta = {
   title: 'Primitives/Data Display/Avatar',
   component: Avatar,
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',

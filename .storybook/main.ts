@@ -28,6 +28,10 @@ const config: StorybookConfig = {
       ...config.resolve.alias,
       '@': resolve(__dirname, '../src/renderer/src'),
       '@shared': resolve(__dirname, '../shared'),
+      // Mirror the app renderer's `@brand` alias (electron.vite.config.ts) so
+      // components that import brand assets (e.g. the title bar icon) resolve
+      // in Storybook too.
+      '@brand': resolve(__dirname, '../build'),
     }
     config.plugins = config.plugins || []
     config.plugins.push(tailwindcss())
@@ -39,9 +43,6 @@ const config: StorybookConfig = {
       jsx: 'automatic',
     }
     return config
-  },
-  docs: {
-    autodocs: 'tag',
   },
 }
 

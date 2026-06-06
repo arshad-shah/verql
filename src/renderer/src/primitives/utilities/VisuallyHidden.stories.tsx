@@ -6,7 +6,6 @@ import { VisuallyHidden } from './VisuallyHidden'
 const meta = {
   title: 'Primitives/Utilities/VisuallyHidden',
   component: VisuallyHidden,
-  tags: ['autodocs'],
 } satisfies Meta<typeof VisuallyHidden>
 
 export default meta

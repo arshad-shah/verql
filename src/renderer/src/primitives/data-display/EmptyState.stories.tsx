@@ -9,7 +9,6 @@ const onAction = fn()
 const meta = {
   title: 'Primitives/Data Display/EmptyState',
   component: EmptyState,
-  tags: ['autodocs'],
   decorators: [(Story) => <div style={{ width: 480 }}><Story /></div>],
   argTypes: {
     title: { control: 'text' },

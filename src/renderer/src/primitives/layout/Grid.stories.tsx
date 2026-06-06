@@ -10,7 +10,6 @@ const DemoBox = ({ children }: { children: string }) => (
 const meta = {
   title: 'Primitives/Layout/Grid',
   component: Grid,
-  tags: ['autodocs'],
   argTypes: {
     columns: {
       control: 'select',

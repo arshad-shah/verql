@@ -4,7 +4,6 @@ import { KeyValue } from './KeyValue'
 const meta = {
   title: 'Primitives/Data Display/KeyValue',
   component: KeyValue,
-  tags: ['autodocs'],
   argTypes: {
     label: { control: 'text' },
     value: { control: 'text' },

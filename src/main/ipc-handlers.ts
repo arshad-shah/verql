@@ -47,6 +47,7 @@ import { registerPluginHandlers } from './ipc/plugins'
 import { registerThemesHandlers } from './ipc/themes'
 import { registerAppHandlers } from './ipc/app'
 import { registerUpdaterHandlers } from './ipc/updater'
+import { registerWindowHandlers } from './ipc/window'
 import { createUpdaterRegistry } from './updater'
 import { getSecretFieldKeys, SECRET_PLACEHOLDER } from './ipc/secrets'
 
@@ -192,6 +193,7 @@ export function registerIpcHandlers(): void {
   registerMigrationHandlers(handle, typeMapperRegistry, ctx.driverRegistry)
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
+  registerWindowHandlers()
 
   const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry, attentionHub)
 

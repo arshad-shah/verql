@@ -4,7 +4,6 @@ import { Panel } from './Panel'
 const meta = {
   title: 'Primitives/Surfaces/Panel',
   component: Panel,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Panel>
 
 export default meta

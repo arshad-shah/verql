@@ -4,7 +4,6 @@ import { AspectRatio } from './AspectRatio'
 const meta = {
   title: 'Primitives/Layout/AspectRatio',
   component: AspectRatio,
-  tags: ['autodocs'],
   argTypes: {
     ratio: {
       control: 'select',

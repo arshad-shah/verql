@@ -4,7 +4,6 @@ import { ScrollArea } from './ScrollArea'
 const meta = {
   title: 'Primitives/Layout/ScrollArea',
   component: ScrollArea,
-  tags: ['autodocs'],
   argTypes: {
     direction: {
       control: 'select',

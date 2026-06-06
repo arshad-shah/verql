@@ -41,7 +41,6 @@ function Host({ initial = '', connectionId = null, schema = null, databaseType =
 const meta: Meta<typeof Host> = {
   title: 'Components/Query/QueryEditor',
   component: Host,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <ThemeProvider>

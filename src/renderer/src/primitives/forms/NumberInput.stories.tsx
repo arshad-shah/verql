@@ -5,7 +5,6 @@ import { NumberInput } from './NumberInput'
 const meta: Meta<typeof NumberInput> = {
   title: 'Primitives/Forms/NumberInput',
   component: NumberInput,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     error: { control: 'boolean' },

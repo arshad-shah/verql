@@ -4,7 +4,6 @@ import { Skeleton } from './Skeleton'
 const meta = {
   title: 'Primitives/Data Display/Skeleton',
   component: Skeleton,
-  tags: ['autodocs'],
   argTypes: {
     shape: { control: 'inline-radio', options: ['line', 'block', 'circle', 'pill'] },
     animation: { control: 'inline-radio', options: ['shimmer', 'pulse', 'none'] },

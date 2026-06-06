@@ -6,7 +6,6 @@ import { Alert } from './Alert'
 const meta = {
   title: 'Primitives/Feedback/Alert',
   component: Alert,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

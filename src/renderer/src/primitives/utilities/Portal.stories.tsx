@@ -5,7 +5,6 @@ import { Portal } from './Portal'
 const meta = {
   title: 'Primitives/Utilities/Portal',
   component: Portal,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Portal>
 
 export default meta

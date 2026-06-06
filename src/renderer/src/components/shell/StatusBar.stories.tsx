@@ -50,7 +50,6 @@ function seed(opts: {
 const meta: Meta<typeof StatusBar> = {
   title: 'Components/Shell/StatusBar',
   component: StatusBar,
-  tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => (

@@ -11,7 +11,6 @@ import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 const meta: Meta<typeof ConfirmDialog> = {
   title: 'Patterns/ConfirmDialog',
   component: ConfirmDialog,
-  tags: ['autodocs'],
   args: {
     open: true,
     title: 'Discard changes?',

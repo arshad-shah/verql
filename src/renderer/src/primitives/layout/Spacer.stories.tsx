@@ -4,7 +4,6 @@ import { Spacer } from './Spacer'
 const meta = {
   title: 'Primitives/Layout/Spacer',
   component: Spacer,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Spacer>
 
 export default meta

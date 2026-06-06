@@ -6,7 +6,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Surfaces/Popover',
   component: Popover,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Popover>
 
 export default meta

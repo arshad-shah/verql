@@ -5,7 +5,6 @@ import { ConnectionTestButton } from './ConnectionTestButton'
 const meta: Meta<typeof ConnectionTestButton> = {
   title: 'Components/Connections/ConnectionTestButton',
   component: ConnectionTestButton,
-  tags: ['autodocs'],
   args: {
     profile: {
       id: 'test-1',

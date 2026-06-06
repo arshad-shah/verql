@@ -15,7 +15,6 @@ appActions.register({
 const meta: Meta<typeof ActionChip> = {
   title: 'Components/AI/ActionChip',
   component: ActionChip,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ padding: 16 }}>

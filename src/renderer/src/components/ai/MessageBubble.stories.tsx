@@ -13,7 +13,6 @@ const makeMessage = (overrides: Partial<AIChatMessage>): AIChatMessage => ({
 const meta: Meta<typeof MessageBubble> = {
   title: 'Components/AI/MessageBubble',
   component: MessageBubble,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 360, padding: 16 }}>

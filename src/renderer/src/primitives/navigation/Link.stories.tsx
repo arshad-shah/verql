@@ -5,7 +5,6 @@ import { Link } from './Link'
 const meta = {
   title: 'Primitives/Navigation/Link',
   component: Link,
-  tags: ['autodocs'],
   argTypes: {
     href: { control: 'text' },
     children: { control: 'text' },

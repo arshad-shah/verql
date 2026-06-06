@@ -84,7 +84,6 @@ function seedStores(tabs: Tab[], activeTabId: string | null) {
 const meta = {
   title: 'Components/Shell/TabBar',
   component: TabBar,
-  tags: ['autodocs'],
   decorators: [
     (Story: React.ComponentType) => (
       <div style={{ width: 900 }}>

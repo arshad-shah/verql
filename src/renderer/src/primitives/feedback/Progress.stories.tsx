@@ -4,7 +4,6 @@ import { Progress } from './Progress'
 const meta = {
   title: 'Primitives/Feedback/Progress',
   component: Progress,
-  tags: ['autodocs'],
   argTypes: {
     value: { control: { type: 'range', min: 0, max: 100, step: 1 } },
     max: { control: 'number' },

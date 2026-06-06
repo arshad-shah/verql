@@ -6,7 +6,6 @@ import { TransactionToolbar } from './TransactionToolbar'
 const meta: Meta<typeof TransactionToolbar> = {
   title: 'Components/Query/TransactionToolbar',
   component: TransactionToolbar,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <ThemeProvider>

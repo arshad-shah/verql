@@ -7,7 +7,6 @@ import { Table2, Eye, Key, Link, Hash } from 'lucide-react'
 const meta = {
   title: 'Primitives/Data Display/TreeItem',
   component: TreeItem,
-  tags: ['autodocs'],
 } satisfies Meta<typeof TreeItem>
 
 export default meta

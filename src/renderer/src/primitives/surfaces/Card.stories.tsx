@@ -4,7 +4,6 @@ import { Card } from './Card'
 const meta = {
   title: 'Primitives/Surfaces/Card',
   component: Card,
-  tags: ['autodocs'],
   argTypes: {
     padding: {
       control: 'select',

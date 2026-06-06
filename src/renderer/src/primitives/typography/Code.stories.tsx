@@ -5,7 +5,6 @@ import { Code } from './Code'
 const meta = {
   title: 'Primitives/Typography/Code',
   component: Code,
-  tags: ['autodocs'],
   argTypes: {
     block: { control: 'boolean' },
   },

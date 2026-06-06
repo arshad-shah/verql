@@ -6,7 +6,6 @@ import { Plus, RefreshCw } from 'lucide-react'
 const meta = {
   title: 'Primitives/Surfaces/Accordion',
   component: Accordion,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Accordion>
 
 export default meta

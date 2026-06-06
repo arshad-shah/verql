@@ -4,7 +4,6 @@ import { Divider } from './Divider'
 const meta = {
   title: 'Primitives/Layout/Divider',
   component: Divider,
-  tags: ['autodocs'],
   argTypes: {
     orientation: {
       control: 'select',

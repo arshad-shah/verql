@@ -23,7 +23,6 @@ function seed(profile: 'read-only' | 'ask-write' | 'auto') {
 const meta: Meta<typeof PermissionModeRow> = {
   title: 'Components/AI/PermissionModeRow',
   component: PermissionModeRow,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 320, background: 'var(--color-bg-secondary)' }}>

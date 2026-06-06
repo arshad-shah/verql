@@ -77,7 +77,6 @@ function ThemeDemo() {
 const meta = {
   title: 'Primitives/Theme/ThemeProvider',
   component: ThemeProvider,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <ThemeProvider>

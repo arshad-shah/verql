@@ -402,6 +402,44 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  // ── Window controls (custom title bar) ─────────────────────────────────
+  // The renderer owns the title bar on every platform. Native window buttons
+  // are preserved where the OS offers them (macOS traffic lights, Windows
+  // Window Controls Overlay); Linux has no overlay API, so the renderer draws
+  // its own controls and drives them through these channels.
+  /** Minimise the window that sent the request. */
+  'window:minimize': {
+    args: []
+    return: void
+  }
+  /** Toggle maximise/restore; returns the resulting maximised state. */
+  'window:toggle-maximize': {
+    args: []
+    return: boolean
+  }
+  /** Close the window that sent the request. */
+  'window:close': {
+    args: []
+    return: void
+  }
+  /** Current maximised state — used to pick the maximise vs. restore icon. */
+  'window:is-maximized': {
+    args: []
+    return: boolean
+  }
+  /** Top-level application-menu items (File/Edit/View/…), so the custom title
+   *  bar can render a menu bar on Windows/Linux where the native one is hidden.
+   *  macOS keeps its global menu bar and doesn't use this. */
+  'window:menu:list': {
+    args: []
+    return: { id: number; label: string; enabled: boolean }[]
+  }
+  /** Pop the native submenu for a top-level menu item at viewport coords (x,y),
+   *  so the title-bar menu bar drives the real, single-source-of-truth menu. */
+  'window:menu:popup': {
+    args: [payload: { id: number; x: number; y: number }]
+    return: void
+  }
   /** Returns whether any updater can manage this install + which channel. */
   'updater:status': {
     args: []
@@ -752,6 +790,13 @@ export const IPC_CHANNELS = {
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',
+  // ── Window controls (custom title bar) ─────────────────────────────────
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_TOGGLE_MAXIMIZE: 'window:toggle-maximize',
+  WINDOW_CLOSE: 'window:close',
+  WINDOW_IS_MAXIMIZED: 'window:is-maximized',
+  WINDOW_MENU_LIST: 'window:menu:list',
+  WINDOW_MENU_POPUP: 'window:menu:popup',
   // ── Updater ────────────────────────────────────────────────────────────
   UPDATER_STATUS: 'updater:status',
   UPDATER_CHECK: 'updater:check',
@@ -807,6 +852,9 @@ export interface IpcEventMap {
   'themes:changed': []
   /** The AI asked to perform an in-app action; the renderer runs it. */
   'app:action:perform': [payload: { requestId: string; actionId: string; params: Record<string, unknown> }]
+  /** The window's maximise state changed — the custom title bar swaps its
+   *  maximise/restore icon in response. */
+  'window:maximize-changed': [isMaximized: boolean]
   /** Progress update for an in-flight `updater:update` install. */
   'updater:progress': [payload:
     | { phase: 'idle' }
@@ -836,5 +884,6 @@ export const IPC_EVENTS = {
   NOTIFICATIONS_SHOW: 'notifications:show',
   THEMES_CHANGED: 'themes:changed',
   UPDATER_PROGRESS: 'updater:progress',
-  APP_ACTION_PERFORM: 'app:action:perform'
+  APP_ACTION_PERFORM: 'app:action:perform',
+  WINDOW_MAXIMIZE_CHANGED: 'window:maximize-changed'
 } as const satisfies Record<string, IpcEvent>

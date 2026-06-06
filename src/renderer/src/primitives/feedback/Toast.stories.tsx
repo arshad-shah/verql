@@ -5,7 +5,6 @@ import { Toast } from './Toast'
 const meta = {
   title: 'Primitives/Feedback/Toast',
   component: Toast,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

@@ -7,7 +7,6 @@ import { Button } from '../forms/Button'
 const meta = {
   title: 'Primitives/Surfaces/Modal',
   component: Modal,
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
   },

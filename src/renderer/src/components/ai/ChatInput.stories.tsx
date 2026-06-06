@@ -32,7 +32,6 @@ function seedAI(opts: { isStreaming?: boolean; activeModel?: string; modelName?:
 const meta: Meta<typeof ChatInput> = {
   title: 'Components/AI/ChatInput',
   component: ChatInput,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div className="w-90 border border-border-default rounded-md bg-bg-secondary">

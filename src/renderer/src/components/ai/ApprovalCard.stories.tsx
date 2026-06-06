@@ -15,7 +15,6 @@ const makeApproval = (overrides?: Partial<AIApprovalRequest>): AIApprovalRequest
 const meta: Meta<typeof ApprovalCardContent> = {
   title: 'Components/AI/ApprovalCard',
   component: ApprovalCardContent,
-  tags: ['autodocs'],
   decorators: [
     (Story) => (
       <div style={{ width: 360, padding: 16 }}>

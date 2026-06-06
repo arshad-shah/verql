@@ -5,7 +5,6 @@ import { Slider } from './Slider'
 const meta: Meta<typeof Slider> = {
   title: 'Primitives/Forms/Slider',
   component: Slider,
-  tags: ['autodocs'],
   argTypes: {
     min: { control: 'number' },
     max: { control: 'number' },

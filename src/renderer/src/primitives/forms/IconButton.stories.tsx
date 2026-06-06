@@ -5,7 +5,6 @@ import { IconButton } from './Button'
 const meta: Meta<typeof IconButton> = {
   title: 'Primitives/Forms/IconButton',
   component: IconButton,
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',

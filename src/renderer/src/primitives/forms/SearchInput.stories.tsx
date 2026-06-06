@@ -6,7 +6,6 @@ import { SearchInput } from './SearchInput'
 const meta: Meta<typeof SearchInput> = {
   title: 'Primitives/Forms/SearchInput',
   component: SearchInput,
-  tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     loading: { control: 'boolean' },

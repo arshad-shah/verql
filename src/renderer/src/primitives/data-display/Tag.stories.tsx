@@ -5,7 +5,6 @@ import { Tag } from './Tag'
 const meta = {
   title: 'Primitives/Data Display/Tag',
   component: Tag,
-  tags: ['autodocs'],
 } satisfies Meta<typeof Tag>
 
 export default meta

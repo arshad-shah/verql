@@ -16,7 +16,6 @@ const baseConnection = {
 const meta: Meta<typeof ConnectionListItem> = {
   title: 'Components/Connections/ConnectionListItem',
   component: ConnectionListItem,
-  tags: ['autodocs'],
   parameters: {
     // The row reads against the sidebar's bg-secondary surface; render it
     // there so visual review matches the production background.

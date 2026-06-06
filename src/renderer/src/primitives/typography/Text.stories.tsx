@@ -4,7 +4,6 @@ import { Text } from './Text'
 const meta = {
   title: 'Primitives/Typography/Text',
   component: Text,
-  tags: ['autodocs'],
   argTypes: {
     size: {
       control: 'select',
