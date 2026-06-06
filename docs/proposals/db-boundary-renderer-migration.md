@@ -120,7 +120,15 @@ but is invoked **per keystroke** by `StatementGutter` for CodeLens.
 4. `StatementGutter` resolves `statementSyntax` from the caps store instead of
    taking `dbType`.
 
-## Sequencing
+## Sequencing — ✅ ALL COMPLETE
 
-Do #1 → #3 → #2 (ascending IPC/serialization complexity). Each ships as its own
-commit + changeset, with the no-hardcoding guard test extended to lock it in.
+#3, #1, and #2 all shipped (each its own commit + changeset). The no-hardcoding
+guard test now covers `db-error.ts`, `statement-contributions/index.ts`, and
+`QueryPlanView.tsx`; `plan-parser.ts` is deleted. Net result: **the renderer no
+longer carries dialect-specific plan parsing, error classification, or statement
+splitting** — drivers provide all of it via capabilities. The main process was
+already generic.
+
+Remaining (intentionally host-owned, not db-dialect knowledge): connection
+lifecycle (refused/lost/auth), timeout/cancel, and app-layer errors (keyring/AI/
+network/file) are classified host-side because they span drivers.
