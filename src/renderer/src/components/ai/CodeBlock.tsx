@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { CodeView } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface CodeBlockProps {
   code: string
@@ -13,6 +14,7 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ code, language, showInsert = true }: CodeBlockProps) {
+  const { t } = useTranslation()
   const updateTabSql = useTabsStore(s => s.updateTabSql)
   const addQueryTab = useTabsStore(s => s.addQueryTab)
   const tabs = useTabsStore(s => s.tabs)
@@ -20,7 +22,7 @@ export function CodeBlock({ code, language, showInsert = true }: CodeBlockProps)
   const connectionId = useConnectionsStore(s => s.activeConnectionId)
 
   const insertIntoEditor = useCallback(() => {
-    const activeTab = tabs.find(t => t.id === activeTabId && t.type === 'query')
+    const activeTab = tabs.find(tab => tab.id === activeTabId && tab.type === 'query')
     if (activeTab) {
       updateTabSql(activeTab.id, code)
     } else {
@@ -39,7 +41,7 @@ export function CodeBlock({ code, language, showInsert = true }: CodeBlockProps)
           onClick={insertIntoEditor}
           className="px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-hover)]"
         >
-          Insert
+          {t('aiui.chat.insert')}
         </button>
       ) : undefined}
     />

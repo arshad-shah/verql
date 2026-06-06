@@ -195,6 +195,7 @@ export function activate(ctx: PluginContext): void {
     quoteChar: SNOWFLAKE_QUOTE,
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
     defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
       { key: 'account', label: 'Account Identifier', type: 'text', required: true },

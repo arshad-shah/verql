@@ -31,6 +31,19 @@ export interface QueryResult {
   affectedRows: number
 }
 
+/** A normalized query-plan tree node. Drivers parse their own EXPLAIN output
+ *  (text or JSON) into this shape via `DbAdapter.parseQueryPlan`; the renderer
+ *  renders it generically and never parses dialect-specific plan formats. */
+export interface PlanNode {
+  type: string
+  table?: string
+  cost: number
+  rows: number
+  actualTime?: number
+  children: PlanNode[]
+  details: string
+}
+
 export interface SchemaTable {
   name: string
   schema: string
@@ -103,6 +116,10 @@ export interface QueryTab {
   error: string | null
   isDirty: boolean
   aiExplanation: string | null
+  /** Parsed execution plan for the current results, or null. Produced by the
+   *  driver (`db:parse-plan`) when results arrive; the renderer reads it to show
+   *  the Query Plan tab. Empty array = results are not a plan. */
+  queryPlan?: PlanNode[] | null
   /** When set, Cmd+S overwrites this saved-query record instead of prompting. */
   savedQueryId?: string
   /** Last saved SQL content. `isDirty` is true iff sql !== savedSnapshot. */

@@ -5,6 +5,8 @@ import { useAIStore } from '@/stores/ai'
 import { Text } from '@/primitives/typography/Text'
 import { appActions } from '@/lib/app-actions/registry'
 import { CodeBlock } from './CodeBlock'
+import { useTranslation } from '@/i18n/I18nProvider'
+import { t } from '@shared/i18n'
 
 interface ToolCallCardProps {
   message: AIChatMessage
@@ -40,7 +42,7 @@ function parseToolResult(content: string): { success: boolean; summary: string; 
     if (parsed.data && typeof parsed.data === 'object' && parsed.data !== null) {
       const data = parsed.data as Record<string, unknown>
       if (data.rowCount !== undefined) {
-        return { success: true, summary: `${data.rowCount} row(s) returned` }
+        return { success: true, summary: t('aiui.tool.rowsReturned', { count: Number(data.rowCount) }) }
       }
     }
     return { success: Boolean(parsed.success), summary: content }
@@ -57,18 +59,19 @@ function getToolLabel(name: string, args: string): string {
     try {
       const actionId = (JSON.parse(args) as { actionId?: string }).actionId
       const title = actionId ? appActions.get(actionId)?.title : undefined
-      return title ?? 'App Action'
+      return title ?? t('aiui.tool.appAction')
     } catch {
-      return 'App Action'
+      return t('aiui.tool.appAction')
     }
   }
-  if (name.includes('execute') || name.includes('query')) return 'Query Execution'
-  if (name.includes('explain')) return 'Query Explain'
-  if (name.includes('schema') || name.includes('table') || name.includes('list')) return 'Schema Lookup'
+  if (name.includes('execute') || name.includes('query')) return t('aiui.tool.queryExecution')
+  if (name.includes('explain')) return t('aiui.tool.queryExplain')
+  if (name.includes('schema') || name.includes('table') || name.includes('list')) return t('aiui.tool.schemaLookup')
   return name
 }
 
 export function ToolCallCard({ message, result }: ToolCallCardProps) {
+  const { t } = useTranslation()
   const [showCode, setShowCode] = useState(false)
   const toolCall = message.toolCalls?.[0]
   if (!toolCall) return null
@@ -99,14 +102,14 @@ export function ToolCallCard({ message, result }: ToolCallCardProps) {
         )}
         <span className="flex-1 text-xs font-medium text-[var(--color-text)]">{label}</span>
         {isWaitingApproval && (
-          <span className="text-[10px] text-warning">Awaiting approval</span>
+          <span className="text-[10px] text-warning">{t('aiui.tool.awaitingApproval')}</span>
         )}
         {isExecuting && (
-          <span className="text-[10px] text-[var(--color-text-tertiary)]">Running</span>
+          <span className="text-[10px] text-[var(--color-text-tertiary)]">{t('aiui.tool.running')}</span>
         )}
         {parsed && (
           <span className={`text-[10px] ${parsed.success ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
-            {parsed.success ? 'Done' : 'Failed'}
+            {parsed.success ? t('aiui.tool.done') : t('aiui.tool.failed')}
           </span>
         )}
         {showCode ? (

@@ -1,7 +1,10 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import type { Tab, QueryTab, QueryTabTxnState, QueryResult, PlanNode, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
+import { useUiStore } from './ui'
+import type { SettingsCategoryId } from '@/lib/settings-categories'
+import { t } from '@shared/i18n'
 
 let tabCounter = 0
 
@@ -19,7 +22,7 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
   return {
     id: `query-${tabCounter}-${Date.now()}`,
     type: 'query',
-    title: `Query ${tabCounter}`,
+    title: t('shell.tabs.queryTitle', { n: tabCounter }),
     connectionId,
     database: null,
     schema,
@@ -33,7 +36,34 @@ function createQueryTab(connectionId: string | null, schema: string | null = nul
   }
 }
 
+/** Patch the query tab with `id`; non-matching and non-query tabs are untouched.
+ *  Collapses the otherwise-identical per-field setters into one shape. */
+function patchQueryTab(tabs: Tab[], id: string, patch: Partial<QueryTab>): Tab[] {
+  return tabs.map((t) => (t.id === id && t.type === 'query' ? { ...t, ...patch } : t))
+}
+
+/** Patch the transaction sub-state of the query tab with `id` (no-op if it has
+ *  no open txn record). */
+function patchTabTxn(tabs: Tab[], id: string, patch: Partial<QueryTabTxnState>): Tab[] {
+  return tabs.map((t) =>
+    t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, ...patch } } : t,
+  )
+}
+
 const MAX_RECENTLY_CLOSED = 10
+
+/** Minimal, serialisable shape of a query tab — what we persist for
+ *  restore-on-startup. Transient runtime state (results, execution, txn status)
+ *  is intentionally dropped; restored tabs come back clean and idle. */
+export interface QueryTabSnapshot {
+  title: string
+  sql: string
+  connectionId: string | null
+  database: string | null
+  schema: string | null
+  savedQueryId?: string
+  autoCommit: boolean
+}
 
 interface TabsState {
   tabs: Tab[]
@@ -56,6 +86,8 @@ interface TabsState {
   setTabSchema: (id: string, schema: string) => void
   setTabExecuting: (id: string, executing: boolean) => void
   setTabResults: (id: string, results: QueryResult) => void
+  /** Store the driver-parsed execution plan for the tab's current results. */
+  setTabQueryPlan: (id: string, plan: PlanNode[]) => void
   setTabError: (id: string, error: string) => void
   setTabAiExplanation: (id: string, explanation: string | null) => void
   setTabAutoCommit: (id: string, autoCommit: boolean) => void
@@ -66,10 +98,15 @@ interface TabsState {
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
   openInstallPlugin: () => string
-  openSettings: () => string
+  /** Open the settings tab, optionally focusing a specific category. */
+  openSettings: (category?: SettingsCategoryId) => string
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
+  /** Re-create query tabs from a persisted snapshot at boot. Restored tabs are
+   *  clean (savedSnapshot === sql) and idle. `activeIndex` selects which one is
+   *  focused, falling back to the first. */
+  restoreQueryTabs: (snapshots: QueryTabSnapshot[], activeIndex: number | null) => void
   /** Called when a connection profile is deleted. Query tabs lose their
    *  pointer so the next execute lands in the "pick a connection" state
    *  instead of failing silently against a gone profile. ER-diagram and
@@ -167,11 +204,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     }))
   },
 
-  setTabDirty: (id, dirty) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, isDirty: dirty } : t)
-    }))
-  },
+  setTabDirty: (id, dirty) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { isDirty: dirty }) })),
 
   markTabSaved: (id, opts) => {
     set((s) => ({
@@ -188,79 +221,36 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     }))
   },
 
-  setTabConnection: (id, connectionId) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, connectionId } : t)
-    }))
-  },
+  setTabConnection: (id, connectionId) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { connectionId }) })),
 
-  setTabDatabase: (id, database) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, database } : t)
-    }))
-  },
+  setTabDatabase: (id, database) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { database }) })),
 
-  setTabSchema: (id, schema) => {
-    set((s) => ({
-      tabs: s.tabs.map(t => t.id === id && t.type === 'query' ? { ...t, schema } : t)
-    }))
-  },
+  setTabSchema: (id, schema) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { schema }) })),
 
-  setTabExecuting: (id, executing) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, isExecuting: executing, ...(executing ? { error: null } : {}) }
-          : t
-      )
-    }))
-  },
-
-  setTabResults: (id, results) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, results, isExecuting: false, error: null, isDirty: false, aiExplanation: null }
-          : t
-      )
-    }))
-  },
-
-  setTabError: (id, error) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, error, isExecuting: false }
-          : t
-      )
-    }))
-  },
-
-  setTabAiExplanation: (id, explanation) => {
-    set((s) => ({
-      tabs: s.tabs.map(t =>
-        t.id === id && t.type === 'query'
-          ? { ...t, aiExplanation: explanation }
-          : t
-      )
-    }))
-  },
-
-  setTabAutoCommit: (id, autoCommit) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, autoCommit } } : t),
+  setTabExecuting: (id, executing) => set((s) => ({
+    // Clear any prior error when starting a run, but leave it on completion.
+    tabs: patchQueryTab(s.tabs, id, { isExecuting: executing, ...(executing ? { error: null } : {}) }),
   })),
 
-  setTabTxnStatus: (id, status) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, status } } : t),
+  setTabResults: (id, results) => set((s) => ({
+    // queryPlan is cleared here and re-populated asynchronously by the driver
+    // (db:parse-plan) once new results land, so a stale plan never lingers.
+    tabs: patchQueryTab(s.tabs, id, { results, isExecuting: false, error: null, isDirty: false, aiExplanation: null, queryPlan: null }),
   })),
 
-  setTabIsolation: (id, isolationLevel) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, isolationLevel } } : t),
-  })),
+  setTabQueryPlan: (id, plan) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { queryPlan: plan }) })),
 
-  setTabReadOnly: (id, readOnly) => set((s) => ({
-    tabs: s.tabs.map((t) => t.id === id && t.type === 'query' && t.txn ? { ...t, txn: { ...t.txn, readOnly } } : t),
-  })),
+  setTabError: (id, error) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { error, isExecuting: false }) })),
+
+  setTabAiExplanation: (id, explanation) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { aiExplanation: explanation }) })),
+
+  setTabAutoCommit: (id, autoCommit) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { autoCommit }) })),
+
+  setTabTxnStatus: (id, status) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { status }) })),
+
+  setTabIsolation: (id, isolationLevel) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { isolationLevel }) })),
+
+  setTabReadOnly: (id, readOnly) => set((s) => ({ tabs: patchTabTxn(s.tabs, id, { readOnly }) })),
 
   openErDiagram: (connectionId: string, schema: string) => {
     const id = `er-${connectionId}-${schema}`
@@ -272,7 +262,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: import('@shared/types').ErDiagramTab = {
       id,
       type: 'er-diagram',
-      title: `ER: ${schema}`,
+      title: t('shell.tabs.erTitle', { schema }),
       connectionId,
       schema
     }
@@ -293,7 +283,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: ConnectionFormTab = {
       id: formId,
       type: 'connection-form',
-      title: editingId ? 'Edit Connection' : 'New Connection',
+      title: editingId ? t('shell.tabs.editConnection') : t('shell.tabs.newConnection'),
       editingId
     }
     set((s) => ({
@@ -333,7 +323,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tab: InstallPluginTab = {
       id,
       type: 'install-plugin',
-      title: 'Install Plugin'
+      title: t('shell.tabs.installPlugin')
     }
     set((s) => ({
       tabs: [...s.tabs, tab],
@@ -342,14 +332,17 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     return id
   },
 
-  openSettings: () => {
+  openSettings: (category) => {
+    // Focus the requested category first so the tab opens on it (the body reads
+    // useUiStore.activeSettingsCategory). Omitting it preserves the last view.
+    if (category) useUiStore.getState().setActiveSettingsCategory(category)
     const id = 'settings'
     const existing = get().tabs.find((t) => t.id === id)
     if (existing) {
       set({ activeTabId: id })
       return id
     }
-    const tab: SettingsTab = { id, type: 'settings', title: 'Settings' }
+    const tab: SettingsTab = { id, type: 'settings', title: t('shell.tabs.settings') }
     set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
     return id
   },
@@ -388,6 +381,38 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         activeTabId: tab.id,
         recentlyClosed: rest
       }
+    })
+  },
+
+  restoreQueryTabs: (snapshots, activeIndex) => {
+    if (snapshots.length === 0) return
+    const restored: QueryTab[] = snapshots.map((s) => {
+      tabCounter++
+      return {
+        id: `query-${tabCounter}-${Date.now()}`,
+        type: 'query',
+        title: s.title,
+        connectionId: s.connectionId,
+        database: s.database,
+        schema: s.schema,
+        sql: s.sql,
+        results: null,
+        isExecuting: false,
+        error: null,
+        isDirty: false,
+        aiExplanation: null,
+        savedSnapshot: s.sql,
+        ...(s.savedQueryId ? { savedQueryId: s.savedQueryId } : {}),
+        txn: { autoCommit: s.autoCommit, status: 'none', readOnly: false },
+      }
+    })
+    set((state) => {
+      const tabs = [...state.tabs, ...restored]
+      const active =
+        activeIndex != null && restored[activeIndex]
+          ? restored[activeIndex].id
+          : (state.activeTabId ?? restored[0].id)
+      return { tabs, activeTabId: active }
     })
   },
 

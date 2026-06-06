@@ -3,13 +3,15 @@ import type { LucideIcon } from 'lucide-react'
 import { Flex } from '@/primitives/layout/Flex'
 import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
 type Profile = 'read-only' | 'ask-write' | 'auto'
 
-const MODES: { id: Profile; label: string; icon: LucideIcon; activeClass: string }[] = [
-  { id: 'read-only', label: 'Read-only', icon: Eye,    activeClass: 'bg-bg-tertiary text-success' },
-  { id: 'ask-write', label: 'Ask write', icon: Shield, activeClass: 'bg-bg-tertiary text-accent' },
-  { id: 'auto',      label: 'Auto',      icon: Zap,    activeClass: 'bg-bg-tertiary text-error' },
+const MODES: { id: Profile; label: MessageKey; icon: LucideIcon; activeClass: string }[] = [
+  { id: 'read-only', label: 'aiui.permission.readOnly', icon: Eye,    activeClass: 'bg-bg-tertiary text-success' },
+  { id: 'ask-write', label: 'aiui.permission.askWrite', icon: Shield, activeClass: 'bg-bg-tertiary text-accent' },
+  { id: 'auto',      label: 'aiui.permission.auto',      icon: Zap,    activeClass: 'bg-bg-tertiary text-error' },
 ]
 
 /**
@@ -18,13 +20,14 @@ const MODES: { id: Profile; label: string; icon: LucideIcon; activeClass: string
  * updates after the round-trip.
  */
 export function PermissionModeRow() {
+  const { t } = useTranslation()
   const profile = useAIStore((s) => s.permissionProfile)
   const setProfile = useAIStore((s) => s.setPermissionProfile)
 
   return (
     <Flex align="center" gap="sm" className="px-3 py-1.5 border-b border-border-default/40 text-[10px]">
       <Shield size={11} className="text-text-tertiary" />
-      <Text size="xs" color="muted">Mode</Text>
+      <Text size="xs" color="muted">{t('aiui.permission.mode')}</Text>
       <div className="ml-auto inline-flex gap-0.5 bg-bg-primary border border-border-default rounded p-0.5">
         {MODES.map((m) => {
           const Icon = m.icon
@@ -38,7 +41,7 @@ export function PermissionModeRow() {
               aria-pressed={active}
             >
               <Icon size={10} />
-              {m.label}
+              {t(m.label)}
             </button>
           )
         })}

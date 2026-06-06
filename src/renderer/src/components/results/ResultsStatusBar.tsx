@@ -3,6 +3,7 @@ import { Download } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
 import { Flex, Text, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   results: QueryResult
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ResultsStatusBar({ results, actions }: Props) {
+  const { t } = useTranslation()
   const [exporting, setExporting] = useState(false)
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -34,16 +36,16 @@ export function ResultsStatusBar({ results, actions }: Props) {
     >
       <Flex direction="row" align="center" gap="md" className="min-w-0">
         <Text size="xs" color="success">
-          {results.rowCount} {results.rowCount === 1 ? 'row' : 'rows'}
+          {t('query.results.rows', { count: results.rowCount })}
         </Text>
         <Text size="xs" color="muted">·</Text>
-        <Text size="xs" color="secondary">{results.duration}ms</Text>
+        <Text size="xs" color="secondary">{t('query.results.duration', { ms: results.duration })}</Text>
         <Text size="xs" color="muted">·</Text>
-        <Text size="xs" color="muted">{results.fields.length} cols</Text>
+        <Text size="xs" color="muted">{t('query.results.cols', { count: results.fields.length })}</Text>
         {results.affectedRows > 0 && (
           <>
             <Text size="xs" color="muted">·</Text>
-            <Text size="xs" color="warning">{results.affectedRows} affected</Text>
+            <Text size="xs" color="warning">{t('query.results.affected', { count: results.affectedRows })}</Text>
           </>
         )}
       </Flex>
@@ -55,9 +57,9 @@ export function ResultsStatusBar({ results, actions }: Props) {
           onClick={() => handleExport('csv')}
           disabled={exporting}
           className="flex items-center gap-1 text-text-muted hover:text-text-primary h-auto py-0"
-          title="Export as CSV"
+          title={t('query.results.exportCsvTitle')}
         >
-          <Download size={10} /> CSV
+          <Download size={10} /> {t('query.results.exportCsv')}
         </Button>
         <Button
           variant="ghost"
@@ -65,9 +67,9 @@ export function ResultsStatusBar({ results, actions }: Props) {
           onClick={() => handleExport('json')}
           disabled={exporting}
           className="flex items-center gap-1 text-text-muted hover:text-text-primary h-auto py-0"
-          title="Export as JSON"
+          title={t('query.results.exportJsonTitle')}
         >
-          <Download size={10} /> JSON
+          <Download size={10} /> {t('query.results.exportJson')}
         </Button>
       </Flex>
     </Flex>

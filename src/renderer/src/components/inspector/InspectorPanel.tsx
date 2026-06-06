@@ -5,10 +5,12 @@ import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Box, Flex, Stack, Text, Divider } from '@/primitives'
 import type { QueryTab, FieldInfo } from '@shared/types'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function InspectorPanel() {
+  const { t } = useTranslation()
   const selection = useSelectionStore(s => s.selection)
-  const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
+  const activeTab = useTabsStore(s => s.tabs.find(item => item.id === s.activeTabId))
 
   if (selection?.kind === 'row') {
     return (
@@ -23,7 +25,7 @@ export function InspectorPanel() {
               </Flex>
               <Text size="sm" className="font-mono break-words whitespace-pre-wrap">
                 {value === null
-                  ? 'NULL'
+                  ? t('shell.inspector.nullValue')
                   : typeof value === 'object'
                     ? JSON.stringify(value)
                     : String(value)}
@@ -45,54 +47,55 @@ export function InspectorPanel() {
 
   return (
     <Flex align="center" justify="center" className="h-full p-4">
-      <Text color="muted" size="sm">Nothing to inspect for this tab.</Text>
+      <Text color="muted" size="sm">{t('shell.inspector.nothingToInspect')}</Text>
     </Flex>
   )
 }
 
 function QueryInspector({ tab }: { tab: QueryTab }) {
+  const { t } = useTranslation()
   const connection = useConnectionsStore(s =>
     tab.connectionId ? s.connections.find(c => c.id === tab.connectionId) : undefined
   )
 
   const status: { label: string; tone: 'accent' | 'muted' | 'error' } = tab.isExecuting
-    ? { label: 'Executing…', tone: 'accent' }
+    ? { label: t('shell.inspector.statusExecuting'), tone: 'accent' }
     : tab.error
-      ? { label: 'Error', tone: 'error' }
+      ? { label: t('shell.inspector.statusError'), tone: 'error' }
       : tab.results
-        ? { label: 'OK', tone: 'accent' }
-        : { label: 'Idle', tone: 'muted' }
+        ? { label: t('shell.inspector.statusOk'), tone: 'accent' }
+        : { label: t('shell.inspector.statusIdle'), tone: 'muted' }
 
   return (
     <Stack direction="vertical" gap="sm" className="p-3">
-      <Section title="Status">
-        <Stat label="State" value={status.label} valueTone={status.tone} />
+      <Section title={t('shell.inspector.sectionStatus')}>
+        <Stat label={t('shell.inspector.state')} value={status.label} valueTone={status.tone} />
         {tab.results && (
           <>
-            <Stat label="Rows" value={String(tab.results.rowCount ?? tab.results.rows.length)} />
-            <Stat label="Duration" value={`${tab.results.duration} ms`} />
+            <Stat label={t('shell.inspector.rows')} value={String(tab.results.rowCount ?? tab.results.rows.length)} />
+            <Stat label={t('shell.inspector.duration')} value={t('shell.inspector.durationValue', { ms: tab.results.duration })} />
             {tab.results.affectedRows > 0 && (
-              <Stat label="Affected" value={String(tab.results.affectedRows)} />
+              <Stat label={t('shell.inspector.affected')} value={String(tab.results.affectedRows)} />
             )}
-            <Stat label="Columns" value={String(tab.results.fields.length)} />
+            <Stat label={t('shell.inspector.columns')} value={String(tab.results.fields.length)} />
           </>
         )}
-        {tab.isDirty && <Stat label="Unsaved" value="Yes" valueTone="accent" />}
+        {tab.isDirty && <Stat label={t('shell.inspector.unsaved')} value={t('shell.inspector.yes')} valueTone="accent" />}
       </Section>
 
       <Divider />
 
-      <Section title="Connection">
-        <Stat label="Profile" value={connection?.name ?? '—'} />
-        {connection?.type && <Stat label="Driver" value={connection.type} />}
-        {tab.database && <Stat label="Database" value={tab.database} />}
-        {tab.schema && <Stat label="Schema" value={tab.schema} />}
+      <Section title={t('shell.inspector.sectionConnection')}>
+        <Stat label={t('shell.inspector.profile')} value={connection?.name ?? '—'} />
+        {connection?.type && <Stat label={t('shell.inspector.driver')} value={connection.type} />}
+        {tab.database && <Stat label={t('shell.inspector.database')} value={tab.database} />}
+        {tab.schema && <Stat label={t('shell.inspector.schema')} value={tab.schema} />}
       </Section>
 
       {tab.error && (
         <>
           <Divider />
-          <Section title="Error">
+          <Section title={t('shell.inspector.sectionError')}>
             <Text size="xs" className="font-mono whitespace-pre-wrap break-words">{tab.error}</Text>
           </Section>
         </>
@@ -101,7 +104,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
       {tab.results && tab.results.fields.length > 0 && (
         <>
           <Divider />
-          <Section title={`Columns (${tab.results.fields.length})`}>
+          <Section title={t('shell.inspector.sectionColumns', { count: tab.results.fields.length })}>
             <FieldList fields={tab.results.fields} />
           </Section>
         </>
@@ -110,7 +113,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
       {tab.sql.trim() && (
         <>
           <Divider />
-          <Section title="SQL">
+          <Section title={t('shell.inspector.sectionSql')}>
             <Box className="bg-bg-secondary rounded-sm p-2 max-h-40 overflow-auto">
               <Text size="xs" className="font-mono whitespace-pre-wrap break-words">
                 {tab.sql.length > 800 ? tab.sql.slice(0, 800) + '…' : tab.sql}
@@ -122,7 +125,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
 
       {tab.results && tab.results.rows.length > 0 && (
         <Text size="xs" color="muted" className="mt-1">
-          Click a row in the results to inspect it.
+          {t('shell.inspector.clickRowToInspect')}
         </Text>
       )}
     </Stack>
@@ -130,13 +133,14 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
 }
 
 function FieldList({ fields }: { fields: FieldInfo[] }) {
+  const { t } = useTranslation()
   return (
     <Stack direction="vertical" gap="none">
       {fields.map(f => (
         <Flex key={f.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
           <Text size="xs" className="font-mono font-semibold truncate">{f.name}</Text>
           <Text size="xs" color="muted" className="ml-auto">{f.dataType}</Text>
-          {f.nullable === false && <Text size="xs" color="accent">NOT NULL</Text>}
+          {f.nullable === false && <Text size="xs" color="accent">{t('shell.inspector.notNull')}</Text>}
         </Flex>
       ))}
     </Stack>
@@ -144,6 +148,7 @@ function FieldList({ fields }: { fields: FieldInfo[] }) {
 }
 
 function TableSummary({ connectionId, schema, table }: { connectionId: string; schema?: string; table: string }) {
+  const { t } = useTranslation()
   const schemaName = schema ?? ''
   const columnsKey = `${connectionId}:${schemaName}:${table}`
   const columns = useSchemaStore(s => s.columns.get(columnsKey) ?? [])
@@ -159,16 +164,16 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
     <Stack direction="vertical" gap="sm" className="p-3">
       <Text size="sm" className="font-mono font-semibold">{table}</Text>
       <Box>
-        <Text size="xs" color="muted" className="mb-1">Columns</Text>
+        <Text size="xs" color="muted" className="mb-1">{t('shell.inspector.columnsLabel')}</Text>
         {columns.length === 0 ? (
-          <Text size="xs" color="muted">Loading…</Text>
+          <Text size="xs" color="muted">{t('shell.inspector.loading')}</Text>
         ) : (
           columns.map(c => (
             <Flex key={c.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
               <Text size="xs" className="font-mono font-semibold">{c.name}</Text>
               <Text size="xs" color="muted">{c.dataType}</Text>
-              {c.isPrimaryKey && <Text size="xs" color="accent">PK</Text>}
-              {c.isForeignKey && <Text size="xs" color="accent">FK</Text>}
+              {c.isPrimaryKey && <Text size="xs" color="accent">{t('shell.inspector.primaryKey')}</Text>}
+              {c.isForeignKey && <Text size="xs" color="accent">{t('shell.inspector.foreignKey')}</Text>}
             </Flex>
           ))
         )}

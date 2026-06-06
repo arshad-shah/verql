@@ -26,11 +26,23 @@ npm install @verql/plugin-sdk
 | **Types** | `PluginContext`, `DriverFactory`, `DbAdapter`, `Tool`, `ConnectionField`, `RegisteredTheme`, … | The full type surface a plugin codes against. Erased at runtime. |
 | **Authoring** | `definePlugin`, `PluginModule` | Typed identity helper that pins your `manifest` + `activate`/`deactivate` shape. |
 | **SQL helpers** | `quoteIdentifier`, `validateIdentifier`, `formatSqlValue`, `generateCreateTable`, `generateInsertStatements`, `splitSqlStatements`, `importCsvToTable`, `createRelationalGetTableData` | Parameterised on your driver's quote char — compose them instead of hardcoding a dialect. |
-| **Capabilities** | `serializeStaticCapabilities` | Advertise what your driver supports (transactions, explain, …). |
 | **Themes** | `validateTheme`, `REQUIRED_THEME_TOKENS`, `RECOMMENDED_THEME_TOKENS` | Validate a theme with the same checker the host uses. |
 | **Tools** | `isWriteQuery`, `toJsonSchema` | Build AI/MCP tool schemas. |
 | **Errors** | `safeCall`, `ErrorBudget`, `PluginError` | Match the host's error-handling contract. |
 | **Permissions** | `ALL_PERMISSIONS`, `PERMISSION_INFO`, `PermissionDeniedError`, `hasPermission`, `effectiveGrants`, `isPluginPermission`, type `PluginPermission` | The capability model your manifest declares against. |
+
+### Driver capabilities (declared, never branched on)
+
+The host treats every driver generically; a driver expresses dialect behaviour by
+declaring serializable capabilities on its `DriverFactory` (and a couple of
+optional adapter methods), not by the host special-casing its type:
+
+- `statementSyntax` — which statement splitter the CodeLens gutter uses (`'sql'` / `'redis'` / `'mongodb'`).
+- `errorRules` — regex rules that classify query errors into a `DbErrorCode` (the host owns the friendly message).
+- `parseQueryPlan(result)` on the adapter — parse EXPLAIN output into a `PlanNode` tree for the Query Plan view.
+- plus `sqlDialect`, `quoteChar`, `placeholderStyle`, `editorLanguage`, `defaultSchemaCandidates`, `session`, `explain`, …
+
+See [../plugins.md](../plugins.md) for the full driver example.
 
 ### What's deliberately *not* exported
 

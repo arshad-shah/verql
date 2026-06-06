@@ -3,6 +3,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
 import { Button, Input, Text, Box, Flex, ScrollArea } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const DB_ABBREVIATIONS: Record<string, string> = {
   postgresql: 'PG',
@@ -27,6 +28,7 @@ interface ConnectionSwitcherProps {
 }
 
 export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: ConnectionSwitcherProps) {
+  const { t } = useTranslation()
   const { connections, activeConnectionId, connectedIds, setActiveConnection, connect } =
     useConnectionsStore()
   const [filter, setFilter] = useState('')
@@ -143,7 +145,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
             ref={inputRef}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter connections..."
+            placeholder={t('shell.connectionSwitcher.filterPlaceholder')}
             size="sm"
             className="flex-1 bg-transparent border-0 focus:ring-0 px-0 text-[10px]"
           />
@@ -154,7 +156,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         {activeConn && (
           <Box className="px-1.5 pt-1">
             <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
-              Active
+              {t('shell.connectionSwitcher.active')}
             </Text>
             {renderConnection(activeConn, true)}
           </Box>
@@ -163,7 +165,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         {connectedConns.length > 0 && (
           <Box className="px-1.5 pt-0.5">
             <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
-              Connected
+              {t('shell.connectionSwitcher.connected')}
             </Text>
             {connectedConns.map((c) => renderConnection(c, false))}
           </Box>
@@ -172,7 +174,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         {savedConns.length > 0 && (
           <Box className="px-1.5 pt-0.5 border-t border-white/3">
             <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
-              Saved
+              {t('shell.connectionSwitcher.saved')}
             </Text>
             {savedConns.map((c) => renderConnection(c, false))}
           </Box>
@@ -189,7 +191,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
           className="flex w-full items-center justify-center gap-1 rounded-md py-1 text-[10px] text-accent hover:bg-hover h-auto"
         >
           <Plus size={10} />
-          New connection
+          {t('shell.connectionSwitcher.newConnection')}
         </Button>
       </Box>
     </div>

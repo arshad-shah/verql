@@ -18,6 +18,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
 import { Flex, Text, Box, Button, Spinner } from '@/primitives'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 function readVar(name: string, fallback: string): string {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function ERDiagram({ connectionId, schema }: Props) {
+  const { t } = useTranslation()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<TableNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
       const tables = await fetchTables(connectionId, schema)
 
       const tablesWithColumns = await Promise.all(
-        tables.filter(t => t.type === 'table').map(async (table) => {
+        tables.filter(table => table.type === 'table').map(async (table) => {
           const columns = await fetchColumns(connectionId, table.name, schema)
           return { name: table.name, columns }
         })
@@ -80,7 +82,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
   if (loading) {
     return (
       <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-        <Spinner size="md" label="Loading diagram..." />
+        <Spinner size="md" label={t('shell.er.loading')} />
       </Flex>
     )
   }
@@ -88,7 +90,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
   if (nodes.length === 0) {
     return (
       <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-        <Text size="sm" color="muted">No tables found in schema "{schema}"</Text>
+        <Text size="sm" color="muted">{t('shell.er.noTables', { schema })}</Text>
       </Flex>
     )
   }
@@ -132,7 +134,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
             onClick={() => handleRelayout('LR')}
             className={`transition-colors ${direction === 'LR' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
-            Horizontal
+            {t('shell.er.horizontal')}
           </Button>
           <Button
             variant="outline"
@@ -140,7 +142,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
             onClick={() => handleRelayout('TB')}
             className={`transition-colors ${direction === 'TB' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
-            Vertical
+            {t('shell.er.vertical')}
           </Button>
         </Flex>
       </ReactFlow>

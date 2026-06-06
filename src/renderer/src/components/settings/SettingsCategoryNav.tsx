@@ -1,26 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Box, Button } from '@/primitives'
-import { useUiStore, type SettingsCategoryId } from '@/stores/ui'
+import { useUiStore } from '@/stores/ui'
+import { SETTINGS_CATEGORIES, type SettingsCategoryDef } from '@/lib/settings-categories'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
-interface CategoryDef {
-  id: SettingsCategoryId
-  label: string
-  /** Plugin name that owns this category — if not active, the category is hidden. */
-  ownedBy?: string
-}
-
-export const SETTINGS_CATEGORIES: CategoryDef[] = [
-  { id: 'general', label: 'General' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'editor', label: 'Editor' },
-  { id: 'connections', label: 'Connections' },
-  { id: 'data-display', label: 'Data Display' },
-  { id: 'keybindings', label: 'Keybindings' },
-  { id: 'ai', label: 'AI', ownedBy: 'verql-plugin-ai' },
-  { id: 'mcp', label: 'MCP Server' },
-  { id: 'plugins', label: 'Plugins' },
-]
+// Re-export so existing importers (e.g. SettingsLayout) keep working.
+export { SETTINGS_CATEGORIES }
 
 interface PluginInfo {
   name: string
@@ -29,7 +14,7 @@ interface PluginInfo {
 
 interface NavProps {
   /** Optional pre-filtered category list (used by the settings search box). */
-  categories?: CategoryDef[]
+  categories?: SettingsCategoryDef[]
 }
 
 export function SettingsCategoryNav({ categories }: NavProps = {}) {

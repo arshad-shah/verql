@@ -1,9 +1,11 @@
 import { Flex, Text, Badge } from '@/primitives'
 import appIconUrl from '@brand/icon-light.svg?url'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const isDev = import.meta.env.DEV
 
 export function TitleBar() {
+  const { t } = useTranslation()
   return (
     <Flex
       align="center"
@@ -11,9 +13,9 @@ export function TitleBar() {
     >
       <Flex align="center" gap="sm" className="ml-20 no-drag">
         <img src={appIconUrl} width={18} height={18} alt="" aria-hidden="true" />
-        <Text size="sm" weight="semibold" color="primary" className="tracking-wide">Verql</Text>
+        <Text size="sm" weight="semibold" color="primary" className="tracking-wide">{t('shell.titleBar.appName')}</Text>
         {isDev && (
-          <Badge variant="warning" size="sm" className="text-[9px] leading-none">DEV</Badge>
+          <Badge variant="warning" size="sm" className="text-[9px] leading-none">{t('shell.statusBar.dev')}</Badge>
         )}
       </Flex>
     </Flex>

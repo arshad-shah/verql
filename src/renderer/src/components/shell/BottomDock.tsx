@@ -1,16 +1,18 @@
 import { useEffect } from 'react'
 import { Flex, Box, Text } from '@/primitives'
-import { useUiStore, type BottomPanelId } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
+import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { QueryErrorView } from '@/components/results/QueryErrorView'
 import { QueryPlanView } from '@/components/query-plan/QueryPlanView'
+// (plan parsing now lives in the driver via db:parse-plan; tab.queryPlan holds it)
 import { ChartPanel } from '@/components/charts/ChartPanel'
-import { parsePlanFromResult } from '@/lib/plan-parser'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function useHasBottomPanels(): boolean {
   const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
@@ -23,7 +25,9 @@ export function useHasBottomPanels(): boolean {
 }
 
 export function BottomDock() {
-  const activeTab = useTabsStore(s => s.tabs.find(t => t.id === s.activeTabId))
+  const { t } = useTranslation()
+  const activeTab = useTabsStore(s => s.tabs.find(tab => tab.id === s.activeTabId))
+  const connections = useConnectionsStore(s => s.connections)
   const bottomActivePanel = useUiStore(s => s.bottomDockActivePanel)
   const setBottomActivePanel = useUiStore(s => s.setBottomDockActivePanel)
   const toggleBottomDock = useUiStore(s => s.toggleBottomDock)
@@ -40,10 +44,10 @@ export function BottomDock() {
   // parser already handles both Postgres JSON plans and plain-text plans
   // and returns [] for non-plan rows, so this also doubles as the "do we
   // even have a plan to render" check inside the tab body below.
-  const planNodes = showResults && (activeTab as QueryTab).results
-    ? parsePlanFromResult((activeTab as QueryTab).results!.rows)
-    : []
-  const hasPlan = planNodes.length > 0
+  // The driver parses EXPLAIN output into tab.queryPlan (db:parse-plan); we only
+  // surface the "Query Plan" tab when there's a parsed plan to show.
+  const queryPlan = showResults ? ((activeTab as QueryTab).queryPlan ?? []) : []
+  const hasPlan = queryPlan.length > 0
 
   // The Chart tab is meaningful any time results have at least two columns —
   // ChartPanel needs an X and a Y axis. Single-column scalar results (e.g.
@@ -57,15 +61,15 @@ export function BottomDock() {
     .map(c => ({ id: `plugin:${c.contributionId}`, title: (c.meta.title as string) ?? c.contributionId }))
 
   const tabs: BottomTab[] = [
-    ...(showResults ? [{ id: 'results', title: 'Results' }] : []),
-    ...(hasChart ? [{ id: 'chart', title: 'Chart' }] : []),
-    ...(hasPlan ? [{ id: 'query-plan', title: 'Query Plan' }] : []),
+    ...(showResults ? [{ id: BOTTOM_PANEL.RESULTS, title: t('shell.bottomDock.results') }] : []),
+    ...(hasChart ? [{ id: BOTTOM_PANEL.CHART, title: t('shell.bottomDock.chart') }] : []),
+    ...(hasPlan ? [{ id: BOTTOM_PANEL.QUERY_PLAN, title: t('shell.bottomDock.queryPlan') }] : []),
     ...bottomPluginPanels,
   ]
 
   useEffect(() => {
     if (tabs.length === 0) return
-    if (!tabs.find(t => t.id === bottomActivePanel)) {
+    if (!tabs.find(tab => tab.id === bottomActivePanel)) {
       setBottomActivePanel(tabs[0].id as BottomPanelId)
     }
   }, [tabs, bottomActivePanel, setBottomActivePanel])
@@ -75,24 +79,25 @@ export function BottomDock() {
   }
 
   const renderBody = () => {
-    if (bottomActivePanel === 'results' && showResults && activeTab) {
-      const t = activeTab as QueryTab
-      if (t.results) {
-        return <ResultsPanel results={t.results} sql={t.sql} tabId={t.id} aiExplanation={t.aiExplanation} />
+    if (bottomActivePanel === BOTTOM_PANEL.RESULTS && showResults && activeTab) {
+      const qt = activeTab as QueryTab
+      if (qt.results) {
+        return <ResultsPanel results={qt.results} sql={qt.sql} tabId={qt.id} aiExplanation={qt.aiExplanation} />
       }
-      if (t.error) {
-        return <QueryErrorView error={t.error} />
+      if (qt.error) {
+        const dbType = connections.find(c => c.id === qt.connectionId)?.type
+        return <QueryErrorView error={qt.error} dbType={dbType} />
       }
       return (
         <Flex align="center" justify="center" className="h-full">
-          <Text color="muted" size="sm">Run a query to see results</Text>
+          <Text color="muted" size="sm">{t('shell.bottomDock.runToSeeResults')}</Text>
         </Flex>
       )
     }
-    if (bottomActivePanel === 'query-plan' && hasPlan && activeTab) {
-      return <QueryPlanView results={(activeTab as QueryTab).results!} />
+    if (bottomActivePanel === BOTTOM_PANEL.QUERY_PLAN && hasPlan && activeTab) {
+      return <QueryPlanView plan={(activeTab as QueryTab).queryPlan ?? []} />
     }
-    if (bottomActivePanel === 'chart' && hasChart && resultsForChart) {
+    if (bottomActivePanel === BOTTOM_PANEL.CHART && hasChart && resultsForChart) {
       return <ChartPanel results={resultsForChart} />
     }
     if (bottomActivePanel.startsWith('plugin:')) {

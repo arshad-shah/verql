@@ -1,23 +1,27 @@
 import { useState, useEffect } from 'react'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL } from '@/stores/ui'
 import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { ExplorerTree } from '@/components/explorer/ExplorerTree'
 import { SavedQueriesPanel } from '@/components/saved-queries/SavedQueriesPanel'
+import { QueryHistoryPanel } from '@/components/query-history/QueryHistoryPanel'
 import { ChartsDashboard } from '@/components/charts-panel/ChartsDashboard'
 import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
+import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { activePanel } = useUiStore()
   const { activeConnectionId, connectedIds } = useConnectionsStore()
 
   const [exportTable, setExportTable] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
+  const [queryView, setQueryView] = useState<'saved' | 'history'>('saved')
 
   const panelContributions = usePluginUIStore(selectContributions('panels'))
 
@@ -26,11 +30,11 @@ export function Sidebar() {
   }, [])
 
   const titles: Record<string, string> = {
-    explorer: 'Explorer',
-    query: 'Saved Queries',
-    charts: 'Charts',
-    plugins: 'Plugins',
-    settings: 'Settings',
+    [ACTIVITY_PANEL.EXPLORER]: t('shell.sidebar.explorer'),
+    [ACTIVITY_PANEL.QUERY]: t('shell.sidebar.savedQueries'),
+    [ACTIVITY_PANEL.CHARTS]: t('shell.sidebar.charts'),
+    [ACTIVITY_PANEL.PLUGINS]: t('shell.sidebar.plugins'),
+    [ACTIVITY_PANEL.SETTINGS]: t('shell.sidebar.settings'),
   }
   const pluginTitles = Object.fromEntries(
     panelContributions.map((c) => [`plugin:${c.contributionId}`, c.pluginName])
@@ -47,12 +51,12 @@ export function Sidebar() {
         className="px-3 py-2 border-b border-border"
       >
         <Text size="xs" color="muted" className="uppercase tracking-wider">
-          {allTitles[activePanel] ?? 'Explorer'}
+          {allTitles[activePanel] ?? t('shell.sidebar.explorer')}
         </Text>
-        {isConnected && activePanel === 'explorer' && (
-          <Tooltip content="Import data" side="left">
+        {isConnected && activePanel === ACTIVITY_PANEL.EXPLORER && (
+          <Tooltip content={t('shell.sidebar.importData')} side="left">
             <IconButton
-              label="Import data"
+              label={t('shell.sidebar.importData')}
               size="xs"
               variant="ghost"
               onClick={() => setShowImport(true)}
@@ -64,18 +68,43 @@ export function Sidebar() {
         )}
       </Flex>
       <ScrollArea direction="vertical" className="flex-1">
-        {activePanel === 'explorer' && (
+        {activePanel === ACTIVITY_PANEL.EXPLORER && (
           <ExplorerTree onExportTable={(name) => setExportTable(name)} />
         )}
-        {activePanel === 'query' && <SavedQueriesPanel />}
-        {activePanel === 'charts' && (
+        {activePanel === ACTIVITY_PANEL.QUERY && (
+          <Flex direction="column" className="h-full">
+            {/* Segmented toggle between persisted saved queries and the
+                run-history log. Both are query-scoped lists, so they share
+                this sidebar slot rather than taking a second activity icon. */}
+            <Flex gap="xs" className="px-2 pt-2 pb-1">
+              {(['saved', 'history'] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setQueryView(view)}
+                  className={`flex-1 rounded-md px-2 py-1 text-xs capitalize transition-colors ${
+                    queryView === view
+                      ? 'bg-bg-tertiary text-text-primary'
+                      : 'text-text-muted hover:text-text-primary hover:bg-white/5'
+                  }`}
+                >
+                  {view === 'saved' ? t('shell.sidebar.saved') : t('shell.sidebar.history')}
+                </button>
+              ))}
+            </Flex>
+            <Box className="flex-1 min-h-0">
+              {queryView === 'saved' ? <SavedQueriesPanel /> : <QueryHistoryPanel />}
+            </Box>
+          </Flex>
+        )}
+        {activePanel === ACTIVITY_PANEL.CHARTS && (
           isConnected ? <ChartsDashboard /> : (
             <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">
-              Connect and run queries to see charts
+              {t('shell.sidebar.chartsEmpty')}
             </Text>
           )
         )}
-        {activePanel === 'plugins' && <PluginsPanel />}
+        {activePanel === ACTIVITY_PANEL.PLUGINS && <PluginsPanel />}
         {/* Plugin-contributed panels */}
         {panelContributions
           .filter((c) => activePanel === `plugin:${c.contributionId}`)

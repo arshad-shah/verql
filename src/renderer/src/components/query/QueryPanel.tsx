@@ -10,42 +10,34 @@ import { tabActions } from '@/stores/tab-actions'
 import { parseDbError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useTabsStore } from '@/stores/tabs'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import { useToastStore } from '@/stores/toast'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
+import { useQueryHistoryStore } from '@/stores/query-history'
 import { useSchemaStore } from '@/stores/schema'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
-import type { QueryTab } from '@shared/types'
+import type { QueryTab, QueryResult } from '@shared/types'
 import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
+import { t as coreT } from '@shared/i18n'
+import { isSchemaMutatingSql, destructiveKind } from '@/lib/sql-classify'
 
 interface Props {
   tab: QueryTab
 }
 
-const DDL_PATTERN = /(^|;)\s*(CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT|GRANT|REVOKE)\b/i
-const DESTRUCTIVE_PATTERN = /(^|;)\s*(DELETE|DROP|TRUNCATE)\b/i
-const UPDATE_NO_WHERE_PATTERN = /(^|;)\s*UPDATE\b(?![\s\S]*\bWHERE\b)/i
-
-function stripSqlNoise(sql: string): string {
-  return sql
-    .replace(/--[^\n]*/g, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-}
-
-function isSchemaMutatingSql(sql: string): boolean {
-  return DDL_PATTERN.test(stripSqlNoise(sql))
-}
-
+/** Localized confirm message for a destructive statement, or null when safe. */
 function destructiveReason(sql: string): string | null {
-  const clean = stripSqlNoise(sql)
-  if (DESTRUCTIVE_PATTERN.test(clean)) return 'This query contains DELETE, DROP, or TRUNCATE.'
-  if (UPDATE_NO_WHERE_PATTERN.test(clean)) return 'This UPDATE has no WHERE clause — every row will be affected.'
+  const kind = destructiveKind(sql)
+  if (kind === 'delete-drop-truncate') return coreT('query.destructive.deleteDropTruncate')
+  if (kind === 'update-no-where') return coreT('query.destructive.updateNoWhere')
   return null
 }
 
 export function QueryPanel({ tab }: Props) {
+  const { t } = useTranslation()
   const { updateTabSql, setTabExecuting, setTabResults, setTabError, markTabSaved,
     setTabAutoCommit, setTabTxnStatus, setTabIsolation, setTabReadOnly } = useTabsStore()
   const connections = useConnectionsStore(s => s.connections)
@@ -83,6 +75,17 @@ export function QueryPanel({ tab }: Props) {
     return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql, undefined, txnOpts)
   }, [tab.connectionId, tab.database, tab.schema])
 
+  // Ask the driver to parse the results into a plan tree (db:parse-plan). The
+  // renderer never parses EXPLAIN output itself; the driver returns [] for
+  // non-plan results, which hides the Query Plan tab. Best-effort.
+  const refreshQueryPlan = useCallback(async (result: QueryResult) => {
+    if (!tab.connectionId) return
+    try {
+      const plan = await window.electronAPI.invoke(IPC_CHANNELS.DB_PARSE_PLAN, tab.connectionId, result)
+      useTabsStore.getState().setTabQueryPlan(tab.id, plan)
+    } catch { /* plan parsing is best-effort */ }
+  }, [tab.connectionId, tab.id])
+
   /**
    * Runs SQL. If `override` is provided we use it verbatim (CodeLens "▶ Run"
    * for a single statement, palette "Run Selection", etc.). Otherwise we
@@ -96,7 +99,7 @@ export function QueryPanel({ tab }: Props) {
     if (!sql) return
     if (confirmDestructive) {
       const reason = destructiveReason(sql)
-      if (reason && !window.confirm(`${reason}\n\nRun anyway?`)) return
+      if (reason && !window.confirm(t('query.destructive.runAnyway', { reason }))) return
     }
     // Only single-statement runs (e.g. statement gutter) carry an override.
     // We record per-statement status only in that case — multi-statement runs
@@ -144,10 +147,21 @@ export function QueryPanel({ tab }: Props) {
       const txnOpts = useSession ? { sessionId: tab.id } : undefined
       const queryPromise = executeWithSchema(sql, txnOpts)
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Query timed out after ${queryTimeout}s`)), timeoutMs)
+        setTimeout(() => reject(new Error(t('query.timeout.message', { seconds: queryTimeout }))), timeoutMs)
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
-      if (result) setTabResults(tab.id, result)
+      if (result) {
+        setTabResults(tab.id, result)
+        void refreshQueryPlan(result)
+      }
+      useQueryHistoryStore.getState().record({
+        sql,
+        connectionId: tab.connectionId ?? undefined,
+        connectionType: dbType,
+        status: 'ok',
+        durationMs: Math.round(performance.now() - startedAt),
+        rowCount: result?.rowCount ?? undefined,
+      })
       if (isSchemaMutatingSql(sql) && tab.connectionId) {
         useSchemaStore.getState().clearCache(tab.connectionId)
       }
@@ -164,7 +178,15 @@ export function QueryPanel({ tab }: Props) {
         tabActions.recordRunResult(tab.id, singleStmt, { kind: 'error', durationMs, rowCount: null })
       }
       const raw = (err as Error).message
-      const parsed = parseDbError(raw)
+      useQueryHistoryStore.getState().record({
+        sql,
+        connectionId: tab.connectionId ?? undefined,
+        connectionType: dbType,
+        status: 'error',
+        durationMs,
+        error: raw,
+      })
+      const parsed = parseDbError(raw, dbType)
       // Tab stores the raw text so the QueryErrorView can re-parse and show
       // both the friendly summary and the original driver message — keeps
       // classification logic in one place.
@@ -180,7 +202,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
 
   const handleExecute = useCallback(() => runSql(), [runSql])
 
@@ -262,21 +284,21 @@ export function QueryPanel({ tab }: Props) {
     if (!current || current.type !== 'query') return
     const sql = current.sql.trim()
     if (!sql) {
-      useToastStore.getState().addToast({ type: 'info', title: 'Nothing to save', message: 'Editor is empty' })
+      useToastStore.getState().addToast({ type: 'info', title: t('query.save.nothingToSaveTitle'), message: t('query.save.nothingToSaveMessage') })
       return
     }
     if (current.savedQueryId) {
       saveQuery({ id: current.savedQueryId, name: current.title, sql, connectionType: dbType })
       markTabSaved(current.id)
-      useToastStore.getState().addToast({ type: 'success', title: 'Saved', message: current.title })
+      useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedTitle'), message: current.title })
       return
     }
     // First-time save: open the in-app prompt (window.prompt is unsupported in
     // Electron's renderer and throws).
     pendingSqlRef.current = sql
-    setSaveDialogName(current.title?.trim() || `Query ${new Date().toLocaleString()}`)
+    setSaveDialogName(current.title?.trim() || t('query.save.defaultName', { timestamp: new Date().toLocaleString() }))
     setSaveDialogOpen(true)
-  }, [tab.id, dbType, markTabSaved])
+  }, [tab.id, dbType, markTabSaved, t])
 
   const confirmSaveDialog = useCallback(() => {
     const name = saveDialogName.trim()
@@ -287,9 +309,9 @@ export function QueryPanel({ tab }: Props) {
     }
     const id = saveQuery({ name, sql, connectionType: dbType })
     markTabSaved(tab.id, { title: name, savedQueryId: id })
-    useToastStore.getState().addToast({ type: 'success', title: 'Query saved', message: name })
+    useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedQueryTitle'), message: name })
     setSaveDialogOpen(false)
-  }, [saveDialogName, dbType, markTabSaved, tab.id])
+  }, [saveDialogName, dbType, markTabSaved, tab.id, t])
 
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
@@ -300,16 +322,17 @@ export function QueryPanel({ tab }: Props) {
       const result = await executeWithSchema(`EXPLAIN ANALYZE ${sql}`)
       if (result) {
         setTabResults(tab.id, result)
+        void refreshQueryPlan(result)
         // The user asked for an EXPLAIN — route them to the plan view instead
         // of leaving them on the raw-rows Results tab. The BottomDock only
-        // surfaces the "Query Plan" tab once the parser sees plan content,
+        // surfaces the "Query Plan" tab once the driver parses plan content,
         // which matches the output we just produced.
-        useUiStore.getState().setBottomDockActivePanel('query-plan')
+        useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.QUERY_PLAN)
       }
     } catch (err) {
       setTabError(tab.id, (err as Error).message)
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
 
@@ -391,26 +414,26 @@ export function QueryPanel({ tab }: Props) {
           className="p-4 flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1">
-            <div className="text-sm font-medium">Save query</div>
+            <div className="text-sm font-medium">{t('query.save.title')}</div>
             <div className="text-xs text-text-tertiary">
-              Give this query a name to find it again in the Saved panel.
+              {t('query.save.description')}
             </div>
           </div>
           <Input
             autoFocus
             value={saveDialogName}
             onChange={(e) => setSaveDialogName(e.target.value)}
-            placeholder="Query name"
+            placeholder={t('query.save.namePlaceholder')}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setSaveDialogOpen(false)
             }}
           />
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" size="sm" onClick={() => setSaveDialogOpen(false)}>
-              Cancel
+              {t('query.save.cancel')}
             </Button>
             <Button type="submit" variant="solid" size="sm" disabled={!saveDialogName.trim()}>
-              Save
+              {t('query.save.save')}
             </Button>
           </div>
         </form>

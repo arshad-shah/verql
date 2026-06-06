@@ -1,9 +1,9 @@
-import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType } from './types'
+import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType, PlanNode } from './types'
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
 import type { ActivityEntry, ActivityQuery } from './activity'
-import type { ConversationsSnapshot, StoredConversation, SavedQuery } from './appdata'
+import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry } from './appdata'
 
 export interface IpcChannelMap {
   'db:connect': {
@@ -109,6 +109,12 @@ export interface IpcChannelMap {
   'db:driver-capabilities': {
     args: [type: string]
     return: DriverCapabilities | null
+  }
+  /** Parse an EXPLAIN result into a normalized plan tree via the driver. Returns
+   *  [] when the driver has no plan parser or the rows aren't a plan. */
+  'db:parse-plan': {
+    args: [profileId: string, result: QueryResult]
+    return: PlanNode[]
   }
   'db:session:open': {
     args: [profileId: string, sessionId: string, opts?: SessionOpts]
@@ -518,6 +524,24 @@ export interface IpcChannelMap {
     args: [queries: SavedQuery[]]
     return: { imported: number }
   }
+  /** Newest-first recorded query runs, capped to `limit`. */
+  'appdata:query-history:list': {
+    args: [limit?: number]
+    return: QueryHistoryEntry[]
+  }
+  /** Record one run; prunes to the newest `maxItems` server-side. */
+  'appdata:query-history:add': {
+    args: [entry: QueryHistoryEntry, maxItems: number]
+    return: void
+  }
+  'appdata:query-history:delete': {
+    args: [id: string]
+    return: void
+  }
+  'appdata:query-history:clear': {
+    args: []
+    return: void
+  }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   'mcp:start': {
     args: []
@@ -609,6 +633,7 @@ export const IPC_CHANNELS = {
   DB_CANCEL_QUERY: 'db:cancel-query',
   DB_SAMPLE_QUERY: 'db:sample-query',
   DB_DRIVER_CAPABILITIES: 'db:driver-capabilities',
+  DB_PARSE_PLAN: 'db:parse-plan',
   // ── Schema introspection ───────────────────────────────────────────────
   DB_GET_TABLES: 'db:get-tables',
   DB_GET_COLUMNS: 'db:get-columns',
@@ -711,6 +736,10 @@ export const IPC_CHANNELS = {
   APPDATA_SAVED_QUERIES_UPSERT: 'appdata:saved-queries:upsert',
   APPDATA_SAVED_QUERIES_DELETE: 'appdata:saved-queries:delete',
   APPDATA_SAVED_QUERIES_IMPORT: 'appdata:saved-queries:import',
+  APPDATA_QUERY_HISTORY_LIST: 'appdata:query-history:list',
+  APPDATA_QUERY_HISTORY_ADD: 'appdata:query-history:add',
+  APPDATA_QUERY_HISTORY_DELETE: 'appdata:query-history:delete',
+  APPDATA_QUERY_HISTORY_CLEAR: 'appdata:query-history:clear',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',

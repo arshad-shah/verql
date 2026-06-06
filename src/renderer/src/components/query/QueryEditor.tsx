@@ -12,6 +12,8 @@ import { useSettingsStore } from '@/stores/settings'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { Flex, Text, useTheme } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { KEYBINDING_ACTION } from '@shared/settings'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   tabId: string
@@ -68,6 +70,7 @@ function parseKeybinding(key: string, monaco: Monaco): number {
 }
 
 export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connectionId, schema, databaseType }: Props) {
+  const { t } = useTranslation()
   // Tracked in state (not refs) so the keybindings effect re-runs once Monaco
   // is ready, instead of silently missing the initial registration.
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null)
@@ -137,23 +140,23 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
 
     const actions: { id: string; label: string; bindingId: string; fallback: number; run: () => void }[] = [
       {
-        id: 'execute-query', label: 'Execute Query', bindingId: 'execute-query',
+        id: KEYBINDING_ACTION.EXECUTE_QUERY, label: t('query.editor.executeAction'), bindingId: KEYBINDING_ACTION.EXECUTE_QUERY,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
         run: () => onExecute()
       },
     ]
     if (onSave) {
       actions.push({
-        id: 'save-query', label: 'Save Query', bindingId: 'save-query',
+        id: KEYBINDING_ACTION.SAVE_QUERY, label: t('query.editor.saveAction'), bindingId: KEYBINDING_ACTION.SAVE_QUERY,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
         run: () => onSave()
       })
     }
     if (language === 'sql') {
       actions.push({
-        id: 'ai-inline-trigger',
-        label: 'Trigger AI Suggestion',
-        bindingId: 'ai-inline-trigger',
+        id: KEYBINDING_ACTION.AI_INLINE_TRIGGER,
+        label: t('query.editor.aiTriggerAction'),
+        bindingId: KEYBINDING_ACTION.AI_INLINE_TRIGGER,
         fallback: monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Backslash,
         run: () => editorInstance.trigger('verql', 'editor.action.inlineSuggest.trigger', null),
       })
@@ -256,7 +259,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
         onMount={handleMount}
         loading={
           <Flex align="center" justify="center" className="h-full">
-            <Text size="sm" color="muted">Loading editor...</Text>
+            <Text size="sm" color="muted">{t('query.editor.loading')}</Text>
           </Flex>
         }
       />
@@ -266,6 +269,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
           tabId={tabId}
           connectionId={connectionId}
           dbType={databaseType}
+          statementSyntax={cachedCaps?.statementSyntax}
         />
       ) : null}
     </>

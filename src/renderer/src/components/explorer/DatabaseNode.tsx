@@ -7,6 +7,7 @@ import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { SchemaNode } from './SchemaNode'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface DatabaseNodeProps {
   databaseName: string
@@ -21,6 +22,7 @@ export function DatabaseNode({
   depth,
   onExportTable,
 }: DatabaseNodeProps) {
+  const { t } = useTranslation()
   const nodeKey = `db:${connectionId}:${databaseName}`
 
   const expandedTreeNodes = useUiStore((s) => s.expandedTreeNodes)
@@ -55,7 +57,7 @@ export function DatabaseNode({
       } catch {
         if (!cancelled) {
           setSwitchError(true)
-          addToast({ type: 'error', title: `Cannot access database "${databaseName}"` })
+          addToast({ type: 'error', title: t('explorer.toast.cannotAccessDatabase', { name: databaseName }) })
         }
       }
     })()
@@ -73,21 +75,21 @@ export function DatabaseNode({
       await switchDatabase(connectionId, databaseName)
       clearCache(connectionId)
       await fetchSchemas(connectionId, databaseName)
-      addToast({ type: 'success', title: `Refreshed ${databaseName}` })
+      addToast({ type: 'success', title: t('explorer.toast.refreshedDatabase', { name: databaseName }) })
     } catch {
-      addToast({ type: 'error', title: `Cannot access "${databaseName}"` })
+      addToast({ type: 'error', title: t('explorer.toast.cannotAccess', { name: databaseName }) })
     }
   }
 
   function handleCopyName() {
     navigator.clipboard.writeText(databaseName).then(() => {
-      addToast({ type: 'success', title: 'Copied database name' })
+      addToast({ type: 'success', title: t('explorer.toast.copiedDatabaseName') })
     })
   }
 
   const menuItems = [
-    { label: 'Refresh', onSelect: handleRefresh },
-    { label: 'Copy database name', onSelect: handleCopyName },
+    { label: t('explorer.menu.refresh'), onSelect: handleRefresh },
+    { label: t('explorer.menu.copyDatabaseName'), onSelect: handleCopyName },
   ]
 
   const paddingLeft = 8 + depth * 16
@@ -124,9 +126,9 @@ export function DatabaseNode({
             className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip content="Refresh" side="top">
+            <Tooltip content={t('explorer.tooltip.refresh')} side="top">
               <IconButton
-                label="Refresh database"
+                label={t('explorer.action.refreshDatabase')}
                 size="xs"
                 variant="ghost"
                 className="h-5 w-5"
@@ -145,14 +147,14 @@ export function DatabaseNode({
                 className="text-xs px-3 py-1"
                 style={{ paddingLeft: paddingLeft + 20, color: 'var(--color-error)' }}
               >
-                Cannot access this database
+                {t('explorer.status.cannotAccessDatabase')}
               </p>
             ) : schemaList.length === 0 ? (
               <p
                 className="text-xs px-3 py-1"
                 style={{ paddingLeft: paddingLeft + 20, color: 'var(--color-text-tertiary)' }}
               >
-                Loading…
+                {t('explorer.loading.generic')}
               </p>
             ) : (
               schemaList.map((schemaName) => (

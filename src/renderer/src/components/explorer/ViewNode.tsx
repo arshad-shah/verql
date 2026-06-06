@@ -10,6 +10,7 @@ import { IconButton } from '@/primitives/forms/Button'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ViewNodeProps {
   viewName: string
@@ -20,6 +21,7 @@ interface ViewNodeProps {
 }
 
 export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery }: ViewNodeProps) {
+  const { t } = useTranslation()
   const expandedTreeNodes = useUiStore((s) => s.expandedTreeNodes)
   const toggleTreeNode = useUiStore((s) => s.toggleTreeNode)
   const columns = useSchemaStore((s) => s.columns)
@@ -57,23 +59,23 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
 
   const menuItems = [
     {
-      label: 'Open in query tab',
+      label: t('explorer.menu.openInQueryTab'),
       onSelect: handleOpenInTab,
     },
     {
-      label: 'Copy view name',
+      label: t('explorer.menu.copyViewName'),
       onSelect: () => {
         navigator.clipboard.writeText(viewName).then(() => {
-          addToast({ type: 'success', title: 'Copied view name' })
+          addToast({ type: 'success', title: t('explorer.toast.copiedViewName') })
         })
       },
     },
     {
-      label: 'Copy sample query',
+      label: t('explorer.menu.copySampleQuery'),
       onSelect: async () => {
         const query = await getSampleQuery()
         navigator.clipboard.writeText(query).then(() => {
-          addToast({ type: 'success', title: 'Copied sample query' })
+          addToast({ type: 'success', title: t('explorer.toast.copiedSampleQuery') })
         })
       },
     },
@@ -111,7 +113,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
             onClick={(e) => e.stopPropagation()}
           >
             <IconButton
-              label="Open in query tab"
+              label={t('explorer.action.openInQueryTab')}
               size="xs"
               variant="ghost"
               className="h-5 w-5"
@@ -169,7 +171,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
               className="text-xs px-2 py-1.5"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
-              Loading columns…
+              {t('explorer.loading.columns')}
             </p>
           ) : (
             cols.map((col) => (

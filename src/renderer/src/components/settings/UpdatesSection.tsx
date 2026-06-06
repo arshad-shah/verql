@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Stack, Flex, Button, Text } from '@/primitives'
 import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
 
 type ProgressEvent = IpcEventMap['updater:progress'][0]
@@ -24,6 +25,7 @@ type ActionState =
  * fail or — worse — clobber their install.
  */
 export function UpdatesSection() {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   const [action, setAction] = useState<ActionState>({ kind: 'idle' })
 
@@ -102,8 +104,8 @@ export function UpdatesSection() {
   return (
     <Stack gap="sm">
       <SettingRow
-        label="Updates"
-        description={`Managed via ${status.displayName}. Current version: ${versionLabel}`}
+        label={t('settings.updates.label')}
+        description={t('settings.updates.description', { manager: status.displayName, version: versionLabel })}
       >
         <Flex gap="sm">
           <Button
@@ -112,11 +114,11 @@ export function UpdatesSection() {
             onClick={check}
             disabled={action.kind === 'checking' || action.kind === 'updating'}
           >
-            {action.kind === 'checking' ? 'Checking…' : 'Check for updates'}
+            {action.kind === 'checking' ? t('settings.updates.checking') : t('settings.updates.checkForUpdates')}
           </Button>
           {status.available && action.kind !== 'updating' && action.kind !== 'done' && (
             <Button variant="solid" size="sm" onClick={update}>
-              Install update
+              {t('settings.updates.installUpdate')}
             </Button>
           )}
           {action.kind === 'updating' && (
@@ -124,7 +126,7 @@ export function UpdatesSection() {
           )}
           {action.kind === 'done' && action.restartRequired && (
             <Button variant="solid" size="sm" onClick={restart}>
-              Restart to apply
+              {t('settings.updates.restartToApply')}
             </Button>
           )}
         </Flex>

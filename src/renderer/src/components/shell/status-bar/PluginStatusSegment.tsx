@@ -2,14 +2,16 @@ import { Spinner } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 import { StatusBarSegment } from './StatusBarSegment'
 import { usePluginStatus } from './usePluginStatus'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function PluginStatusSegment() {
+  const { t } = useTranslation()
   const status = usePluginStatus()
   if (status.loading) {
     return (
-      <StatusBarSegment tone="default" side="right" aria-label="Plugins loading">
-        <Spinner size="xs" label="Loading plugins" />
-        <span className="text-[10px]">Loading…</span>
+      <StatusBarSegment tone="default" side="right" aria-label={t('shell.statusBar.pluginsLoading')}>
+        <Spinner size="xs" label={t('shell.statusBar.loadingPlugins')} />
+        <span className="text-[10px]">{t('shell.statusBar.loading')}</span>
       </StatusBarSegment>
     )
   }
@@ -18,11 +20,11 @@ export function PluginStatusSegment() {
     <StatusBarSegment
       tone="default"
       side="right"
-      aria-label={warn ? `${status.failed} plugins failed` : `${status.active} plugins active`}
+      aria-label={warn ? t('shell.statusBar.pluginsFailed', { count: status.failed }) : t('shell.statusBar.pluginsActive', { count: status.active })}
     >
       <span className={cn('h-1.5 w-1.5 rounded-full', warn ? 'bg-warning' : 'bg-success')} />
       <span className="text-[10px]">
-        {warn ? `${status.active}/${status.total} plugins` : `${status.active} plugins`}
+        {warn ? t('shell.statusBar.pluginsCount', { active: status.active, total: status.total }) : t('shell.statusBar.pluginsActiveShort', { count: status.active })}
       </span>
     </StatusBarSegment>
   )

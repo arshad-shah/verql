@@ -8,6 +8,8 @@ export function serializeStaticCapabilities(factory: DriverFactory): DriverCapab
   return {
     sqlDialect: factory.sqlDialect,
     editorLanguage: factory.editorLanguage,
+    statementSyntax: factory.statementSyntax,
+    errorRules: factory.errorRules,
     defaultSchemaUseConnectionDatabase: factory.defaultSchemaUseConnectionDatabase,
     defaultSchemaCandidates: factory.defaultSchemaCandidates,
     hasSampleQuery: typeof factory.sampleQuery === 'function',

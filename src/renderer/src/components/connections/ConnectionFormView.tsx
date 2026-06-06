@@ -11,6 +11,7 @@ import {
   Button, Spinner
 } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   tabId: string
@@ -36,6 +37,7 @@ interface MiddlewareField {
 const COLOR_PRESETS = ['#7c6ff7', '#28c840', '#e5c07b', '#61afef', '#ff5f57', '#c678dd']
 
 export function ConnectionFormView({ tabId, editingId }: Props) {
+  const { t } = useTranslation()
   const saveConnection = useConnectionsStore(s => s.saveConnection)
   const connections = useConnectionsStore(s => s.connections)
   const closeTab = useTabsStore(s => s.closeTab)
@@ -108,7 +110,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       // Fetch ALL fetchable fields in one connection (single browser auth)
       const fieldKeys = fetchableFields.map(f => f.key)
       const options = await window.electronAPI.invoke(
-        'db:connection-options',
+        IPC_CHANNELS.DB_CONNECTION_OPTIONS,
         profile as unknown as ConnectionProfile,
         fieldKeys
       )
@@ -145,7 +147,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             <Select
               size="lg"
               searchable
-              searchPlaceholder={`Search ${field.label.toLowerCase()}…`}
+              searchPlaceholder={t('connections.form.searchPlaceholder', { label: field.label.toLowerCase() })}
               value={String(value)}
               onChange={(v) => update({ [field.key]: v })}
               options={options.map(o => ({ value: o, label: o }))}
@@ -159,7 +161,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <Input
             value={String(value)}
             onChange={(e) => update({ [field.key]: e.target.value })}
-            placeholder={authStatus === 'authenticated' ? 'Type a value' : 'Authenticate first'}
+            placeholder={authStatus === 'authenticated' ? t('connections.form.typeAValue') : t('connections.form.authenticateFirst')}
             disabled={authStatus !== 'authenticated'}
             size="lg"
           />
@@ -248,7 +250,9 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     const isActive = step === currentStep && authStatus === 'authenticated'
     const isPending = !isCompleted && !isActive
 
-    const stepLabel = stepIndex === 0 ? 'Select Role & Warehouse' : 'Select Database & Schema'
+    const stepLabel = stepIndex === 0
+      ? t('connections.wizard.stepSelectRoleWarehouse')
+      : t('connections.wizard.stepSelectDatabaseSchema')
 
     return (
       <Box
@@ -268,7 +272,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             {isCompleted ? <Check size={14} /> : stepIndex + 2}
           </div>
           <Text size="sm" weight="semibold" color={isPending ? 'muted' : 'primary'}>
-            Step {stepIndex + 2}: {stepLabel}
+            {t('connections.wizard.stepLabel', { n: stepIndex + 2, label: stepLabel })}
           </Text>
         </Flex>
         {(isActive || isCompleted) && (
@@ -282,7 +286,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   size="sm"
                   onClick={() => handleStepComplete(step)}
                 >
-                  Continue
+                  {t('connections.wizard.continue')}
                 </Button>
               </div>
             )}
@@ -299,11 +303,11 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           <Stack gap="xl">
             {/* Header */}
             <Flex direction="row" align="center" justify="between">
-              <Heading level={2}>{editingId ? 'Edit Connection' : 'New Connection'}</Heading>
+              <Heading level={2}>{editingId ? t('connections.form.editTitle') : t('connections.form.newTitle')}</Heading>
               <Flex direction="row" gap="md">
-                <Button type="button" variant="outline" size="md" onClick={handleCancel}>Cancel</Button>
+                <Button type="button" variant="outline" size="md" onClick={handleCancel}>{t('common.cancel')}</Button>
                 <Button type="submit" variant="solid" size="md">
-                  {editingId ? 'Save Changes' : 'Add Connection'}
+                  {editingId ? t('connections.form.saveChanges') : t('connections.form.addConnection')}
                 </Button>
               </Flex>
             </Flex>
@@ -312,8 +316,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
             {/* Database Type */}
             <Stack gap="md">
-              <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Database Type</Text>
-              <FormField label="Database Type">
+              <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.databaseType')}</Text>
+              <FormField label={t('connections.form.databaseType')}>
                 <Select
                   size="lg"
                   value={String(profile.type)}
@@ -325,17 +329,17 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
             {/* General */}
             <Stack gap="md">
-              <Text size="sm" color="muted" weight="semibold" className="uppercase tracking-wider">General</Text>
-              <FormField label="Connection Name">
+              <Text size="sm" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.general')}</Text>
+              <FormField label={t('connections.form.connectionName')}>
                 <Input
                   required
                   value={String(profile.name ?? '')}
                   onChange={(e) => update({ name: e.target.value })}
-                  placeholder="My Database"
+                  placeholder={t('connections.form.connectionNamePlaceholder')}
                   size="lg"
                 />
               </FormField>
-              <FormField label="Color">
+              <FormField label={t('connections.form.color')}>
                 <ColorInput
                   value={String(profile.color ?? '#7c6ff7')}
                   onChange={(v) => update({ color: v })}
@@ -345,18 +349,18 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
               </FormField>
               <Flex direction="row" align="center" gap="md">
                 <Switch
-                  label="Auto-commit by default"
+                  label={t('connections.form.autoCommit')}
                   checked={profile.defaultAutoCommit !== false}
                   onChange={(e) => update({ defaultAutoCommit: e.target.checked })}
                 />
-                <Text size="lg" color="secondary">Auto-commit by default</Text>
+                <Text size="lg" color="secondary">{t('connections.form.autoCommit')}</Text>
               </Flex>
             </Stack>
 
             {/* Connection fields — non-fetchable, non-grouped */}
             {activePluginDriver && (
               <Stack gap="md">
-                <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">Connection</Text>
+                <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.connection')}</Text>
                 {activePluginDriver.connectionFields.filter(f => !f.group && !f.fetchable).map(renderPluginField)}
               </Stack>
             )}
@@ -379,21 +383,21 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       {authStatus === 'authenticated' ? <Check size={14} /> : '1'}
                     </div>
                     <Text size="sm" weight="semibold">
-                      Step 1: Authenticate
+                      {t('connections.wizard.stepAuthenticate')}
                     </Text>
                   </Flex>
                   <Stack gap="sm" className="px-3 pb-3">
                     {authStatus === 'authenticated' ? (
                       <Flex direction="row" align="center" gap="md">
-                        <Text size="sm" color="success">Authenticated successfully</Text>
+                        <Text size="sm" color="success">{t('connections.wizard.authenticatedSuccess')}</Text>
                         <Button type="button" variant="ghost" size="sm" onClick={handleAuthenticate}>
-                          Re-authenticate
+                          {t('connections.wizard.reAuthenticate')}
                         </Button>
                       </Flex>
                     ) : (
                       <>
                         <Text size="sm" color="muted">
-                          Connect to your account to load available roles, warehouses, databases, and schemas.
+                          {t('connections.wizard.authIntro')}
                         </Text>
                         <div>
                           <Button
@@ -405,7 +409,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                             className="flex items-center gap-1.5"
                           >
                             {authStatus === 'authenticating' ? <Spinner size="xs" /> : null}
-                            {authStatus === 'authenticating' ? 'Authenticating...' : 'Authenticate'}
+                            {authStatus === 'authenticating' ? t('connections.wizard.authenticating') : t('connections.wizard.authenticate')}
                           </Button>
                         </div>
                       </>
@@ -434,7 +438,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-none border-0 h-auto justify-start"
                 >
                   {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <Text size="lg" color="secondary">SSH Tunnel</Text>
+                  <Text size="lg" color="secondary">{t('connections.form.sshTunnel')}</Text>
                 </Button>
                 {sshExpanded && (
                   <Stack gap="md" className="px-3 pb-3">

@@ -1,4 +1,4 @@
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, TestConnectionResult } from '@shared/types'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, TestConnectionResult, PlanNode } from '@shared/types'
 import type { SessionOpts } from '@shared/driver-capabilities'
 
 export interface DbAdapter {
@@ -19,6 +19,13 @@ export interface DbAdapter {
   cancelQuery?(): Promise<void>
   isConnected(): Promise<boolean>
   getConnectionOptions?(field: string): Promise<string[]>
+  /**
+   * Parse this driver's EXPLAIN output (the rows of an EXPLAIN query) into a
+   * normalized PlanNode tree. Drivers that support query plans implement it
+   * (e.g. Postgres parses its text/JSON plan); others omit it and the renderer
+   * shows no plan. Keeps dialect-specific plan parsing inside the driver.
+   */
+  parseQueryPlan?(result: QueryResult): PlanNode[]
   /**
    * Returns non-table schema objects (views, materialized views, functions,
    * procedures, triggers, sequences) for the given schema. Drivers that don't

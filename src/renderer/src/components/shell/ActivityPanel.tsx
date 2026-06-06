@@ -3,13 +3,15 @@ import { Database, Wrench, Plug, Bell, Globe, Trash2 } from 'lucide-react'
 import { Flex, Box, Text, cn } from '@/primitives'
 import { useActivityStore } from '@/stores/activity'
 import type { ActivityEntry, ActivityKind, ActivityLevel } from '@shared/activity'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
-const KIND_META: Record<ActivityKind, { icon: typeof Database; label: string }> = {
-  query: { icon: Database, label: 'Queries' },
-  'tool-call': { icon: Wrench, label: 'Tools' },
-  connection: { icon: Plug, label: 'Connections' },
-  notification: { icon: Bell, label: 'Notifications' },
-  network: { icon: Globe, label: 'Network' },
+const KIND_META: Record<ActivityKind, { icon: typeof Database; label: MessageKey }> = {
+  query: { icon: Database, label: 'shell.activity.queries' },
+  'tool-call': { icon: Wrench, label: 'shell.activity.tools' },
+  connection: { icon: Plug, label: 'shell.activity.connections' },
+  notification: { icon: Bell, label: 'shell.activity.notifications' },
+  network: { icon: Globe, label: 'shell.activity.network' },
 }
 
 const LEVEL_CLASS: Record<ActivityLevel, string> = {
@@ -75,6 +77,7 @@ export interface ActivityListProps {
 
 /** Presentational, store-free — used by the panel and Storybook. */
 export function ActivityList({ entries, active, onToggleKind, onClear }: ActivityListProps) {
+  const { t } = useTranslation()
   const filtered = useMemo(() => {
     const list = active.size === 0 ? entries : entries.filter((e) => active.has(e.kind))
     return list.slice(0, MAX_RENDERED)
@@ -91,14 +94,14 @@ export function ActivityList({ entries, active, onToggleKind, onClear }: Activit
               key={kind}
               type="button"
               onClick={() => onToggleKind(kind)}
-              title={label}
+              title={t(label)}
               className={cn(
                 'flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors',
                 on ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-primary hover:bg-white/5',
               )}
             >
               <Icon size={12} />
-              {label}
+              {t(label)}
             </button>
           )
         })}
@@ -106,7 +109,7 @@ export function ActivityList({ entries, active, onToggleKind, onClear }: Activit
         <button
           type="button"
           onClick={onClear}
-          title="Clear activity"
+          title={t('shell.activity.clear')}
           className="flex items-center rounded p-1 text-text-muted hover:text-error hover:bg-white/5"
         >
           <Trash2 size={13} />
@@ -116,7 +119,7 @@ export function ActivityList({ entries, active, onToggleKind, onClear }: Activit
       <Box className="flex-1 min-h-0 overflow-auto">
         {filtered.length === 0 ? (
           <Flex align="center" justify="center" className="h-full p-6">
-            <Text size="sm" color="muted">No activity yet</Text>
+            <Text size="sm" color="muted">{t('shell.activity.empty')}</Text>
           </Flex>
         ) : (
           filtered.map((e) => <ActivityRow key={e.id} entry={e} />)

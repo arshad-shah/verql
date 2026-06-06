@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AlertTriangle, Loader2, RotateCcw, X, Check } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const AUTO_TRIGGER_THRESHOLD = 0.80
 const FORCED_WARNING_THRESHOLD = 0.95
@@ -24,6 +25,7 @@ type Phase =
  *   - forced: ≥95% used; suppression ignored, manual click required.
  */
 export function AutoCompactBanner() {
+  const { t } = useTranslation()
   const messages = useAIStore((s) => s.messages)
   const stats = useAIStore((s) => s.sessionStats)
   const isStreaming = useAIStore((s) => s.isStreaming)
@@ -94,14 +96,14 @@ export function AutoCompactBanner() {
     return (
       <Wrapper tone="warn">
         <AlertTriangle size={12} className="shrink-0" />
-        <span className="flex-1 text-[11px]"><strong>{Math.round(pct * 100)}% used.</strong> Auto-compact in 5s — keeps the recent exchange, summarises the rest.</span>
+        <span className="flex-1 text-[11px]"><strong>{t('aiui.autoCompact.usedPct', { pct: Math.round(pct * 100) })}</strong> {t('aiui.autoCompact.pending')}</span>
         <button className="rounded bg-warning text-[10px] font-medium px-2 py-0.5 text-bg-primary"
           onClick={() => { window.clearTimeout(timer.current); justCompactedRef.current = true; void compact() }}>
-          Now
+          {t('aiui.autoCompact.now')}
         </button>
         <button className="rounded border border-warning/50 text-warning text-[10px] px-2 py-0.5"
           onClick={() => { window.clearTimeout(timer.current); suppress(); setPhase({ kind: 'idle' }) }}>
-          Skip
+          {t('aiui.autoCompact.skip')}
         </button>
       </Wrapper>
     )
@@ -111,7 +113,7 @@ export function AutoCompactBanner() {
     return (
       <Wrapper tone="info">
         <Loader2 size={12} className="shrink-0 animate-spin" />
-        <span className="flex-1 text-[11px]">Compacting older messages… keeping the last exchange.</span>
+        <span className="flex-1 text-[11px]">{t('aiui.autoCompact.compacting')}</span>
       </Wrapper>
     )
   }
@@ -120,14 +122,14 @@ export function AutoCompactBanner() {
     return (
       <Wrapper tone="ok">
         <Check size={12} className="shrink-0" />
-        <span className="flex-1 text-[11px]">Compacted earlier turns into a summary.</span>
+        <span className="flex-1 text-[11px]">{t('aiui.autoCompact.success')}</span>
         {lastSnapshot ? (
           <button className="rounded border border-success/50 text-success text-[10px] px-2 py-0.5 inline-flex items-center gap-1"
             onClick={() => { void undo(); setPhase({ kind: 'idle' }) }}>
-            <RotateCcw size={10} /> Undo
+            <RotateCcw size={10} /> {t('aiui.autoCompact.undo')}
           </button>
         ) : null}
-        <button className="text-success/70 hover:text-success" aria-label="Dismiss"
+        <button className="text-success/70 hover:text-success" aria-label={t('aiui.autoCompact.dismiss')}
           onClick={() => setPhase({ kind: 'idle' })}>
           <X size={12} />
         </button>
@@ -139,10 +141,10 @@ export function AutoCompactBanner() {
   return (
     <Wrapper tone="error">
       <AlertTriangle size={12} className="shrink-0" />
-      <span className="flex-1 text-[11px]"><strong>{Math.round(pct * 100)}% used.</strong> Context is nearly full — compact now to keep sending.</span>
+      <span className="flex-1 text-[11px]"><strong>{t('aiui.autoCompact.usedPct', { pct: Math.round(pct * 100) })}</strong> {t('aiui.autoCompact.forced')}</span>
       <button className="rounded bg-error text-[10px] font-medium px-2 py-0.5 text-bg-primary"
         onClick={() => { justCompactedRef.current = true; void compact() }}>
-        Compact now
+        {t('aiui.autoCompact.compactNow')}
       </button>
     </Wrapper>
   )

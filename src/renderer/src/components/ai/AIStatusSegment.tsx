@@ -6,6 +6,7 @@ import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
+import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import {
   getInlineAIState,
   subscribeInlineAIState,
@@ -14,6 +15,7 @@ import {
   type InlineAIState,
 } from '@/lib/monaco-ai-completion'
 import { StatusBarSegment } from '@/components/shell/status-bar/StatusBarSegment'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -31,6 +33,7 @@ function formatTokens(n: number): string {
  * remaining tokens, inline-completion / chat status, and quick actions.
  */
 export function AIStatusSegment() {
+  const { t } = useTranslation()
   const [inlineState, setInlineState] = useState<InlineAIState>(() => getInlineAIState())
   useEffect(() => subscribeInlineAIState(setInlineState), [])
   const [inlineEnabled, setInlineEnabled] = useState<boolean>(() => isInlineCompletionEnabled())
@@ -53,10 +56,10 @@ export function AIStatusSegment() {
     : 0
   const remaining = contextWindow != null ? Math.max(0, contextWindow - totalTokens) : 0
 
-  const modeLabel = profile === 'read-only' ? 'Read-only' : profile === 'auto' ? 'Auto' : 'Ask write'
+  const modeLabel = profile === 'read-only' ? t('aiui.status.readOnly') : profile === 'auto' ? t('aiui.status.auto') : t('aiui.status.askWrite')
   const ModeIcon = profile === 'read-only' ? Eye : profile === 'auto' ? Zap : Shield
 
-  const statusLabel = isStreaming ? 'streaming' : inlineState === 'thinking' ? 'thinking' : 'idle'
+  const statusLabel = isStreaming ? t('aiui.status.streaming') : inlineState === 'thinking' ? t('aiui.status.thinking') : t('aiui.status.idle')
   const statusTone =
     isStreaming || inlineState === 'thinking'
       ? 'bg-accent/15 text-accent'
@@ -66,7 +69,7 @@ export function AIStatusSegment() {
     <StatusBarSegment
       tone="default"
       side="right"
-      aria-label={busy ? 'AI working' : 'AI status'}
+      aria-label={busy ? t('aiui.status.aiWorking') : t('aiui.status.aiStatus')}
     >
       {busy
         ? <Loader2 size={12} className="animate-spin text-accent" />
@@ -78,16 +81,16 @@ export function AIStatusSegment() {
     <div className="min-w-[260px] p-1 space-y-2">
       <div className="flex items-center gap-2 px-1">
         <Sparkles size={12} className="text-accent" />
-        <Text size="xs" weight="medium">AI</Text>
+        <Text size="xs" weight="medium">{t('aiui.status.title')}</Text>
         <span className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${statusTone}`}>
           <span className="h-1.5 w-1.5 rounded-full bg-current" />
           {statusLabel}
         </span>
       </div>
 
-      <Row label="Provider" value={activeProvider?.name ?? 'None'} />
-      <Row label="Model"    value={models.find((m) => m.id === activeModelId)?.name ?? activeModelId ?? 'None'} />
-      <Row label="Mode" valueNode={
+      <Row label={t('aiui.status.provider')} value={activeProvider?.name ?? t('aiui.status.none')} />
+      <Row label={t('aiui.status.model')}    value={models.find((m) => m.id === activeModelId)?.name ?? activeModelId ?? t('aiui.status.none')} />
+      <Row label={t('aiui.status.mode')} valueNode={
         <span className="inline-flex items-center gap-1 text-text-primary">
           <ModeIcon size={10} /> {modeLabel}
         </span>
@@ -96,7 +99,7 @@ export function AIStatusSegment() {
       {contextWindow != null ? (
         <div className="rounded bg-bg-secondary p-2 space-y-1">
           <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-accent">
-            <span>Context window</span>
+            <span>{t('aiui.status.contextWindow')}</span>
             <span className="font-mono text-text-primary text-[10.5px] normal-case tracking-normal">
               {formatTokens(totalTokens)} / {formatTokens(contextWindow)}
             </span>
@@ -108,19 +111,19 @@ export function AIStatusSegment() {
             />
           </div>
           <Text size="xs" weight="medium" className={`block text-right ${pct >= 90 ? 'text-error' : pct >= 70 ? 'text-warning' : 'text-success'}`}>
-            {formatTokens(remaining)} tokens remaining
+            {t('aiui.status.tokensRemaining', { remaining: formatTokens(remaining) })}
           </Text>
         </div>
       ) : null}
 
-      <Row label="Tool calls" value={String(stats.toolCallCount)} />
-      <Row label="Inline completion" valueNode={
+      <Row label={t('aiui.status.toolCalls')} value={String(stats.toolCallCount)} />
+      <Row label={t('aiui.status.inlineCompletion')} valueNode={
         <div className="inline-flex items-center gap-2">
           <Text size="xs" color="muted">
-            {inlineEnabled ? (inlineState === 'thinking' ? 'thinking' : 'on') : 'off'}
+            {inlineEnabled ? (inlineState === 'thinking' ? t('aiui.status.inlineThinking') : t('aiui.status.inlineOn')) : t('aiui.status.inlineOff')}
           </Text>
           <Switch
-            label="Toggle AI inline completion"
+            label={t('aiui.status.toggleInlineCompletion')}
             checked={inlineEnabled}
             onChange={(e) => {
               const next = e.currentTarget.checked
@@ -132,9 +135,9 @@ export function AIStatusSegment() {
       } />
 
       <div className="flex gap-1 pt-1 border-t border-border-default">
-        <ActionBtn icon={Minimize2} label="Compact"   onClick={() => { void compact() }} />
-        <ActionBtn icon={Maximize2} label="Open chat" onClick={() => setSecondaryActivePanel('plugin:ai-chat')} />
-        <ActionBtn icon={Settings}  label="Settings"  onClick={() => openSettings()} />
+        <ActionBtn icon={Minimize2} label={t('aiui.status.compact')}   onClick={() => { void compact() }} />
+        <ActionBtn icon={Maximize2} label={t('aiui.status.openChat')} onClick={() => setSecondaryActivePanel('plugin:ai-chat')} />
+        <ActionBtn icon={Settings}  label={t('aiui.status.settings')}  onClick={() => openSettings(SETTINGS_CATEGORY.AI)} />
       </div>
     </div>
   )

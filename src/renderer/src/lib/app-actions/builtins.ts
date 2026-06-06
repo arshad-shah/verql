@@ -1,4 +1,5 @@
-import { useUiStore, type SettingsCategoryId, type SecondaryPanelId } from '@/stores/ui'
+import { useUiStore, ACTIVITY_PANEL, SECONDARY_PANEL, BOTTOM_PANEL, type SecondaryPanelId } from '@/stores/ui'
+import { SETTINGS_CATEGORY, isSettingsCategory } from '@/lib/settings-categories'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
@@ -9,6 +10,7 @@ import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { findSavedQuery, openSavedQuery } from '@/components/saved-queries/SavedQueriesPanel'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { t } from '@shared/i18n'
 import { resolveConnection } from './resolve'
 import { appActions } from './registry'
 import type { AppAction } from './types'
@@ -18,7 +20,7 @@ const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v 
 /** The active query tab's current results, or null when there's nothing to act on. */
 function activeQueryResults() {
   const { tabs, activeTabId } = useTabsStore.getState()
-  const tab = tabs.find((t) => t.id === activeTabId)
+  const tab = tabs.find((item) => item.id === activeTabId)
   return tab && tab.type === 'query' ? tab.results : null
 }
 
@@ -46,43 +48,46 @@ const BUILTINS: AppAction[] = [
   // ── Navigation & panels ─────────────────────────────────────────────────
   {
     id: 'open-settings',
-    title: 'Open Settings',
-    description: 'Open the settings screen, optionally at a category (general, appearance, editor, connections, data-display, keybindings, ai, mcp, plugins). Use category "plugins" to let the user enable or configure installed plugins.',
+    title: t('actions.openSettings.title'),
+    description: t('actions.openSettings.description', {
+      categories: Object.values(SETTINGS_CATEGORY).join(', '),
+      pluginsCategory: SETTINGS_CATEGORY.PLUGINS
+    }),
     kind: 'navigation',
     params: { category: { type: 'string', description: 'Settings category id' } },
     run: (p) => {
-      // Settings live in a dedicated editor tab (SettingsTab), not the
-      // left sidebar panel. Set the category first so the tab opens on it.
+      // Settings live in a dedicated editor tab (SettingsTab), not the left
+      // sidebar panel. openSettings focuses the category when one is given;
+      // ignore an unrecognised category rather than landing on a blank id.
       const category = str(p.category)
-      if (category) useUiStore.getState().setActiveSettingsCategory(category as SettingsCategoryId)
-      useTabsStore.getState().openSettings()
+      useTabsStore.getState().openSettings(isSettingsCategory(category) ? category : undefined)
     }
   },
   {
     id: 'open-connections',
-    title: 'Open Connections',
-    description: 'Open the list of saved connections, where the user can connect to one that already exists. Use this when the user wants to connect to a database that is already saved (see the saved connections list).',
+    title: t('actions.openConnections.title'),
+    description: t('actions.openConnections.description'),
     kind: 'navigation',
-    run: () => useUiStore.getState().setSecondaryActivePanel('connections')
+    run: () => useUiStore.getState().setSecondaryActivePanel(SECONDARY_PANEL.CONNECTIONS)
   },
   {
     id: 'new-connection',
-    title: 'Add a Connection',
-    description: 'Open the form to create a brand-new connection. Only use this when the database the user wants is NOT already in the saved connections list; to connect to an existing one, use open-connections instead.',
+    title: t('actions.newConnection.title'),
+    description: t('actions.newConnection.description'),
     kind: 'navigation',
     run: () => useTabsStore.getState().openConnectionForm()
   },
   {
     id: 'open-explorer',
-    title: 'Open Explorer',
-    description: 'Show the explorer sidebar, where connections and schema live. Point users here to add or connect to a database.',
+    title: t('actions.openExplorer.title'),
+    description: t('actions.openExplorer.description'),
     kind: 'navigation',
-    run: () => useUiStore.getState().setActivePanel('explorer')
+    run: () => useUiStore.getState().setActivePanel(ACTIVITY_PANEL.EXPLORER)
   },
   {
     id: 'open-secondary-panel',
-    title: 'Open Side Panel',
-    description: 'Open a right-hand panel by id (e.g. connections, inspector, notifications).',
+    title: t('actions.openSecondaryPanel.title'),
+    description: t('actions.openSecondaryPanel.description'),
     kind: 'navigation',
     params: { id: { type: 'string', required: true, description: 'Secondary panel id' } },
     run: (p) => {
@@ -92,13 +97,13 @@ const BUILTINS: AppAction[] = [
   },
   {
     id: 'open-notifications',
-    title: 'Open Notifications',
-    description: 'Open the notifications panel, which lists recent errors, warnings, and activity. Use this when pointing the user to a past error or to recent diagnostics.',
+    title: t('actions.openNotifications.title'),
+    description: t('actions.openNotifications.description'),
     kind: 'navigation',
     run: () => {
       const ui = useUiStore.getState()
-      if (!(ui.secondaryActivePanel === 'notifications' && ui.secondarySidebarVisible)) {
-        ui.setSecondaryActivePanel('notifications')
+      if (!(ui.secondaryActivePanel === SECONDARY_PANEL.NOTIFICATIONS && ui.secondarySidebarVisible)) {
+        ui.setSecondaryActivePanel(SECONDARY_PANEL.NOTIFICATIONS)
       }
     }
   },
@@ -106,8 +111,8 @@ const BUILTINS: AppAction[] = [
   // ── Query tabs & schema authoring ───────────────────────────────────────
   {
     id: 'new-query-tab',
-    title: 'Open Query Tab',
-    description: 'Open a new SQL query tab, optionally pre-filled with SQL. Use this to scaffold DDL such as CREATE TABLE, ALTER, or a migration script for the user to review. Nothing runs until the user executes it.',
+    title: t('actions.newQueryTab.title'),
+    description: t('actions.newQueryTab.description'),
     kind: 'navigation',
     params: { sql: { type: 'string', description: 'SQL to pre-fill' } },
     run: (p) => {
@@ -120,32 +125,32 @@ const BUILTINS: AppAction[] = [
   },
   {
     id: 'open-saved-query',
-    title: 'Open Saved Query',
-    description: 'Open a saved query in a new query tab, by its name or id. Nothing runs until the user executes it.',
+    title: t('actions.openSavedQuery.title'),
+    description: t('actions.openSavedQuery.description'),
     kind: 'navigation',
     params: { query: { type: 'string', required: true, description: 'Saved query name or id' } },
     run: (p) => {
       const arg = str(p.query)
-      if (!arg) throw new Error('Provide a saved query name or id.')
+      if (!arg) throw new Error(t('actions.errors.provideSavedQuery'))
       const q = findSavedQuery(arg)
-      if (!q) throw new Error(`No saved query matches "${arg}".`)
+      if (!q) throw new Error(t('actions.errors.noSavedQueryMatch', { arg }))
       openSavedQuery(q)
     }
   },
   {
     id: 'format-editor',
-    title: 'Format Document',
-    description: "Pretty-print the active editor's buffer using the connection's formatter (SQL dialect, JSON for document stores, etc.). Reformats the whole buffer; runs nothing. No-ops when the connection has no formatter.",
+    title: t('actions.formatEditor.title'),
+    description: t('actions.formatEditor.description'),
     kind: 'navigation',
     run: async () => {
       const reg = editorRegistry.get()
-      if (!reg) throw new Error('No active editor. Open or focus a query tab first.')
+      if (!reg) throw new Error(t('actions.errors.noActiveEditor'))
       const model = reg.editor.getModel()
-      if (!model) throw new Error('No editor content to format.')
+      if (!model) throw new Error(t('actions.errors.noEditorContent'))
       const source = model.getValue()
       if (!source.trim()) return
       const { tabs } = useTabsStore.getState()
-      const tab = tabs.find((t) => t.id === reg.tabId)
+      const tab = tabs.find((item) => item.id === reg.tabId)
       const { activeConnectionId, connections } = useConnectionsStore.getState()
       const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
       const connType = connections.find((c) => c.id === connId)?.type ?? ''
@@ -159,15 +164,15 @@ const BUILTINS: AppAction[] = [
   },
   {
     id: 'insert-into-editor',
-    title: 'Insert into Editor',
-    description: 'Insert SQL into the active query editor, replacing the current selection (or inserting at the cursor when nothing is selected). The user reviews and runs it; nothing executes automatically.',
+    title: t('actions.insertIntoEditor.title'),
+    description: t('actions.insertIntoEditor.description'),
     kind: 'navigation',
     params: { sql: { type: 'string', required: true, description: 'SQL text to insert' } },
     run: (p) => {
       const sql = str(p.sql)
-      if (!sql) throw new Error('Provide SQL to insert.')
+      if (!sql) throw new Error(t('actions.errors.provideSql'))
       const reg = editorRegistry.get()
-      if (!reg) throw new Error('No active SQL editor. Open or focus a query tab first.')
+      if (!reg) throw new Error(t('actions.errors.noActiveSqlEditor'))
       const { editor } = reg
       const selection = editor.getSelection()
       const pos = editor.getPosition()
@@ -182,21 +187,21 @@ const BUILTINS: AppAction[] = [
   // ── Connection lifecycle ────────────────────────────────────────────────
   {
     id: 'connect-database',
-    title: 'Connect to Database',
-    description: 'Open a connection to a saved database, by connection name or id. Use this to actually connect, not just navigate to the connections list.',
+    title: t('actions.connectDatabase.title'),
+    description: t('actions.connectDatabase.description'),
     kind: 'navigation',
     params: { connection: { type: 'string', required: true, description: 'Saved connection name or id' } },
     run: async (p) => {
       const conn = resolveConnection(useConnectionsStore.getState().connections, str(p.connection))
-      if (!conn) throw new Error('No matching saved connection. Use a name or id from the saved connections list.')
+      if (!conn) throw new Error(t('actions.errors.noMatchingConnection'))
       const res = await useConnectionsStore.getState().connect(conn.id)
-      if (!res.success) throw new Error(res.error ?? `Couldn't connect to "${conn.name}".`)
+      if (!res.success) throw new Error(res.error ?? t('actions.errors.couldntConnect', { name: conn.name }))
     }
   },
   {
     id: 'disconnect-database',
-    title: 'Disconnect Database',
-    description: 'Close the connection to a database, by name or id. Defaults to the active connection when none is given.',
+    title: t('actions.disconnectDatabase.title'),
+    description: t('actions.disconnectDatabase.description'),
     kind: 'navigation',
     params: { connection: { type: 'string', description: 'Saved connection name or id (defaults to the active one)' } },
     run: async (p) => {
@@ -205,25 +210,25 @@ const BUILTINS: AppAction[] = [
       const conn = arg
         ? resolveConnection(state.connections, arg)
         : state.connections.find((c) => c.id === state.activeConnectionId)
-      if (!conn) throw new Error('No connection to disconnect. Specify one by name or id.')
+      if (!conn) throw new Error(t('actions.errors.noConnectionToDisconnect'))
       await useConnectionsStore.getState().disconnect(conn.id)
     }
   },
   {
     id: 'switch-connection',
-    title: 'Switch Active Connection',
-    description: 'Make a saved connection the active one (connecting first if needed), by name or id. Subsequent queries and chat use this connection.',
+    title: t('actions.switchConnection.title'),
+    description: t('actions.switchConnection.description'),
     kind: 'navigation',
     params: { connection: { type: 'string', required: true, description: 'Saved connection name or id' } },
     run: async (p) => {
       const state = useConnectionsStore.getState()
       const conn = resolveConnection(state.connections, str(p.connection))
-      if (!conn) throw new Error('No matching saved connection. Use a name or id from the saved connections list.')
+      if (!conn) throw new Error(t('actions.errors.noMatchingConnection'))
       if (state.connectedIds.has(conn.id)) {
         state.setActiveConnection(conn.id)
       } else {
         const res = await useConnectionsStore.getState().connect(conn.id)
-        if (!res.success) throw new Error(res.error ?? `Couldn't connect to "${conn.name}".`)
+        if (!res.success) throw new Error(res.error ?? t('actions.errors.couldntConnect', { name: conn.name }))
       }
     }
   },
@@ -231,33 +236,33 @@ const BUILTINS: AppAction[] = [
   // ── Result actions ──────────────────────────────────────────────────────
   {
     id: 'export-results',
-    title: 'Export Results',
-    description: "Export the active query tab's current results to a file (csv or json). Opens a save dialog; data is written only to the file the user picks.",
+    title: t('actions.exportResults.title'),
+    description: t('actions.exportResults.description'),
     kind: 'navigation',
     params: { format: { type: 'string', description: 'csv or json (defaults to csv)' } },
     run: async (p) => {
       const format = (str(p.format) ?? 'csv').toLowerCase()
-      if (format !== 'csv' && format !== 'json') throw new Error('Format must be "csv" or "json".')
+      if (format !== 'csv' && format !== 'json') throw new Error(t('actions.errors.formatMustBe'))
       const results = activeQueryResults()
-      if (!results) throw new Error('No query results to export. Run a query first.')
+      if (!results) throw new Error(t('actions.errors.noResultsToExport'))
       const fields = results.fields.map((f) => f.name)
       await window.electronAPI.invoke(IPC_CHANNELS.EXPORT_QUERY_RESULT, results.rows, fields, format)
     }
   },
   {
     id: 'open-chart',
-    title: 'Open Chart',
-    description: 'Open the chart panel for the active query result set. Needs at least two columns and one row.',
+    title: t('actions.openChart.title'),
+    description: t('actions.openChart.description'),
     kind: 'navigation',
     run: () => {
       const results = activeQueryResults()
-      if (!results) throw new Error('No query results to chart. Run a query first.')
+      if (!results) throw new Error(t('actions.errors.noResultsToChart'))
       if (results.fields.length < 2 || results.rows.length === 0) {
-        throw new Error('Need at least two columns and one row to chart these results.')
+        throw new Error(t('actions.errors.needColumnsToChart'))
       }
       const ui = useUiStore.getState()
-      if (!(ui.bottomDockActivePanel === 'chart' && ui.bottomDockVisible)) {
-        ui.setBottomDockActivePanel('chart')
+      if (!(ui.bottomDockActivePanel === BOTTOM_PANEL.CHART && ui.bottomDockVisible)) {
+        ui.setBottomDockActivePanel(BOTTOM_PANEL.CHART)
       }
     }
   },
@@ -265,8 +270,8 @@ const BUILTINS: AppAction[] = [
   // ── Schema navigation ───────────────────────────────────────────────────
   {
     id: 'focus-table',
-    title: 'Reveal Table in Explorer',
-    description: 'Reveal a table (optionally a specific column) in the schema explorer for the active connection, expanding the tree and selecting it.',
+    title: t('actions.focusTable.title'),
+    description: t('actions.focusTable.description'),
     kind: 'navigation',
     params: {
       table: { type: 'string', required: true, description: 'Table name' },
@@ -275,14 +280,14 @@ const BUILTINS: AppAction[] = [
     },
     run: async (p) => {
       const table = str(p.table)
-      if (!table) throw new Error('Provide a table name.')
+      if (!table) throw new Error(t('actions.errors.provideTable'))
       const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
       const conn = connections.find((c) => c.id === activeConnectionId)
-      if (!conn) throw new Error('No active connection. Connect to a database first.')
-      if (!connectedIds.has(conn.id)) throw new Error(`Not connected to "${conn.name}". Connect first.`)
+      if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
+      if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnected', { name: conn.name }))
       const schema = await resolveSchema(conn, str(p.schema))
       const ui = useUiStore.getState()
-      if (!(ui.activePanel === 'explorer' && ui.sidebarVisible)) ui.setActivePanel('explorer')
+      if (!(ui.activePanel === ACTIVITY_PANEL.EXPLORER && ui.sidebarVisible)) ui.setActivePanel(ACTIVITY_PANEL.EXPLORER)
       // Expand the ancestor nodes so the table row renders. Cover both the
       // database-qualified and flat key shapes — an unused key is harmless.
       if (conn.database) {
@@ -296,8 +301,8 @@ const BUILTINS: AppAction[] = [
   },
   {
     id: 'open-er-diagram',
-    title: 'Open ER Diagram',
-    description: 'Open the entity-relationship diagram for the active connection. Optionally pass a table to select it in the diagram.',
+    title: t('actions.openErDiagram.title'),
+    description: t('actions.openErDiagram.description'),
     kind: 'navigation',
     params: {
       schema: { type: 'string', description: 'Schema name (defaults to the connection default)' },
@@ -306,8 +311,8 @@ const BUILTINS: AppAction[] = [
     run: async (p) => {
       const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
       const conn = connections.find((c) => c.id === activeConnectionId)
-      if (!conn) throw new Error('No active connection. Connect to a database first.')
-      if (!connectedIds.has(conn.id)) throw new Error(`Not connected to "${conn.name}". Connect first, then open the ER diagram.`)
+      if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
+      if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnectedEr', { name: conn.name }))
       const schema = (await resolveSchema(conn, str(p.schema))) || ''
       useTabsStore.getState().openErDiagram(conn.id, schema)
       const table = str(p.table)
@@ -318,8 +323,8 @@ const BUILTINS: AppAction[] = [
   // ── Plugins ─────────────────────────────────────────────────────────────
   {
     id: 'open-install-plugin',
-    title: 'Install a Plugin',
-    description: 'Open the plugin install screen. To enable or configure already-installed plugins instead, use open-settings with category "plugins".',
+    title: t('actions.openInstallPlugin.title'),
+    description: t('actions.openInstallPlugin.description'),
     kind: 'navigation',
     run: () => { useTabsStore.getState().openInstallPlugin() }
   }

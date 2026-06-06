@@ -12,6 +12,8 @@ import { useUiStore } from '@/stores/ui'
 import { notifyError } from '@/lib/notify-error'
 import { parseAppError } from '@/lib/db-error'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
+import { t as coreT } from '@shared/i18n'
 
 interface Props {
   tabId: string
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
+  const { t } = useTranslation()
   const loading = useExplainStore(s => s.byTab[tabId]?.loading ?? false)
   const startStream = useExplainStore(s => s.startStream)
 
@@ -41,7 +44,7 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
     } catch (err) {
       const parsed = parseAppError(err)
       useExplainStore.getState().failStream(tabId, parsed.message)
-      notifyError(err, { titlePrefix: 'AI: Explain failed' })
+      notifyError(err, { titlePrefix: coreT('aiui.explain.failedPrefix') })
     }
   }, [tabId, sql, results, loading, startStream])
 
@@ -56,12 +59,13 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
       {loading
         ? <Loader2 size={10} className="animate-spin text-accent" />
         : <Sparkles size={10} className={explanation ? 'text-accent' : 'text-text-muted'} />}
-      Explain
+      {t('aiui.explain.explain')}
     </Button>
   )
 }
 
 export function ExplainResult({ tabId, explanation }: { tabId: string; explanation: string | null }) {
+  const { t } = useTranslation()
   const per = useExplainStore(s => s.byTab[tabId])
   const setTabAiExplanation = useTabsStore(s => s.setTabAiExplanation)
 
@@ -79,7 +83,7 @@ export function ExplainResult({ tabId, explanation }: { tabId: string; explanati
         setTabAiExplanation(tabId, finalText)
         useExplainStore.getState().finishStream(tabId, e.durationMs ?? 0)
       } else if (e.kind === 'error') {
-        useExplainStore.getState().failStream(tabId, e.message ?? 'Stream failed')
+        useExplainStore.getState().failStream(tabId, e.message ?? coreT('aiui.explain.streamFailed'))
       }
     })
     return off
@@ -94,7 +98,7 @@ export function ExplainResult({ tabId, explanation }: { tabId: string; explanati
     <div className="border-t border-accent/30 bg-bg-secondary shrink-0">
       <Flex align="center" gap="sm" className="px-3 py-1.5 border-b border-border-default/40">
         <Sparkles size={12} className="text-accent" />
-        <Text size="xs" className="text-accent font-medium">Explanation</Text>
+        <Text size="xs" className="text-accent font-medium">{t('aiui.explain.explanation')}</Text>
         <Flex align="center" gap="xs" className="ml-auto">
           {per?.loading
             ? <StopButton tabId={tabId} streamId={per?.streamId} />
@@ -116,6 +120,7 @@ export function ExplainResult({ tabId, explanation }: { tabId: string; explanati
 }
 
 function StopButton({ tabId, streamId }: { tabId: string; streamId: string | null | undefined }) {
+  const { t } = useTranslation()
   return (
     <Button
       variant="ghost"
@@ -123,10 +128,10 @@ function StopButton({ tabId, streamId }: { tabId: string; streamId: string | nul
       className="!h-6 !px-1.5 gap-1 text-text-muted"
       onClick={() => {
         if (streamId) void window.electronAPI.invoke(IPC_CHANNELS.AI_EXPLAIN_ABORT, streamId)
-        useExplainStore.getState().failStream(tabId, 'Stopped')
+        useExplainStore.getState().failStream(tabId, coreT('aiui.explain.stopped'))
       }}
     >
-      <Square size={10} /> Stop
+      <Square size={10} /> {t('aiui.explain.stop')}
     </Button>
   )
 }
@@ -157,8 +162,9 @@ function SkeletonBody() {
 }
 
 function ActionBar({ tabId, text }: { tabId: string; text: string }) {
+  const { t } = useTranslation()
   const askInChat = useCallback(() => {
-    const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId)
+    const tab = useTabsStore.getState().tabs.find((item) => item.id === tabId)
     const sql = tab && tab.type === 'query' ? tab.sql : ''
     const prefill = `> ${sql.split('\n').join('\n> ')}\n\nFollow-up about this explanation:\n\n${text}\n\n`
     useAIStore.getState().seedComposer(prefill)
@@ -166,7 +172,7 @@ function ActionBar({ tabId, text }: { tabId: string; text: string }) {
   }, [tabId, text])
 
   const regenerate = useCallback(async () => {
-    const tab = useTabsStore.getState().tabs.find((t) => t.id === tabId)
+    const tab = useTabsStore.getState().tabs.find((item) => item.id === tabId)
     if (!tab || tab.type !== 'query' || !tab.results) return
     const request = {
       sql: tab.sql,
@@ -183,20 +189,20 @@ function ActionBar({ tabId, text }: { tabId: string; text: string }) {
     } catch (err) {
       const parsed = parseAppError(err)
       useExplainStore.getState().failStream(tabId, parsed.message)
-      notifyError(err, { titlePrefix: 'AI: Explain failed' })
+      notifyError(err, { titlePrefix: coreT('aiui.explain.failedPrefix') })
     }
   }, [tabId])
 
   return (
     <Flex gap="xs" className="px-3 py-1 border-t border-border-default/40">
       <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={() => navigator.clipboard.writeText(text)}>
-        <Copy size={10} /> Copy
+        <Copy size={10} /> {t('aiui.explain.copy')}
       </Button>
       <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={regenerate}>
-        <RefreshCcw size={10} /> Regenerate
+        <RefreshCcw size={10} /> {t('aiui.explain.regenerate')}
       </Button>
       <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={askInChat}>
-        <MessageSquarePlus size={10} /> Ask follow-up
+        <MessageSquarePlus size={10} /> {t('aiui.explain.askFollowUp')}
       </Button>
     </Flex>
   )

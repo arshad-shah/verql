@@ -1,7 +1,8 @@
 import pg from 'pg'
 import type { DbAdapter } from '../../../db/adapter'
 import { quoteIdentifier } from '../../sdk/identifier'
-import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, FieldInfo, TestConnectionResult } from '@shared/types'
+import { parsePostgresPlan } from './plan-parse'
+import type { QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, FieldInfo, TestConnectionResult, PlanNode } from '@shared/types'
 
 const PG_QUOTE = '"' as const
 
@@ -95,6 +96,11 @@ export class PostgresAdapter implements DbAdapter {
   private shape(result: { rows?: Record<string, unknown>[]; fields?: { name: string; dataTypeID?: number }[]; rowCount?: number | null }, duration: number): QueryResult {
     const fields: FieldInfo[] = (result.fields ?? []).map((f) => ({ name: f.name, dataType: String(f.dataTypeID ?? ''), nullable: true }))
     return { rows: result.rows ?? [], fields, rowCount: result.rows?.length ?? 0, duration, affectedRows: result.rowCount ?? 0 }
+  }
+
+  /** Parse Postgres EXPLAIN output (text or FORMAT JSON) into a plan tree. */
+  parseQueryPlan(result: QueryResult): PlanNode[] {
+    return parsePostgresPlan(result)
   }
 
   async query(sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }): Promise<QueryResult> {

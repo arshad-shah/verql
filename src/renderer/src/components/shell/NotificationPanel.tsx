@@ -4,14 +4,16 @@ import { NotificationItem } from './NotificationItem'
 import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
 import { Box, Flex, Text, Button, IconButton, EmptyState } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
 const categoryOrder = ['error', 'warning', 'info', 'success'] as const
 
-const categoryLabels: Record<string, string> = {
-  error: 'Errors',
-  warning: 'Warnings',
-  info: 'Info',
-  success: 'Success',
+const categoryLabels: Record<string, MessageKey> = {
+  error: 'shell.notifications.categoryErrors',
+  warning: 'shell.notifications.categoryWarnings',
+  info: 'shell.notifications.categoryInfo',
+  success: 'shell.notifications.categorySuccess',
 }
 
 const categoryColors: Record<string, string> = {
@@ -22,6 +24,7 @@ const categoryColors: Record<string, string> = {
 }
 
 export function NotificationPanel() {
+  const { t } = useTranslation()
   const { notifications, markRead, markAllRead, unreadCount } =
     useNotificationsStore()
   // Panel open/close is now driven by the secondary-sidebar UI store. This
@@ -85,7 +88,7 @@ export function NotificationPanel() {
         className="px-3.5 py-2.5 border-b border-border-default"
       >
         <Flex align="center" gap="sm">
-          <Text size="xs" weight="semibold" color="primary">Notifications</Text>
+          <Text size="xs" weight="semibold" color="primary">{t('shell.notifications.title')}</Text>
           {unread > 0 && (
             <Text
               size="xs"
@@ -93,7 +96,7 @@ export function NotificationPanel() {
               color="error"
               className="rounded-full bg-error/15 px-1.5 py-px text-[9px]"
             >
-              {unread} new
+              {t('shell.notifications.newCount', { count: unread })}
             </Text>
           )}
         </Flex>
@@ -105,14 +108,14 @@ export function NotificationPanel() {
               onClick={markAllRead}
               className="text-[10px] text-accent hover:text-accent-hover"
             >
-              Mark all read
+              {t('shell.notifications.markAllRead')}
             </Button>
           )}
           <IconButton
             variant="ghost"
             size="xs"
             onClick={closePanel}
-            label="Close notifications"
+            label={t('shell.notifications.close')}
           >
             <X size={12} />
           </IconButton>
@@ -122,8 +125,8 @@ export function NotificationPanel() {
       {grouped.length === 0 ? (
         <EmptyState
           icon={<Bell size={24} className="text-text-disabled" />}
-          title="All caught up"
-          description="No new notifications"
+          title={t('shell.notifications.allCaughtUp')}
+          description={t('shell.notifications.emptyDescriptionNew')}
           className="py-8 px-4"
         />
       ) : (
@@ -137,7 +140,7 @@ export function NotificationPanel() {
                 categoryColors[group.category]
               )}
             >
-              {categoryLabels[group.category]}
+              {t(categoryLabels[group.category])}
             </Text>
             {group.items.map((n) => (
               <NotificationItem key={n.id} notification={n} onClick={handleItemClick} />

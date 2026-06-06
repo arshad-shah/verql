@@ -2,6 +2,8 @@ import { app, BrowserWindow, Menu, nativeImage, shell, type MenuItemConstructorO
 import path from 'path'
 import fs from 'fs'
 import { registerIpcHandlers } from './ipc-handlers'
+import { IPC_EVENTS } from '@shared/ipc'
+import { t } from '@shared/i18n'
 
 const isDev = !app.isPackaged
 const APP_NAME = 'Verql'
@@ -54,18 +56,18 @@ function buildAppMenu(): void {
         ]
       : []),
     {
-      label: 'File',
+      label: t('menu.file'),
       submenu: [
         {
-          label: 'New Query Tab',
+          label: t('menu.newQueryTab'),
           accelerator: 'CmdOrCtrl+N',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-query-tab'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_NEW_QUERY_TAB),
         },
         { type: 'separator' },
         {
-          label: 'New Connection',
+          label: t('menu.newConnection'),
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:new-connection'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_NEW_CONNECTION),
         },
         { type: 'separator' },
         process.platform === 'darwin'
@@ -74,7 +76,7 @@ function buildAppMenu(): void {
       ],
     },
     {
-      label: 'Edit',
+      label: t('menu.edit'),
       submenu: [
         { role: 'undo' },
         { role: 'redo' },
@@ -86,12 +88,12 @@ function buildAppMenu(): void {
       ],
     },
     {
-      label: 'View',
+      label: t('menu.view'),
       submenu: [
         {
-          label: 'Command Palette',
+          label: t('menu.commandPalette'),
           accelerator: 'CmdOrCtrl+Shift+P',
-          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send('menu:toggle-command-palette'),
+          click: (_, win) => (win as BrowserWindow | undefined)?.webContents.send(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE),
         },
         { type: 'separator' },
         { role: 'togglefullscreen' },
@@ -106,7 +108,7 @@ function buildAppMenu(): void {
       ],
     },
     {
-      label: 'Window',
+      label: t('menu.window'),
       submenu: [
         { role: 'minimize' },
         { role: 'zoom' },
@@ -119,29 +121,29 @@ function buildAppMenu(): void {
       ],
     },
     {
-      label: 'Help',
+      label: t('menu.help'),
       role: 'help',
       submenu: [
         {
-          label: `${APP_NAME} User Guide`,
+          label: t('menu.userGuide', { appName: APP_NAME }),
           click: () => { void shell.openExternal(GUIDE_URL) },
         },
         {
-          label: 'Build a Plugin (SDK)',
+          label: t('menu.buildPlugin'),
           click: () => { void shell.openExternal(SDK_URL) },
         },
         {
-          label: 'Report an Issue',
+          label: t('menu.reportIssue'),
           click: () => { void shell.openExternal(ISSUES_URL) },
         },
         { type: 'separator' },
         // Non-macOS has no app menu, so surface About here. On macOS the
         // native About lives in the app menu above.
         ...(process.platform !== 'darwin'
-          ? [{ role: 'about' as const, label: `About ${APP_NAME}` }]
+          ? [{ role: 'about' as const, label: t('menu.about', { appName: APP_NAME }) }]
           : []),
         {
-          label: `${APP_NAME} v${app.getVersion()}`,
+          label: t('menu.version', { appName: APP_NAME, version: app.getVersion() }),
           enabled: false,
         },
       ],

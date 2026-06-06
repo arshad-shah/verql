@@ -217,6 +217,7 @@ Examples:
 
   ctx.drivers.register('mongodb', {
     editorLanguage: 'json',
+    statementSyntax: 'mongodb',
     createAdapter: (config) => {
       const host = config.host as string || 'localhost'
       const port = config.port as number || 27017

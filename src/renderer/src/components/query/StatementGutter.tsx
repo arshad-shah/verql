@@ -11,12 +11,17 @@ import {
   type LensActionContext,
 } from '@/lib/statement-registry'
 import { useStatementStatus, hashStatement, type StatementStatus } from '@/stores/statement-status'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   editor: editor.IStandaloneCodeEditor
   tabId: string
   connectionId: string | null
+  /** Real db type — passed through to lens-action handlers via the context. */
   dbType: string | undefined
+  /** Driver-declared statement syntax (capability) used to select the splitter +
+   *  lens actions. No gutter renders when the driver declares none. */
+  statementSyntax: string | undefined
 }
 
 interface ZoneEntry {
@@ -25,14 +30,14 @@ interface ZoneEntry {
   stmt: Statement
 }
 
-export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) {
+export function StatementGutter({ editor, tabId, connectionId, dbType, statementSyntax }: Props) {
   const entriesRef = useRef<ZoneEntry[]>([])
   const [, setTick] = useState(0)
   const bump = () => setTick((n) => n + 1)
 
   useEffect(() => {
-    if (!dbType) return
-    const contribution = getStatementContribution(dbType)
+    if (!statementSyntax) return
+    const contribution = getStatementContribution(statementSyntax)
     if (!contribution) return
 
     const reconcile = () => {
@@ -104,10 +109,12 @@ export function StatementGutter({ editor, tabId, connectionId, dbType }: Props) 
         entriesRef.current = []
       })
     }
-  }, [editor, dbType])
+  }, [editor, statementSyntax])
 
-  if (!dbType) return null
-  const contribution = getStatementContribution(dbType)
+  // Need the syntax (to pick the splitter/actions) and the real db type (passed
+  // to lens-action handlers via the context).
+  if (!statementSyntax || !dbType) return null
+  const contribution = getStatementContribution(statementSyntax)
   if (!contribution) return null
 
   return (
@@ -167,11 +174,12 @@ function GutterRow({
 }
 
 function StatusChip({ status }: { status: StatementStatus }) {
+  const { t } = useTranslation()
   if (status.kind === 'running') {
     return (
       <Text as="span" size="xs" color="muted" className="ml-2 inline-flex items-center gap-1">
         <Loader2 size={10} className="animate-spin" />
-        running
+        {t('query.statement.running')}
       </Text>
     )
   }
@@ -179,7 +187,7 @@ function StatusChip({ status }: { status: StatementStatus }) {
     return (
       <Text as="span" size="xs" color="error" className="ml-2 inline-flex items-center gap-1">
         <AlertCircle size={10} />
-        failed
+        {t('query.statement.failed')}
         {status.durationMs != null ? ` · ${formatMs(status.durationMs)}` : null}
       </Text>
     )
@@ -187,9 +195,9 @@ function StatusChip({ status }: { status: StatementStatus }) {
   return (
     <Text as="span" size="xs" color="success" className="ml-2 inline-flex items-center gap-1">
       <Check size={10} />
-      {status.durationMs != null ? formatMs(status.durationMs) : 'ok'}
+      {status.durationMs != null ? formatMs(status.durationMs) : t('query.statement.ok')}
       {status.rowCount != null
-        ? ` · ${status.rowCount} row${status.rowCount === 1 ? '' : 's'}`
+        ? ` · ${t('query.statement.rows', { count: status.rowCount })}`
         : null}
     </Text>
   )

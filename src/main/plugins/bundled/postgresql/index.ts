@@ -1,5 +1,6 @@
 import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
+import { postgresErrorRules } from './error-rules'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { PostgresAdapter } from './postgres-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
@@ -123,6 +124,8 @@ export function activate(ctx: PluginContext): void {
     quoteChar: PG_QUOTE,
     placeholderStyle: 'numbered',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
+    errorRules: postgresErrorRules,
     defaultSchemaCandidates: ['public'],
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },

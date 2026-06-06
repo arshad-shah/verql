@@ -3,6 +3,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { ConnectionSwitcher } from '../ConnectionSwitcher'
 import { StatusBarSegment } from './StatusBarSegment'
 import { cn } from '@/primitives/utils/cn'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 const DB_ABBREVIATIONS: Record<string, string> = {
   postgresql: 'PG',
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function ConnectionSegment({ onNewConnection }: Props) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   useEffect(() => {
     const handler = () => setOpen(true)
@@ -39,7 +41,7 @@ export function ConnectionSegment({ onNewConnection }: Props) {
         interactive
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
-        aria-label="Toggle connection switcher"
+        aria-label={t('shell.statusBar.toggleConnectionSwitcher')}
       >
         <span
           className={cn(
@@ -60,9 +62,9 @@ export function ConnectionSegment({ onNewConnection }: Props) {
           </>
         ) : (
           <>
-            <span>No connection</span>
+            <span>{t('shell.statusBar.noConnection')}</span>
             <span className="rounded-sm bg-white/8 px-1 py-px text-[9.5px] font-medium opacity-80">
-              click to connect
+              {t('shell.statusBar.clickToConnect')}
             </span>
           </>
         )}

@@ -22,8 +22,10 @@ area you're touching → the source it points to.
 - [`docs/sdk/`](./docs/sdk/README.md) — the published `@verql/plugin-sdk` package (source under `packages/plugin-sdk/`) that external plugin authors consume, plus a getting-started walkthrough. The package re-exports the **electron-free** author surface of `src/main/plugins/sdk`; keep its curated barrel and the `sdk-public-surface` test in sync when changing public exports.
 - [`docs/guide/`](./docs/guide/README.md) — end-user (consumer) documentation. The in-app Help menu links here.
 - [`docs/ipc.md`](./docs/ipc.md) — adding/renaming a typed IPC channel.
+- [`docs/settings.md`](./docs/settings.md) — the settings subsystem: the UI → store → IPC → `ConfigStore` pipeline, the centralized category ids, every category and where each setting is consumed, and the query-history / tab-restore / keybinding-rebind / secrets handling. Read before adding or changing a setting.
 - [`docs/notifications.md`](./docs/notifications.md) — the notifications subsystem: the host **attention seam** (a delivery-agnostic relay approval flows publish to) and the bundled `os-notifications` plugin that turns it into native OS notifications. Diagram-rich (context, architecture, sequences, state, class/data models). Read before touching approval surfacing or adding a notification consumer.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
+- [`docs/i18n.md`](./docs/i18n.md) — internationalization: the homegrown, dependency-free, cross-process message catalogue (`shared/i18n`), the typed `t()` / `MessageKey`, the renderer `<I18nProvider>`/`useTranslation`, key-naming convention, interpolation/plural syntax, and how locales + plugin catalogues register. Diagram-rich. Read before adding or changing user-facing strings.
 
 When you change a subsystem, update its doc (and this file) in the same change
 so the docs never drift from the code.
@@ -74,6 +76,8 @@ Zustand stores in `src/renderer/src/stores/`:
 - `ai.ts` — AI chat: messages, providers/models, and conversation history persisted to the internal SQLite app-data store via IPC (see `docs/ai.md`)
 - `selection.ts` / `notifications.ts` / `toast.ts` — inspector selection, notification center, transient toasts
 - `editor.ts` / `tab-actions.ts` — non-reactive registries of mounted Monaco editors and per-tab save/transaction handlers (refs, not reactive state)
+- `query-history.ts` — recorded query runs (mirror of the SQLite app-data `query_history` table), capped to `general.maxHistoryItems`; surfaced via the Saved/History toggle in the query sidebar panel
+- `tab-persistence.ts` — debounced localStorage snapshot of open query tabs, restored on startup when `general.restoreTabsOnStartup` is on
 
 ### Database Adapters
 

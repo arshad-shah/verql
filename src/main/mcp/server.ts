@@ -7,6 +7,7 @@ import { findFreePort } from './find-port'
 import { isWriteToolCall, jsonSchemaToZodShape } from '../plugins/sdk/tool-schema'
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
 import type { AttentionHub } from '../attention/attention-hub'
+import { IPC_EVENTS } from '@shared/ipc'
 import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
 
 interface MCPGate { disabledTools: string[]; readOnly: boolean }
@@ -83,7 +84,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
   function record(entry: MCPActivityEntry): void {
     activity.push(entry)
     if (activity.length > 100) activity.shift()
-    BrowserWindow.getAllWindows()[0]?.webContents.send('mcp:activity-event', entry)
+    BrowserWindow.getAllWindows()[0]?.webContents.send(IPC_EVENTS.MCP_ACTIVITY_EVENT, entry)
   }
 
   function requestApproval(tool: Tool, params: Record<string, unknown>): Promise<boolean> {
@@ -97,7 +98,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
         sql: typeof params.sql === 'string' ? params.sql : JSON.stringify(params, null, 2),
         permission: tool.permission,
       }
-      win.webContents.send('mcp:approval-request', req)
+      win.webContents.send(IPC_EVENTS.MCP_APPROVAL_REQUEST, req)
       deps.attention?.request({
         id: requestId,
         kind: 'approval',

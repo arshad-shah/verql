@@ -7,6 +7,7 @@ import type {
   ConversationsSnapshot,
   StoredConversation,
   SavedQuery,
+  QueryHistoryEntry,
 } from '@shared/appdata'
 
 const EMPTY_STATS: ConversationStats = {
@@ -58,6 +59,22 @@ const MIGRATIONS: ((db: Database.Database) => void)[] = [
         key    TEXT PRIMARY KEY,
         value  TEXT
       );
+    `)
+  },
+  /* v2 */ (db) => {
+    db.exec(`
+      CREATE TABLE query_history (
+        id               TEXT PRIMARY KEY,
+        sql              TEXT NOT NULL,
+        connection_id    TEXT,
+        connection_type  TEXT,
+        status           TEXT NOT NULL,
+        duration_ms      INTEGER,
+        row_count        INTEGER,
+        error            TEXT,
+        executed_at      INTEGER NOT NULL
+      );
+      CREATE INDEX idx_query_history_executed_at ON query_history(executed_at DESC);
     `)
   },
 ]
@@ -331,5 +348,82 @@ export class AppDataStore {
     })
     run()
     return queries.length
+  }
+
+  // ─── Query history ────────────────────────────────────────────────
+  /** Newest-first list of recorded query runs, capped to `limit`. */
+  listQueryHistory(limit = 500): QueryHistoryEntry[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, sql, connection_id, connection_type, status,
+                duration_ms, row_count, error, executed_at
+         FROM query_history ORDER BY executed_at DESC LIMIT ?`,
+      )
+      .all(limit) as Array<{
+      id: string
+      sql: string
+      connection_id: string | null
+      connection_type: string | null
+      status: string
+      duration_ms: number | null
+      row_count: number | null
+      error: string | null
+      executed_at: number
+    }>
+    return rows.map((r) => ({
+      id: r.id,
+      sql: r.sql,
+      ...(r.connection_id ? { connectionId: r.connection_id } : {}),
+      ...(r.connection_type ? { connectionType: r.connection_type } : {}),
+      status: r.status as QueryHistoryEntry['status'],
+      ...(r.duration_ms != null ? { durationMs: r.duration_ms } : {}),
+      ...(r.row_count != null ? { rowCount: r.row_count } : {}),
+      ...(r.error ? { error: r.error } : {}),
+      executedAt: r.executed_at,
+    }))
+  }
+
+  /** Insert one run and prune to the newest `maxItems` in a single transaction. */
+  addQueryHistory(entry: QueryHistoryEntry, maxItems: number): void {
+    const run = this.db.transaction(() => {
+      this.db
+        .prepare(
+          `INSERT INTO query_history
+             (id, sql, connection_id, connection_type, status,
+              duration_ms, row_count, error, executed_at)
+           VALUES (@id, @sql, @connectionId, @connectionType, @status,
+                   @durationMs, @rowCount, @error, @executedAt)`,
+        )
+        .run({
+          id: entry.id,
+          sql: entry.sql,
+          connectionId: entry.connectionId ?? null,
+          connectionType: entry.connectionType ?? null,
+          status: entry.status,
+          durationMs: entry.durationMs ?? null,
+          rowCount: entry.rowCount ?? null,
+          error: entry.error ?? null,
+          executedAt: entry.executedAt,
+        })
+      // Keep only the newest `maxItems`. Clamp to >= 1 so a misconfigured 0
+      // doesn't wipe the table on every insert.
+      const keep = Math.max(1, Math.floor(maxItems))
+      this.db
+        .prepare(
+          `DELETE FROM query_history WHERE id NOT IN (
+             SELECT id FROM query_history ORDER BY executed_at DESC LIMIT ?
+           )`,
+        )
+        .run(keep)
+    })
+    run()
+  }
+
+  deleteQueryHistory(id: string): void {
+    this.db.prepare(`DELETE FROM query_history WHERE id = ?`).run(id)
+  }
+
+  clearQueryHistory(): void {
+    this.db.prepare(`DELETE FROM query_history`).run()
   }
 }

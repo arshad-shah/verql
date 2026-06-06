@@ -1,5 +1,6 @@
 import type { PluginManifest } from '../../types'
 import type { PluginContext } from '../../sdk/types'
+import { mysqlErrorRules } from './error-rules'
 import type { CompletionItem, CompletionContext } from '@shared/plugin-ui-types'
 import { MysqlAdapter } from './mysql-adapter'
 import { sqlExporter, sqlImporter } from './sql-format'
@@ -136,6 +137,8 @@ export function activate(ctx: PluginContext): void {
     quoteChar: MY_QUOTE,
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
+    statementSyntax: 'sql',
+    errorRules: mysqlErrorRules,
     defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { Flex, cn } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export interface BottomTab {
   id: string
@@ -14,27 +15,28 @@ interface Props {
 }
 
 export function BottomDockTabs({ tabs, activeId, onSelect, onClose }: Props) {
+  const { t } = useTranslation()
   return (
     <Flex align="center" className="h-8 border-b border-border bg-bg-secondary px-1 shrink-0">
-      {tabs.map(t => (
+      {tabs.map(tab => (
         <button
-          key={t.id}
+          key={tab.id}
           type="button"
-          onClick={() => onSelect(t.id)}
+          onClick={() => onSelect(tab.id)}
           className={cn(
             'h-7 px-3 text-xs rounded-sm transition-colors',
-            activeId === t.id
+            activeId === tab.id
               ? 'bg-bg-primary text-text-primary'
               : 'text-text-muted hover:text-text-primary hover:bg-white/5'
           )}
         >
-          {t.title}
+          {tab.title}
         </button>
       ))}
       <div className="flex-1" />
       <button
         type="button"
-        aria-label="Hide bottom dock"
+        aria-label={t('shell.bottomDock.hide')}
         onClick={onClose}
         className="h-7 w-7 inline-flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 rounded-sm"
       >

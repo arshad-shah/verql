@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Alert, Box, Flex, Text, Badge } from '@/primitives'
 import { parseDbError } from '@/lib/db-error'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   /** Raw error message as caught from the IPC boundary. */
   error: string
+  /** Active connection's driver type, so driver error rules classify the error. */
+  dbType?: string
 }
 
 /**
@@ -20,8 +23,9 @@ interface Props {
  * errors surface; if we ever add another error surface (connection test,
  * import) it can reuse this verbatim.
  */
-export function QueryErrorView({ error }: Props) {
-  const parsed = parseDbError(error)
+export function QueryErrorView({ error, dbType }: Props) {
+  const { t } = useTranslation()
+  const parsed = parseDbError(error, dbType)
   const [showRaw, setShowRaw] = useState(false)
   const isUnknown = parsed.code === 'UNKNOWN'
 
@@ -35,7 +39,7 @@ export function QueryErrorView({ error }: Props) {
           {parsed.hint && (
             <Flex gap="xs" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
               <Text size="xs" weight="medium" className="text-text-secondary uppercase tracking-wide shrink-0">
-                Hint
+                {t('query.error.hint')}
               </Text>
               <Text size="xs" color="secondary" as="p" className="leading-relaxed">{parsed.hint}</Text>
             </Flex>
@@ -54,7 +58,7 @@ export function QueryErrorView({ error }: Props) {
               className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary transition-colors ml-auto"
             >
               {showRaw ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              {showRaw ? 'Hide' : 'Show'} driver message
+              {showRaw ? t('query.error.hideDriverMessage') : t('query.error.showDriverMessage')}
             </button>
           </Flex>
 

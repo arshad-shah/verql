@@ -7,8 +7,10 @@ import { Card } from '@/primitives/surfaces/Card'
 import { Text } from '@/primitives/typography/Text'
 import { SchemaAutocomplete } from './SchemaAutocomplete'
 import { ModelPicker } from './ModelPicker'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function ChatInput() {
+  const { t } = useTranslation()
   const [input, setInput] = useState('')
   const sendMessage = useAIStore(s => s.sendMessage)
   const isStreaming = useAIStore(s => s.isStreaming)
@@ -33,7 +35,7 @@ export function ChatInput() {
   const [autocompleteFilter, setAutocompleteFilter] = useState('')
   const [showModelPicker, setShowModelPicker] = useState(false)
 
-  const activeModelName = models.find(m => m.id === activeModel)?.name ?? activeModel ?? 'Select model'
+  const activeModelName = models.find(m => m.id === activeModel)?.name ?? activeModel ?? t('aiui.input.selectModel')
 
   const handleSend = useCallback(() => {
     const trimmed = input.trim()
@@ -138,7 +140,7 @@ export function ChatInput() {
         <textarea
           ref={textareaRef}
           className="w-full resize-none bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
-          placeholder="Ask about your database... (@ to reference tables)"
+          placeholder={t('aiui.input.placeholder')}
           value={input}
           onChange={e => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -155,7 +157,7 @@ export function ChatInput() {
           </button>
           {isStreaming ? (
             <IconButton
-              label="Stop generating"
+              label={t('aiui.input.stop')}
               variant="solid"
               size="xs"
               onClick={abort}
@@ -165,7 +167,7 @@ export function ChatInput() {
             </IconButton>
           ) : (
             <IconButton
-              label="Send message"
+              label={t('aiui.input.send')}
               variant={hasInput ? 'solid' : 'ghost'}
               size="xs"
               onClick={handleSend}

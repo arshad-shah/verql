@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { BrowserWindow, dialog } from 'electron'
 import { PluginBootCoordinator } from '../plugins/plugin-host'
+import { IPC_EVENTS } from '@shared/ipc'
 import { PERMISSION_INFO, type PluginPermission } from '../plugins/sdk/permissions'
 import { UIRegistryImpl } from '../plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../plugins/sdk/completion-registry'
@@ -68,7 +69,7 @@ export function registerPluginHandlers(
     event: 'activated' | 'deactivated' | 'installed' | 'uninstalled'
   ) => {
     for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send('plugins:lifecycle', { name, event })
+      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.PLUGINS_LIFECYCLE, { name, event })
     }
   }
 
@@ -333,6 +334,6 @@ export function registerPluginHandlers(
 
   uiRegistry.onChange(() => {
     const win = BrowserWindow.getAllWindows()[0]
-    if (win) win.webContents.send('plugins:ui:contributions-changed')
+    if (win) win.webContents.send(IPC_EVENTS.PLUGINS_UI_CONTRIBUTIONS_CHANGED)
   })
 }

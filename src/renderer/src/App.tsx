@@ -12,6 +12,7 @@ import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
+import { editorRegistry } from '@/stores/editor'
 import { tabActions, requestCloseTab as routeCloseTab, usePendingClose } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -31,6 +32,7 @@ import { registerBuiltinStatementContributions } from '@/lib/statement-contribut
 import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
 import { initAppActionBridge } from '@/lib/app-actions/bridge'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { usePanelResize } from '@/hooks/usePanelResize'
 import { notifyError } from '@/lib/notify-error'
 
 // Register CodeLens statement contributions once at module init. Re-registration
@@ -41,13 +43,25 @@ registerBuiltinStatementContributions()
 registerBuiltinAppActions()
 initAppActionBridge()
 import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
+import { KEYBINDING_ACTION } from '@shared/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { matchesAccelerator } from '@/lib/accelerators'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function App() {
-  const { tabs, activeTabId, addQueryTab, closeTab, reopenTab } = useTabsStore()
+  const { t } = useTranslation()
+  // Subscribe per-field (not the whole store): App renders the entire shell, so
+  // a whole-store subscription re-rendered it on every tab mutation — including
+  // per-keystroke updateTabSql. Actions are stable refs, so selecting them
+  // individually is free.
+  const tabs = useTabsStore(s => s.tabs)
+  const activeTabId = useTabsStore(s => s.activeTabId)
+  const addQueryTab = useTabsStore(s => s.addQueryTab)
+  const closeTab = useTabsStore(s => s.closeTab)
+  const reopenTab = useTabsStore(s => s.reopenTab)
   const openConnectionForm = useTabsStore(s => s.openConnectionForm)
-  const { sidebarVisible, setSidebarWidth } = useUiStore()
+  const sidebarVisible = useUiStore(s => s.sidebarVisible)
+  const setSidebarWidth = useUiStore(s => s.setSidebarWidth)
   const sidebarWidth = useSettingsStore(s => s.settings.appearance.sidebarWidth)
   const sidebarPosition = useSettingsStore(s => s.settings.appearance.sidebarPosition)
   const showStatusBar = useSettingsStore(s => s.settings.appearance.showStatusBar)
@@ -70,10 +84,9 @@ export function App() {
   useEffect(() => {
     void loadConnections()
   }, [loadConnections])
-  const activeTab = tabs.find(t => t.id === activeTabId)
+  const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
   // Shared across every close site (tab-bar X, Cmd+W, context menu). The
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
@@ -85,39 +98,40 @@ export function App() {
   // Keyboard shortcuts + native menu events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Built-in shortcuts are data-driven from the user's keybindings setting
+      // (Settings → Keybindings), so a rebind there takes effect immediately.
+      // `execute-query` is owned by the Monaco editor (it registers the binding
+      // itself, also from this setting) and intentionally has no entry here.
+      // Save dispatches to whichever tab is in front via tabActions so it works
+      // for query, settings, and any future tab kind.
+      const actions: Record<string, () => void> = {
+        [KEYBINDING_ACTION.NEW_TAB]: () => {
+          const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+          addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
+        },
+        [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },
+        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => setPaletteOpen(prev => !prev),
+        [KEYBINDING_ACTION.SAVE_QUERY]: () => { if (activeTabId) void tabActions.save(activeTabId) },
+        [KEYBINDING_ACTION.TOGGLE_SIDEBAR]: () => useUiStore.getState().toggleSidebar(),
+        [KEYBINDING_ACTION.FOCUS_EDITOR]: () => editorRegistry.get()?.editor.focus(),
+        [KEYBINDING_ACTION.TOGGLE_SECONDARY_SIDEBAR]: () => useUiStore.getState().toggleSecondarySidebar(),
+        [KEYBINDING_ACTION.TOGGLE_BOTTOM_DOCK]: () => useUiStore.getState().toggleBottomDock(),
+      }
+      const keybindings = useSettingsStore.getState().settings.keybindings
+      for (const kb of keybindings) {
+        const handler = actions[kb.id]
+        if (!handler) continue
+        if (kb.keys.some(k => matchesAccelerator(e, k))) {
+          e.preventDefault()
+          handler()
+          return
+        }
+      }
+      // Reopen-closed-tab isn't a user-configurable binding; keep it fixed.
       const mod = e.metaKey || e.ctrlKey
-      if (mod && e.shiftKey && e.key === 'p') {
-        e.preventDefault()
-        setPaletteOpen(prev => !prev)
-      }
-      if (mod && e.key === 'w') {
-        e.preventDefault()
-        if (activeTabId) requestCloseTab(activeTabId)
-      }
-      // Global save: dispatches to whichever tab is in front. Settings, query,
-      // any future tab kind — they all participate by registering with
-      // tabActions. Capture phase + preventDefault keeps the browser's
-      // default "Save Page As" dialog out of the way.
-      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        if (activeTabId) void tabActions.save(activeTabId)
-      }
-      if (mod && e.key === 't' && !e.shiftKey) {
-        e.preventDefault()
-        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
-        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
-      }
-      if (mod && e.shiftKey && e.key === 't') {
+      if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
         e.preventDefault()
         reopenTab()
-      }
-      if (mod && e.altKey && e.key.toLowerCase() === 'b') {
-        e.preventDefault()
-        useUiStore.getState().toggleSecondarySidebar()
-      }
-      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'j') {
-        e.preventDefault()
-        useUiStore.getState().toggleBottomDock()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -187,99 +201,54 @@ export function App() {
     }
   }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
 
-  // Bottom dock resize — draft state prevents per-pixel settings writes during drag
-  const [draftBottomHeight, setDraftBottomHeight] = useState<number | null>(null)
-  const effectiveBottomHeight = draftBottomHeight ?? bottomDockHeight
-  const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
+  // Panel resize behavior (draft-during-drag, commit-on-release, collapse on
+  // double-click) is shared across the three handles via usePanelResize.
+  const {
+    effective: effectiveBottomHeight,
+    onResize: handleBottomResize,
+    onResizeEnd: handleBottomResizeEnd,
+    onDoubleClick: handleBottomResizeDoubleClick,
+  } = usePanelResize({
+    value: bottomDockHeight, min: 120, max: 640, restoreDefault: 240, direction: -1,
+    read: () => useSettingsStore.getState().settings.appearance.bottomDockHeight,
+    commit: setBottomDockHeight,
+  })
 
-  const handleBottomResize = (delta: number) => {
-    setDraftBottomHeight(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.bottomDockHeight
-      return Math.min(640, Math.max(120, current - delta))
-    })
-  }
-  const handleBottomResizeEnd = () => {
-    if (draftBottomHeight !== null) {
-      setBottomDockHeight(draftBottomHeight)
-      setDraftBottomHeight(null)
-    }
-  }
-  const handleBottomResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
-    if (current > 120) {
-      setPrevBottomDockHeight(current)
-      setBottomDockHeight(120)
-    } else {
-      setBottomDockHeight(prevBottomDockHeight > 120 ? prevBottomDockHeight : 240)
-    }
-  }
+  const {
+    effective: effectiveSecondaryWidth,
+    onResize: handleSecondaryResize,
+    onResizeEnd: handleSecondaryResizeEnd,
+    onDoubleClick: handleSecondaryResizeDoubleClick,
+  } = usePanelResize({
+    value: secondarySidebarWidth, min: 220, max: 640, restoreDefault: 320, direction: -1,
+    read: () => useSettingsStore.getState().settings.appearance.secondarySidebarWidth,
+    commit: setSecondarySidebarWidth,
+  })
 
-  // Secondary sidebar resize — draft state prevents per-pixel settings writes during drag
-  const [draftSecondaryWidth, setDraftSecondaryWidth] = useState<number | null>(null)
-  const effectiveSecondaryWidth = draftSecondaryWidth ?? secondarySidebarWidth
-  const [prevSecondaryWidth, setPrevSecondaryWidth] = useState(secondarySidebarWidth)
-
-  const handleSecondaryResize = (delta: number) => {
-    setDraftSecondaryWidth(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-      return Math.min(640, Math.max(220, current - delta))
-    })
-  }
-  const handleSecondaryResizeEnd = () => {
-    if (draftSecondaryWidth !== null) {
-      setSecondarySidebarWidth(draftSecondaryWidth)
-      setDraftSecondaryWidth(null)
-    }
-  }
-  const handleSecondaryResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-    if (current > 220) {
-      setPrevSecondaryWidth(current)
-      setSecondarySidebarWidth(220)
-    } else {
-      setSecondarySidebarWidth(prevSecondaryWidth > 220 ? prevSecondaryWidth : 320)
-    }
-  }
-
-  // Left sidebar resize — draft state prevents per-pixel settings writes during drag
-  const [draftSidebarWidth, setDraftSidebarWidth] = useState<number | null>(null)
-  const effectiveSidebarWidth = draftSidebarWidth ?? sidebarWidth
-
-  const handleSidebarResize = (delta: number) => {
-    setDraftSidebarWidth(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.sidebarWidth
-      return Math.min(480, Math.max(180, current + delta))
-    })
-  }
-  const handleSidebarResizeEnd = () => {
-    if (draftSidebarWidth !== null) {
-      setSidebarWidth(draftSidebarWidth)
-      setDraftSidebarWidth(null)
-    }
-  }
-  const handleSidebarResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.sidebarWidth
-    if (current > 180) {
-      setPrevSidebarWidth(current)
-      setSidebarWidth(180)
-    } else {
-      setSidebarWidth(prevSidebarWidth > 180 ? prevSidebarWidth : 240)
-    }
-  }
+  const {
+    effective: effectiveSidebarWidth,
+    onResize: handleSidebarResize,
+    onResizeEnd: handleSidebarResizeEnd,
+    onDoubleClick: handleSidebarResizeDoubleClick,
+  } = usePanelResize({
+    value: sidebarWidth, min: 180, max: 480, restoreDefault: 240, direction: 1,
+    read: () => useSettingsStore.getState().settings.appearance.sidebarWidth,
+    commit: setSidebarWidth,
+  })
 
   return (
     <Flex direction="column" className="h-screen bg-bg-primary text-text-primary">
-      <SectionErrorBoundary label="Title bar">
+      <SectionErrorBoundary label={t('shell.sectionLabels.titleBar')}>
         <TitleBar />
       </SectionErrorBoundary>
       <Flex className="flex-1 overflow-hidden">
-        <SectionErrorBoundary label="Activity bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.activityBar')}>
           <ActivityBar />
         </SectionErrorBoundary>
         {sidebarVisible && sidebarPosition === 'left' && (
           <>
             <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.sidebar')}>
                 <Sidebar />
               </SectionErrorBoundary>
             </Flex>
@@ -295,7 +264,7 @@ export function App() {
           { activeTab && <TabBar /> }
           <Flex direction="column" className="flex-1 overflow-hidden">
             <Box className="flex-1 overflow-hidden">
-              <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
+              <SectionErrorBoundary label={activeTab?.title ?? t('shell.sectionLabels.tab')} resetKey={activeTabId}>
                 {activeTab?.type === 'query' && (
                   <QueryPanel tab={activeTab as QueryTab} />
                 )}
@@ -324,7 +293,7 @@ export function App() {
                 )}
               </SectionErrorBoundary>
               {!activeTab && (
-                <SectionErrorBoundary label="Welcome">
+                <SectionErrorBoundary label={t('shell.sectionLabels.welcome')}>
                   <WelcomeScreen />
                 </SectionErrorBoundary>
               )}
@@ -338,7 +307,7 @@ export function App() {
                   onDoubleClick={handleBottomResizeDoubleClick}
                 />
                 <Box style={{ height: effectiveBottomHeight }} className="shrink-0">
-                  <SectionErrorBoundary label="Bottom dock">
+                  <SectionErrorBoundary label={t('shell.sectionLabels.bottomDock')}>
                     <BottomDock />
                   </SectionErrorBoundary>
                 </Box>
@@ -355,7 +324,7 @@ export function App() {
               onDoubleClick={handleSidebarResizeDoubleClick}
             />
             <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.sidebar')}>
                 <Sidebar />
               </SectionErrorBoundary>
             </Flex>
@@ -370,29 +339,29 @@ export function App() {
               onDoubleClick={handleSecondaryResizeDoubleClick}
             />
             <Flex direction="column" style={{ width: effectiveSecondaryWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Secondary sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.secondarySidebar')}>
                 <SecondarySidebar />
               </SectionErrorBoundary>
             </Flex>
           </>
         )}
-        <SectionErrorBoundary label="Secondary activity bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.secondaryActivityBar')}>
           <SecondaryActivityBar />
         </SectionErrorBoundary>
       </Flex>
       {showStatusBar && (
-        <SectionErrorBoundary label="Status bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.statusBar')}>
           <StatusBar />
         </SectionErrorBoundary>
       )}
       <ToastContainer />
-      <SectionErrorBoundary label="Command palette">
+      <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </SectionErrorBoundary>
-      <SectionErrorBoundary label="MCP approval">
+      <SectionErrorBoundary label={t('shell.sectionLabels.mcpApproval')}>
         <MCPApprovalDialog />
       </SectionErrorBoundary>
-      <SectionErrorBoundary label="Plugin restart banner">
+      <SectionErrorBoundary label={t('shell.sectionLabels.pluginRestartBanner')}>
         <PluginRestartBanner />
       </SectionErrorBoundary>
       {pendingCloseId !== null && tabActions.hasOpenTransaction(pendingCloseId) ? (
@@ -400,13 +369,15 @@ export function App() {
         // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
         <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
           <Stack gap="md" className="p-4">
-            <Text size="sm" weight="semibold">Open transaction</Text>
+            <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
             <Text size="sm" color="secondary">
-              {`${tabActions.get(pendingCloseId)?.label ?? 'This tab'} has an open transaction. Commit or roll back before closing.`}
+              {t('shell.confirmTransaction.message', {
+                label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
+              })}
             </Text>
           </Stack>
           <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-            <Button variant="outline" size="sm" onClick={clearPendingClose}>Cancel</Button>
+            <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
             <Button
               variant="danger"
               size="sm"
@@ -425,7 +396,7 @@ export function App() {
                 }
               }}
             >
-              Rollback &amp; close
+              {t('shell.confirmTransaction.rollbackAndClose')}
             </Button>
             <Button
               variant="solid"
@@ -445,21 +416,21 @@ export function App() {
                 }
               }}
             >
-              Commit &amp; close
+              {t('shell.confirmTransaction.commitAndClose')}
             </Button>
           </Flex>
         </Modal>
       ) : (
         <ConfirmDialog
           open={pendingCloseId !== null}
-          title="Unsaved changes"
+          title={t('shell.confirmClose.unsavedTitle')}
           message={(() => {
             if (!pendingCloseId) return ''
-            const label = tabActions.get(pendingCloseId)?.label ?? 'this tab'
-            return `${label} has unsaved changes. Close anyway?`
+            const label = tabActions.get(pendingCloseId)?.label ?? t('shell.confirmClose.thisTab')
+            return t('shell.confirmClose.unsavedMessage', { label })
           })()}
-          confirmLabel="Discard changes"
-          cancelLabel="Keep editing"
+          confirmLabel={t('shell.confirmClose.discardChanges')}
+          cancelLabel={t('shell.confirmClose.keepEditing')}
           variant="danger"
           onCancel={clearPendingClose}
           onConfirm={() => {

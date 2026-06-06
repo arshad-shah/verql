@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import { Flex, Text, Button, EmptyState } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
+import { useTranslation } from '@/i18n/I18nProvider'
+import { t } from '@shared/i18n'
 
 const typeIcons: Record<Notification['type'], typeof AlertCircle> = {
   error: AlertCircle,
@@ -38,13 +40,13 @@ const typeBgColors: Record<Notification['type'], string> = {
 
 function formatRelativeTime(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return 'just now'
+  if (seconds < 60) return t('shell.notifications.justNow')
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return t('shell.notifications.minutesAgo', { count: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t('shell.notifications.hoursAgo', { count: hours })
   const days = Math.floor(hours / 24)
-  return `${days}d ago`
+  return t('shell.notifications.daysAgo', { count: days })
 }
 
 function buildCopyPayload(n: Notification): string {
@@ -58,6 +60,7 @@ function buildCopyPayload(n: Notification): string {
 }
 
 function NotificationItem({ notification }: { notification: Notification }) {
+  const { t } = useTranslation()
   const { markRead, removeNotification } = useNotificationsStore()
   const Icon = typeIcons[notification.type]
   const [copied, setCopied] = useState(false)
@@ -160,8 +163,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
               'text-text-disabled hover:text-text-primary hover:bg-white/5',
               'transition-colors'
             )}
-            aria-label={copied ? 'Copied' : 'Copy error details'}
-            title={copied ? 'Copied' : 'Copy error details'}
+            aria-label={copied ? t('shell.notifications.copied') : t('shell.notifications.copyErrorDetails')}
+            title={copied ? t('shell.notifications.copied') : t('shell.notifications.copyErrorDetails')}
           >
             {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
           </button>
@@ -176,7 +179,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
             'text-text-disabled hover:text-text-primary hover:bg-white/5',
             isError ? 'transition-colors' : 'opacity-0 group-hover:opacity-100 transition-opacity'
           )}
-          aria-label="Dismiss notification"
+          aria-label={t('shell.notifications.dismiss')}
         >
           <X size={12} />
         </button>
@@ -186,6 +189,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export function NotificationsSidebar() {
+  const { t } = useTranslation()
   const { notifications, markAllRead, clearAll, unreadCount } =
     useNotificationsStore()
   const unread = unreadCount()
@@ -208,7 +212,7 @@ export function NotificationsSidebar() {
               className="text-[10px] text-accent hover:text-accent-hover gap-1"
             >
               <CheckCheck size={10} />
-              Mark all read
+              {t('shell.notifications.markAllRead')}
             </Button>
           )}
           <Button
@@ -218,7 +222,7 @@ export function NotificationsSidebar() {
             className="text-[10px] text-text-muted hover:text-error gap-1"
           >
             <Trash2 size={10} />
-            Clear
+            {t('shell.notifications.clear')}
           </Button>
         </Flex>
       )}
@@ -227,8 +231,8 @@ export function NotificationsSidebar() {
       {notifications.length === 0 ? (
         <EmptyState
           icon={<Bell size={24} className="text-text-disabled" />}
-          title="All caught up"
-          description="No notifications yet"
+          title={t('shell.notifications.allCaughtUp')}
+          description={t('shell.notifications.emptyDescription')}
           className="py-12 px-4"
         />
       ) : (

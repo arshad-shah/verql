@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNotificationsStore } from '@/stores/notifications'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { t } from '@shared/i18n'
 
 export interface PluginStatus {
   total: number
@@ -36,9 +37,9 @@ export function usePluginStatus(): PluginStatus {
           notifiedRef.current = true
           useNotificationsStore.getState().addNotification({
             type: 'warning',
-            title: 'Plugin load failure',
-            message: `${failed} plugin(s) failed to load`,
-            source: { type: 'plugin', id: 'system', label: 'Plugin system' },
+            title: t('shell.statusBar.loadFailureTitle'),
+            message: t('shell.statusBar.loadFailureMessage', { count: failed }),
+            source: { type: 'plugin', id: 'system', label: t('shell.statusBar.pluginSystemLabel') },
           })
         }
       } catch {

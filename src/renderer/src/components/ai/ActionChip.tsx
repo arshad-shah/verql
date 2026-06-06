@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { appActions } from '@/lib/app-actions/registry'
 import { useToastStore } from '@/stores/toast'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 // Per-action icons (lucide only — no emoji). Unknown ids fall back to a generic
 // "jump to" arrow so any plugin-registered action still renders sensibly.
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function ActionChip({ actionId, params, children }: Props) {
+  const { t } = useTranslation()
   const [busy, setBusy] = useState(false)
   const action = appActions.get(actionId)
 
@@ -33,7 +35,7 @@ export function ActionChip({ actionId, params, children }: Props) {
     return (
       <span
         className="inline-flex items-center gap-1 rounded-md border border-border-default px-2 py-0.5 text-xs text-text-muted align-baseline"
-        title="This action isn't available in this version"
+        title={t('aiui.actionChip.unavailable')}
       >
         <AlertTriangle className="h-3 w-3" />
         {children ?? actionId}
@@ -47,14 +49,14 @@ export function ActionChip({ actionId, params, children }: Props) {
 
   const handleClick = async () => {
     if (busy) return
-    if (isMutating && !window.confirm(`Run "${action.title}"? This can change data.`)) return
+    if (isMutating && !window.confirm(t('aiui.actionChip.confirmMutating', { title: action.title }))) return
     setBusy(true)
     try {
       await appActions.run(actionId, params)
     } catch (err) {
       useToastStore.getState().addToast({
         type: 'error',
-        title: 'Action failed',
+        title: t('aiui.actionChip.actionFailed'),
         message: err instanceof Error ? err.message : String(err)
       })
     } finally {

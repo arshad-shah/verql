@@ -1,17 +1,19 @@
 import { BarChart3 } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
 import { Stack, ScrollArea, Flex, Text, EmptyState, Box } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function ChartsDashboard() {
+  const { t } = useTranslation()
   const { tabs } = useTabsStore()
   const { activeConnectionId } = useConnectionsStore()
 
   // Show query tabs that have results (potential charts)
   const queryTabsWithResults = tabs.filter(
-    (t): t is QueryTab => t.type === 'query' && t.connectionId === activeConnectionId && (t as QueryTab).results !== null
+    (tab): tab is QueryTab => tab.type === 'query' && tab.connectionId === activeConnectionId && (tab as QueryTab).results !== null
   )
 
   return (
@@ -20,8 +22,8 @@ export function ChartsDashboard() {
         {queryTabsWithResults.length === 0 && (
           <EmptyState
             icon={<BarChart3 size={20} className="text-text-muted" />}
-            title="No chart data yet"
-            description="Run a query that returns at least two columns — the Chart tab appears in the results dock."
+            title={t('shell.charts.emptyTitle')}
+            description={t('shell.charts.emptyDescription')}
             className="py-8"
           />
         )}
@@ -35,14 +37,14 @@ export function ChartsDashboard() {
               // Chart tab in one click — the dashboard becomes a real
               // "jump to chart" surface instead of just a tab-switcher.
               useTabsStore.getState().setActiveTab(tab.id)
-              useUiStore.getState().setBottomDockActivePanel('chart')
+              useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.CHART)
             }}
           >
             <Flex direction="row" align="center" gap="sm">
               <BarChart3 size={12} className="text-accent shrink-0" />
               <Text size="xs" color="primary" truncate className="flex-1">{tab.title}</Text>
               <Text size="xs" color="muted" className="text-[10px] ml-auto">
-                {tab.results?.rowCount} rows
+                {t('shell.charts.rowsCount', { count: tab.results?.rowCount ?? 0 })}
               </Text>
             </Flex>
             <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono pl-5 block">

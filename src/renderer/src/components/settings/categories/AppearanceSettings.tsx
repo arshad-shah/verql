@@ -4,6 +4,7 @@ import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
 import { useThemesStore } from '@/stores/themes'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
 import { SettingLabel } from '@/components/settings/SettingLabel'
@@ -11,10 +12,10 @@ import { isThemeSelectable } from './theme-utils'
 
 const FALLBACK_PREVIEW = { bg: '#0B0F16', sidebar: '#131825', text: '#E8ECF3', accent: '#2bd9a3' }
 
-const MODE_OPTIONS: { id: 'light' | 'dark' | 'system'; label: string; Icon: typeof Sun }[] = [
-  { id: 'light', label: 'Light', Icon: Sun },
-  { id: 'dark', label: 'Dark', Icon: Moon },
-  { id: 'system', label: 'System', Icon: Monitor },
+const MODE_OPTIONS: { id: 'light' | 'dark' | 'system'; Icon: typeof Sun }[] = [
+  { id: 'light', Icon: Sun },
+  { id: 'dark', Icon: Moon },
+  { id: 'system', Icon: Monitor },
 ]
 
 type ThemeGridItem = {
@@ -35,6 +36,7 @@ function ThemeGrid({
   currentTheme: string
   setTheme: (id: string) => void
 }) {
+  const { t: tr } = useTranslation()
   if (list.length === 0) return null
   return (
     <Box>
@@ -47,9 +49,9 @@ function ThemeGrid({
           const hasError = !selectable
           const hasWarning = selectable && v && v.missingRecommended.length > 0
           const tooltip = hasError
-            ? `This theme is missing required tokens — selecting it would break the UI. Missing: ${v!.missingRequired.join(', ')}`
+            ? tr('settings.appearance.themeMissingRequired', { tokens: v!.missingRequired.join(', ') })
             : hasWarning
-              ? `Missing recommended tokens: ${v!.missingRecommended.join(', ')}`
+              ? tr('settings.appearance.themeMissingRecommended', { tokens: v!.missingRecommended.join(', ') })
               : undefined
           return (
             <Box
@@ -108,6 +110,7 @@ function ThemeGrid({
 }
 
 export function AppearanceSettings() {
+  const { t } = useTranslation()
   const appearance = useSettingsStore((s) => s.settings.appearance)
   const setSetting = useSettingsStore((s) => s.set)
   const resetCategory = useSettingsStore((s) => s.resetCategory)
@@ -124,12 +127,12 @@ export function AppearanceSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">Customize how verql looks and feels</Text>
+      <Text size="xs" color="muted">{t('settings.appearance.blurb')}</Text>
 
       <Box>
-        <SettingLabel label="Color Mode" description="Light, dark, or follow the operating system" />
+        <SettingLabel label={t('settings.appearance.colorMode.label')} description={t('settings.appearance.colorMode.description')} />
         <Flex gap="xs">
-          {MODE_OPTIONS.map(({ id, label, Icon }) => (
+          {MODE_OPTIONS.map(({ id, Icon }) => (
             <Box
               key={id}
               as="button"
@@ -142,46 +145,46 @@ export function AppearanceSettings() {
             >
               <Flex align="center" justify="center" gap="xs">
                 <Icon size={14} />
-                <Text size="sm">{label}</Text>
+                <Text size="sm">{t(`settings.appearance.mode.${id}`)}</Text>
               </Flex>
             </Box>
           ))}
         </Flex>
         {mode === 'system' && (
           <Text size="xs" color="muted" className="mt-2 block">
-            Following the OS — picking a theme below pins it as your preference for that side.
+            {t('settings.appearance.systemHint')}
           </Text>
         )}
       </Box>
 
       <Divider />
 
-      <ThemeGrid title="Dark themes" list={darkThemes} currentTheme={currentTheme} setTheme={setTheme} />
-      <ThemeGrid title="Light themes" list={lightThemes} currentTheme={currentTheme} setTheme={setTheme} />
+      <ThemeGrid title={t('settings.appearance.darkThemes')} list={darkThemes} currentTheme={currentTheme} setTheme={setTheme} />
+      <ThemeGrid title={t('settings.appearance.lightThemes')} list={lightThemes} currentTheme={currentTheme} setTheme={setTheme} />
 
       <Divider />
 
-      <SettingRow label="UI Density" description="Controls spacing and padding across the interface">
+      <SettingRow label={t('settings.appearance.uiDensity.label')} description={t('settings.appearance.uiDensity.description')}>
         <Select
           value={appearance.uiDensity}
           onChange={(v) => setSetting('appearance.uiDensity', v)}
           options={[
-            { value: 'compact', label: 'Compact' },
-            { value: 'comfortable', label: 'Comfortable' },
-            { value: 'spacious', label: 'Spacious' },
+            { value: 'compact', label: t('settings.appearance.uiDensity.compact') },
+            { value: 'comfortable', label: t('settings.appearance.uiDensity.comfortable') },
+            { value: 'spacious', label: t('settings.appearance.uiDensity.spacious') },
           ]}
           size="sm"
           className="w-32"
         />
       </SettingRow>
 
-      <SettingRow label="Sidebar Position" description="Place the sidebar on the left or right side">
+      <SettingRow label={t('settings.appearance.sidebarPosition.label')} description={t('settings.appearance.sidebarPosition.description')}>
         <Select
           value={appearance.sidebarPosition}
           onChange={(v) => setSetting('appearance.sidebarPosition', v)}
           options={[
-            { value: 'left', label: 'Left' },
-            { value: 'right', label: 'Right' },
+            { value: 'left', label: t('settings.appearance.sidebarPosition.left') },
+            { value: 'right', label: t('settings.appearance.sidebarPosition.right') },
           ]}
           size="sm"
           className="w-32"
@@ -189,11 +192,11 @@ export function AppearanceSettings() {
       </SettingRow>
 
       <SettingRow
-        label="Accent Color"
+        label={t('settings.appearance.accentColor.label')}
         description={
           appearance.accentColor
-            ? 'Custom accent overriding the theme default'
-            : 'Follows the theme — pick a colour to override'
+            ? t('settings.appearance.accentColor.descriptionCustom')
+            : t('settings.appearance.accentColor.descriptionDefault')
         }
       >
         <Flex gap="sm" align="center">
@@ -204,7 +207,7 @@ export function AppearanceSettings() {
           />
           {appearance.accentColor && (
             <Button variant="ghost" size="sm" onClick={() => setSetting('appearance.accentColor', '')}>
-              Use theme default
+              {t('settings.appearance.accentColor.useThemeDefault')}
             </Button>
           )}
         </Flex>
@@ -212,33 +215,33 @@ export function AppearanceSettings() {
 
       <Divider />
 
-      <SettingRow label="Show status bar" description="Display the status bar at the bottom of the window">
+      <SettingRow label={t('settings.appearance.showStatusBar.label')} description={t('settings.appearance.showStatusBar.description')}>
         <Switch
-          label="Show status bar"
+          label={t('settings.appearance.showStatusBar.label')}
           checked={appearance.showStatusBar}
           onChange={(e) => setSetting('appearance.showStatusBar', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Show secondary sidebar" description="Show the right (secondary) sidebar by default">
+      <SettingRow label={t('settings.appearance.showSecondarySidebar.label')} description={t('settings.appearance.showSecondarySidebar.description')}>
         <Switch
-          label="Show secondary sidebar"
+          label={t('settings.appearance.showSecondarySidebar.label')}
           checked={appearance.showSecondarySidebar}
           onChange={(e) => setSetting('appearance.showSecondarySidebar', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Show bottom dock" description="Show the bottom dock by default when there's content to display">
+      <SettingRow label={t('settings.appearance.showBottomDock.label')} description={t('settings.appearance.showBottomDock.description')}>
         <Switch
-          label="Show bottom dock"
+          label={t('settings.appearance.showBottomDock.label')}
           checked={appearance.showBottomDock}
           onChange={(e) => setSetting('appearance.showBottomDock', e.target.checked)}
         />
       </SettingRow>
 
-      <SettingRow label="Animations" description="Animate menus, dropdowns, and transitions">
+      <SettingRow label={t('settings.appearance.animations.label')} description={t('settings.appearance.animations.description')}>
         <Switch
-          label="Animations"
+          label={t('settings.appearance.animations.label')}
           checked={appearance.animations}
           onChange={(e) => setSetting('appearance.animations', e.target.checked)}
         />
@@ -250,7 +253,7 @@ export function AppearanceSettings() {
 
       <Flex justify="end">
         <Button variant="outline" size="sm" onClick={() => resetCategory('appearance')}>
-          Reset to Defaults
+          {t('common.resetToDefaults')}
         </Button>
       </Flex>
     </Stack>

@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { Flex, Text, Tooltip, ContextMenu, cn, IconButton } from '@/primitives'
 import { getTabIcon } from './tab-icons'
+import { useTranslation } from '@/i18n/I18nProvider'
 import './tab-bar.css'
 
 interface TabItemProps {
@@ -31,6 +32,7 @@ export function TabItem({
   onDragOver,
   onDragEnd,
 }: TabItemProps) {
+  const { t } = useTranslation()
   const [closeHovered, setCloseHovered] = useState(false)
   const { icon: Icon, className: iconColor } = getTabIcon(tab.type)
   const isDirty = tab.type === 'query' && tab.isDirty
@@ -82,7 +84,7 @@ export function TabItem({
         {/* Close / dirty indicator */}
         <IconButton
           size="tab-action"
-          label={isDirty ? 'Close tab (unsaved changes)' : 'Close tab'}
+          label={isDirty ? t('shell.tabBar.closeTabUnsaved') : t('shell.tabBar.closeTab')}
           variant="tab-action"
           className={cn(
             'ml-0.5 transition-opacity duration-(--transition-fast)',
@@ -95,7 +97,7 @@ export function TabItem({
           {isDirty && !closeHovered ? (
             <span
               className="block h-1.75 w-1.75 rounded-full bg-warning"
-              aria-label="Unsaved changes"
+              aria-label={t('shell.tabBar.unsavedChanges')}
             />
           ) : (
             <X

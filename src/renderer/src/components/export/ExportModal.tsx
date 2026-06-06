@@ -3,6 +3,7 @@ import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   tableName?: string
@@ -13,10 +14,11 @@ interface Props {
 type ExportFormat = 'sql' | 'csv' | 'json'
 
 export function ExportModal({ tableName, connectionId, onClose }: Props) {
+  const { t } = useTranslation()
   const [format, setFormat] = useState<ExportFormat>('sql')
   const [includeSchema, setIncludeSchema] = useState(true)
   const [exporting, setExporting] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<{ text: string; isError: boolean } | null>(null)
   const { connections } = useConnectionsStore()
   const conn = connections.find(c => c.id === connectionId)
 
@@ -26,11 +28,11 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
     try {
       const res = await window.electronAPI.invoke(IPC_CHANNELS.EXPORT_TABLE, connectionId, tableName, format, { includeSchema })
       if ('filePath' in res) {
-        setResult(`Exported to ${res.filePath}`)
+        setResult({ text: t('shell.exportModal.exportedTo', { filePath: res.filePath }), isError: false })
         setTimeout(onClose, 1500)
       }
     } catch (err) {
-      setResult(`Error: ${(err as Error).message}`)
+      setResult({ text: t('shell.exportModal.errorPrefix', { message: (err as Error).message }), isError: true })
     } finally {
       setExporting(false)
     }
@@ -39,13 +41,13 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
   return (
     <Modal open={true} onClose={onClose}>
       <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
-        <Text size="sm" weight="semibold">Export {tableName}</Text>
-        <Button variant="ghost" size="xs" onClick={onClose} aria-label="Close"><X size={14} /></Button>
+        <Text size="sm" weight="semibold">{t('shell.exportModal.title', { tableName: tableName ?? '' })}</Text>
+        <Button variant="ghost" size="xs" onClick={onClose} aria-label={t('shell.exportModal.close')}><X size={14} /></Button>
       </Flex>
 
       <Stack gap="md" className="p-4">
         <Box>
-          <Text size="xs" color="muted" as="p" className="mb-2">Format</Text>
+          <Text size="xs" color="muted" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
           <Flex direction="row" gap="sm">
             {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
               <Button
@@ -64,17 +66,17 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         {format === 'sql' && (
           <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
             <Checkbox checked={includeSchema} onChange={e => setIncludeSchema(e.target.checked)} />
-            <Text size="sm" color="secondary">Include CREATE TABLE</Text>
+            <Text size="sm" color="secondary">{t('shell.exportModal.includeCreateTable')}</Text>
           </Flex>
         )}
 
         {result && (
-          <Text size="xs" color={result.startsWith('Error') ? 'error' : 'success'} as="p">{result}</Text>
+          <Text size="xs" color={result.isError ? 'error' : 'success'} as="p">{result.text}</Text>
         )}
       </Stack>
 
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+        <Button variant="outline" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
         <Button
           variant="solid"
           size="sm"
@@ -83,7 +85,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
           className="flex items-center gap-1.5"
         >
           {exporting ? <Spinner size="xs" /> : <Download size={14} />}
-          Export
+          {t('shell.exportModal.export')}
         </Button>
       </Flex>
     </Modal>

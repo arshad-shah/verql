@@ -8,15 +8,18 @@ import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
 import { StreamingResponse } from './StreamingResponse'
 import type { AIChatMessage } from '@shared/ai-types'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
-const SUGGESTIONS = [
-  'Summarize this database schema',
-  'Find the largest tables',
-  'Show recent slow query patterns',
-  'Explain the relationships between tables'
+const SUGGESTIONS: MessageKey[] = [
+  'aiui.chat.suggestionSummarizeSchema',
+  'aiui.chat.suggestionLargestTables',
+  'aiui.chat.suggestionSlowQueries',
+  'aiui.chat.suggestionRelationships',
 ]
 
 function EmptyState() {
+  const { t } = useTranslation()
   const sendMessage = useAIStore(s => s.sendMessage)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
   const connections = useConnectionsStore(s => s.connections)
@@ -33,19 +36,22 @@ function EmptyState() {
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-border-default">
           <Sparkles className="h-4 w-4" />
         </span>
-        <Text size="sm" color="secondary">Ask about your schema, queries, or data</Text>
+        <Text size="sm" color="secondary">{t('aiui.chat.emptyPrompt')}</Text>
       </div>
       <div className="flex flex-wrap justify-center gap-1.5 max-w-[300px]">
-        {SUGGESTIONS.map(s => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => ask(s)}
-            className="rounded-md border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-hover hover:text-text-primary transition-colors"
-          >
-            {s}
-          </button>
-        ))}
+        {SUGGESTIONS.map(key => {
+          const text = t(key)
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => ask(text)}
+              className="rounded-md border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-hover hover:text-text-primary transition-colors"
+            >
+              {text}
+            </button>
+          )
+        })}
       </div>
     </div>
   )

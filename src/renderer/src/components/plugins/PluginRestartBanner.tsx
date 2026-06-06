@@ -1,4 +1,5 @@
 import { usePluginLifecycleStore } from '@/stores/plugin-lifecycle'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { Button, Flex, Text } from '@/primitives'
 
 /**
@@ -8,6 +9,7 @@ import { Button, Flex, Text } from '@/primitives'
  * to fully reset — surface that to the user without forcing the issue.
  */
 export function PluginRestartBanner() {
+  const { t } = useTranslation()
   const pending = usePluginLifecycleStore((s) => s.pending)
   const restart = usePluginLifecycleStore((s) => s.restart)
   const dismiss = usePluginLifecycleStore((s) => s.dismiss)
@@ -15,10 +17,10 @@ export function PluginRestartBanner() {
   if (!pending) return null
 
   const verb = ({
-    activated: 'enabled',
-    deactivated: 'disabled',
-    installed: 'installed',
-    uninstalled: 'uninstalled'
+    activated: t('plugins.restart.verbActivated'),
+    deactivated: t('plugins.restart.verbDeactivated'),
+    installed: t('plugins.restart.verbInstalled'),
+    uninstalled: t('plugins.restart.verbUninstalled')
   } as const)[pending.event]
 
   return (
@@ -40,11 +42,11 @@ export function PluginRestartBanner() {
     >
       <Flex direction="column" gap="xs">
         <Text size="sm">
-          Plugin <strong>{pending.name}</strong> was {verb}. Restart to apply cleanly.
+          {t('plugins.restart.messagePrefix')} <strong>{pending.name}</strong> {t('plugins.restart.messageSuffix', { verb })}
         </Text>
         <Flex gap="xs" justify="end">
-          <Button size="sm" variant="ghost" onClick={dismiss}>Later</Button>
-          <Button size="sm" onClick={restart}>Restart</Button>
+          <Button size="sm" variant="ghost" onClick={dismiss}>{t('plugins.restart.later')}</Button>
+          <Button size="sm" onClick={restart}>{t('plugins.restart.restart')}</Button>
         </Flex>
       </Flex>
     </div>

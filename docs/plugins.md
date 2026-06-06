@@ -192,6 +192,22 @@ ctx.drivers.register('cassandra', {
   defaultSchemaCandidates: ['system'],  // renderer picks first match
   defaultSchemaUseConnectionDatabase: false,
 
+  // Which built-in statement splitter the CodeLens "Run/Explain" gutter uses.
+  // The renderer owns the (Monaco-coupled) splitters and selects one by this id;
+  // there is no hardcoded db-type list. Omit to disable the per-statement gutter.
+  statementSyntax: 'sql',               // 'sql' | 'redis' | 'mongodb'
+
+  // Driver-owned error classification. Each rule's regex (matched
+  // case-insensitively against the cleaned message; first capture group → the
+  // message variable) maps to a DbErrorCode; the renderer owns the friendly
+  // i18n message. Lets a new driver get column-not-found / syntax / constraint
+  // messages without any host change. Host classifies connection/auth/app errors.
+  errorRules: [
+    { code: 'COLUMN_NOT_FOUND', pattern: 'Undefined column name ([^;]+)' },
+    { code: 'SYNTAX_ERROR', pattern: 'line \\d+:\\d+ (no viable alternative.*)' },
+    // …
+  ],
+
   // REQUIRED for every driver — the orchestrator refuses to fabricate a
   // "SELECT * FROM table LIMIT 100" fallback. Async so an isolated driver can
   // answer over the RPC bridge.
@@ -231,6 +247,11 @@ Look at any of the bundled drivers for a full example:
 [snowflake](../src/main/plugins/bundled/snowflake/index.ts),
 [mongodb](../src/main/plugins/bundled/mongodb/index.ts),
 [redis](../src/main/plugins/bundled/redis/index.ts).
+
+Your **adapter** (returned by `createAdapter`) may also implement
+`parseQueryPlan(result): PlanNode[]` — the renderer calls it over
+`db:parse-plan` to render the Query Plan tab, so EXPLAIN-format parsing stays in
+the driver. Return `[]` (or omit the method) if the rows aren't a plan.
 
 The orchestrator never branches on driver type. If you need behaviour the
 existing capability flags don't cover, **add a flag to `DriverFactory`**
