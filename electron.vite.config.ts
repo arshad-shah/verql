@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, isAbsolute } from 'node:path'
 import type { Plugin } from 'vite'
 
 const req = createRequire(import.meta.url)
@@ -76,8 +76,13 @@ function externaliseUnresolvable(): Plugin {
     name: 'externalise-unresolvable',
     enforce: 'pre',
     resolveId(source, importer) {
-      // Skip relative + alias imports
-      if (source.startsWith('.') || source.startsWith('/') || source.startsWith('@/') || source.startsWith('@shared')) {
+      // Skip relative, absolute, and alias imports. Use isAbsolute() rather than
+      // startsWith('/') so Windows drive-letter paths (C:\…) are also recognised:
+      // Vite's alias plugin re-runs this resolver on the post-alias absolute path
+      // (e.g. C:\…\shared/settings), and a POSIX-only check would mistake that for
+      // a bare specifier, fail to require.resolve the .ts file, and externalise our
+      // own internal @shared modules as runtime requires that crash at launch.
+      if (source.startsWith('.') || isAbsolute(source) || source.startsWith('@/') || source.startsWith('@shared')) {
         return null
       }
       // Skip node built-ins (Rollup handles them)
