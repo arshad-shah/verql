@@ -7,8 +7,10 @@ import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
 import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function SecondaryActivityBar() {
+  const { t } = useTranslation()
   const active = useUiStore(s => s.secondaryActivePanel)
   const visible = useUiStore(s => s.secondarySidebarVisible)
   const setActive = useUiStore(s => s.setSecondaryActivePanel)
@@ -41,9 +43,9 @@ export function SecondaryActivityBar() {
       gap="xs"
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
-      {renderButton(SECONDARY_PANEL.CONNECTIONS, Plug, 'Connections')}
-      {renderButton(SECONDARY_PANEL.INSPECTOR, ListTree, 'Inspector')}
-      {renderButton(SECONDARY_PANEL.ACTIVITY, Activity, 'Activity')}
+      {renderButton(SECONDARY_PANEL.CONNECTIONS, Plug, t('shell.secondaryActivityBar.connections'))}
+      {renderButton(SECONDARY_PANEL.INSPECTOR, ListTree, t('shell.secondaryActivityBar.inspector'))}
+      {renderButton(SECONDARY_PANEL.ACTIVITY, Activity, t('shell.secondaryActivityBar.activity'))}
       <PluginSlot id="app.secondaryActivityBar.top" />
       <Spacer />
       <PluginSlot id="app.secondaryActivityBar.bottom" />

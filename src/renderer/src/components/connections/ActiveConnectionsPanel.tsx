@@ -7,6 +7,7 @@ import { notifyError } from '@/lib/notify-error'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { ConnectionListItem } from './ConnectionListItem'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 /**
  * IntelliJ-style active-connections pane.
@@ -18,6 +19,7 @@ import { ConnectionListItem } from './ConnectionListItem'
  * connections store. This file is just data binding.
  */
 export function ActiveConnectionsPanel() {
+  const { t } = useTranslation()
   const connections = useConnectionsStore(s => s.connections)
   const connectedIds = useConnectionsStore(s => s.connectedIds)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
@@ -39,7 +41,7 @@ export function ActiveConnectionsPanel() {
 
   const handleConnect = async (id: string) => {
     const result = await connect(id)
-    if (!result.success) notifyError(result.error ?? 'Connection failed', { titlePrefix: 'Connect' })
+    if (!result.success) notifyError(result.error ?? t('connections.connectionFailed'), { titlePrefix: t('connections.active.connectErrorPrefix') })
   }
 
   const confirmDelete = () => {
@@ -52,14 +54,14 @@ export function ActiveConnectionsPanel() {
       <Box className="p-4">
         <EmptyState
           icon={<Database size={20} className="text-text-muted" />}
-          title="No connections yet"
-          description="Add a database connection to get started."
+          title={t('connections.active.emptyTitle')}
+          description={t('connections.active.emptyDescription')}
           action={
             <button
               onClick={() => openConnectionForm()}
               className="text-xs text-accent hover:underline"
             >
-              New connection
+              {t('connections.active.newConnection')}
             </button>
           }
         />
@@ -79,11 +81,11 @@ export function ActiveConnectionsPanel() {
     <Stack className="py-1">
       <Flex align="center" justify="between" className="px-3 py-1">
         <Text size="xs" color="muted" className="text-[10px] uppercase tracking-wider">
-          {connections.length} connection{connections.length === 1 ? '' : 's'}
+          {t('connections.active.count', { n: connections.length })}
         </Text>
-        <Tooltip content="New connection">
+        <Tooltip content={t('connections.active.newConnection')}>
           <IconButton
-            label="New connection"
+            label={t('connections.active.newConnection')}
             size="xs"
             variant="ghost"
             onClick={() => openConnectionForm()}
@@ -96,7 +98,7 @@ export function ActiveConnectionsPanel() {
       {live.length > 0 && (
         <>
           <Text size="xs" color="muted" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
-            Live · {live.length}
+            {t('connections.active.live', { n: live.length })}
           </Text>
           {live.map(c => (
             <ConnectionListItem
@@ -121,7 +123,7 @@ export function ActiveConnectionsPanel() {
       {saved.length > 0 && (
         <>
           <Text size="xs" color="muted" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
-            Saved · {saved.length}
+            {t('connections.active.saved', { n: saved.length })}
           </Text>
           {saved.map(c => (
             <ConnectionListItem
@@ -146,9 +148,9 @@ export function ActiveConnectionsPanel() {
     <ConfirmDialog
       open={pendingDelete !== null}
       variant="danger"
-      title="Delete connection"
-      message={pendingDelete ? `Delete "${pendingDelete.name}"? This can't be undone.` : undefined}
-      confirmLabel="Delete"
+      title={t('connections.active.deleteTitle')}
+      message={pendingDelete ? t('connections.active.deleteMessage', { name: pendingDelete.name }) : undefined}
+      confirmLabel={t('connections.active.deleteConfirm')}
       onConfirm={confirmDelete}
       onCancel={() => setPendingDelete(null)}
     />

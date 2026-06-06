@@ -45,8 +45,10 @@ import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
 import { KEYBINDING_ACTION } from '@shared/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { matchesAccelerator } from '@/lib/accelerators'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function App() {
+  const { t } = useTranslation()
   // Subscribe per-field (not the whole store): App renders the entire shell, so
   // a whole-store subscription re-rendered it on every tab mutation — including
   // per-keystroke updateTabSql. Actions are stable refs, so selecting them
@@ -81,7 +83,7 @@ export function App() {
   useEffect(() => {
     void loadConnections()
   }, [loadConnections])
-  const activeTab = tabs.find(t => t.id === activeTabId)
+  const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
@@ -281,17 +283,17 @@ export function App() {
 
   return (
     <Flex direction="column" className="h-screen bg-bg-primary text-text-primary">
-      <SectionErrorBoundary label="Title bar">
+      <SectionErrorBoundary label={t('shell.sectionLabels.titleBar')}>
         <TitleBar />
       </SectionErrorBoundary>
       <Flex className="flex-1 overflow-hidden">
-        <SectionErrorBoundary label="Activity bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.activityBar')}>
           <ActivityBar />
         </SectionErrorBoundary>
         {sidebarVisible && sidebarPosition === 'left' && (
           <>
             <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.sidebar')}>
                 <Sidebar />
               </SectionErrorBoundary>
             </Flex>
@@ -307,7 +309,7 @@ export function App() {
           { activeTab && <TabBar /> }
           <Flex direction="column" className="flex-1 overflow-hidden">
             <Box className="flex-1 overflow-hidden">
-              <SectionErrorBoundary label={activeTab?.title ?? 'Tab'} resetKey={activeTabId}>
+              <SectionErrorBoundary label={activeTab?.title ?? t('shell.sectionLabels.tab')} resetKey={activeTabId}>
                 {activeTab?.type === 'query' && (
                   <QueryPanel tab={activeTab as QueryTab} />
                 )}
@@ -336,7 +338,7 @@ export function App() {
                 )}
               </SectionErrorBoundary>
               {!activeTab && (
-                <SectionErrorBoundary label="Welcome">
+                <SectionErrorBoundary label={t('shell.sectionLabels.welcome')}>
                   <WelcomeScreen />
                 </SectionErrorBoundary>
               )}
@@ -350,7 +352,7 @@ export function App() {
                   onDoubleClick={handleBottomResizeDoubleClick}
                 />
                 <Box style={{ height: effectiveBottomHeight }} className="shrink-0">
-                  <SectionErrorBoundary label="Bottom dock">
+                  <SectionErrorBoundary label={t('shell.sectionLabels.bottomDock')}>
                     <BottomDock />
                   </SectionErrorBoundary>
                 </Box>
@@ -367,7 +369,7 @@ export function App() {
               onDoubleClick={handleSidebarResizeDoubleClick}
             />
             <Flex direction="column" style={{ width: effectiveSidebarWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.sidebar')}>
                 <Sidebar />
               </SectionErrorBoundary>
             </Flex>
@@ -382,29 +384,29 @@ export function App() {
               onDoubleClick={handleSecondaryResizeDoubleClick}
             />
             <Flex direction="column" style={{ width: effectiveSecondaryWidth }} className="shrink-0 overflow-hidden">
-              <SectionErrorBoundary label="Secondary sidebar">
+              <SectionErrorBoundary label={t('shell.sectionLabels.secondarySidebar')}>
                 <SecondarySidebar />
               </SectionErrorBoundary>
             </Flex>
           </>
         )}
-        <SectionErrorBoundary label="Secondary activity bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.secondaryActivityBar')}>
           <SecondaryActivityBar />
         </SectionErrorBoundary>
       </Flex>
       {showStatusBar && (
-        <SectionErrorBoundary label="Status bar">
+        <SectionErrorBoundary label={t('shell.sectionLabels.statusBar')}>
           <StatusBar />
         </SectionErrorBoundary>
       )}
       <ToastContainer />
-      <SectionErrorBoundary label="Command palette">
+      <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </SectionErrorBoundary>
-      <SectionErrorBoundary label="MCP approval">
+      <SectionErrorBoundary label={t('shell.sectionLabels.mcpApproval')}>
         <MCPApprovalDialog />
       </SectionErrorBoundary>
-      <SectionErrorBoundary label="Plugin restart banner">
+      <SectionErrorBoundary label={t('shell.sectionLabels.pluginRestartBanner')}>
         <PluginRestartBanner />
       </SectionErrorBoundary>
       {pendingCloseId !== null && tabActions.hasOpenTransaction(pendingCloseId) ? (
@@ -412,13 +414,15 @@ export function App() {
         // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
         <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
           <Stack gap="md" className="p-4">
-            <Text size="sm" weight="semibold">Open transaction</Text>
+            <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
             <Text size="sm" color="secondary">
-              {`${tabActions.get(pendingCloseId)?.label ?? 'This tab'} has an open transaction. Commit or roll back before closing.`}
+              {t('shell.confirmTransaction.message', {
+                label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
+              })}
             </Text>
           </Stack>
           <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-            <Button variant="outline" size="sm" onClick={clearPendingClose}>Cancel</Button>
+            <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
             <Button
               variant="danger"
               size="sm"
@@ -437,7 +441,7 @@ export function App() {
                 }
               }}
             >
-              Rollback &amp; close
+              {t('shell.confirmTransaction.rollbackAndClose')}
             </Button>
             <Button
               variant="solid"
@@ -457,21 +461,21 @@ export function App() {
                 }
               }}
             >
-              Commit &amp; close
+              {t('shell.confirmTransaction.commitAndClose')}
             </Button>
           </Flex>
         </Modal>
       ) : (
         <ConfirmDialog
           open={pendingCloseId !== null}
-          title="Unsaved changes"
+          title={t('shell.confirmClose.unsavedTitle')}
           message={(() => {
             if (!pendingCloseId) return ''
-            const label = tabActions.get(pendingCloseId)?.label ?? 'this tab'
-            return `${label} has unsaved changes. Close anyway?`
+            const label = tabActions.get(pendingCloseId)?.label ?? t('shell.confirmClose.thisTab')
+            return t('shell.confirmClose.unsavedMessage', { label })
           })()}
-          confirmLabel="Discard changes"
-          cancelLabel="Keep editing"
+          confirmLabel={t('shell.confirmClose.discardChanges')}
+          cancelLabel={t('shell.confirmClose.keepEditing')}
           variant="danger"
           onCancel={clearPendingClose}
           onConfirm={() => {

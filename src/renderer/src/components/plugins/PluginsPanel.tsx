@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Spinner, SearchInput, cn } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
 
@@ -65,6 +66,7 @@ export function PluginIcon({ plugin, size = 28 }: { plugin: PluginInfo; size?: n
 }
 
 export function PluginsPanel() {
+  const { t } = useTranslation()
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -99,14 +101,14 @@ export function PluginsPanel() {
       <Flex direction="row" align="center" gap="xs" className="px-2 py-1.5">
         <SearchInput
           size="xs"
-          placeholder="Search plugins..."
+          placeholder={t('plugins.list.searchPlaceholder')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           onClear={() => setSearch('')}
           className="flex-1"
         />
         <IconButton
-          label="Install from folder"
+          label={t('plugins.list.installFromFolder')}
           size="xs"
           variant="ghost"
           onClick={openInstallPlugin}
@@ -115,7 +117,7 @@ export function PluginsPanel() {
           <FolderOpen size={12} />
         </IconButton>
         <IconButton
-          label="Refresh"
+          label={t('plugins.list.refresh')}
           size="xs"
           variant="ghost"
           onClick={loadPlugins}
@@ -129,7 +131,7 @@ export function PluginsPanel() {
         {filtered.length === 0 && (
           <EmptyState
             icon={<Package size={24} className="text-text-muted" />}
-            title={search ? 'No matches' : 'No plugins'}
+            title={search ? t('plugins.list.noMatches') : t('plugins.list.empty')}
             className="py-8"
           />
         )}
@@ -137,7 +139,7 @@ export function PluginsPanel() {
         {bundledPlugins.length > 0 && (
           <>
             <Box className="px-2 pt-2 pb-1">
-              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">Built-in</Text>
+              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.builtIn')}</Text>
             </Box>
             {bundledPlugins.map(plugin => (
               <PluginRow
@@ -153,7 +155,7 @@ export function PluginsPanel() {
         {installedPlugins.length > 0 && (
           <>
             <Box className="px-2 pt-3 pb-1">
-              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">Installed</Text>
+              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.installed')}</Text>
             </Box>
             {installedPlugins.map(plugin => (
               <PluginRow
@@ -168,7 +170,7 @@ export function PluginsPanel() {
 
         {filtered.length > 0 && (
           <Text size="xs" color="muted" className="text-[10px] text-center py-3 block">
-            {plugins.length} plugin{plugins.length !== 1 ? 's' : ''}
+            {t('plugins.list.count', { count: plugins.length })}
           </Text>
         )}
       </ScrollArea>

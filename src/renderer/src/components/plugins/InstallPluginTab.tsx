@@ -1,12 +1,14 @@
 import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
+import { useTranslation } from '@/i18n/I18nProvider'
 import { Flex, Box, Text, Button, Spinner } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
 
 type InstallState = 'idle' | 'drag-over' | 'installing' | 'error'
 
 export function InstallPluginTab() {
+  const { t } = useTranslation()
   const [state, setState] = useState<InstallState>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const addToast = useToastStore((s) => s.addToast)
@@ -19,9 +21,9 @@ export function InstallPluginTab() {
         ? await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_ZIP, filePath)
         : await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_PATH, filePath)
       if (result.success) {
-        addToast({ type: 'success', title: 'Plugin installed', message: result.name ?? undefined })
+        addToast({ type: 'success', title: t('plugins.install.installedToast'), message: result.name ?? undefined })
       } else {
-        setErrorMessage(result.error ?? 'Installation failed')
+        setErrorMessage(result.error ?? t('plugins.install.failed'))
         setState('error')
         return
       }
@@ -31,7 +33,7 @@ export function InstallPluginTab() {
       return
     }
     setState('idle')
-  }, [addToast])
+  }, [addToast, t])
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault()
@@ -97,7 +99,7 @@ export function InstallPluginTab() {
             <>
               <Spinner size="md" />
               <Text size="sm" color="muted">
-                Installing plugin...
+                {t('plugins.install.installing')}
               </Text>
             </>
           ) : (
@@ -124,10 +126,10 @@ export function InstallPluginTab() {
               </Box>
               <Flex direction="column" align="center" gap="xs">
                 <Text size="sm" weight="semibold" color="primary">
-                  Drop plugin here to install
+                  {t('plugins.install.dropHere')}
                 </Text>
                 <Text size="xs" color="muted">
-                  .zip archive or plugin folder
+                  {t('plugins.install.dropHint')}
                 </Text>
               </Flex>
               <Button
@@ -136,7 +138,7 @@ export function InstallPluginTab() {
                 onClick={handleBrowse}
                 className="mt-2"
               >
-                Browse Files...
+                {t('plugins.install.browse')}
               </Button>
             </>
           )}

@@ -6,6 +6,7 @@ import {
 import { useAIStore } from '@/stores/ai'
 import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -20,6 +21,7 @@ function formatTokens(n: number): string {
  * single system message to free up context.
  */
 export function ChatPanelHeader() {
+  const { t } = useTranslation()
   const conversations = useAIStore((s) => s.conversations)
   const activeId = useAIStore((s) => s.activeConversationId)
   const newConversation = useAIStore((s) => s.newConversation)
@@ -78,26 +80,26 @@ export function ChatPanelHeader() {
           type="button"
           onClick={() => { setHistoryOpen((o) => !o); setMoreOpen(false) }}
           className="flex items-center gap-1.5 flex-1 min-w-0 text-left rounded-md px-1.5 py-1 hover:bg-hover transition-colors"
-          aria-label="Conversation history"
+          aria-label={t('aiui.header.conversationHistory')}
           aria-expanded={historyOpen}
         >
           <History size={13} className="text-text-tertiary shrink-0" />
           <Text size="sm" weight="medium" truncate className="flex-1">
-            {active?.title ?? 'New chat'}
+            {active?.title ?? t('aiui.header.newChatTitle')}
           </Text>
           <ChevronDown size={12} className="text-text-tertiary shrink-0" />
         </button>
-        <Tooltip content="New chat" side="bottom">
-          <IconButton label="New chat" size="xs" variant="ghost" onClick={() => { newConversation(); setHistoryOpen(false) }}>
+        <Tooltip content={t('aiui.header.newChat')} side="bottom">
+          <IconButton label={t('aiui.header.newChat')} size="xs" variant="ghost" onClick={() => { newConversation(); setHistoryOpen(false) }}>
             <Plus size={14} />
           </IconButton>
         </Tooltip>
         <Tooltip
-          content={canCompact ? 'Compact older messages to free up context' : 'Conversation too short to compact'}
+          content={canCompact ? t('aiui.header.compactHint') : t('aiui.header.compactDisabledHint')}
           side="bottom"
         >
           <IconButton
-            label="Compact conversation"
+            label={t('aiui.header.compact')}
             size="xs"
             variant="ghost"
             disabled={!canCompact}
@@ -107,7 +109,7 @@ export function ChatPanelHeader() {
           </IconButton>
         </Tooltip>
         <IconButton
-          label="More"
+          label={t('aiui.header.more')}
           size="xs"
           variant="ghost"
           onClick={() => { setMoreOpen((o) => !o); setHistoryOpen(false) }}
@@ -121,10 +123,10 @@ export function ChatPanelHeader() {
         <Flex align="center" justify="between" className="text-[11px]">
           <Flex align="center" gap="xs">
             <Sparkles size={11} className="text-accent" />
-            <Text size="xs" color="muted">Model</Text>
+            <Text size="xs" color="muted">{t('aiui.header.model')}</Text>
           </Flex>
           <Text size="xs" weight="medium" className="truncate max-w-[180px]">
-            {models.find((m) => m.id === activeModel)?.name ?? activeModel ?? 'No model'}
+            {models.find((m) => m.id === activeModel)?.name ?? activeModel ?? t('aiui.header.noModel')}
           </Text>
         </Flex>
 
@@ -135,15 +137,15 @@ export function ChatPanelHeader() {
             </div>
             <Flex align="center" justify="between" className="text-[10px]">
               <Text size="xs" color="muted">
-                {formatTokens(totalTokens)} / {formatTokens(contextWindow)} used
+                {t('aiui.header.used', { used: formatTokens(totalTokens), total: formatTokens(contextWindow) })}
               </Text>
               <Text size="xs" weight="medium" className={remainingTone}>
-                {formatTokens(remaining ?? 0)} remaining
+                {t('aiui.header.remaining', { remaining: formatTokens(remaining ?? 0) })}
               </Text>
             </Flex>
           </>
         ) : (
-          <Text size="xs" color="muted">No context window data</Text>
+          <Text size="xs" color="muted">{t('aiui.header.noContextWindow')}</Text>
         )}
       </div>
 
@@ -171,10 +173,10 @@ export function ChatPanelHeader() {
                       }}
                       className="flex-1"
                     />
-                    <IconButton label="Save name" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); commitEdit() }}>
+                    <IconButton label={t('aiui.header.saveName')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); commitEdit() }}>
                       <Check size={12} />
                     </IconButton>
-                    <IconButton label="Cancel rename" size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(null) }}>
+                    <IconButton label={t('aiui.header.cancelRename')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(null) }}>
                       <X size={12} />
                     </IconButton>
                   </>

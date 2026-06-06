@@ -7,8 +7,10 @@ import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { NotificationsSidebar } from './NotificationsSidebar'
 import { ActivityPanel } from './ActivityPanel'
 import { ActiveConnectionsPanel } from '@/components/connections/ActiveConnectionsPanel'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function SecondarySidebar() {
+  const { t } = useTranslation()
   const active = useUiStore(s => s.secondaryActivePanel)
   const contributions = usePluginUIStore(selectContributions('panels'))
   const fetchContributions = usePluginUIStore(s => s.fetchContributions)
@@ -18,7 +20,7 @@ export function SecondarySidebar() {
   if (active === SECONDARY_PANEL.NOTIFICATIONS) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
-        <PanelHeader title="Notifications" />
+        <PanelHeader title={t('shell.secondaryPanel.notifications')} />
         <Box className="flex-1 overflow-auto">
           <NotificationsSidebar />
         </Box>
@@ -29,7 +31,7 @@ export function SecondarySidebar() {
   if (active === SECONDARY_PANEL.ACTIVITY) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
-        <PanelHeader title="Activity" />
+        <PanelHeader title={t('shell.secondaryPanel.activity')} />
         <Box className="flex-1 overflow-hidden">
           <ActivityPanel />
         </Box>
@@ -40,7 +42,7 @@ export function SecondarySidebar() {
   if (active === SECONDARY_PANEL.CONNECTIONS) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
-        <PanelHeader title="Connections" />
+        <PanelHeader title={t('shell.secondaryPanel.connections')} />
         <Box className="flex-1 overflow-auto">
           <ActiveConnectionsPanel />
         </Box>
@@ -51,7 +53,7 @@ export function SecondarySidebar() {
   if (active === SECONDARY_PANEL.INSPECTOR) {
     return (
       <Flex direction="column" className="h-full bg-bg-secondary border-l border-border overflow-hidden">
-        <PanelHeader title="Inspector" />
+        <PanelHeader title={t('shell.secondaryPanel.inspector')} />
         <Box className="flex-1 overflow-auto">
           <InspectorPanel />
         </Box>
@@ -76,7 +78,7 @@ export function SecondarySidebar() {
 
   return (
     <Flex align="center" justify="center" className="h-full bg-bg-secondary border-l border-border">
-      <Text color="muted" size="sm">No panel selected</Text>
+      <Text color="muted" size="sm">{t('shell.secondaryPanel.noPanelSelected')}</Text>
     </Flex>
   )
 }

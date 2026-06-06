@@ -4,6 +4,8 @@ import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { PluginIcon } from './PluginsPanel'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 import { Stack, ScrollArea, Flex, Text, Button, Badge, Box, Card, Code, Tabs, EmptyState, Alert, Input, Switch, PasswordInput, NumberInput, Select } from '@/primitives'
 import { SettingRow } from '@/components/settings/SettingRow'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -50,15 +52,15 @@ interface Props {
   pluginName: string
 }
 
-const STATE_CONFIG: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'default'; icon: typeof CheckCircle }> = {
-  active: { label: 'Active', variant: 'success', icon: CheckCircle },
-  degraded: { label: 'Degraded', variant: 'warning', icon: AlertTriangle },
-  error: { label: 'Error', variant: 'error', icon: XCircle },
-  inactive: { label: 'Disabled', variant: 'default', icon: PowerOff },
-  discovered: { label: 'Discovered', variant: 'default', icon: Clock },
-  validated: { label: 'Validated', variant: 'default', icon: Clock },
-  resolved: { label: 'Ready', variant: 'default', icon: Clock },
-  activating: { label: 'Loading...', variant: 'default', icon: Clock },
+const STATE_CONFIG: Record<string, { labelKey: MessageKey; variant: 'success' | 'warning' | 'error' | 'default'; icon: typeof CheckCircle }> = {
+  active: { labelKey: 'plugins.detail.state.active', variant: 'success', icon: CheckCircle },
+  degraded: { labelKey: 'plugins.detail.state.degraded', variant: 'warning', icon: AlertTriangle },
+  error: { labelKey: 'plugins.detail.state.error', variant: 'error', icon: XCircle },
+  inactive: { labelKey: 'plugins.detail.state.inactive', variant: 'default', icon: PowerOff },
+  discovered: { labelKey: 'plugins.detail.state.discovered', variant: 'default', icon: Clock },
+  validated: { labelKey: 'plugins.detail.state.validated', variant: 'default', icon: Clock },
+  resolved: { labelKey: 'plugins.detail.state.resolved', variant: 'default', icon: Clock },
+  activating: { labelKey: 'plugins.detail.state.activating', variant: 'default', icon: Clock },
 }
 
 const CONTRIBUTION_BADGE_VARIANTS: Record<string, 'accent' | 'info' | 'success' | 'warning' | 'error' | 'default'> = {
@@ -72,15 +74,10 @@ const CONTRIBUTION_BADGE_VARIANTS: Record<string, 'accent' | 'info' | 'success' 
   setting: 'default',
 }
 
-const DETAIL_TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'permissions', label: 'Permissions' },
-  { id: 'contributions', label: 'Contributions' },
-  { id: 'errors', label: 'Errors' },
-  { id: 'settings', label: 'Settings' },
-]
+const DETAIL_TAB_IDS = ['overview', 'permissions', 'contributions', 'errors', 'settings'] as const
 
 export function PluginDetailView({ pluginName }: Props) {
+  const { t } = useTranslation()
   const [plugin, setPlugin] = useState<PluginInfo | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [errors, setErrors] = useState<ErrorRecord[]>([])
@@ -130,15 +127,15 @@ export function PluginDetailView({ pluginName }: Props) {
     if (isActive) {
       addToast({
         type: 'info',
-        title: 'Re-enable to apply',
-        message: 'Disable and re-enable this plugin for the permission change to take effect.',
+        title: t('plugins.detail.toast.reEnableTitle'),
+        message: t('plugins.detail.toast.reEnableMessage'),
       })
     }
   }
 
   const handleActivate = async () => {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_ACTIVATE, pluginName)
-    if (!result.success) addToast({ type: 'error', title: 'Failed to activate', message: result.error })
+    if (!result.success) addToast({ type: 'error', title: t('plugins.detail.toast.activateFailed'), message: result.error })
     // Force immediate UI refresh
     const uiStore = usePluginUIStore.getState()
     uiStore.invalidateAll()
@@ -178,7 +175,7 @@ export function PluginDetailView({ pluginName }: Props) {
   if (!plugin) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text color="muted">Loading...</Text>
+        <Text color="muted">{t('plugins.detail.loading')}</Text>
       </Flex>
     )
   }
@@ -195,25 +192,25 @@ export function PluginDetailView({ pluginName }: Props) {
           <Box className="flex-1 min-w-0">
             <Flex direction="row" align="center" gap="sm" className="flex-wrap">
               <Text size="lg" weight="semibold" color="primary">{plugin.displayName}</Text>
-              <Text size="xs" color="muted">v{plugin.version}</Text>
-              <Badge size="sm" variant={stateConfig.variant}>{stateConfig.label}</Badge>
-              {plugin.bundled && <Badge size="sm">Built-in</Badge>}
+              <Text size="xs" color="muted">{t('plugins.detail.version', { version: plugin.version })}</Text>
+              <Badge size="sm" variant={stateConfig.variant}>{t(stateConfig.labelKey)}</Badge>
+              {plugin.bundled && <Badge size="sm">{t('plugins.detail.builtIn')}</Badge>}
             </Flex>
             <Text size="sm" color="secondary" as="p" className="mt-1 leading-relaxed">{plugin.description}</Text>
           </Box>
           <Flex direction="row" gap="sm" className="shrink-0">
             {isActive ? (
               <Button variant="outline" size="sm" onClick={handleDeactivate} className="flex items-center gap-1.5">
-                <PowerOff size={14} /> Disable
+                <PowerOff size={14} /> {t('plugins.detail.disable')}
               </Button>
             ) : (
               <Button variant="solid" size="sm" onClick={handleActivate} className="flex items-center gap-1.5">
-                <Power size={14} /> Enable
+                <Power size={14} /> {t('plugins.detail.enable')}
               </Button>
             )}
             {!plugin.bundled && (
               <Button variant="outline" size="sm" onClick={() => setShowUninstallConfirm(true)} className="flex items-center gap-1.5 hover:text-error hover:border-error/30">
-                <Trash2 size={14} /> Uninstall
+                <Trash2 size={14} /> {t('plugins.detail.uninstall')}
               </Button>
             )}
           </Flex>
@@ -222,7 +219,7 @@ export function PluginDetailView({ pluginName }: Props) {
 
       {/* Sub-Tabs */}
       <Tabs
-        tabs={DETAIL_TABS}
+        tabs={DETAIL_TAB_IDS.map((id) => ({ id, label: t(`plugins.detail.tabs.${id}`) }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         className="px-6 shrink-0"
@@ -251,9 +248,9 @@ export function PluginDetailView({ pluginName }: Props) {
 
       <ConfirmDialog
         open={showUninstallConfirm}
-        title={`Uninstall "${plugin.displayName}"?`}
-        message="This plugin will be permanently removed."
-        confirmLabel="Uninstall"
+        title={t('plugins.detail.uninstallConfirm.title', { name: plugin.displayName })}
+        message={t('plugins.detail.uninstallConfirm.message')}
+        confirmLabel={t('plugins.detail.uninstallConfirm.confirm')}
         variant="danger"
         onConfirm={handleUninstall}
         onCancel={() => setShowUninstallConfirm(false)}
@@ -264,28 +261,29 @@ export function PluginDetailView({ pluginName }: Props) {
 
 function OverviewTab({ plugin, stateConfig, errors }: {
   plugin: PluginInfo
-  stateConfig: { label: string; variant: string; icon: typeof CheckCircle }
+  stateConfig: { labelKey: MessageKey; variant: string; icon: typeof CheckCircle }
   errors: ErrorRecord[]
 }) {
+  const { t } = useTranslation()
   const StateIcon = stateConfig.icon
   return (
     <Stack gap="lg">
       {/* Stat Cards */}
       <Flex direction="row" gap="md">
         <Card padding="md" className="flex-1">
-          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">Status</Text>
+          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{t('plugins.detail.overview.statusLabel')}</Text>
           <Flex direction="row" align="center" gap="xs">
             <StateIcon size={16} />
-            <Text size="sm" weight="medium">{stateConfig.label}</Text>
+            <Text size="sm" weight="medium">{t(stateConfig.labelKey)}</Text>
           </Flex>
         </Card>
         <Card padding="md" className="flex-1">
-          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">Contributions</Text>
-          <Text size="sm" weight="medium">{plugin.contributions.length} registered</Text>
+          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{t('plugins.detail.overview.contributionsLabel')}</Text>
+          <Text size="sm" weight="medium">{t('plugins.detail.overview.contributionsValue', { count: plugin.contributions.length })}</Text>
         </Card>
         <Card padding="md" className="flex-1">
-          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">Errors</Text>
-          <Text size="sm" weight="medium">{errors.length > 0 ? `${errors.length} recorded` : 'None'}</Text>
+          <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{t('plugins.detail.overview.errorsLabel')}</Text>
+          <Text size="sm" weight="medium">{errors.length > 0 ? t('plugins.detail.overview.errorsValue', { count: errors.length }) : t('plugins.detail.overview.errorsNone')}</Text>
         </Card>
       </Flex>
 
@@ -296,13 +294,13 @@ function OverviewTab({ plugin, stateConfig, errors }: {
 
       {/* Details Card */}
       <Card padding="md">
-        <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-3 block">Details</Text>
+        <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide mb-3 block">{t('plugins.detail.overview.detailsLabel')}</Text>
         <Stack gap="sm">
-          <DetailRow label="Identifier" value={plugin.name} mono />
-          <DetailRow label="Version" value={plugin.version} />
-          <DetailRow label="Source" value={plugin.bundled ? 'Built-in' : 'User installed'} />
+          <DetailRow label={t('plugins.detail.overview.identifier')} value={plugin.name} mono />
+          <DetailRow label={t('plugins.detail.overview.version')} value={plugin.version} />
+          <DetailRow label={t('plugins.detail.overview.source')} value={plugin.bundled ? t('plugins.detail.overview.sourceBuiltIn') : t('plugins.detail.overview.sourceUserInstalled')} />
           {plugin.status.phase && plugin.status.state === 'error' && (
-            <DetailRow label="Failed during" value={plugin.status.phase} />
+            <DetailRow label={t('plugins.detail.overview.failedDuring')} value={plugin.status.phase} />
           )}
         </Stack>
       </Card>
@@ -311,8 +309,9 @@ function OverviewTab({ plugin, stateConfig, errors }: {
 }
 
 function ContributionsTab({ contributions }: { contributions: string[] }) {
+  const { t } = useTranslation()
   if (contributions.length === 0) {
-    return <EmptyState title="No contributions" description="This plugin has no registered contributions" className="py-12" />
+    return <EmptyState title={t('plugins.detail.contributions.emptyTitle')} description={t('plugins.detail.contributions.emptyDescription')} className="py-12" />
   }
 
   return (
@@ -337,16 +336,16 @@ function PermissionsTab({ permissions, onToggle }: {
   permissions: PermissionState | null
   onToggle: (permission: string, granted: boolean) => void
 }) {
+  const { t } = useTranslation()
   if (!permissions) {
-    return <EmptyState title="Loading…" description="Reading capability requests" className="py-12" />
+    return <EmptyState title={t('plugins.detail.permissions.loadingTitle')} description={t('plugins.detail.permissions.loadingDescription')} className="py-12" />
   }
 
   if (permissions.trusted) {
     return (
       <Stack gap="md">
         <Alert variant="info">
-          This is a built-in plugin shipped with Verql. It is fully trusted and
-          all capabilities are granted; there is nothing to configure here.
+          {t('plugins.detail.permissions.trusted')}
         </Alert>
       </Stack>
     )
@@ -355,8 +354,8 @@ function PermissionsTab({ permissions, onToggle }: {
   if (permissions.declared.length === 0) {
     return (
       <EmptyState
-        title="No special capabilities"
-        description="This plugin does not request access to your secrets, connections, or app messaging."
+        title={t('plugins.detail.permissions.noneTitle')}
+        description={t('plugins.detail.permissions.noneDescription')}
         className="py-12"
       />
     )
@@ -365,9 +364,7 @@ function PermissionsTab({ permissions, onToggle }: {
   return (
     <Stack gap="md">
       <Alert variant="warning">
-        Third-party plugins run as code inside Verql. Only grant capabilities to
-        plugins you trust. Enforced capabilities are blocked until you grant
-        them; changes apply the next time the plugin is enabled.
+        {t('plugins.detail.permissions.warning')}
       </Alert>
       <Card padding="md">
         <Stack gap="md">
@@ -380,13 +377,13 @@ function PermissionsTab({ permissions, onToggle }: {
                   <Flex direction="row" align="center" gap="sm" className="flex-wrap">
                     <Text size="sm" weight="medium" color="primary">{info?.title ?? perm}</Text>
                     <Badge size="sm" variant={info?.enforced ? 'accent' : 'default'}>
-                      {info?.enforced ? 'Enforced' : 'Advisory'}
+                      {info?.enforced ? t('plugins.detail.permissions.enforced') : t('plugins.detail.permissions.advisory')}
                     </Badge>
                   </Flex>
                   <Text size="xs" color="muted" as="p" className="mt-1 leading-relaxed">
-                    {info?.description ?? `Capability: ${perm}`}
+                    {info?.description ?? t('plugins.detail.permissions.capabilityFallback', { perm })}
                     {info && !info.enforced && (
-                      <> Verql cannot block this for in-process plugins — it is shown for transparency.</>
+                      <>{t('plugins.detail.permissions.advisoryNote')}</>
                     )}
                   </Text>
                 </Box>

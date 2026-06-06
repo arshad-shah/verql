@@ -15,6 +15,9 @@ import { actions } from './actions'
 import { errors } from './errors'
 import { explorer } from './explorer'
 import { query } from './query'
+import { plugins } from './plugins'
+import { shell } from './shell'
+import { aiui } from './aiui'
 
 export const en = {
   common,
@@ -26,4 +29,7 @@ export const en = {
   errors,
   explorer,
   query,
+  plugins,
+  shell,
+  aiui,
 } as const

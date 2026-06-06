@@ -1,5 +1,6 @@
 import { Text } from '@/primitives/typography/Text'
 import { Button } from '@/primitives/forms/Button'
+import { useTranslation } from '@/i18n/I18nProvider'
 import type { AIApprovalRequest } from '@shared/ai-types'
 
 interface ApprovalCardContentProps {
@@ -8,6 +9,7 @@ interface ApprovalCardContentProps {
 }
 
 export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContentProps) {
+  const { t } = useTranslation()
   return (
     <div className="mx-2 mb-3 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0 text-warning">
@@ -16,7 +18,7 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
         <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
       </svg>
       <Text size="xs" color="secondary" className="flex-1">
-        Allow this action?
+        {t('aiui.approval.allowAction')}
       </Text>
       <div className="flex gap-1.5 shrink-0">
         <Button
@@ -24,14 +26,14 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
           size="xs"
           onClick={() => onRespond(approval.requestId, true)}
         >
-          Run
+          {t('aiui.approval.run')}
         </Button>
         <Button
           variant="ghost"
           size="xs"
           onClick={() => onRespond(approval.requestId, false)}
         >
-          Decline
+          {t('aiui.approval.decline')}
         </Button>
       </div>
     </div>

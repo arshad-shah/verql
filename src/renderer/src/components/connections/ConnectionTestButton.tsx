@@ -2,12 +2,14 @@ import { useState } from 'react'
 import type { ConnectionProfile } from '@shared/types'
 import { Stack, Button, Spinner, Alert } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
   profile: ConnectionProfile
 }
 
 export function ConnectionTestButton({ profile }: Props) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
@@ -16,7 +18,7 @@ export function ConnectionTestButton({ profile }: Props) {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.DB_TEST_CONNECTION, profile)
     if (result.success) {
       setStatus('success')
-      const parts = [result.version ?? 'Connected']
+      const parts = [result.version ?? t('connections.test.connected')]
       if (result.details) {
         for (const [k, v] of Object.entries(result.details)) {
           parts.push(`${k}: ${v}`)
@@ -25,7 +27,7 @@ export function ConnectionTestButton({ profile }: Props) {
       setMessage(parts.join(' | '))
     } else {
       setStatus('error')
-      setMessage(result.error ?? 'Connection failed')
+      setMessage(result.error ?? t('connections.connectionFailed'))
     }
     setTimeout(() => setStatus('idle'), 3000)
   }
@@ -41,14 +43,14 @@ export function ConnectionTestButton({ profile }: Props) {
           className="flex items-center gap-1.5"
         >
           {status === 'testing' ? <Spinner size="xs" /> : null}
-          Test Connection
+          {t('connections.test.button')}
         </Button>
       </div>
       {status === 'success' && (
-        <Alert variant="success" title="Connection successful">{message}</Alert>
+        <Alert variant="success" title={t('connections.test.successTitle')}>{message}</Alert>
       )}
       {status === 'error' && (
-        <Alert variant="error" title="Connection failed">{message}</Alert>
+        <Alert variant="error" title={t('connections.test.failedTitle')}>{message}</Alert>
       )}
     </Stack>
   )

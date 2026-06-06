@@ -12,8 +12,10 @@ import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
 import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { activePanel } = useUiStore()
   const { activeConnectionId, connectedIds } = useConnectionsStore()
 
@@ -28,11 +30,11 @@ export function Sidebar() {
   }, [])
 
   const titles: Record<string, string> = {
-    [ACTIVITY_PANEL.EXPLORER]: 'Explorer',
-    [ACTIVITY_PANEL.QUERY]: 'Saved Queries',
-    [ACTIVITY_PANEL.CHARTS]: 'Charts',
-    [ACTIVITY_PANEL.PLUGINS]: 'Plugins',
-    [ACTIVITY_PANEL.SETTINGS]: 'Settings',
+    [ACTIVITY_PANEL.EXPLORER]: t('shell.sidebar.explorer'),
+    [ACTIVITY_PANEL.QUERY]: t('shell.sidebar.savedQueries'),
+    [ACTIVITY_PANEL.CHARTS]: t('shell.sidebar.charts'),
+    [ACTIVITY_PANEL.PLUGINS]: t('shell.sidebar.plugins'),
+    [ACTIVITY_PANEL.SETTINGS]: t('shell.sidebar.settings'),
   }
   const pluginTitles = Object.fromEntries(
     panelContributions.map((c) => [`plugin:${c.contributionId}`, c.pluginName])
@@ -49,12 +51,12 @@ export function Sidebar() {
         className="px-3 py-2 border-b border-border"
       >
         <Text size="xs" color="muted" className="uppercase tracking-wider">
-          {allTitles[activePanel] ?? 'Explorer'}
+          {allTitles[activePanel] ?? t('shell.sidebar.explorer')}
         </Text>
         {isConnected && activePanel === ACTIVITY_PANEL.EXPLORER && (
-          <Tooltip content="Import data" side="left">
+          <Tooltip content={t('shell.sidebar.importData')} side="left">
             <IconButton
-              label="Import data"
+              label={t('shell.sidebar.importData')}
               size="xs"
               variant="ghost"
               onClick={() => setShowImport(true)}
@@ -86,7 +88,7 @@ export function Sidebar() {
                       : 'text-text-muted hover:text-text-primary hover:bg-white/5'
                   }`}
                 >
-                  {view}
+                  {view === 'saved' ? t('shell.sidebar.saved') : t('shell.sidebar.history')}
                 </button>
               ))}
             </Flex>
@@ -98,7 +100,7 @@ export function Sidebar() {
         {activePanel === ACTIVITY_PANEL.CHARTS && (
           isConnected ? <ChartsDashboard /> : (
             <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">
-              Connect and run queries to see charts
+              {t('shell.sidebar.chartsEmpty')}
             </Text>
           )
         )}

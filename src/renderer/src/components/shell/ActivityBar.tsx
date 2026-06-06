@@ -8,15 +8,18 @@ import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { IPC_CHANNELS } from '@shared/ipc'
 import type { MCPServerStatus } from '@shared/mcp'
+import { useTranslation } from '@/i18n/I18nProvider'
+import type { MessageKey } from '@shared/i18n'
 
-const topItems: { id: ActivityPanel; icon: typeof Database; label: string }[] = [
-  { id: ACTIVITY_PANEL.EXPLORER, icon: Database, label: 'Explorer' },
-  { id: ACTIVITY_PANEL.QUERY, icon: PenSquare, label: 'Saved Queries' },
-  { id: ACTIVITY_PANEL.CHARTS, icon: BarChart3, label: 'Charts' },
-  { id: ACTIVITY_PANEL.PLUGINS, icon: Puzzle, label: 'Plugins' }
+const topItems: { id: ActivityPanel; icon: typeof Database; labelKey: MessageKey }[] = [
+  { id: ACTIVITY_PANEL.EXPLORER, icon: Database, labelKey: 'shell.activityBar.explorer' },
+  { id: ACTIVITY_PANEL.QUERY, icon: PenSquare, labelKey: 'shell.activityBar.savedQueries' },
+  { id: ACTIVITY_PANEL.CHARTS, icon: BarChart3, labelKey: 'shell.activityBar.charts' },
+  { id: ACTIVITY_PANEL.PLUGINS, icon: Puzzle, labelKey: 'shell.activityBar.plugins' }
 ]
 
 export function ActivityBar() {
+  const { t } = useTranslation()
   const { activePanel, sidebarVisible, setActivePanel } = useUiStore()
   const openSettings = useTabsStore((s) => s.openSettings)
   const activeTabType = useTabsStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.type)
@@ -70,7 +73,7 @@ export function ActivityBar() {
       gap="xs"
       className="w-12 bg-bg-primary border-r border-border shrink-0 pt-2"
     >
-      {topItems.map(({ id, icon, label }) => renderButton(id, icon, label))}
+      {topItems.map(({ id, icon, labelKey }) => renderButton(id, icon, t(labelKey)))}
       {activityBarContributions
         .filter((c) => c.meta.zone === 'top' || !c.meta.zone)
         .map((c) => renderButton(
@@ -82,9 +85,9 @@ export function ActivityBar() {
       <Spacer />
       <PluginSlot id="app.activityBar.bottom" />
       {mcpRunning && (
-        <Tooltip content={`MCP Server · ${mcpClients} client${mcpClients !== 1 ? 's' : ''}`} side="right">
+        <Tooltip content={t('shell.activityBar.mcpServerStatus', { count: mcpClients })} side="right">
           <IconButton
-            label="MCP Server"
+            label={t('shell.activityBar.mcpServer')}
             size="lg"
             variant="ghost"
             onClick={() => openSettings(SETTINGS_CATEGORY.MCP)}
@@ -94,9 +97,9 @@ export function ActivityBar() {
           </IconButton>
         </Tooltip>
       )}
-      <Tooltip content="Settings" side="right">
+      <Tooltip content={t('shell.activityBar.settings')} side="right">
         <IconButton
-          label="Settings"
+          label={t('shell.activityBar.settings')}
           size="lg"
           variant="ghost"
           onClick={() => openSettings()}
