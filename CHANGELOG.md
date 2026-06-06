@@ -1,5 +1,100 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#81](https://github.com/arshad-shah/verql/pull/81) [`3a2f890`](https://github.com/arshad-shah/verql/commit/3a2f8906bdd1051d219fa162d7c089df4eafe403) Thanks [@arshad-shah](https://github.com/arshad-shah)! - v1.0.0 — settings fully plumbed, internationalization, and platform hardening.
+
+  **Settings (every setting now works end-to-end):**
+
+  - Query history backed by the SQLite app-data store (consumes `maxHistoryItems`), surfaced via a Saved/History toggle.
+  - Restore open tabs on startup (`restoreTabsOnStartup`).
+  - Data display: custom date pattern, boolean display, and text truncation now apply to results.
+  - Confirm-on-unsaved-close is honoured; full keybinding rebinding (App-level shortcuts are data-driven; editor already was) with a capture/reset UI.
+  - Removed orphaned `connectionDefaults` (autoReconnect / defaultSslMode — SSL is driver-owned) and dead `splitRatio`; typed `pluginGrants`.
+
+  **Internationalization (new subsystem):**
+
+  - Homegrown, dependency-free, cross-process message catalogue (`shared/i18n`) with a typed `t()`/`MessageKey`, ICU-subset interpolation + plurals, a renderer `<I18nProvider>`/`useTranslation`, and a `general.language` setting. All user-facing chrome migrated to it (plugin-authored strings stay plugin-owned). See `docs/i18n.md`.
+
+  **Performance, structure & correctness:**
+
+  - `App` subscribes to stores per-field (no more whole-shell re-render per keystroke).
+  - Centralized constants the way IPC channels are: main-process `IPC_EVENTS`, settings category ids, keybinding action ids, and UI panel ids — fixing a broken "Show Schema" command and making settings-open land on the correct category.
+
+### Minor Changes
+
+- [#84](https://github.com/arshad-shah/verql/pull/84) [`30f39e5`](https://github.com/arshad-shah/verql/commit/30f39e5df67dcb68de200f1a3c50b265d5b00f5d) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Cross-platform, app-integrated title bar. The renderer now owns the title bar on
+  every OS with a consistent look: macOS keeps its native traffic lights, while
+  Windows and Linux get app-drawn window controls (minimize / maximize / close)
+  plus an in-title-bar application menu (File / Edit / View / …) that pops the
+  native submenus. This fixes the doubled title bar on Windows (native frame +
+  app bar) and restores the menu that the custom title bar had hidden.
+
+  Also fixed in this release:
+
+  - **Windows production crash** — `@shared/*` modules were externalised as
+    runtime `require()`s (`Cannot find module … shared/settings`) because the
+    Vite externalisation guard only recognised POSIX absolute paths. It now uses
+    `path.isAbsolute`, so Windows drive-letter paths resolve and the modules are
+    bundled.
+  - **Windows dev console mojibake** — `pnpm dev` now forces the console to UTF-8
+    so tooling glyphs (e.g. `✓`) render correctly instead of `Ô£ô`.
+
+### Patch Changes
+
+- [#81](https://github.com/arshad-shah/verql/pull/81) [`3a2f890`](https://github.com/arshad-shah/verql/commit/3a2f8906bdd1051d219fa162d7c089df4eafe403) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Move query-semantic error classification into the drivers (DB-boundary fix [#2](https://github.com/arshad-shah/verql/issues/2)).
+  The renderer previously hardcoded PG/MySQL/SQLite error-message patterns in
+  `lib/db-error.ts`. Now:
+
+  - `DbErrorCode` + a serializable `DbErrorRule` live in `shared/db-errors`; an
+    `errorRules` capability is added to the `@verql/plugin-sdk` `DriverFactory`
+    (additive) and serialized into driver capabilities.
+  - The postgresql/mysql/sqlite plugins declare their dialect's rules (bad
+    column/table/schema, syntax, constraints, type mismatch, duplicate table,
+    division-by-zero, deadlock, aborted txn).
+  - `parseDbError(raw, dbType?)` applies the active driver's rules first (regex from
+    the driver, friendly message from the renderer's i18n catalogue), then host
+    rules for connection/auth/app-layer errors that span drivers. A new driver can
+    contribute its own error classification by shipping `errorRules` — no host
+    changes. Classification behaviour is unchanged (42-case characterization test).
+
+- [#81](https://github.com/arshad-shah/verql/pull/81) [`3a2f890`](https://github.com/arshad-shah/verql/commit/3a2f8906bdd1051d219fa162d7c089df4eafe403) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Move Postgres EXPLAIN plan parsing out of the renderer into the driver
+  (DB-boundary fix [#1](https://github.com/arshad-shah/verql/issues/1)). The renderer previously hardcoded Postgres plan formats
+  (`(cost=…)` text + `FORMAT JSON` keys). Now:
+
+  - `PlanNode` lives in `shared/types`; `DbAdapter` gains an optional
+    `parseQueryPlan(result)` (additive to the plugin-author surface).
+  - The postgresql plugin owns the parsing; a new `db:parse-plan` IPC delegates to
+    the active adapter and returns `[]` when a driver has no plan parser.
+  - The renderer stores the parsed tree on the query tab and renders it
+    generically; `lib/plan-parser.ts` is removed. Other drivers can now contribute
+    plan parsing by implementing `parseQueryPlan`.
+
+- [#81](https://github.com/arshad-shah/verql/pull/81) [`3a2f890`](https://github.com/arshad-shah/verql/commit/3a2f8906bdd1051d219fa162d7c089df4eafe403) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Move statement-gutter dialect selection behind a driver capability (DB-boundary
+  fix [#3](https://github.com/arshad-shah/verql/issues/3)). Drivers now declare a `statementSyntax` (`'sql'` / `'redis'` /
+  `'mongodb'`) on their factory; the renderer's statement registry is keyed by that
+  syntax and `StatementGutter` resolves it from the driver's capabilities, instead
+  of a hardcoded db-type list in the renderer. A new SQL driver gets the
+  "Run/Explain" gutter for free by declaring `statementSyntax: 'sql'`. Adds the
+  optional `statementSyntax` field to the `@verql/plugin-sdk` `DriverFactory` type
+  (additive). Behaviour for the bundled drivers is unchanged.
+
+- [#81](https://github.com/arshad-shah/verql/pull/81) [`3a2f890`](https://github.com/arshad-shah/verql/commit/3a2f8906bdd1051d219fa162d7c089df4eafe403) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Internal modularization & slimming (behavior-preserving, no user-facing change):
+
+  - Extract pure plugin-manifest validation + the symlink walker out of the
+    1047-line `plugin-host.ts` into `plugins/manifest-validation.ts` (re-exported
+    for compatibility; covered by the existing manifest/audit tests).
+  - Collapse the 14 near-identical `tabs.ts` query-tab setters behind
+    `patchQueryTab`/`patchTabTxn` helpers.
+  - Extract SQL classification (`isSchemaMutatingSql`, `destructiveKind`,
+    `stripSqlNoise`) into a tested `lib/sql-classify.ts`, decoupled from i18n.
+  - Split the inline `PluginDetailView` tab components and the repeated
+    `SchemaNode` object-group blocks into their own modules.
+  - Use `IPC_CHANNELS.DB_CONNECTION_OPTIONS` in the connection form instead of a
+    hardcoded channel string.
+
 ## 0.12.0
 
 ### Minor Changes
