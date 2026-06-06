@@ -32,6 +32,7 @@ import { registerBuiltinStatementContributions } from '@/lib/statement-contribut
 import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
 import { initAppActionBridge } from '@/lib/app-actions/bridge'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { usePanelResize } from '@/hooks/usePanelResize'
 import { notifyError } from '@/lib/notify-error'
 
 // Register CodeLens statement contributions once at module init. Re-registration
@@ -86,7 +87,6 @@ export function App() {
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [prevSidebarWidth, setPrevSidebarWidth] = useState(sidebarWidth)
   // Shared across every close site (tab-bar X, Cmd+W, context menu). The
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
@@ -201,85 +201,40 @@ export function App() {
     }
   }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
 
-  // Bottom dock resize — draft state prevents per-pixel settings writes during drag
-  const [draftBottomHeight, setDraftBottomHeight] = useState<number | null>(null)
-  const effectiveBottomHeight = draftBottomHeight ?? bottomDockHeight
-  const [prevBottomDockHeight, setPrevBottomDockHeight] = useState(bottomDockHeight)
+  // Panel resize behavior (draft-during-drag, commit-on-release, collapse on
+  // double-click) is shared across the three handles via usePanelResize.
+  const {
+    effective: effectiveBottomHeight,
+    onResize: handleBottomResize,
+    onResizeEnd: handleBottomResizeEnd,
+    onDoubleClick: handleBottomResizeDoubleClick,
+  } = usePanelResize({
+    value: bottomDockHeight, min: 120, max: 640, restoreDefault: 240, direction: -1,
+    read: () => useSettingsStore.getState().settings.appearance.bottomDockHeight,
+    commit: setBottomDockHeight,
+  })
 
-  const handleBottomResize = (delta: number) => {
-    setDraftBottomHeight(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.bottomDockHeight
-      return Math.min(640, Math.max(120, current - delta))
-    })
-  }
-  const handleBottomResizeEnd = () => {
-    if (draftBottomHeight !== null) {
-      setBottomDockHeight(draftBottomHeight)
-      setDraftBottomHeight(null)
-    }
-  }
-  const handleBottomResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.bottomDockHeight
-    if (current > 120) {
-      setPrevBottomDockHeight(current)
-      setBottomDockHeight(120)
-    } else {
-      setBottomDockHeight(prevBottomDockHeight > 120 ? prevBottomDockHeight : 240)
-    }
-  }
+  const {
+    effective: effectiveSecondaryWidth,
+    onResize: handleSecondaryResize,
+    onResizeEnd: handleSecondaryResizeEnd,
+    onDoubleClick: handleSecondaryResizeDoubleClick,
+  } = usePanelResize({
+    value: secondarySidebarWidth, min: 220, max: 640, restoreDefault: 320, direction: -1,
+    read: () => useSettingsStore.getState().settings.appearance.secondarySidebarWidth,
+    commit: setSecondarySidebarWidth,
+  })
 
-  // Secondary sidebar resize — draft state prevents per-pixel settings writes during drag
-  const [draftSecondaryWidth, setDraftSecondaryWidth] = useState<number | null>(null)
-  const effectiveSecondaryWidth = draftSecondaryWidth ?? secondarySidebarWidth
-  const [prevSecondaryWidth, setPrevSecondaryWidth] = useState(secondarySidebarWidth)
-
-  const handleSecondaryResize = (delta: number) => {
-    setDraftSecondaryWidth(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-      return Math.min(640, Math.max(220, current - delta))
-    })
-  }
-  const handleSecondaryResizeEnd = () => {
-    if (draftSecondaryWidth !== null) {
-      setSecondarySidebarWidth(draftSecondaryWidth)
-      setDraftSecondaryWidth(null)
-    }
-  }
-  const handleSecondaryResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.secondarySidebarWidth
-    if (current > 220) {
-      setPrevSecondaryWidth(current)
-      setSecondarySidebarWidth(220)
-    } else {
-      setSecondarySidebarWidth(prevSecondaryWidth > 220 ? prevSecondaryWidth : 320)
-    }
-  }
-
-  // Left sidebar resize — draft state prevents per-pixel settings writes during drag
-  const [draftSidebarWidth, setDraftSidebarWidth] = useState<number | null>(null)
-  const effectiveSidebarWidth = draftSidebarWidth ?? sidebarWidth
-
-  const handleSidebarResize = (delta: number) => {
-    setDraftSidebarWidth(prev => {
-      const current = prev ?? useSettingsStore.getState().settings.appearance.sidebarWidth
-      return Math.min(480, Math.max(180, current + delta))
-    })
-  }
-  const handleSidebarResizeEnd = () => {
-    if (draftSidebarWidth !== null) {
-      setSidebarWidth(draftSidebarWidth)
-      setDraftSidebarWidth(null)
-    }
-  }
-  const handleSidebarResizeDoubleClick = () => {
-    const current = useSettingsStore.getState().settings.appearance.sidebarWidth
-    if (current > 180) {
-      setPrevSidebarWidth(current)
-      setSidebarWidth(180)
-    } else {
-      setSidebarWidth(prevSidebarWidth > 180 ? prevSidebarWidth : 240)
-    }
-  }
+  const {
+    effective: effectiveSidebarWidth,
+    onResize: handleSidebarResize,
+    onResizeEnd: handleSidebarResizeEnd,
+    onDoubleClick: handleSidebarResizeDoubleClick,
+  } = usePanelResize({
+    value: sidebarWidth, min: 180, max: 480, restoreDefault: 240, direction: 1,
+    read: () => useSettingsStore.getState().settings.appearance.sidebarWidth,
+    commit: setSidebarWidth,
+  })
 
   return (
     <Flex direction="column" className="h-screen bg-bg-primary text-text-primary">
