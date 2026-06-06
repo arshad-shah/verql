@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
-import type { PlanNode as PlanNodeType } from '@/lib/plan-parser'
+import type { PlanNode as PlanNodeType } from '@shared/types'
 import { Box, Flex, Text } from '@/primitives'
 
 interface Props {

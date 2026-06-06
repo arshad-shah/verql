@@ -17,7 +17,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useQueryHistoryStore } from '@/stores/query-history'
 import { useSchemaStore } from '@/stores/schema'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
-import type { QueryTab } from '@shared/types'
+import type { QueryTab, QueryResult } from '@shared/types'
 import { Flex, Divider, Box, Modal, Input, Button } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -74,6 +74,17 @@ export function QueryPanel({ tab }: Props) {
     }
     return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql, undefined, txnOpts)
   }, [tab.connectionId, tab.database, tab.schema])
+
+  // Ask the driver to parse the results into a plan tree (db:parse-plan). The
+  // renderer never parses EXPLAIN output itself; the driver returns [] for
+  // non-plan results, which hides the Query Plan tab. Best-effort.
+  const refreshQueryPlan = useCallback(async (result: QueryResult) => {
+    if (!tab.connectionId) return
+    try {
+      const plan = await window.electronAPI.invoke(IPC_CHANNELS.DB_PARSE_PLAN, tab.connectionId, result)
+      useTabsStore.getState().setTabQueryPlan(tab.id, plan)
+    } catch { /* plan parsing is best-effort */ }
+  }, [tab.connectionId, tab.id])
 
   /**
    * Runs SQL. If `override` is provided we use it verbatim (CodeLens "▶ Run"
@@ -139,7 +150,10 @@ export function QueryPanel({ tab }: Props) {
         setTimeout(() => reject(new Error(t('query.timeout.message', { seconds: queryTimeout }))), timeoutMs)
       )
       const result = await Promise.race([queryPromise, timeoutPromise])
-      if (result) setTabResults(tab.id, result)
+      if (result) {
+        setTabResults(tab.id, result)
+        void refreshQueryPlan(result)
+      }
       useQueryHistoryStore.getState().record({
         sql,
         connectionId: tab.connectionId ?? undefined,
@@ -188,7 +202,7 @@ export function QueryPanel({ tab }: Props) {
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, t])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
 
   const handleExecute = useCallback(() => runSql(), [runSql])
 
@@ -308,16 +322,17 @@ export function QueryPanel({ tab }: Props) {
       const result = await executeWithSchema(`EXPLAIN ANALYZE ${sql}`)
       if (result) {
         setTabResults(tab.id, result)
+        void refreshQueryPlan(result)
         // The user asked for an EXPLAIN — route them to the plan view instead
         // of leaving them on the raw-rows Results tab. The BottomDock only
-        // surfaces the "Query Plan" tab once the parser sees plan content,
+        // surfaces the "Query Plan" tab once the driver parses plan content,
         // which matches the output we just produced.
         useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.QUERY_PLAN)
       }
     } catch (err) {
       setTabError(tab.id, (err as Error).message)
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
 

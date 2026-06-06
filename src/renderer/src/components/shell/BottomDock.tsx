@@ -6,8 +6,8 @@ import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { ResultsPanel } from '@/components/results/ResultsPanel'
 import { QueryErrorView } from '@/components/results/QueryErrorView'
 import { QueryPlanView } from '@/components/query-plan/QueryPlanView'
+// (plan parsing now lives in the driver via db:parse-plan; tab.queryPlan holds it)
 import { ChartPanel } from '@/components/charts/ChartPanel'
-import { parsePlanFromResult } from '@/lib/plan-parser'
 import { PluginPanelMount } from '@/components/plugins/PluginPanelMount'
 import { BottomDockTabs, type BottomTab } from './BottomDockTabs'
 import type { QueryTab } from '@shared/types'
@@ -42,10 +42,10 @@ export function BottomDock() {
   // parser already handles both Postgres JSON plans and plain-text plans
   // and returns [] for non-plan rows, so this also doubles as the "do we
   // even have a plan to render" check inside the tab body below.
-  const planNodes = showResults && (activeTab as QueryTab).results
-    ? parsePlanFromResult((activeTab as QueryTab).results!.rows)
-    : []
-  const hasPlan = planNodes.length > 0
+  // The driver parses EXPLAIN output into tab.queryPlan (db:parse-plan); we only
+  // surface the "Query Plan" tab when there's a parsed plan to show.
+  const queryPlan = showResults ? ((activeTab as QueryTab).queryPlan ?? []) : []
+  const hasPlan = queryPlan.length > 0
 
   // The Chart tab is meaningful any time results have at least two columns —
   // ChartPanel needs an X and a Y axis. Single-column scalar results (e.g.
@@ -92,7 +92,7 @@ export function BottomDock() {
       )
     }
     if (bottomActivePanel === BOTTOM_PANEL.QUERY_PLAN && hasPlan && activeTab) {
-      return <QueryPlanView results={(activeTab as QueryTab).results!} />
+      return <QueryPlanView plan={(activeTab as QueryTab).queryPlan ?? []} />
     }
     if (bottomActivePanel === BOTTOM_PANEL.CHART && hasChart && resultsForChart) {
       return <ChartPanel results={resultsForChart} />

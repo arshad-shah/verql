@@ -22,7 +22,17 @@ adapter/registry/capability interface with no db-type branching:
 The remaining db-specific code is in **three renderer files**. Each is a
 cross-process change with a design decision; sequenced below.
 
-## #1 — `lib/plan-parser.ts` (Postgres EXPLAIN parsing) — HIGH
+## #1 — `lib/plan-parser.ts` (Postgres EXPLAIN parsing) — ✅ DONE
+
+Shipped: `PlanNode` moved to `shared/types`; `DbAdapter.parseQueryPlan?(result)`
+added; the PG text/JSON parsing moved into the postgresql plugin
+(`bundled/postgresql/plan-parse.ts`); new `db:parse-plan` IPC delegates to the
+adapter (returns `[]` when unsupported). The renderer stores the parsed plan on
+`QueryTab.queryPlan` (computed via IPC when results arrive) and `BottomDock` /
+`QueryPlanView` read it synchronously; `lib/plan-parser.ts` deleted. Original
+analysis retained below.
+
+---
 
 **Problem.** `parsePlanText` (PG `(cost=… rows=…)` text) and `convertPgJsonPlan`
 (PG JSON keys) encode Postgres plan knowledge in the renderer. Consumers:

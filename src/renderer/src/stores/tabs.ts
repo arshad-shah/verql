@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryTabTxnState, QueryResult, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import type { Tab, QueryTab, QueryTabTxnState, QueryResult, PlanNode, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
 import { useUiStore } from './ui'
@@ -86,6 +86,8 @@ interface TabsState {
   setTabSchema: (id: string, schema: string) => void
   setTabExecuting: (id: string, executing: boolean) => void
   setTabResults: (id: string, results: QueryResult) => void
+  /** Store the driver-parsed execution plan for the tab's current results. */
+  setTabQueryPlan: (id: string, plan: PlanNode[]) => void
   setTabError: (id: string, error: string) => void
   setTabAiExplanation: (id: string, explanation: string | null) => void
   setTabAutoCommit: (id: string, autoCommit: boolean) => void
@@ -231,8 +233,12 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   })),
 
   setTabResults: (id, results) => set((s) => ({
-    tabs: patchQueryTab(s.tabs, id, { results, isExecuting: false, error: null, isDirty: false, aiExplanation: null }),
+    // queryPlan is cleared here and re-populated asynchronously by the driver
+    // (db:parse-plan) once new results land, so a stale plan never lingers.
+    tabs: patchQueryTab(s.tabs, id, { results, isExecuting: false, error: null, isDirty: false, aiExplanation: null, queryPlan: null }),
   })),
+
+  setTabQueryPlan: (id, plan) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { queryPlan: plan }) })),
 
   setTabError: (id, error) => set((s) => ({ tabs: patchQueryTab(s.tabs, id, { error, isExecuting: false }) })),
 

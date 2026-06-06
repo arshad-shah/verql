@@ -268,6 +268,14 @@ export function registerDbHandlers(
     return serializeStaticCapabilities(driver)
   })
 
+  handle('db:parse-plan', async (profileId, result) => {
+    // Plan parsing is dialect-specific and owned by the driver. The renderer
+    // never parses EXPLAIN output itself. Returns [] when the driver has no
+    // parser or the rows aren't a plan.
+    const adapter = ctx.activeAdapters.get(profileId)
+    return adapter?.parseQueryPlan?.(result) ?? []
+  })
+
   handle('db:sample-query', async (profileId, table, schema) => {
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) throw new Error('Unknown connection')

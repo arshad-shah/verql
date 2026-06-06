@@ -1,15 +1,10 @@
-export interface PlanNode {
-  type: string
-  table?: string
-  cost: number
-  rows: number
-  actualTime?: number
-  children: PlanNode[]
-  details: string
-}
+// Postgres EXPLAIN plan parsing — owned by the postgresql driver plugin (moved
+// out of the renderer to keep dialect knowledge in the driver). Handles both
+// `EXPLAIN (FORMAT JSON)` output and the default indented text format.
+import type { QueryResult, PlanNode } from '@shared/types'
 
-export function parsePlanText(text: string): PlanNode[] {
-  const lines = text.split('\n').filter(l => l.trim())
+function parsePlanText(text: string): PlanNode[] {
+  const lines = text.split('\n').filter((l) => l.trim())
   if (lines.length === 0) return []
 
   const nodes: PlanNode[] = []
@@ -28,7 +23,7 @@ export function parsePlanText(text: string): PlanNode[] {
           cost: parseFloat(simpleMatch[3] ?? '0'),
           rows: parseInt(simpleMatch[4] ?? '0'),
           children: [],
-          details: line.trim()
+          details: line.trim(),
         }
         while (stack.length > 0 && stack[stack.length - 1].indent >= indent) stack.pop()
         if (stack.length > 0) stack[stack.length - 1].node.children.push(node)
@@ -44,7 +39,7 @@ export function parsePlanText(text: string): PlanNode[] {
       cost: parseFloat(match[3]),
       rows: parseInt(match[4]),
       children: [],
-      details: line.trim()
+      details: line.trim(),
     }
 
     while (stack.length > 0 && stack[stack.length - 1].indent >= indent) stack.pop()
@@ -56,34 +51,7 @@ export function parsePlanText(text: string): PlanNode[] {
   return nodes
 }
 
-export function findMaxCost(nodes: PlanNode[]): number {
-  let max = 0
-  for (const n of nodes) {
-    if (n.cost > max) max = n.cost
-    const childMax = findMaxCost(n.children)
-    if (childMax > max) max = childMax
-  }
-  return max
-}
-
-export function parsePlanFromResult(rows: Record<string, unknown>[]): PlanNode[] {
-  if (rows.length === 0) return []
-
-  const firstRow = rows[0]
-  const firstVal = Object.values(firstRow)[0]
-  if (typeof firstVal === 'string' && firstVal.trim().startsWith('[')) {
-    try {
-      const parsed = JSON.parse(firstVal)
-      if (Array.isArray(parsed) && parsed[0]?.Plan) {
-        return [convertPgJsonPlan(parsed[0].Plan)]
-      }
-    } catch { /* not JSON */ }
-  }
-
-  const text = rows.map(r => String(Object.values(r)[0] ?? '')).join('\n')
-  return parsePlanText(text)
-}
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertPgJsonPlan(plan: any): PlanNode {
   return {
     type: plan['Node Type'] ?? 'Unknown',
@@ -95,6 +63,28 @@ function convertPgJsonPlan(plan: any): PlanNode {
     details: Object.entries(plan)
       .filter(([k]) => !['Plans', 'Node Type', 'Relation Name', 'Total Cost', 'Plan Rows'].includes(k))
       .map(([k, v]) => `${k}: ${v}`)
-      .join(', ')
+      .join(', '),
   }
+}
+
+/** Parse a Postgres EXPLAIN result (`EXPLAIN` text rows or `FORMAT JSON`) into a
+ *  normalized plan tree. Returns [] when the rows aren't a plan. */
+export function parsePostgresPlan(result: QueryResult): PlanNode[] {
+  const rows = result.rows
+  if (rows.length === 0) return []
+
+  const firstVal = Object.values(rows[0])[0]
+  if (typeof firstVal === 'string' && firstVal.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(firstVal)
+      if (Array.isArray(parsed) && parsed[0]?.Plan) {
+        return [convertPgJsonPlan(parsed[0].Plan)]
+      }
+    } catch {
+      /* not JSON — fall through to text parsing */
+    }
+  }
+
+  const text = rows.map((r) => String(Object.values(r)[0] ?? '')).join('\n')
+  return parsePlanText(text)
 }

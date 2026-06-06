@@ -1,4 +1,4 @@
-import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType } from './types'
+import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaIndex, SchemaObject, DatabaseType, PlanNode } from './types'
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
@@ -109,6 +109,12 @@ export interface IpcChannelMap {
   'db:driver-capabilities': {
     args: [type: string]
     return: DriverCapabilities | null
+  }
+  /** Parse an EXPLAIN result into a normalized plan tree via the driver. Returns
+   *  [] when the driver has no plan parser or the rows aren't a plan. */
+  'db:parse-plan': {
+    args: [profileId: string, result: QueryResult]
+    return: PlanNode[]
   }
   'db:session:open': {
     args: [profileId: string, sessionId: string, opts?: SessionOpts]
@@ -627,6 +633,7 @@ export const IPC_CHANNELS = {
   DB_CANCEL_QUERY: 'db:cancel-query',
   DB_SAMPLE_QUERY: 'db:sample-query',
   DB_DRIVER_CAPABILITIES: 'db:driver-capabilities',
+  DB_PARSE_PLAN: 'db:parse-plan',
   // ── Schema introspection ───────────────────────────────────────────────
   DB_GET_TABLES: 'db:get-tables',
   DB_GET_COLUMNS: 'db:get-columns',
