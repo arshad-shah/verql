@@ -14,8 +14,9 @@ export type ActivityKind =
   | 'connection'   // connect / disconnect / failed
   | 'notification' // something surfaced to the user
   | 'network'      // an outbound request the app initiated (AI providers, …)
+  | 'log'          // a diagnostic log line from the app/glue (for devs)
 
-export type ActivityLevel = 'info' | 'success' | 'warn' | 'error'
+export type ActivityLevel = 'debug' | 'info' | 'success' | 'warn' | 'error'
 
 export interface ActivityEntry {
   id: string
@@ -36,6 +37,8 @@ export interface ActivityEntry {
 export interface ActivityQuery {
   /** Restrict to these kinds (default: all). */
   kinds?: ActivityKind[]
+  /** Restrict to these levels (default: all). */
+  levels?: ActivityLevel[]
   /** Only entries at/after this epoch-ms timestamp. */
   sinceTs?: number
   /** Cap the number of (most-recent) entries returned. */

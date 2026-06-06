@@ -26,9 +26,13 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
     } catch {
       set({ loaded: true })
     }
-    // Live stream: new entries arrive newest-first.
-    window.electronAPI.on(IPC_EVENTS.ACTIVITY_EVENT, (entry: unknown) => {
-      set((s) => ({ entries: [entry as ActivityEntry, ...s.entries].slice(0, CAP) }))
+    // Live stream: the main process coalesces entries into batches (oldest-first
+    // within a batch). Prepend the reversed batch so the store stays newest-first,
+    // and apply each batch in a single update to avoid per-entry re-renders.
+    window.electronAPI.on(IPC_EVENTS.ACTIVITY_BATCH, (batch: unknown) => {
+      const entries = batch as ActivityEntry[]
+      if (entries.length === 0) return
+      set((s) => ({ entries: [...entries.slice().reverse(), ...s.entries].slice(0, CAP) }))
     })
   },
   clear: async () => {

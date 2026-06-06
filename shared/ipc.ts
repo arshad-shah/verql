@@ -785,6 +785,10 @@ export interface IpcEventMap {
   'mcp:activity-event': [entry: import('./mcp').MCPActivityEntry]
   /** A new entry was appended to the app activity log. */
   'activity:event': [entry: ActivityEntry]
+  /** A coalesced batch of newly-appended activity entries (oldest-first within
+   *  the batch). The main process buffers entries and flushes them on a short
+   *  timer / size threshold so a busy stream is one IPC round-trip, not N. */
+  'activity:batch': [entries: ActivityEntry[]]
   /** App menu accelerator: focus / create a new query tab. */
   'menu:new-query-tab': []
   /** App menu accelerator: open the new-connection form. */
@@ -822,6 +826,7 @@ export const IPC_EVENTS = {
   MCP_APPROVAL_REQUEST: 'mcp:approval-request',
   MCP_ACTIVITY_EVENT: 'mcp:activity-event',
   ACTIVITY_EVENT: 'activity:event',
+  ACTIVITY_BATCH: 'activity:batch',
   MENU_NEW_QUERY_TAB: 'menu:new-query-tab',
   MENU_NEW_CONNECTION: 'menu:new-connection',
   MENU_TOGGLE_COMMAND_PALETTE: 'menu:toggle-command-palette',

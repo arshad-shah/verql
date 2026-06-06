@@ -24,6 +24,17 @@ describe('ActivityLog', () => {
     expect(log.list({ kinds: ['notification'] })).toEqual([])
   })
 
+  it('filters by level', () => {
+    const log = new ActivityLog()
+    log.record({ kind: 'log', level: 'debug', title: 'd' })
+    log.record({ kind: 'log', level: 'error', title: 'e' })
+    log.record({ kind: 'query', level: 'info', title: 'i' })
+
+    expect(log.list({ levels: ['error'] }).map(e => e.title)).toEqual(['e'])
+    expect(log.list({ levels: ['debug', 'info'] }).map(e => e.title)).toEqual(['i', 'd'])
+    expect(log.list({ kinds: ['log'], levels: ['error'] }).map(e => e.title)).toEqual(['e'])
+  })
+
   it('filters by sinceTs', () => {
     const log = new ActivityLog()
     vi.spyOn(Date, 'now').mockReturnValue(100)

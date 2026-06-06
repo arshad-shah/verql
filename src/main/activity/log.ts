@@ -60,10 +60,14 @@ export class ActivityLog implements ActivityReader {
 
   list(query: ActivityQuery = {}): ActivityEntry[] {
     const kinds = query.kinds && query.kinds.length > 0 ? new Set(query.kinds) : null
+    const levels = query.levels && query.levels.length > 0 ? new Set(query.levels) : null
     let out = this.entries
-    if (kinds || query.sinceTs !== undefined) {
+    if (kinds || levels || query.sinceTs !== undefined) {
       out = out.filter(
-        e => (!kinds || kinds.has(e.kind)) && (query.sinceTs === undefined || e.ts >= query.sinceTs),
+        e =>
+          (!kinds || kinds.has(e.kind)) &&
+          (!levels || levels.has(e.level)) &&
+          (query.sinceTs === undefined || e.ts >= query.sinceTs),
       )
     }
     // Newest first.

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Database, Wrench, Plug, Bell, Globe, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Database, Wrench, Plug, Bell, Globe, ScrollText, Trash2, Search, Download, Pause, Play,
+} from 'lucide-react'
 import { Flex, Box, Text, cn } from '@/primitives'
 import { useActivityStore } from '@/stores/activity'
 import type { ActivityEntry, ActivityKind, ActivityLevel } from '@shared/activity'
@@ -12,6 +14,7 @@ const KIND_META: Record<ActivityKind, { icon: typeof Database; label: MessageKey
   connection: { icon: Plug, label: 'shell.activity.connections' },
   notification: { icon: Bell, label: 'shell.activity.notifications' },
   network: { icon: Globe, label: 'shell.activity.network' },
+  log: { icon: ScrollText, label: 'shell.activity.logs' },
 }
 
 const LEVEL_CLASS: Record<ActivityLevel, string> = {
@@ -19,11 +22,21 @@ const LEVEL_CLASS: Record<ActivityLevel, string> = {
   warn: 'text-warning',
   success: 'text-success',
   info: 'text-text-muted',
+  debug: 'text-text-muted/60',
 }
+
+const LEVEL_META: { level: ActivityLevel; label: MessageKey }[] = [
+  { level: 'error', label: 'shell.activity.levelError' },
+  { level: 'warn', label: 'shell.activity.levelWarn' },
+  { level: 'success', label: 'shell.activity.levelSuccess' },
+  { level: 'info', label: 'shell.activity.levelInfo' },
+  { level: 'debug', label: 'shell.activity.levelDebug' },
+]
 
 const ALL_KINDS = Object.keys(KIND_META) as ActivityKind[]
 
-/** Cap rendered rows so a long stream stays smooth; the store keeps more. */
+/** Cap rendered rows so a long stream stays smooth; the store keeps more and
+ *  export still sees every matching entry. */
 const MAX_RENDERED = 400
 
 function formatTime(ts: number): string {
@@ -67,62 +80,168 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
   )
 }
 
+function toggle<T>(set: Set<T>, value: T): Set<T> {
+  const next = new Set(set)
+  if (next.has(value)) next.delete(value)
+  else next.add(value)
+  return next
+}
+
+function downloadEntries(entries: ActivityEntry[]): void {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `verql-activity-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export interface ActivityListProps {
   entries: ActivityEntry[]
-  /** Active kind filters; empty set = show all. */
-  active: Set<ActivityKind>
-  onToggleKind: (kind: ActivityKind) => void
   onClear: () => void
 }
 
-/** Presentational, store-free — used by the panel and Storybook. */
-export function ActivityList({ entries, active, onToggleKind, onClear }: ActivityListProps) {
+/** Presentational, store-free — used by the panel and Storybook. Owns its own
+ *  filter/search/pause state so the live container stays a thin wiring layer. */
+export function ActivityList({ entries, onClear }: ActivityListProps) {
   const { t } = useTranslation()
-  const filtered = useMemo(() => {
-    const list = active.size === 0 ? entries : entries.filter((e) => active.has(e.kind))
-    return list.slice(0, MAX_RENDERED)
-  }, [entries, active])
+  const [kinds, setKinds] = useState<Set<ActivityKind>>(new Set())
+  const [levels, setLevels] = useState<Set<ActivityLevel>>(new Set())
+  const [search, setSearch] = useState('')
+  const [paused, setPaused] = useState(false)
+  // While paused we render a frozen snapshot so a fast stream can't yank rows
+  // out from under the reader; live entries keep accumulating in the store.
+  const frozen = useRef<ActivityEntry[]>([])
+  const togglePause = () => {
+    setPaused((p) => {
+      frozen.current = p ? [] : entries
+      return !p
+    })
+  }
+  const source = paused ? frozen.current : entries
+
+  // Full match set (used for export); the rendered slice is capped below.
+  const matched = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return source.filter((e) => {
+      if (kinds.size > 0 && !kinds.has(e.kind)) return false
+      if (levels.size > 0 && !levels.has(e.level)) return false
+      if (q) {
+        const hay = `${e.title} ${e.detail ?? ''} ${e.source ?? ''}`.toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      return true
+    })
+  }, [source, kinds, levels, search])
+
+  const rendered = useMemo(() => matched.slice(0, MAX_RENDERED), [matched])
 
   return (
     <Flex direction="column" className="h-full min-h-0">
-      <Flex align="center" gap="xs" className="px-2 py-1.5 border-b border-border shrink-0 flex-wrap">
-        {ALL_KINDS.map((kind) => {
-          const on = active.has(kind)
-          const { icon: Icon, label } = KIND_META[kind]
-          return (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => onToggleKind(kind)}
-              title={t(label)}
-              className={cn(
-                'flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors',
-                on ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-primary hover:bg-white/5',
-              )}
-            >
-              <Icon size={12} />
-              {t(label)}
-            </button>
-          )
-        })}
-        <span className="flex-1" />
-        <button
-          type="button"
-          onClick={onClear}
-          title={t('shell.activity.clear')}
-          className="flex items-center rounded p-1 text-text-muted hover:text-error hover:bg-white/5"
-        >
-          <Trash2 size={13} />
-        </button>
-      </Flex>
+      <Box className="border-b border-border shrink-0">
+        <Flex align="center" gap="xs" className="px-2 pt-1.5 pb-1">
+          <Flex
+            align="center"
+            gap="xs"
+            className="flex-1 min-w-0 rounded bg-bg-inset px-1.5 py-0.5"
+          >
+            <Search size={12} className="text-text-muted shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('shell.activity.search')}
+              className="flex-1 min-w-0 bg-transparent text-[11px] text-text-primary placeholder:text-text-muted outline-none"
+            />
+          </Flex>
+          <button
+            type="button"
+            onClick={togglePause}
+            title={t(paused ? 'shell.activity.resume' : 'shell.activity.pause')}
+            className={cn(
+              'flex items-center rounded p-1 hover:bg-white/5',
+              paused ? 'text-warning' : 'text-text-muted hover:text-text-primary',
+            )}
+          >
+            {paused ? <Play size={13} /> : <Pause size={13} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadEntries(matched)}
+            disabled={matched.length === 0}
+            title={t('shell.activity.export')}
+            className="flex items-center rounded p-1 text-text-muted hover:text-text-primary hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <Download size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            title={t('shell.activity.clear')}
+            className="flex items-center rounded p-1 text-text-muted hover:text-error hover:bg-white/5"
+          >
+            <Trash2 size={13} />
+          </button>
+        </Flex>
+        <Flex align="center" gap="xs" className="px-2 pb-1 flex-wrap">
+          {ALL_KINDS.map((kind) => {
+            const on = kinds.has(kind)
+            const { icon: Icon, label } = KIND_META[kind]
+            return (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setKinds((prev) => toggle(prev, kind))}
+                title={t(label)}
+                className={cn(
+                  'flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors',
+                  on ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-primary hover:bg-white/5',
+                )}
+              >
+                <Icon size={12} />
+                {t(label)}
+              </button>
+            )
+          })}
+        </Flex>
+        <Flex align="center" gap="xs" className="px-2 pb-1.5 flex-wrap">
+          {LEVEL_META.map(({ level, label }) => {
+            const on = levels.has(level)
+            return (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setLevels((prev) => toggle(prev, level))}
+                title={t(label)}
+                className={cn(
+                  'flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition-colors',
+                  on ? 'bg-accent/15 text-accent' : 'text-text-muted hover:text-text-primary hover:bg-white/5',
+                )}
+              >
+                <span className={cn('h-1.5 w-1.5 rounded-full bg-current', LEVEL_CLASS[level])} />
+                {t(label)}
+              </button>
+            )
+          })}
+          {paused && (
+            <>
+              <span className="flex-1" />
+              <span className="text-[10px] text-warning">{t('shell.activity.paused')}</span>
+            </>
+          )}
+        </Flex>
+      </Box>
 
       <Box className="flex-1 min-h-0 overflow-auto">
-        {filtered.length === 0 ? (
+        {rendered.length === 0 ? (
           <Flex align="center" justify="center" className="h-full p-6">
-            <Text size="sm" color="muted">{t('shell.activity.empty')}</Text>
+            <Text size="sm" color="muted">
+              {entries.length === 0 ? t('shell.activity.empty') : t('shell.activity.noMatch')}
+            </Text>
           </Flex>
         ) : (
-          filtered.map((e) => <ActivityRow key={e.id} entry={e} />)
+          rendered.map((e) => <ActivityRow key={e.id} entry={e} />)
         )}
       </Box>
     </Flex>
@@ -134,17 +253,8 @@ export function ActivityPanel() {
   const entries = useActivityStore((s) => s.entries)
   const init = useActivityStore((s) => s.init)
   const clear = useActivityStore((s) => s.clear)
-  const [active, setActive] = useState<Set<ActivityKind>>(new Set())
 
   useEffect(() => { void init() }, [init])
 
-  const toggle = (kind: ActivityKind) =>
-    setActive((prev) => {
-      const next = new Set(prev)
-      if (next.has(kind)) next.delete(kind)
-      else next.add(kind)
-      return next
-    })
-
-  return <ActivityList entries={entries} active={active} onToggleKind={toggle} onClear={() => void clear()} />
+  return <ActivityList entries={entries} onClear={() => void clear()} />
 }

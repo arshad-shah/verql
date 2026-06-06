@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
 import { ActivityList } from './ActivityPanel'
-import type { ActivityEntry, ActivityKind } from '@shared/activity'
+import type { ActivityEntry } from '@shared/activity'
 
 const now = Date.now()
 const SAMPLE: ActivityEntry[] = [
@@ -11,19 +10,14 @@ const SAMPLE: ActivityEntry[] = [
   { id: '4', ts: now - 4200, kind: 'query', level: 'error', title: 'Query failed', detail: 'SELECT * FROM nope\n\nrelation "nope" does not exist', source: 'Prod' },
   { id: '5', ts: now - 6000, kind: 'notification', level: 'warn', title: 'Schema cache is stale' },
   { id: '6', ts: now - 9000, kind: 'network', level: 'info', title: 'POST /api/chat (anthropic)', source: 'anthropic' },
+  { id: '7', ts: now - 11000, kind: 'log', level: 'debug', title: 'Resolved 9 bundled plugins', detail: 'sqlite, postgresql, mysql, db-tools, ai, core-formats, core-themes, ssh-tunnel, os-notifications', source: 'app:plugins' },
+  { id: '8', ts: now - 13000, kind: 'log', level: 'error', title: 'Auto-start failed', detail: 'Error: port 7337 already in use', source: 'app:mcp' },
 ]
 
 function Harness({ entries }: { entries: ActivityEntry[] }) {
-  const [active, setActive] = useState<Set<ActivityKind>>(new Set())
-  const toggle = (k: ActivityKind) =>
-    setActive((prev) => {
-      const next = new Set(prev)
-      next.has(k) ? next.delete(k) : next.add(k)
-      return next
-    })
   return (
-    <div style={{ height: 420, width: 320 }} className="bg-bg-secondary border border-border">
-      <ActivityList entries={entries} active={active} onToggleKind={toggle} onClear={() => {}} />
+    <div style={{ height: 460, width: 340 }} className="bg-bg-secondary border border-border">
+      <ActivityList entries={entries} onClear={() => {}} />
     </div>
   )
 }
