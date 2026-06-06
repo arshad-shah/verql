@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/arshad-shah/verql/issues"
   },
-  "homepage": "https://github.com/arshad-shah/verql#readme",
+  "homepage": "https://verql.arshadshah.com",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

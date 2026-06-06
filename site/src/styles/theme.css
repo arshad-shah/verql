@@ -1,0 +1,129 @@
+/*
+ * Verql brand theme for Starlight.
+ *
+ * Maps the app's "Nightshift" palette onto Starlight's color tokens:
+ *   accent  → electric mint  (#00c990 / #5ce0bd)
+ *   gray    → cool ink neutrals (bluer than Starlight's defaults)
+ *   surface → deep midnight ink for dark, warm white for light
+ *
+ * Mirrors src/renderer/src/primitives/theme/tokens.css in the app.
+ */
+
+:root {
+  /* Mint accent — same scale the app uses for the central V-bar. */
+  --sl-color-accent-low: #00352a;
+  --sl-color-accent: #00c990;
+  --sl-color-accent-high: #9fe9d4;
+
+  /* Cool ink neutrals (dark theme). */
+  --sl-color-white: #f3f6fb;
+  --sl-color-gray-1: #e8ecf3;
+  --sl-color-gray-2: #b8c0d1;
+  --sl-color-gray-3: #7c8499;
+  --sl-color-gray-4: #4a5468;
+  --sl-color-gray-5: #2a3140;
+  --sl-color-gray-6: #161b26;
+  --sl-color-black: #0b0f16;
+
+  /* Page + panel surfaces, tuned to the app's midnight ink. */
+  --sl-color-bg: #0b0f16;
+  --sl-color-bg-nav: #0e121b;
+  --sl-color-bg-sidebar: #0e121b;
+  --sl-color-bg-inline-code: #161b26;
+  --sl-color-hairline-shade: #1a2030;
+
+  /* Brand gradient used by the splash hero. */
+  --verql-glow: radial-gradient(60% 60% at 50% 30%, rgba(43, 217, 163, 0.18), transparent 70%);
+}
+
+:root[data-theme='light'] {
+  /* Mint darkened for AA contrast on warm white. */
+  --sl-color-accent-low: #c7f0e3;
+  --sl-color-accent: #008f68;
+  --sl-color-accent-high: #00352a;
+
+  --sl-color-white: #0b0f16;
+  --sl-color-gray-1: #161b26;
+  --sl-color-gray-2: #2a3140;
+  --sl-color-gray-3: #4a5468;
+  --sl-color-gray-4: #7c8499;
+  --sl-color-gray-5: #d4dae5;
+  --sl-color-gray-6: #eef1f6;
+  --sl-color-gray-7: #f6f8fb;
+  --sl-color-black: #ffffff;
+
+  --sl-color-bg: #ffffff;
+  --sl-color-bg-nav: #f6f8fb;
+  --sl-color-bg-sidebar: #f6f8fb;
+  --sl-color-bg-inline-code: #eef1f6;
+  --sl-color-hairline-shade: #e2e7ef;
+
+  --verql-glow: radial-gradient(60% 60% at 50% 30%, rgba(0, 143, 104, 0.12), transparent 70%);
+}
+
+/* ── Splash / landing polish ── */
+
+.hero {
+  position: relative;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -10% -20% auto -20%;
+  height: 120%;
+  background: var(--verql-glow);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Hero V-bars icon: lift it off the page with a soft mint halo. */
+.hero img {
+  filter: drop-shadow(0 24px 60px rgba(0, 201, 144, 0.22));
+}
+
+/* Primary CTA in brand mint with readable ink text. */
+.hero .actions a.sl-link-button.primary {
+  background: linear-gradient(180deg, #5ce0bd, #00c990);
+  border-color: transparent;
+  color: #06221a;
+  font-weight: 600;
+}
+
+.hero .actions a.sl-link-button.primary:hover {
+  background: linear-gradient(180deg, #6fe8c8, #11d49b);
+}
+
+/* ── CardGrid accents ── */
+
+.card {
+  border-color: var(--sl-color-gray-5);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--sl-color-accent);
+  transform: translateY(-2px);
+}
+
+.card .icon {
+  color: var(--sl-color-accent);
+  border-color: color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--sl-color-accent) 10%, transparent);
+}
+
+/* Mermaid diagrams: center, give them room, and round the SVG. */
+pre.mermaid {
+  background: transparent;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}

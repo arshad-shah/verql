@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <!-- Verql header mark for dark surfaces: frost bars + mint accent. -->
+  <rect x="2"     y="4"  width="2.6" height="18" rx="0.6" fill="#E8ECF3"/>
+  <rect x="6.35"  y="10" width="2.6" height="12" rx="0.6" fill="#E8ECF3" opacity="0.82"/>
+  <rect x="10.7"  y="16" width="2.6" height="6"  rx="0.6" fill="#00C990"/>
+  <rect x="15.05" y="10" width="2.6" height="12" rx="0.6" fill="#E8ECF3" opacity="0.82"/>
+  <rect x="19.4"  y="4"  width="2.6" height="18" rx="0.6" fill="#E8ECF3"/>
+</svg>

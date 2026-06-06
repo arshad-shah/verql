@@ -21,10 +21,11 @@ const STORAGE_NAME = 'verql'
 
 app.setName(STORAGE_NAME)
 
-// Help-menu destinations. The user guide is the consumer-facing entry point;
-// the SDK docs are for developers building plugins.
-const GUIDE_URL = 'https://github.com/arshad-shah/verql/tree/main/docs/guide'
-const SDK_URL = 'https://github.com/arshad-shah/verql/tree/main/docs/sdk'
+// Help-menu destinations on the docs site (https://verql.arshadshah.com). The
+// user guide is the consumer-facing entry point; the SDK docs are for
+// developers building plugins.
+const GUIDE_URL = 'https://verql.arshadshah.com/guide/'
+const SDK_URL = 'https://verql.arshadshah.com/plugins/sdk/'
 const ISSUES_URL = 'https://github.com/arshad-shah/verql/issues'
 
 function buildAppMenu(): void {
