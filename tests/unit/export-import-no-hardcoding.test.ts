@@ -7,6 +7,12 @@ const DB_FILE = path.join(__dirname, '../../src/main/ipc/db.ts')
 const CMD_PALETTE = path.join(__dirname, '../../src/renderer/src/components/command-palette/CommandPalette.tsx')
 const CONN_SELECTOR = path.join(__dirname, '../../src/renderer/src/components/query/ConnectionSelector.tsx')
 const QUERY_EDITOR = path.join(__dirname, '../../src/renderer/src/components/query/QueryEditor.tsx')
+// DB-boundary migrations (plan parsing, error classification, statement
+// splitting) moved dialect knowledge into drivers — guard the renderer files
+// that used to hold it so it can't creep back.
+const DB_ERROR = path.join(__dirname, '../../src/renderer/src/lib/db-error.ts')
+const STMT_CONTRIB = path.join(__dirname, '../../src/renderer/src/lib/statement-contributions/index.ts')
+const QUERY_PLAN = path.join(__dirname, '../../src/renderer/src/components/query-plan/QueryPlanView.tsx')
 
 /**
  * Architectural guard: the orchestrator (IPC layer) must NOT contain a
@@ -38,7 +44,7 @@ describe('Orchestrator has no hardcoded relational table', () => {
     expect(src).toMatch(/return driver\.sampleQuery/)
   })
 
-  for (const file of [CMD_PALETTE, CONN_SELECTOR, QUERY_EDITOR]) {
+  for (const file of [CMD_PALETTE, CONN_SELECTOR, QUERY_EDITOR, DB_ERROR, STMT_CONTRIB, QUERY_PLAN]) {
     it(`renderer ${path.basename(file)} has no hardcoded db-type branch`, () => {
       const src = fs.readFileSync(file, 'utf-8')
       // The renderer must NOT make decisions based on connection type
