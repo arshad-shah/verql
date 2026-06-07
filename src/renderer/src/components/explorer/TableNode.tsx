@@ -347,7 +347,10 @@ export function TableNode({
               className="px-3 py-1 text-xs"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              {t('explorer.loading.columns')}
+              {/* Distinguish "loaded, but this driver has no columns" (e.g. Redis)
+                  from "still fetching" — otherwise schema-less drivers show a
+                  perpetual "Loading columns…". */}
+              {columns.has(cacheKey) ? t('explorer.noColumns') : t('explorer.loading.columns')}
             </p>
           ) : (
             tableColumns.map((col) => (

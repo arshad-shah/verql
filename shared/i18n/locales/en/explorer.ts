@@ -24,6 +24,7 @@ export const explorer = {
     tables: 'Loading tables…',
     columns: 'Loading columns…',
   },
+  noColumns: 'No columns — use View data to browse',
   status: {
     noMatches: 'No matches',
     noMatchesFor: 'No matches for "{query}"',
