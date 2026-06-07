@@ -40,7 +40,7 @@ const COLOR_PRESETS = ['#7c6ff7', '#28c840', '#e5c07b', '#61afef', '#ff5f57', '#
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
     <Box className="border border-border-subtle rounded-lg bg-bg-secondary overflow-hidden">
-      <Box className="px-4 py-3 border-b border-border-subtle">
+      <Box className="px-4 py-3 border-b border-border-subtle flex flex-col">
         <Text size="sm" weight="semibold" color="primary">{title}</Text>
         {description && <Text size="xs" color="muted" className="mt-0.5">{description}</Text>}
       </Box>
@@ -79,8 +79,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   })
 
   useEffect(() => {
-    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_CONNECTION_FIELDS).then(setPluginDrivers).catch(() => {})
-    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_MIDDLEWARE_FIELDS).then(setMiddlewareFields).catch(() => {})
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_CONNECTION_FIELDS).then(setPluginDrivers).catch(() => { })
+    window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_MIDDLEWARE_FIELDS).then(setMiddlewareFields).catch(() => { })
   }, [])
 
   const allTypes = pluginDrivers.map(d => ({
@@ -274,18 +274,16 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     return (
       <Box
         key={step}
-        className={`border rounded-lg transition-colors ${
-          isCompleted ? 'border-success/20 bg-success/5' :
-          isActive ? 'border-accent/30' :
-          'border-border-subtle opacity-60'
-        }`}
+        className={`border rounded-lg transition-colors ${isCompleted ? 'border-success/20 bg-success/5' :
+            isActive ? 'border-accent/30' :
+              'border-border-subtle opacity-60'
+          }`}
       >
         <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-            isCompleted ? 'bg-bg-success text-text-on-solid' :
-            isActive ? 'bg-bg-accent text-text-on-solid' :
-            'bg-bg-tertiary text-text-muted'
-          }`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${isCompleted ? 'bg-bg-success text-text-on-solid' :
+              isActive ? 'bg-bg-accent text-text-on-solid' :
+                'bg-bg-tertiary text-text-muted'
+            }`}>
             {isCompleted ? <Check size={14} /> : stepIndex + 2}
           </div>
           <Text size="sm" weight="semibold" color={isPending ? 'muted' : 'primary'}>
@@ -400,17 +398,15 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             {hasFetchableFields && (
               <Stack gap="md">
                 {/* Step 1: Authenticate */}
-                <Box className={`border rounded-lg transition-colors ${
-                  authStatus === 'authenticated' ? 'border-success/20 bg-success/5' :
-                  authStatus === 'authenticating' ? 'border-accent/30' :
-                  'border-border-subtle'
-                }`}>
+                <Box className={`border rounded-lg transition-colors ${authStatus === 'authenticated' ? 'border-success/20 bg-success/5' :
+                    authStatus === 'authenticating' ? 'border-accent/30' :
+                      'border-border-subtle'
+                  }`}>
                   <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-                      authStatus === 'authenticated' ? 'bg-bg-success text-text-on-solid' :
-                      authStatus === 'authenticating' ? 'bg-bg-accent text-text-on-solid' :
-                      'bg-bg-tertiary text-text-muted'
-                    }`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${authStatus === 'authenticated' ? 'bg-bg-success text-text-on-solid' :
+                        authStatus === 'authenticating' ? 'bg-bg-accent text-text-on-solid' :
+                          'bg-bg-tertiary text-text-muted'
+                      }`}>
                       {authStatus === 'authenticated' ? <Check size={14} /> : '1'}
                     </div>
                     <Text size="sm" weight="semibold">
