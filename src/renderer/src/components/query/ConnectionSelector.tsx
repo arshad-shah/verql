@@ -6,6 +6,7 @@ import { useTabsStore } from '@/stores/tabs'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -19,7 +20,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
   const { t } = useTranslation()
   const { connections, connectedIds, connect } = useConnectionsStore()
   const { fetchSchemas, fetchDatabases, switchDatabase } = useSchemaStore()
-  const { setTabConnection, setTabDatabase, setTabSchema } = useTabsStore()
+  const { setTabConnection, setTabDatabase, setTabSchema, setTabTxnStatus } = useTabsStore()
   const fetchCaps = useDriverCapabilitiesStore((s) => s.fetch)
   const [showConnDropdown, setShowConnDropdown] = useState(false)
   const [showDbDropdown, setShowDbDropdown] = useState(false)
@@ -69,7 +70,20 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
     })
   }, [connectionId, database, connectedIds])
 
-  const handleSelectConnection = (id: string) => {
+  const handleSelectConnection = async (id: string) => {
+    if (id !== connectionId && connectionId) {
+      // Release any per-tab transactional session on the OLD connection so it
+      // isn't orphaned on that connection's adapter when the tab moves. The
+      // adapter rolls back + releases; DB_SESSION_CLOSE is a tolerant no-op when
+      // no session is open. Reset txn status so the new connection gets a fresh
+      // BEGIN on its first transactional query instead of reusing stale state.
+      try {
+        await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_CLOSE, connectionId, tabId)
+      } catch {
+        // best-effort — the session may not exist
+      }
+      setTabTxnStatus(tabId, 'none')
+    }
     setTabConnection(tabId, id)
     setShowConnDropdown(false)
   }

@@ -44,9 +44,14 @@ export function useQueryExecution(
   const queryTimeout = useSettingsStore(s => s.settings.general.queryTimeout)
   const confirmDestructive = useSettingsStore(s => s.settings.general.confirmDestructiveQueries)
 
-  const executeWithSchema = useCallback(async (sql: string, txnOpts?: { sessionId?: string }) => {
+  // Align the connection to the tab's selected database + schema. This MUST run
+  // before a transactional session is opened: `switchDatabase` rebuilds the
+  // connection pool (and clears its sessions) when the target differs from the
+  // current database, so applying context *after* opening the session would
+  // wipe the session out from under the first query. It's idempotent — a no-op
+  // once the connection is already on the right database.
+  const applyContext = useCallback(async () => {
     if (!tab.connectionId) return
-    // Set database context before executing if selected
     if (tab.database) {
       try {
         await window.electronAPI.invoke(IPC_CHANNELS.DB_SWITCH_DATABASE, tab.connectionId, tab.database)
@@ -54,7 +59,6 @@ export function useQueryExecution(
         // ignore — some adapters don't support switchDatabase
       }
     }
-    // Set search_path/USE before executing if schema is selected
     if (tab.schema) {
       try {
         await window.electronAPI.invoke(IPC_CHANNELS.DB_SET_SCHEMA, tab.connectionId, tab.schema)
@@ -62,7 +66,6 @@ export function useQueryExecution(
         // ignore — some adapters don't support setSchema
       }
     }
-    return window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql, undefined, txnOpts)
   }, [tab.connectionId, tab.database, tab.schema])
 
   // Ask the driver to parse the results into a plan tree (db:parse-plan). The
@@ -107,17 +110,12 @@ export function useQueryExecution(
       // off (connection profile default) still get a session before their first
       // statement — previously such tabs would send sessionId with no open
       // session, causing the adapter to throw "No open session".
-      //
-      // DEFERRED: switching a tab's connection while a transaction is open does
-      // not release the old session. The next query will throw a legible "No
-      // open session" from the old connection's adapter. Tracked as a follow-up.
-      //
-      // DEFERRED (I2): a tab whose remembered `database` differs from the freshly-
-      // connected pool's default can throw "No open session" on its FIRST
-      // transactional query because the per-query DB switch (DB_SWITCH_DATABASE)
-      // rebuilds the pool and clears sessions; it self-corrects on retry.
-      // Tracked as a follow-up.
       const useSession = !!(tab.txn && !tab.txn.autoCommit && tab.connectionId)
+      // Apply the database/schema context FIRST, before opening the session, so
+      // a pool-rebuilding switchDatabase can't wipe the session we're about to
+      // open (the old "No open session on the first transactional query" that
+      // self-corrected on retry).
+      await applyContext()
       if (useSession) {
         // db:session:open is idempotent (no-op if already open) — safe to call every time.
         await window.electronAPI.invoke(IPC_CHANNELS.DB_SESSION_OPEN, tab.connectionId!, tab.id, { autoCommit: false })
@@ -135,7 +133,7 @@ export function useQueryExecution(
         }
       }
       const txnOpts = useSession ? { sessionId: tab.id } : undefined
-      const queryPromise = executeWithSchema(sql, txnOpts)
+      const queryPromise = window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, sql, undefined, txnOpts)
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(t('query.timeout.message', { seconds: queryTimeout }))), timeoutMs)
       )
@@ -192,7 +190,7 @@ export function useQueryExecution(
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, applyContext, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
 
   const handleExecute = useCallback(() => runStatement(), [runStatement])
 
@@ -216,7 +214,8 @@ export function useQueryExecution(
     if (!sql) return
     setTabExecuting(tab.id, true)
     try {
-      const result = await executeWithSchema(`${explain.statement} ${sql}`)
+      await applyContext()
+      const result = await window.electronAPI.invoke(IPC_CHANNELS.DB_QUERY, tab.connectionId, `${explain.statement} ${sql}`)
       if (result) {
         setTabResults(tab.id, result)
         void refreshQueryPlan(result)
@@ -229,7 +228,7 @@ export function useQueryExecution(
     } catch (err) {
       setTabError(tab.id, (err as Error).message)
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, caps, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, caps, applyContext, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
 
   const handleExplain = useCallback(() => explainStatement(), [explainStatement])
 
