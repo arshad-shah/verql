@@ -5,10 +5,8 @@ with a plugin architecture: the main app is an orchestrator and every
 database driver, import/export format, theme, and AI integration ships
 as a bundled plugin.
 
-> **Status:** Pre-1.0. Expect rough edges and breaking changes between
-> minor versions. The contribution surfaces (plugin APIs, IPC channels)
-> are documented at **[verql.arshadshah.com](https://verql.arshadshah.com)**
-> and will be stabilised before 1.0.
+> The contribution surfaces (plugin APIs, IPC channels) are documented at
+> **[verql.arshadshah.com](https://verql.arshadshah.com)**.
 
 📚 **Documentation:** **[verql.arshadshah.com](https://verql.arshadshah.com)** —
 a [user guide](https://verql.arshadshah.com/guide/) for everyday use and

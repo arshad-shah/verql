@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-Verql is in pre-1.0 development. Security fixes are applied to the
-latest minor release on `main`. Older releases are not maintained.
+Security fixes are applied to the latest release on `main`. Older
+releases are not maintained.
 
 | Version | Supported |
 |---------|-----------|
-| 0.x.x (latest) | ✅ |
-| any earlier release | ❌ |
+| Latest release | ✅ |
+| Any earlier release | ❌ |
 
 ## Reporting a vulnerability
 

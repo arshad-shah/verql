@@ -122,7 +122,7 @@ Releases are cut by a maintainer from `main`:
 1. `pnpm changeset version` consumes the pending markdown changesets,
    bumps `package.json`, and updates `CHANGELOG.md`.
 2. The maintainer reviews the diff and commits it.
-3. Tagging `v0.X.Y` triggers `.github/workflows/release.yml`, which
+3. Tagging `vX.Y.Z` triggers `.github/workflows/release.yml`, which
    builds + signs binaries for macOS / Linux, drafts a GitHub release,
    and uploads SBOM and sha256sums.
 

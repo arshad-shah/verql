@@ -5,9 +5,9 @@ sidebar:
   order: 8
 ---
 
-Verql is pre-1.0 software under active development, so new releases land
-regularly with fixes and features. The current release is **v0.9.0**. Keeping up
-to date is the best way to get improvements and security fixes.
+Verql is under active development, so new releases land regularly with fixes
+and features. Keeping up to date is the best way to get improvements and
+security fixes.
 
 [← Back to the User Guide](/guide/)
 
@@ -53,8 +53,8 @@ you restart Verql to finish applying the update.
   [changelog](https://github.com/arshad-shah/verql/blob/main/CHANGELOG.md) to
   see what changed.
 
-> Because Verql is pre-1.0, minor versions can include breaking changes. Skim the
-> changelog before upgrading if you depend on specific behaviour.
+> Minor versions can include breaking changes. Skim the changelog before
+> upgrading if you depend on specific behaviour.
 
 ---
 
