@@ -7,7 +7,7 @@ import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import {
   ScrollArea, Container, Stack, Flex, Box, Grid, Divider,
   Heading, Text,
-  FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput,
+  FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput, FilePathInput,
   Button, Spinner
 } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -22,6 +22,8 @@ interface PluginField {
   key: string; label: string; type: string; required?: boolean
   default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number
   options?: { value: string; label: string }[]
+  /** Comma-separated extension filter for `file` / `file-path` fields (e.g. `.db,.sqlite`). */
+  accept?: string
 }
 
 interface PluginDriver {
@@ -162,7 +164,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   // Wide fields read better spanning the full width of the 2-column grid.
   const fieldSpan = (field: PluginField) =>
-    field.type === 'select' || field.type === 'file' || field.type === 'password' ? 'col-span-2' : ''
+    field.type === 'select' || field.type === 'file' || field.type === 'file-path' || field.type === 'password' ? 'col-span-2' : ''
 
   const renderPluginField = (field: PluginField, className?: string) => {
     const value = profile[field.key] ?? field.default ?? ''
@@ -236,13 +238,29 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       )
     }
 
+    // A `file-path` field stores the chosen file's native path (e.g. the SQLite
+    // database file or a private-key file the adapter reads itself). A plain
+    // `file` field reads and stores the file's *contents* (e.g. an inline SSH key).
+    if (field.type === 'file-path') {
+      return (
+        <FormField key={field.key} label={field.label} className={className}>
+          <FilePathInput
+            value={String(value)}
+            onChange={(filePath) => update({ [field.key]: filePath })}
+            accept={field.accept}
+            size="lg"
+          />
+        </FormField>
+      )
+    }
+
     if (field.type === 'file') {
       return (
         <FormField key={field.key} label={field.label} className={className}>
           <FileContentInput
             value={String(value)}
             onChange={(content) => update({ [field.key]: content })}
-            accept=".pem,.key"
+            accept={field.accept ?? '.pem,.key'}
             size="lg"
           />
         </FormField>

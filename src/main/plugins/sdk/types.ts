@@ -225,6 +225,9 @@ export interface ConnectionField {
   step?: number
   /** Static options for non-fetchable select fields */
   options?: { value: string; label: string }[]
+  /** Comma-separated extension filter for `file` / `file-path` fields
+   *  (e.g. `.db,.sqlite`). Used by both the file picker and drag-drop. */
+  accept?: string
 }
 
 export interface ConnectionMiddleware {

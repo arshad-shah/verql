@@ -1,5 +1,5 @@
 import { Flex, Stack, Text, Spinner } from '@/primitives'
-import { VerqlHero } from '@/components/brand/VerqlMark'
+import { VerqlHero } from '@/components/brand/VerqlHero'
 
 interface SplashScreenProps {
   /** Optional status text shown beneath the mark (e.g. "Loading settings…"). */

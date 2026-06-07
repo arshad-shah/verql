@@ -37,8 +37,8 @@ export function QueryErrorView({ error, dbType }: Props) {
           <Text size="sm" as="p" className="leading-relaxed">{parsed.message}</Text>
 
           {parsed.hint && (
-            <Flex gap="xs" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
-              <Text size="xs" weight="medium" className="text-text-secondary uppercase tracking-wide shrink-0">
+            <Flex direction="column" gap="xs" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
+              <Text size="xs" weight="medium" className="text-text-secondary uppercase tracking-wide">
                 {t('query.error.hint')}
               </Text>
               <Text size="xs" color="secondary" as="p" className="leading-relaxed">{parsed.hint}</Text>

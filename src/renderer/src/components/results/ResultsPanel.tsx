@@ -1,7 +1,7 @@
 import { ResultsGrid } from './ResultsGrid'
 import { ResultsStatusBar } from './ResultsStatusBar'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
-import { ExplainResult } from '@/components/ai/ExplainPanel'
+import { ExplainResult } from '@/components/ai/ExplainResult'
 import type { QueryResult } from '@shared/types'
 import { Flex, Box } from '@/primitives'
 

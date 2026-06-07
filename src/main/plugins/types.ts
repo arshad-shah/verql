@@ -80,12 +80,18 @@ export interface FormatterContribution {
 export interface ConnectionFieldContribution {
   key: string
   label: string
-  type: 'text' | 'password' | 'number' | 'boolean' | 'file' | 'select'
+  /** `file` stores the selected file's *contents* (e.g. an inline SSH key);
+   *  `file-path` stores its native *path* (e.g. a SQLite database file or a
+   *  private-key file the adapter reads itself). */
+  type: 'text' | 'password' | 'number' | 'boolean' | 'file' | 'file-path' | 'select'
   required?: boolean
   default?: string | number | boolean
   group?: string
   fetchable?: boolean
   step?: number
+  /** Comma-separated extension filter for `file` / `file-path` fields
+   *  (e.g. `.db,.sqlite`). Used by both the file picker and drag-drop. */
+  accept?: string
 }
 
 export interface PanelContributionManifest {

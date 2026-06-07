@@ -7,6 +7,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
   Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, Tooltip,
+  SearchInput,
 } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -55,29 +56,7 @@ export function QueryHistoryPanel() {
   return (
     <Stack className="h-full">
       <Box className="px-2 py-1.5">
-        <Flex align="center" gap="xs" className="bg-bg-tertiary border border-border rounded-md px-2 py-1">
-          <Search size={12} className="text-text-muted shrink-0" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('query.history.searchPlaceholder')}
-            size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
-          />
-          {entries.length > 0 && (
-            <Tooltip content={t('query.history.clearAll')} side="left">
-              <IconButton
-                label={t('query.history.clearAll')}
-                size="xs"
-                variant="ghost"
-                onClick={() => clear()}
-                className="text-text-muted hover:text-error shrink-0"
-              >
-                <Trash2 size={12} />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Flex>
+        <SearchInput size="lg" onClear={() => setSearch('')} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('query.history.searchPlaceholder')} />
       </Box>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">

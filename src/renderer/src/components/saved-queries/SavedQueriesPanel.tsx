@@ -5,7 +5,7 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input } from '@/primitives'
+import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, SearchInput } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Saved queries persist in the SQLite app-data store (main process). This module
@@ -92,16 +92,7 @@ export function SavedQueriesPanel() {
   return (
     <Stack className="h-full">
       <Box className="px-2 py-1.5">
-        <Flex align="center" gap="xs" className="bg-bg-tertiary border border-border rounded-md px-2 py-1">
-          <Search size={12} className="text-text-muted shrink-0" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={t('query.saved.searchPlaceholder')}
-            size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
-          />
-        </Flex>
+        <SearchInput size="lg" onClear={() => setSearch('')} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('query.saved.searchPlaceholder')} />
       </Box>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">

@@ -212,7 +212,7 @@ export function activate(ctx: PluginContext): void {
           { value: 'https://okta.example.com', label: 'Okta (enter URL)' },
         ],
       },
-      { key: 'privateKeyPath', label: 'Private Key File', type: 'file' },
+      { key: 'privateKeyPath', label: 'Private Key File', type: 'file-path', accept: '.pem,.p8,.key' },
       { key: 'passphrase', label: 'Key Passphrase', type: 'password' },
       { key: 'role', label: 'Role', type: 'select', fetchable: true, step: 1 },
       { key: 'warehouse', label: 'Warehouse', type: 'select', fetchable: true, step: 1 },

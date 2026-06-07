@@ -145,7 +145,7 @@ export function activate(ctx: PluginContext): void {
     errorRules: sqliteErrorRules,
     defaultSchemaCandidates: ['main'],
     connectionFields: [
-      { key: 'database', label: 'Database File', type: 'file', required: true },
+      { key: 'database', label: 'Database File', type: 'file-path', accept: '.db,.sqlite,.sqlite3,.db3', required: true },
     ],
     sampleQuery: async (table, schema) => {
       const qualified = schema && schema !== 'main'
