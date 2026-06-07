@@ -2,16 +2,22 @@
 
 The **Activity log** is Verql's single, unified stream of "what's happening" —
 queries the app ran, AI/MCP tool calls, connection lifecycle, notifications,
-outbound network requests, and now general **diagnostic log lines** from the
-glue. One stream feeds two audiences: **users** (a readable, filterable record
-of what the app did) and **developers** (in-app diagnostics, no log files to dig
-out of `userData`). It is also exposed to agents read-only via a shared tool.
+outbound network requests, **IPC calls**, **plugin lifecycle**, renderer
+**store** mutations, **perf** signals, and general **diagnostic log lines** from
+the glue. One stream feeds two audiences: **users** (a readable, filterable
+record of what the app did) and **developers** (in-app diagnostics, no log files
+to dig out of `userData`). It is also exposed to agents read-only via a shared
+tool.
 
 It follows Verql's **orchestrator + plugins** rule: the host owns the stream
-(glue); recording happens at the points where things actually occur.
+(glue); recording happens at the points where things actually occur. Recorders
+spread across the main process reach the single stream through a process-wide
+**sink** (`src/main/activity/recorder.ts` — `setActivitySink` / `recordActivity`)
+so a subsystem doesn't have to thread the log through its constructor.
 
 - [The pieces](#the-pieces)
 - [The `log` kind and the app logger](#the-log-kind-and-the-app-logger)
+- [Developer recorders](#developer-recorders)
 - [Clever processing: batching & pause](#clever-processing-batching--pause)
 - [The Activity panel](#the-activity-panel)
 - [Data model](#data-model)
@@ -24,19 +30,31 @@ It follows Verql's **orchestrator + plugins** rule: the host owns the stream
 | **`ActivityLog`** (host glue) | an in-memory ring buffer (cap 1000); `record` / `list` / `subscribe` / `clear`; provided as the `activity-log` service | `src/main/activity/log.ts` |
 | **`ActivityBatcher`** (host glue) | coalesces appended entries into batches before they cross IPC | `src/main/activity/batcher.ts` |
 | **`Logger`** (host glue) | mirrors a log line to the console **and** records it as a `log` entry; provided as the `logger` service | `src/main/logging/logger.ts` |
-| **Recorders** | call `activityLog.record(...)` where things happen (db queries, connect/disconnect, tool calls, notifications, network) | `src/main/ipc/db.ts`, `ipc-handlers.ts`, `src/main/mcp/server.ts`, … |
+| **Activity sink** (host glue) | process-wide handle to the one `ActivityLog`, wired once in `ipc-handlers.ts`; lets any main-side subsystem record without threading the log through its constructor | `src/main/activity/recorder.ts` |
+| **`tracedFetch`** (host glue) | a `fetch()` wrapper that records a `network` entry (method, host+path, status, timing — never bodies or auth headers) | `src/main/activity/net.ts` |
+| **Recorders** | call `recordActivity(...)` / `activityLog.record(...)` where things happen (db queries, connect/disconnect, tool calls, notifications, network, IPC calls, plugin boot, renderer store mutations, perf) | `src/main/ipc/db.ts`, `ipc-handlers.ts`, `src/main/ipc/context.ts`, `src/main/plugins/plugin-host.ts`, `src/main/mcp/server.ts`, … |
+| **Renderer diagnostics** | renderer-side recorder (`recordActivity` over `activity:record`) + verbose flag; verbose-gated store-mutation + long-task capture | `src/renderer/src/lib/diagnostics.ts`, `src/renderer/src/lib/store-diagnostics.ts` |
 | **Renderer store** | mirrors the stream (cap 1000), applies each IPC batch in one update | `src/renderer/src/stores/activity.ts` |
-| **Activity panel** | filter (kind + level), search, pause, export, expand-detail UI | `src/renderer/src/components/shell/ActivityPanel.tsx` |
+| **Activity panel** | filter (kind + level), search, pause, export, severity summary, verbose toggle, expand-detail drawer | `src/renderer/src/components/shell/ActivityList.tsx` (presentational), `ActivityPanel.tsx` (container) |
 
 Entries are deliberately free of secrets, and every stored text field is clipped
 to 2000 chars so a giant SQL/error can't bloat the ring or the IPC payload.
 
 ## The `log` kind and the app logger
 
-Activity entries have a `kind` and a `level`. Alongside the existing kinds
-(`query`, `tool-call`, `connection`, `notification`, `network`) there is a `log`
-kind for general diagnostics, and the level set adds `debug` (so `debug` →
-`info` → `success` / `warn` → `error`).
+Activity entries have a `kind` and a `level`. Alongside the user-facing kinds
+(`query`, `tool-call`, `connection`, `notification`, `network`) there are
+developer-oriented kinds — `ipc` (a renderer→main IPC call), `plugin` (a plugin
+lifecycle event), `store` (a renderer state-store mutation), `perf` (a
+performance signal such as a long task) — and a `log` kind for general
+diagnostics. The level set adds `debug` (so `debug` → `info` → `success` /
+`warn` → `error`).
+
+Beyond the headline fields, an entry can carry an optional `stack` (full error
+stack on a failure), `metadata` (a structured, **secret-free** JSON payload —
+args/request/response/diffs — rendered in the detail drawer; clipped to 8 KB and
+dropped if it can't serialise), and `traceId` (correlates related entries, e.g.
+an IPC call and the query it triggered).
 
 `createLogger(sink, scope)` returns a `Logger` with `debug` / `info` / `warn` /
 `error(message, detail?)` and a `child(scope)` for narrower scopes
@@ -49,6 +67,29 @@ kind for general diagnostics, and the level set adds `debug` (so `debug` →
 The host provides it as the `logger` service so plugins can log into the same
 stream, and wires a few glue call-sites (plugin boot, MCP auto-start, drag-drop)
 through it instead of raw `console.error`.
+
+## Developer recorders
+
+Several glue seams record diagnostics into the stream automatically. All of them
+record metadata only — **never argument values, request/response bodies, or auth
+headers**, which can carry secrets.
+
+- **IPC tracing** (`src/main/ipc/context.ts`) — the shared `handle()` wrapper
+  records an `ipc` entry (level `debug`) for every typed IPC call, with the
+  channel, timing, and ok/err. The `activity:*` channels are excluded to avoid a
+  feedback loop (recording an entry would itself record an entry).
+- **Plugin lifecycle** (`src/main/plugins/plugin-host.ts`) — each plugin's final
+  boot state and the overall boot summary are mirrored as `plugin` entries.
+- **Network** — the AI providers call `tracedFetch` (`src/main/activity/net.ts`)
+  instead of raw `fetch`, so outbound provider requests show as `network`
+  entries.
+- **Renderer diagnostics** (`src/renderer/src/lib/diagnostics.ts`,
+  `store-diagnostics.ts`) — `installRendererDiagnostics()` (called once from
+  `main.tsx`) subscribes to the Zustand stores and a `longtask`
+  `PerformanceObserver`, recording `store` and `perf` entries over the
+  `activity:record` IPC. This is **verbose-gated**: capture is off by default and
+  costs nothing until a dev flips the Activity panel's **verbose** toggle, which
+  flips the renderer's diagnostics flag.
 
 ## Clever processing: batching & pause
 
@@ -74,16 +115,27 @@ keeps, while export still sees every matching entry.
 Storybook); it owns its own filter/search/pause state. `ActivityPanel` is the
 thin container that wires the live store. Controls:
 
-- **Search** — free-text across title, detail, and source.
-- **Kind chips** and **level chips** — multi-select; empty = show all.
+- **Search** — free-text across title, detail, source, and serialized metadata.
+- **Kind chips** and **level chips** — multi-select; empty = show all. The kind
+  chips include the developer kinds (`ipc`, `plugin`, `store`, `perf`).
+- **Severity summary** — error/warn counts for the session; click a count to
+  filter to that level.
+- **Verbose toggle** — turns on renderer `store` + `perf` capture (see
+  [Developer recorders](#developer-recorders)).
 - **Pause / resume** — freeze the displayed snapshot.
 - **Export** — download the matching entries as JSON (`verql-activity-<ts>.json`).
 - **Clear** — empties the log (via `activity:clear`).
 
+Each row expands into a **detail drawer** with the structured fields —
+timestamp, kind, level, source, duration, `traceId`, the `metadata` JSON, and
+the error `stack` when present.
+
 ## Data model
 
 ```ts
-type ActivityKind  = 'query' | 'tool-call' | 'connection' | 'notification' | 'network' | 'log'
+type ActivityKind  =
+  | 'query' | 'tool-call' | 'connection' | 'notification' | 'network'
+  | 'ipc' | 'plugin' | 'store' | 'perf' | 'log'
 type ActivityLevel = 'debug' | 'info' | 'success' | 'warn' | 'error'
 
 interface ActivityEntry {
@@ -95,6 +147,9 @@ interface ActivityEntry {
   detail?: string      // longer text (SQL, error, serialized log detail)
   source?: string      // connection id/name, provider/tool id, or logger scope
   durationMs?: number
+  stack?: string       // full error stack on a failure
+  metadata?: Record<string, unknown>  // structured, secret-free JSON for the drawer
+  traceId?: string     // correlates related entries
 }
 ```
 
@@ -106,12 +161,17 @@ interface ActivityEntry {
 |---------|------|
 | Shared types | `shared/activity.ts` |
 | Activity ring buffer | `src/main/activity/log.ts` |
+| Process-wide sink | `src/main/activity/recorder.ts` |
+| Traced network fetch | `src/main/activity/net.ts` |
 | IPC batcher | `src/main/activity/batcher.ts` |
 | App logger | `src/main/logging/logger.ts` |
-| Host wiring (provide services, stream batches, recorders) | `src/main/ipc-handlers.ts` |
-| IPC channels / events | `shared/ipc.ts` (`activity:list`, `activity:clear`, `activity:batch`) |
+| IPC-trace recorder | `src/main/ipc/context.ts` |
+| Plugin-lifecycle recorder | `src/main/plugins/plugin-host.ts` |
+| Renderer diagnostics (recorder + verbose store/perf capture) | `src/renderer/src/lib/diagnostics.ts`, `src/renderer/src/lib/store-diagnostics.ts` |
+| Host wiring (provide services, stream batches, recorders, set sink) | `src/main/ipc-handlers.ts` |
+| IPC channels / events | `shared/ipc.ts` (`activity:list`, `activity:clear`, `activity:record`, `activity:batch`) |
 | Renderer store | `src/renderer/src/stores/activity.ts` |
-| Activity panel UI | `src/renderer/src/components/shell/ActivityPanel.tsx` |
+| Activity panel UI | `src/renderer/src/components/shell/ActivityList.tsx`, `ActivityPanel.tsx` |
 | Tests | `tests/unit/activity-log.test.ts`, `tests/unit/activity-batcher.test.ts`, `tests/unit/logger.test.ts`, `tests/unit/components/shell/activity-list.test.tsx` |
 
 See also: [notifications.md](./notifications.md) for the **attention seam** (a

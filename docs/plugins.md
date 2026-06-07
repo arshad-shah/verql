@@ -173,6 +173,11 @@ A driver makes a new database type available. It must implement the
 ```ts
 ctx.drivers.register('cassandra', {
   createAdapter: (config) => new CassandraAdapter(config),
+  // Field `type` is one of: 'text' | 'password' | 'number' | 'boolean' |
+  // 'select' | 'file' | 'file-path'. `file` stores the selected file's
+  // *contents* (e.g. an inline SSH key); `file-path` stores its native *path*
+  // (e.g. a SQLite database file or a private-key file the adapter reads
+  // itself). Add `accept: '.db,.sqlite'` to filter the picker / drag-drop.
   connectionFields: [...],
 
   // Free-form badge — never branched on. Use it for displayNames like
@@ -213,9 +218,23 @@ ctx.drivers.register('cassandra', {
   // answer over the RPC bridge.
   sampleQuery: async (table, schema) => `SELECT * FROM ${table} LIMIT 100;`,
 
-  // Reads all rows for export. Use `createRelationalGetTableData(quoteChar)`
-  // from the SDK if your driver speaks plain SELECT.
+  // Reads all rows for a table/collection/key-prefix. Use
+  // `createRelationalGetTableData(quoteChar)` from the SDK if your driver speaks
+  // plain SELECT. Powers both data export *and* the "View data" grid (the
+  // `'table'` tab) over `db:get-table-data` — so a non-SQL driver (Redis
+  // key/value, Mongo documents) gets a real browse grid the renderer can't build
+  // from a SELECT. The renderer gates the "View data" action on
+  // `hasGetTableData`, set automatically when this is present.
   getTableData: async (adapter, table, schema) => { ... },
+
+  // Optional EXPLAIN capability. `statement` is the prefix the renderer prepends
+  // *verbatim* to the query — the renderer never hardcodes an EXPLAIN dialect.
+  // `format: 'tree'` ⇒ the renderer draws an ExplainNode tree; 'text' ⇒ raw plan
+  // text. Omit the whole `explain` capability if the driver can't explain
+  // (e.g. Redis, Mongo) — that hides the Explain action. Bundled values:
+  // Postgres/MySQL `EXPLAIN ANALYZE`, SQLite `EXPLAIN QUERY PLAN`,
+  // Snowflake `EXPLAIN`.
+  explain: { supportsAnalyze: true, format: 'tree', statement: 'EXPLAIN ANALYZE' },
 
   // Used by the migration tool when this driver is the *target* of a
   // schema migration. Async; compose `generateCreateTable()` from the SDK or

@@ -145,7 +145,14 @@ cross-process catalogue in `shared/i18n`; the renderer wraps it with
 (`forms/`, `layout/`, `surfaces/`, `data-display/`, …) and styled with
 class-variance-authority. Theming is three layers in `primitives/theme/tokens.css`
 (raw color scale → semantic tokens remapped per theme → component tokens),
-applied via a `data-theme` attribute by `ThemeProvider`.
+applied via a `data-theme` attribute by `ThemeProvider`. Variant names follow
+semantic tokens (e.g. Button's destructive variant is `error`, not `danger`;
+Banner gained a `success` variant), and most primitives now expose a `size`
+variant. `Switch` is built from a hidden checkbox + a visual track driven by
+`--color-switch-*` tokens so the toggle reads identically across light/dark/plugin
+themes; `ColorInput`'s picker portals so it isn't clipped. The new
+`GradientSurface` (`surfaces/`) paints a soft, theme-derived gradient
+(`tone` × `intensity`) for hero panels, empty states, and callouts.
 
 **Key libraries:** Monaco (SQL editor, custom completion in
 `lib/monaco-sql.ts`), AG Grid (results), `@xyflow/react` (ER diagrams), Recharts
