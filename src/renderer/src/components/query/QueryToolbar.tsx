@@ -25,7 +25,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
     <Flex direction="row" align="center" gap="sm" className="flex-1">
       {isExecuting ? (
         <Button
-          variant="danger"
+          variant="error"
           size="sm"
           onClick={onCancel}
           className="flex items-center gap-1.5 bg-error/10 text-error hover:bg-error/20 border-0"

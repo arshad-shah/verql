@@ -379,7 +379,7 @@ export function App() {
           <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
             <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
             <Button
-              variant="danger"
+              variant="error"
               size="sm"
               onClick={async () => {
                 const id = pendingCloseId

@@ -30,7 +30,7 @@ export function ConfirmDialog({
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
         <Button variant="outline" size="sm" onClick={onCancel}>{cancelLabel}</Button>
         <Button
-          variant={variant === 'danger' ? 'danger' : 'solid'}
+          variant={variant === 'danger' ? 'error' : 'solid'}
           size="sm"
           onClick={onConfirm}
         >

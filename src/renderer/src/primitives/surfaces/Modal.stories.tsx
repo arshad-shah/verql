@@ -34,7 +34,7 @@ export const Default: Story = {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button variant="danger" onClick={handleClose}>Delete</Button>
+              <Button variant="error" onClick={handleClose}>Delete</Button>
             </div>
           </div>
         </Modal>

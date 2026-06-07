@@ -8,7 +8,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['solid', 'outline', 'ghost', 'danger'],
+      options: ['solid', 'outline', 'ghost', 'error'],
     },
     size: {
       control: 'select',
@@ -32,7 +32,7 @@ export const Default: Story = {
 export const Variants: Story = {
   render: () => (
     <div className="flex flex-col gap-6">
-      {(['solid', 'outline', 'ghost', 'danger'] as const).map((variant) => (
+      {(['solid', 'outline', 'ghost', 'error'] as const).map((variant) => (
         <div key={variant} className="flex items-center gap-3">
           <span className="w-16 text-xs text-text-muted">{variant}</span>
           {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (

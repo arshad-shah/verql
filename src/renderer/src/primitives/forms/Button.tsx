@@ -11,7 +11,7 @@ const buttonVariants = cva(
         outline:
           'border border-border-default bg-transparent hover:bg-hover hover:border-border-strong text-text-primary',
         ghost: 'bg-transparent hover:bg-hover text-text-primary',
-        danger: 'bg-error-emphasis text-text-inverse hover:bg-error shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_var(--color-overlay-soft)]',
+        error: 'bg-error-emphasis text-text-inverse hover:bg-error shadow-[inset_0_1px_0_var(--color-button-highlight),0_1px_2px_var(--color-overlay-soft)]',
       },
       size: {
         xs: 'h-7 px-2 text-xs rounded',
