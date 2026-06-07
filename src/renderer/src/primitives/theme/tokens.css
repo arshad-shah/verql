@@ -195,4 +195,18 @@
      theme's own foreground colour into transparency. */
   --color-skeleton-base: color-mix(in oklab, var(--color-text-primary) 14%, transparent);
   --color-skeleton-highlight: color-mix(in oklab, var(--color-text-primary) 28%, transparent);
+
+  /* Switch — tuned so the toggle looks *identical in spirit* on every theme,
+     light or dark. The knob is always the lightest, raised element (a white
+     surface) and the off-track is always darker than it: mixing the theme's
+     foreground INTO its background yields a mid-grey in either polarity, so
+     the knob-lighter-than-track relationship never inverts the way a
+     foreground-tinted track + surface knob would. The on-track is the accent.
+     Depth comes from fixed shadows in the component (not theme overlay
+     tokens), so lift reads the same everywhere. Themes may override any of
+     these — e.g. a warm theme might set a cream knob. */
+  --color-switch-track-off: color-mix(in oklab, var(--color-text-primary) 30%, var(--color-bg-secondary));
+  --color-switch-track-off-hover: color-mix(in oklab, var(--color-text-primary) 42%, var(--color-bg-secondary));
+  --color-switch-track-on: var(--color-accent);
+  --color-switch-thumb: #ffffff;
 }
