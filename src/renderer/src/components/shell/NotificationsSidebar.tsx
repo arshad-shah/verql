@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 import { Flex, Text, Button, EmptyState } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
+import { formatRelativeTime } from '@/lib/format-time'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { t } from '@shared/i18n'
 
 const typeIcons: Record<Notification['type'], typeof AlertCircle> = {
   error: AlertCircle,
@@ -36,17 +36,6 @@ const typeBgColors: Record<Notification['type'], string> = {
   warning: 'bg-warning/10',
   info: 'bg-info/10',
   success: 'bg-success/10',
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return t('shell.notifications.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return t('shell.notifications.minutesAgo', { count: minutes })
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return t('shell.notifications.hoursAgo', { count: hours })
-  const days = Math.floor(hours / 24)
-  return t('shell.notifications.daysAgo', { count: days })
 }
 
 function buildCopyPayload(n: Notification): string {

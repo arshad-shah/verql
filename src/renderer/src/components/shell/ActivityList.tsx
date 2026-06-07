@@ -7,6 +7,7 @@ import { Flex, Box, Text, cn } from '@/primitives'
 import type { ActivityEntry, ActivityKind, ActivityLevel } from '@shared/activity'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { MessageKey } from '@shared/i18n'
+import { formatClockTime, formatClockTimeWithMillis } from '@/lib/format-time'
 import { setDiagnosticsVerbose, isDiagnosticsVerbose } from '@/lib/diagnostics'
 
 const KIND_META: Record<ActivityKind, { icon: typeof Database; label: MessageKey }> = {
@@ -44,17 +45,6 @@ const ALL_KINDS = Object.keys(KIND_META) as ActivityKind[]
  *  export still sees every matching entry. */
 const MAX_RENDERED = 400
 
-function formatTime(ts: number): string {
-  const d = new Date(ts)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-}
-
-function formatFull(ts: number): string {
-  const d = new Date(ts)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
-}
 
 /** A labelled field row in the detail drawer. */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -100,7 +90,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
           : <span className="w-[11px] shrink-0" />}
         <Icon size={13} className={cn('shrink-0', LEVEL_CLASS[entry.level])} />
         <span className="font-mono text-[10px] text-text-muted shrink-0 tabular-nums">
-          {formatTime(entry.ts)}
+          {formatClockTime(entry.ts)}
         </span>
         <span className={cn('truncate flex-1 min-w-0', entry.level === 'error' && 'text-error')}>
           {entry.title}
@@ -117,7 +107,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
 
       {open && expandable && (
         <div className="mt-2 ml-[24px] flex flex-col gap-1.5 pb-1">
-          <Field label="Time">{formatFull(entry.ts)}</Field>
+          <Field label="Time">{formatClockTimeWithMillis(entry.ts)}</Field>
           <Field label="Kind">{t(KIND_META[entry.kind].label)} · {entry.level}</Field>
           {entry.source && <Field label="Source">{entry.source}</Field>}
           {entry.durationMs !== undefined && <Field label="Duration">{Math.round(entry.durationMs)}ms</Field>}

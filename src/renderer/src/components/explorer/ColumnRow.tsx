@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Key, Link, Hash } from 'lucide-react'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { useToastStore } from '@/stores/toast'
+import { useClipboardCopy } from '@/hooks/useClipboardCopy'
 import type { SchemaColumn } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -98,26 +98,18 @@ function ConstraintBadge({ column }: { column: SchemaColumn }) {
 
 export function ColumnRow({ column, tableName }: ColumnRowProps) {
   const { t } = useTranslation()
-  const addToast = useToastStore((s) => s.addToast)
+  const copy = useClipboardCopy()
 
   const qualifiedName = `${tableName}.${column.name}`
 
   const menuItems = [
     {
       label: t('explorer.menu.copyColumnName'),
-      onSelect: () => {
-        navigator.clipboard.writeText(column.name).then(() => {
-          addToast({ type: 'success', title: t('explorer.toast.copiedColumnName') })
-        })
-      },
+      onSelect: () => copy(column.name, 'explorer.toast.copiedColumnName'),
     },
     {
       label: t('explorer.menu.copyQualifiedName'),
-      onSelect: () => {
-        navigator.clipboard.writeText(qualifiedName).then(() => {
-          addToast({ type: 'success', title: t('explorer.toast.copiedQualifiedName') })
-        })
-      },
+      onSelect: () => copy(qualifiedName, 'explorer.toast.copiedQualifiedName'),
     },
   ]
 

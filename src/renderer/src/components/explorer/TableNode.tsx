@@ -7,6 +7,7 @@ import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
 import { TableHoverActions } from './TableHoverActions'
 import { useTableNodeActions } from './useTableNodeActions'
+import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface TableNodeProps {
@@ -16,12 +17,6 @@ interface TableNodeProps {
   depth: number
   onExportTable?: (tableName: string) => void
   highlightQuery?: string
-}
-
-function formatRowCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
-  return String(count)
 }
 
 export function TableNode({
@@ -83,7 +78,7 @@ export function TableNode({
         className="text-xs shrink-0"
         style={{ color: 'var(--color-text-secondary)' }}
       >
-        {formatRowCount(rowCount)}
+        {formatCompactNumber(rowCount)}
       </span>
     ) : null
 
@@ -173,7 +168,7 @@ export function TableNode({
                   color: 'var(--color-text-secondary)',
                 }}
               >
-                {t('explorer.table.rows', { value: formatRowCount(rowCount), n: rowCount })}
+                {t('explorer.table.rows', { value: formatCompactNumber(rowCount), n: rowCount })}
               </span>
             )}
             {tableIndexes.length > 0 && (

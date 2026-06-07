@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
 import { createOnigurumaEngine } from 'shiki/engine/oniguruma'
 import DOMPurify from 'dompurify'
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard'
 
 const SUPPORTED_LANGS = ['sql', 'json', 'javascript'] as const
 type SupportedLang = typeof SUPPORTED_LANGS[number]
@@ -40,7 +41,7 @@ export interface CodeViewProps {
 
 export function CodeView({ code, language, actions, showCopy = true }: CodeViewProps) {
   const [html, setHtml] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard(1500)
 
   useEffect(() => {
     let cancelled = false
@@ -55,14 +56,9 @@ export function CodeView({ code, language, actions, showCopy = true }: CodeViewP
     return () => { cancelled = true }
   }, [code, language])
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }, [code])
+  const handleCopy = () => copy(code)
 
-  const langLabel = LANG_LABELS[language || ''] || language || 'SQL'
+  const langLabel = LANG_LABELS[language || ''] || language || 'Code'
 
   return (
     <div className="my-2 rounded-lg border border-[var(--color-border)] overflow-hidden">
