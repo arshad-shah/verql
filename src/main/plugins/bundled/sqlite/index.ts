@@ -154,6 +154,7 @@ export function activate(ctx: PluginContext): void {
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SQLITE_QUOTE),
+    explain: { supportsAnalyze: false, format: 'text', statement: 'EXPLAIN QUERY PLAN' },
     generateMigrationDdl: async (tableName, columns) => {
       // SQLite quirk: the rowid alias is only created when the column is
       // declared exactly as `INTEGER PRIMARY KEY` (no NOT NULL needed —

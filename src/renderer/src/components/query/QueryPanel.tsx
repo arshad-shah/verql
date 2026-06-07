@@ -315,11 +315,15 @@ export function QueryPanel({ tab }: Props) {
 
   const explainSql = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
+    // The explain statement is driver-declared (capabilities.explain); the app
+    // never hardcodes an EXPLAIN dialect. Drivers without it can't explain.
+    const explain = caps?.explain
+    if (!explain) return
     const sql = (sqlOverride?.trim() || editorRegistry.getSelectedSql() || tab.sql).trim()
     if (!sql) return
     setTabExecuting(tab.id, true)
     try {
-      const result = await executeWithSchema(`EXPLAIN ANALYZE ${sql}`)
+      const result = await executeWithSchema(`${explain.statement} ${sql}`)
       if (result) {
         setTabResults(tab.id, result)
         void refreshQueryPlan(result)
@@ -332,7 +336,7 @@ export function QueryPanel({ tab }: Props) {
     } catch (err) {
       setTabError(tab.id, (err as Error).message)
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, caps, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
 
   const handleExplain = useCallback(() => explainSql(), [explainSql])
 
@@ -351,7 +355,8 @@ export function QueryPanel({ tab }: Props) {
       },
       label: tab.title,
       runStatement: (sql) => { void runSql(sql) },
-      explainStatement: (sql) => { void explainSql(sql) },
+      // Only expose the per-statement Explain when the driver can explain.
+      explainStatement: caps?.explain ? (sql) => { void explainSql(sql) } : undefined,
       txnStatus: () => {
         const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
         return (t?.type === 'query' ? t.txn?.status : undefined) ?? 'none'
@@ -362,7 +367,7 @@ export function QueryPanel({ tab }: Props) {
       rollbackTransaction: doRollback,
     })
     return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave, runSql, explainSql, doCommit, doRollback])
+  }, [tab.id, tab.title, handleSave, runSql, explainSql, caps, doCommit, doRollback])
 
   return (
     <Flex direction="column" className="h-full">
@@ -377,6 +382,7 @@ export function QueryPanel({ tab }: Props) {
             onExplain={handleExplain}
             isExecuting={tab.isExecuting}
             connectionType={dbType}
+            canExplain={Boolean(caps?.explain)}
           />
         </Flex>
         {/* Transaction toolbar — only shown when driver reports session capabilities.

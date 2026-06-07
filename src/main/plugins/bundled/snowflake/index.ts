@@ -226,6 +226,7 @@ export function activate(ctx: PluginContext): void {
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SNOWFLAKE_QUOTE),
+    explain: { supportsAnalyze: false, format: 'text', statement: 'EXPLAIN' },
     generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,

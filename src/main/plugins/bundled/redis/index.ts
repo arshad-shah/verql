@@ -221,7 +221,11 @@ Do not use SQL syntax. Use standard Redis commands.`
     },
     editorLanguage: 'plaintext',
     statementSyntax: 'redis',
-    sampleQuery: async (key: string) => `GET ${key}`,
+    // "Tables" are key prefixes (e.g. `user:1`,`user:2` → `user`). List the keys
+    // under the prefix instead of `GET <prefix>` (a prefix isn't itself a key, so
+    // GET returned nil — or WRONGTYPE on a non-string key). Glob metachars in the
+    // prefix are escaped so a name can't expand into an unintended wildcard.
+    sampleQuery: async (prefix: string) => `KEYS ${prefix.replace(/[*?[\]\\]/g, '\\$&')}:*`,
     getTableData,
     connectionFields: [
       { key: 'host', label: 'Host', type: 'text', required: true, default: 'localhost' },
