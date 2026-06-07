@@ -1,9 +1,19 @@
 name: Release
 
-# Triggered by pushing a `v*` tag to the repo. The tag MUST be created
+# Triggered by pushing a `v*.*.*` tag to the repo. The tag MUST be created
 # from `main` and signed by a maintainer (see SETTINGS.md → tag protection).
 # Forks that push tags will hit the repository guard and the workflow
 # will short-circuit before doing any work.
+#
+# Per-platform distribution + update channel:
+#   • macOS   — signed/notarised dmg+zip → GitHub Release (draft). The
+#                Homebrew cask is bumped from the published release by
+#                homebrew-bump.yml. (Unchanged by design.)
+#   • Linux   — AppImage → GitHub Release (this is the electron-updater feed:
+#                latest-linux.yml) AND Snap → Snap Store (snapd auto-refreshes).
+#   • Windows — MSIX (appx) → Microsoft Store (the Store handles updates).
+# Only the Linux AppImage is wired to electron-updater; the in-app updater is
+# hard-guarded to AppImage installs (src/main/updater/auto-update.ts).
 
 on:
   push:
@@ -30,25 +40,17 @@ jobs:
             exit 1
           fi
 
-  # ─── 1. Build per-platform binaries ──────────────────────────────────────
-  build:
-    name: Build (${{ matrix.os }})
+  # ─── 1a. macOS build (signed + notarised) ────────────────────────────────
+  # Untouched in spirit: produces the dmg/zip the Homebrew cask consumes and
+  # the cosigned sha256sums. Published via the draft in the `publish` job.
+  build-macos:
+    name: Build (macOS)
     needs: guard
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-14
     timeout-minutes: 30
     permissions:
       contents: read
       id-token: write   # for sigstore keyless signing of artifacts
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-14
-            artifact_glob: dist/Verql-*.dmg
-          - os: ubuntu-latest
-            artifact_glob: dist/Verql-*.AppImage
-          - os: windows-latest
-            artifact_glob: dist/Verql*Setup*.exe
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -66,8 +68,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # electron-builder packages whatever electron-vite emitted into `out/`.
-      # Without this step the asar sanity check fails with:
-      #   Application entry file "out/main/index.js" ... was not found
       - name: Build (electron-vite)
         run: pnpm exec electron-vite build
 
@@ -76,7 +76,7 @@ jobs:
       # keychain. Skipped silently when the secret isn't set so forks / branch
       # CI runs still succeed (they just produce unsigned binaries).
       - name: Import macOS signing certificate
-        if: matrix.os == 'macos-14' && env.MAC_CERT_P12_BASE64 != ''
+        if: env.MAC_CERT_P12_BASE64 != ''
         env:
           MAC_CERT_P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
           MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
@@ -98,8 +98,8 @@ jobs:
       # into a temporary keychain so electron-builder picks it up automatically.
       # When it's unset, we explicitly disable identity discovery so the build
       # produces an unsigned bundle instead of erroring on a missing cert.
+      # `--publish=never`: macOS assets are attached to the draft by `publish`.
       - name: Build (macOS)
-        if: matrix.os == 'macos-14'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
@@ -108,35 +108,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only for publish=never, kept for parity
         run: pnpm exec electron-builder --mac --publish=never
 
-      - name: Build (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec electron-builder --linux --publish=never
-
-      - name: Build (Windows)
-        if: matrix.os == 'windows-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec electron-builder --win --publish=never
-
       # ─── Hash + sign ──────────────────────────────────────────────────────
       - name: Compute SHA-256 of build artifacts
         shell: bash
         run: |
           cd dist
-          # Only the user-facing installers, not the intermediate files.
           shopt -s nullglob
-          if [ "${{ matrix.os }}" = "macos-14" ]; then
-            files=( *.dmg *.zip latest-mac.yml )
-          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            files=( *.AppImage latest-linux.yml )
-          else
-            files=( *.exe latest.yml )
-          fi
-          # macOS ships `shasum` (Perl); Linux/Windows runners ship GNU
-          # `sha256sum`. Pick whichever is available so output format is
-          # identical (`<hash>  <filename>`).
+          files=( *.dmg *.zip latest-mac.yml )
+          # macOS ships `shasum` (Perl). Output format matches GNU sha256sum.
           if command -v sha256sum >/dev/null 2>&1; then
             HASH=(sha256sum)
           else
@@ -166,26 +145,167 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
-          name: verql-${{ matrix.os }}
+          name: verql-macos
           path: |
             dist/*.dmg
             dist/*.zip
-            dist/*.AppImage
-            dist/*.exe
-            dist/latest*.yml
+            dist/latest-mac.yml
             dist/sha256sums.txt
             dist/sha256sums.txt.sig
             dist/sha256sums.txt.pem
           if-no-files-found: warn
           retention-days: 7
 
-  # ─── 2. Aggregate + publish ───────────────────────────────────────────────
+  # ─── 1b. Linux: AppImage → GitHub Releases, Snap → Snap Store (Job A) ─────
+  build-linux:
+    name: Build & publish (Linux)
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # electron-builder uploads AppImage + latest-linux.yml to the release
+      id-token: write   # sigstore keyless signing of the AppImage checksums
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
+        with:
+          version: 11.1.2
+
+      - name: Setup Node
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build (electron-vite)
+        run: pnpm exec electron-vite build
+
+      # electron-builder shells out to snapcraft to assemble the .snap.
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      # AppImage + latest-linux.yml → the (draft) GitHub Release. This is the
+      # electron-updater feed; `--publish always` creates/updates the draft for
+      # this tag (releaseType is `draft` in electron-builder.yml).
+      - name: Build AppImage + publish to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec electron-builder --linux AppImage --publish always
+
+      # Snap is built locally only — never pushed to GitHub. `snapcraft upload`
+      # below sends it to the Snap Store instead.
+      - name: Build Snap (no GitHub publish)
+        run: pnpm exec electron-builder --linux snap --publish never
+
+      # Parity with the macOS job: checksum + cosign the AppImage feed files and
+      # attach them to the same draft release (distinct name avoids colliding
+      # with the macOS sha256sums.txt).
+      - name: Compute SHA-256 of Linux artifacts
+        shell: bash
+        run: |
+          cd dist
+          shopt -s nullglob
+          : > sha256sums-linux.txt
+          for f in *.AppImage latest-linux.yml; do
+            [ -f "$f" ] && sha256sum "$f" | tee -a sha256sums-linux.txt
+          done
+
+      - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+      - name: Sign Linux sha256sums with cosign keyless
+        shell: bash
+        run: |
+          cd dist
+          [ -s sha256sums-linux.txt ] || { echo "nothing to sign"; exit 0; }
+          cosign sign-blob --yes \
+            --output-signature sha256sums-linux.txt.sig \
+            --output-certificate sha256sums-linux.txt.pem \
+            sha256sums-linux.txt
+
+      - name: Attach Linux checksums to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            dist/sha256sums-linux.txt \
+            dist/sha256sums-linux.txt.sig \
+            dist/sha256sums-linux.txt.pem \
+            --clobber
+
+      # snapd auto-refreshes installed snaps, so this is the Snap update channel.
+      - name: Publish Snap to the Snap Store
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          snap_file=$(ls dist/*.snap | head -n1)
+          echo "Uploading $snap_file to the stable channel"
+          snapcraft upload --release=stable "$snap_file"
+
+  # ─── 1c. Windows: MSIX → Microsoft Store (Job B) ─────────────────────────
+  publish-microsoft-store:
+    name: Build & publish (Microsoft Store)
+    needs: guard
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read    # nothing is written to GitHub; the Store receives the MSIX
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
+        with:
+          version: 11.1.2
+
+      - name: Setup Node
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build (electron-vite)
+        run: pnpm exec electron-vite build
+
+      # MSIX only; never published to GitHub. The Store distributes + updates it.
+      - name: Build MSIX (appx)
+        run: pnpm exec electron-builder --win appx --publish never
+
+      - name: Setup Microsoft Store CLI
+        uses: microsoft/setup-msstore-cli@v1
+
+      - name: Configure msstore CLI
+        run: >
+          msstore reconfigure
+          --tenantId ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          --sellerId ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          --clientId ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          --clientSecret ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+
+      # The Store app must already exist and have one manual submission seeded
+      # in Partner Center (see .github/maintainers/release.md). `-id` is the
+      # Store product Id — kept as a (non-secret) repository variable.
+      - name: Publish to the Microsoft Store
+        shell: bash
+        run: |
+          appx=$(ls dist/*.appx | head -n1)
+          echo "Publishing $appx"
+          msstore publish "$appx" -id "${{ vars.MICROSOFT_STORE_PRODUCT_ID }}"
+
+  # ─── 2. Aggregate macOS assets + SBOM onto the draft release ──────────────
+  # The draft release for this tag is created by `build-linux` (electron-builder
+  # --publish always). This job adds the macOS assets, SBOM and release notes to
+  # it, then leaves it as a draft for the maintainer to review + publish.
   publish:
     name: Publish release
-    needs: build
+    needs: [build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
-      contents: write     # only this job can write to the release
+      contents: write     # only this job + build-linux write to the release
       id-token: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1

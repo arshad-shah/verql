@@ -25,28 +25,37 @@ This document covers cutting a new release end-to-end:
               └────────────────────────┘
                   │       │       │
         ┌─────────┘       │       └─────────┐
-        ▼                 ▼                 ▼
-   ┌─────────┐       ┌──────────┐      ┌─────────┐
-   │ macOS   │       │  Linux   │      │ Windows │
-   │ build   │       │  build   │      │  build  │
-   │ + sign  │       │ (+GPG    │      │ (no     │
-   │ + notar │       │  sums)   │      │  sign)  │
-   └─────────┘       └──────────┘      └─────────┘
-        └──────────────┬───────────────────┘
-                       ▼
-              ┌──────────────────────┐
-              │ Aggregate + publish  │
-              │ - sha256sums.txt     │
-              │ - cosign signature   │
-              │ - CycloneDX SBOM     │
-              │ - draft GitHub       │
-              │   release            │
-              └──────────────────────┘
-                       │
-                       ▼
-                Maintainer reviews
-                and clicks Publish.
+        ▼                 ▼                       ▼
+   ┌─────────┐   ┌────────────────────┐   ┌──────────────┐
+   │ macOS   │   │  Linux             │   │ Windows      │
+   │ build   │   │  AppImage ─▶ GH    │   │ MSIX ─▶      │
+   │ + sign  │   │   Release (draft,  │   │  Microsoft   │
+   │ + notar │   │   electron-updater)│   │  Store       │
+   │         │   │  Snap ─▶ Snap Store│   │ (msstore CLI)│
+   └─────────┘   └────────────────────┘   └──────────────┘
+        │                 │
+        └────────┬────────┘
+                 ▼
+        ┌──────────────────────┐
+        │ Aggregate (macOS) +  │
+        │ attach to the draft  │
+        │ - sha256sums.txt     │
+        │ - cosign signature   │
+        │ - CycloneDX SBOM     │
+        └──────────────────────┘
+                 │
+                 ▼
+          Maintainer reviews
+          and clicks Publish ──▶ AppImage auto-update goes live;
+                                  homebrew-bump.yml fires.
 ```
+
+The **Linux AppImage** is the only channel wired to electron-updater (the
+in-app updater is hard-guarded to AppImage installs in
+[`src/main/updater/auto-update.ts`](../../src/main/updater/auto-update.ts)).
+**Snap** (via `snapd`) and the **Microsoft Store** manage their own updates and
+publish to their respective stores immediately on tag, independent of the draft
+GitHub Release.
 
 The release workflow is in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 
@@ -115,27 +124,80 @@ If you'd rather use a traditional GPG key:
 The current pipeline uses sigstore by default because it requires no
 key material at all.
 
-### Windows — **unsigned per your decision**
+### Windows — **Microsoft Store (MSIX)**
 
-The pipeline ships the NSIS installer without signing. Users will see a
-SmartScreen "Unrecognized App" warning on first run and can click
-"More info" → "Run anyway". This is fine for the first public release
-but should be revisited if you want a smoother install experience.
+Windows ships as an **MSIX** distributed through the Microsoft Store, which
+code-signs the package and handles updates. No code-signing certificate is
+needed (that's why the old NSIS/SmartScreen problem is gone).
 
-When you're ready to sign, the recommended path is **Azure Trusted
-Signing** (~$10/month, no hardware token, signs in CI). Add these
-secrets and replace the `Build (Windows)` step with a sign action
-([Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action)):
+**One-time setup — do this before the first tag:**
 
-- `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` — for
-  a Service Principal with the Code Signing role on your Trusted
-  Signing account.
+1. **Reserve the app** in [Partner Center](https://partner.microsoft.com/dashboard)
+   (Apps and games → New product → MSIX or PWA app). Pick the name.
+2. Open the reserved app → **Product management → Product identity** and copy
+   the three identity values into the `appx:` block of `electron-builder.yml`
+   (they are `PLACEHOLDER`s today):
+   - **Package/Identity/Name** → `appx.identityName`
+   - **Package/Identity/Publisher** (the `CN=…` GUID) → `appx.publisher`
+   - **Package/Properties/PublisherDisplayName** → `appx.publisherDisplayName`
+   These must match exactly or the Store rejects the upload.
+3. **Seed the listing with a manual submission.** `msstore publish` only
+   *updates* an app that is already live, so build an MSIX locally
+   (`pnpm build && pnpm exec electron-builder --win appx`) and submit it once
+   through Partner Center by hand. CI takes over from the next tag.
+4. Note the app's **Store product ID** (Product identity page) and set it as a
+   repository **variable** `MICROSOFT_STORE_PRODUCT_ID` (not a secret — it's
+   not sensitive; `msstore publish -id` reads it).
 
-Alternatives: [SignPath.io](https://signpath.io/) is free for OSS and
-provides a signing portal you trigger manually. Traditional EV / OV
-certs from DigiCert / Sectigo / SSL.com work too but cost more and
-(for EV) require a hardware token, which doesn't translate cleanly
-into CI.
+**Create the publishing credentials (Azure Entra app registration):**
+
+1. Azure portal → **Microsoft Entra ID → App registrations → New registration**.
+   Note the **Application (client) ID** and the **Directory (tenant) ID**.
+2. In that registration → **Certificates & secrets → New client secret** and
+   copy the secret *value* immediately.
+3. **Link the app registration in Partner Center**: Account settings → User
+   management → **Azure AD applications → Add Azure AD application**, pick the
+   registration, and grant it the **Manager** role.
+4. Find your **Seller ID** under Partner Center → Account settings →
+   Identifiers (or Legal info).
+
+Then set these GitHub **secrets**:
+
+| Secret | What it is |
+|--------|------------|
+| `PARTNER_CENTER_TENANT_ID` | Entra **Directory (tenant) ID** |
+| `PARTNER_CENTER_CLIENT_ID` | Entra **Application (client) ID** of the registration |
+| `PARTNER_CENTER_CLIENT_SECRET` | The client secret **value** from step 2 |
+| `PARTNER_CENTER_SELLER_ID` | Partner Center **Seller ID** |
+
+…and the repository **variable** `MICROSOFT_STORE_PRODUCT_ID` from above.
+
+Reference: [Publish app updates to Microsoft Store with GitHub Actions](https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions).
+
+### Linux Snap — **Snap Store**
+
+The Linux build also produces a `snap` that CI uploads to the Snap Store with
+`snapcraft upload --release=stable`. `snapd` auto-refreshes installed snaps, so
+this channel is not wired to electron-updater.
+
+**One-time setup:**
+
+1. Register the name once: `snapcraft register verql` (or on
+   [snapcraft.io](https://snapcraft.io/)).
+2. Export an upload token and store it as the `SNAPCRAFT_STORE_CREDENTIALS`
+   secret:
+
+   ```bash
+   snapcraft export-login \
+     --snaps verql \
+     --channels stable \
+     --acls package_upload \
+     -                       # writes the token to stdout; paste it into the secret
+   ```
+
+| Secret | What it is |
+|--------|------------|
+| `SNAPCRAFT_STORE_CREDENTIALS` | Exported `snapcraft` login token (`package_upload` ACL) |
 
 ### Sigstore keyless signing
 
@@ -170,17 +232,22 @@ Provided automatically by GitHub Actions. The workflow's job-level
 A published release on
 `https://github.com/arshad-shah/verql/releases/tag/vX.Y.Z` includes:
 
+A published GitHub Release contains the macOS + Linux **direct-download** assets:
+
 | Asset | Platform | What it is |
 |-------|----------|------------|
-| `Verql-X.Y.Z.dmg` | macOS Intel | Disk image, signed & notarised |
-| `Verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
-| `Verql-X.Y.Z-mac.zip` | macOS (both arches) | For auto-updater |
-| `Verql-X.Y.Z.AppImage` | Linux x64 | Portable, no install needed |
-| `Verql Setup X.Y.Z.exe` | Windows x64 | NSIS installer (currently unsigned) |
-| `latest-mac.yml` / `latest-linux.yml` / `latest.yml` | All | Auto-updater feeds |
-| `sha256sums.txt` | All | Hashes of every binary |
-| `sha256sums.txt.sig` + `.pem` | All | Sigstore signature + cert |
+| `verql-X.Y.Z-x64.dmg` | macOS Intel | Disk image, signed & notarised |
+| `verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
+| `verql-X.Y.Z-*-mac.zip` | macOS (both arches) | For the macOS auto-updater feed |
+| `verql-X.Y.Z-x64.AppImage` | Linux x64 | Portable, **electron-updater** target |
+| `latest-mac.yml` / `latest-linux.yml` | macOS / Linux | Auto-updater feeds |
+| `sha256sums.txt` (+`.sig`/`.pem`) | macOS | Hashes + sigstore signature/cert |
+| `sha256sums-linux.txt` (+`.sig`/`.pem`) | Linux | Hashes + sigstore signature/cert |
 | `verql-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
+
+The **MSIX (Windows)** and **Snap (Linux)** builds are *not* attached to the
+GitHub Release — they're submitted to the Microsoft Store and Snap Store
+respectively. Users install/update those from the stores.
 
 ## Verifying a release as a user
 
@@ -214,17 +281,21 @@ mutated it after the build.
    trusted-signing action (or wire `electron-builder` to call
    `signtool.exe` via the SignPath toolset).
 
-### Add `latest*.yml` upload for auto-updates
+### `latest*.yml` auto-updates — **wired (AppImage)**
 
-Already produced by `electron-builder` per platform. They're uploaded
-alongside the binaries. `electron-updater` in the app can be wired
-later by:
+This is now live for the Linux AppImage:
 
-1. `pnpm add electron-updater`
-2. In `src/main/index.ts`, call `autoUpdater.checkForUpdatesAndNotify()`
-   on app startup.
-3. The renderer can subscribe to lifecycle events via a new IPC
-   channel.
+- `electron-updater` is a dependency; `latest-linux.yml` is published to the
+  GitHub Release by `electron-builder --publish always` in the `build-linux`
+  job.
+- `src/main/index.ts` calls `initAutoUpdater()` on app ready, which runs
+  `autoUpdater.checkForUpdatesAndNotify()` — but only inside a packaged Linux
+  AppImage (`src/main/updater/auto-update.ts` gates on `process.env.APPIMAGE`,
+  with an `APP_UPDATER_ENABLED=1|0` override). The Store/Snap/Homebrew channels
+  are deliberately excluded because they self-update.
+
+Because the GitHub Release is created as a **draft**, AppImage clients only
+pick up the new version once a maintainer publishes it.
 
 ### Promote a draft release
 
@@ -234,5 +305,7 @@ before users see them. Once you're happy:
 1. Go to https://github.com/arshad-shah/verql/releases
 2. Find the draft, click Edit
 3. Click "Publish release"
-4. Users with the app installed will get notified by the
-   auto-updater (once that's wired).
+4. Linux AppImage users get notified by the in-app auto-updater, and
+   `homebrew-bump.yml` fires to update the macOS cask. (Microsoft Store
+   and Snap users already received their update when CI submitted to those
+   stores on tag.)

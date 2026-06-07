@@ -37,11 +37,17 @@ is built from [`docs/`](./docs/); its source lives in [`site/`](./site/).
 Pre-built binaries are published to
 [GitHub Releases](https://github.com/arshad-shah/verql/releases):
 
-| Platform | Format | Notes |
-|----------|--------|-------|
-| macOS    | `.dmg` (Intel + Apple Silicon) | Signed and notarised. |
-| Linux    | `.AppImage` | Signature published as a detached `.sig` next to the `sha256sums.txt`. |
-| Windows  | `.exe` (NSIS installer) | **Unsigned.** SmartScreen will warn the first time it runs; see `.github/maintainers/release.md` for the upgrade path. |
+| Platform | Format | Where | Updates |
+|----------|--------|-------|---------|
+| macOS    | `.dmg` (Intel + Apple Silicon) | GitHub Releases / Homebrew cask | Homebrew (`brew upgrade --cask verql`) |
+| Linux    | `.AppImage` | GitHub Releases | **In-app auto-update** (electron-updater) |
+| Linux    | Snap | [Snap Store](https://snapcraft.io/) | `snapd` auto-refresh |
+| Windows  | MSIX | [Microsoft Store](https://apps.microsoft.com/) | Microsoft Store |
+
+Auto-updates differ per channel by design: only the Linux **AppImage** is
+driven by electron-updater (it polls GitHub Releases). The Microsoft Store,
+Snap (`snapd`), and Homebrew each manage their own updates, so the in-app
+updater stays out of their way.
 
 Verifying a release:
 
@@ -86,6 +92,62 @@ pnpm changeset
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full workflow.
+
+## Releasing & store publishing
+
+Pushing a `v*.*.*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
+which builds every platform, publishes the **Linux AppImage** (+ the
+`latest-linux.yml` auto-update feed) to a draft GitHub Release, pushes the
+**Snap** to the Snap Store, and submits the **MSIX** to the Microsoft Store.
+Full operator detail (including macOS signing) lives in
+[`.github/maintainers/release.md`](.github/maintainers/release.md).
+
+### Required secrets
+
+Set these as **repository secrets** at
+`Settings → Secrets and variables → Actions`:
+
+| Secret | Channel | How to obtain |
+|--------|---------|---------------|
+| `PARTNER_CENTER_TENANT_ID` | Microsoft Store | Azure **Entra ID** → your tenant's **Directory (tenant) ID**. |
+| `PARTNER_CENTER_CLIENT_ID` | Microsoft Store | **App registration** in Entra ID (Azure portal → Entra ID → App registrations → New registration) → the app's **Application (client) ID**. |
+| `PARTNER_CENTER_CLIENT_SECRET` | Microsoft Store | In that app registration → **Certificates & secrets → New client secret** (copy the *value* immediately). |
+| `PARTNER_CENTER_SELLER_ID` | Microsoft Store | Partner Center → **Account settings → Identifiers / Legal info** → your **Seller ID**. |
+| `SNAPCRAFT_STORE_CREDENTIALS` | Snap Store | Run `snapcraft export-login --snaps verql --channels stable --acls package_upload -` and paste the exported token blob. |
+
+Plus one **repository variable** (not a secret) at the same screen → *Variables*:
+
+| Variable | What it is |
+|----------|------------|
+| `MICROSOFT_STORE_PRODUCT_ID` | The **Store product ID** of your reserved app (Partner Center → your app → *Product identity*); passed to `msstore publish -id`. |
+
+> The first three Microsoft secrets come from a single **Entra app
+> registration** that you must then **link in Partner Center** (Account
+> settings → User management → Azure AD applications → *Add Azure AD
+> application*) and grant the **Manager** role so it can submit on your behalf.
+> See [Microsoft's guide](https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions).
+
+The macOS / Apple signing secrets and the optional Windows code-signing path
+are documented separately in
+[`.github/maintainers/release.md`](.github/maintainers/release.md).
+
+### One-time manual setup (before CI can publish)
+
+CI cannot create a Store listing or a Snap from nothing — seed each once:
+
+- **Microsoft Store:** the app must **already exist** in Partner Center.
+  Reserve the name, then copy the exact **Identity Name**, **Publisher**
+  (`CN=…`) and **Publisher display name** into the `appx:` block of
+  [`electron-builder.yml`](electron-builder.yml) (they're `PLACEHOLDER`s
+  today). The **first MSIX must be submitted manually** through Partner
+  Center to seed the listing — `msstore publish` only updates an app that is
+  already live. Then create the Entra app registration and link it (above).
+- **Snap Store:** register the name once with `snapcraft register verql`
+  (or on snapcraft.io), then generate `SNAPCRAFT_STORE_CREDENTIALS` with
+  `snapcraft export-login` as above.
+- **Linux AppImage auto-update:** nothing to seed — but the GitHub Release is
+  created as a **draft**; electron-updater clients only see it once a
+  maintainer **publishes** it.
 
 ## Security
 

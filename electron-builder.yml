@@ -12,11 +12,23 @@ asarUnpack:
 # Publish target — releases go to the GitHub Releases of this repo only.
 # CI guards on $GITHUB_REPOSITORY before invoking electron-builder, so a
 # fork that triggers the workflow can't publish to this owner.
+#
+# This is the electron-updater feed. Only the Linux AppImage consumes it
+# (latest-linux.yml is generated + uploaded here); the in-app updater
+# (src/main/updater/auto-update.ts) is hard-guarded to AppImage installs.
+# The Microsoft Store (MSIX) and the Snap Store manage their own updates, so
+# their artifacts are NOT routed through this provider — see the per-target
+# notes on `win` and `snap` below.
+#
+# `releaseType: draft` uploads assets to a *draft* GitHub Release so a
+# maintainer can review before it goes live. electron-updater only sees a
+# release once it's published, which doubles as the human gate that also
+# triggers homebrew-bump.yml.
 publish:
   provider: github
   owner: arshad-shah
   repo: verql
-  releaseType: release
+  releaseType: draft
 
 mac:
   category: public.app-category.developer-tools
@@ -30,18 +42,46 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
   # gatekeeperAssess: false  # left at default; CI runs codesign + notarytool
 
-# Windows: shipped UNSIGNED on first release. Users will see a SmartScreen
-# warning until reputation builds or a code-signing certificate is added.
-# (See .github/maintainers/release.md for the upgrade path.)
+# Windows: shipped as an MSIX (appx) and distributed through the Microsoft
+# Store. The Store code-signs the package and drives its own updates, so
+# electron-updater is intentionally NOT wired for this build and electron-
+# builder generates no update feed (app-update.yml) for the appx target.
 win:
   target:
-    - target: nsis
+    - target: appx
       arch: [x64]
-  verifyUpdateCodeSignature: false
+
+# MSIX identity. These values come from Partner Center once the app name is
+# reserved — replace every PLACEHOLDER below before the first Store submission
+# (see .github/maintainers/release.md → "Microsoft Store"):
+#   • identityName / publisher / publisherDisplayName MUST match exactly what
+#     Partner Center shows under Product management → Product identity, or the
+#     Store will reject the upload.
+appx:
+  identityName: PLACEHOLDER.Verql                 # e.g. 12345ArshadShah.Verql
+  publisher: CN=PLACEHOLDER-PUBLISHER-ID          # the CN=... GUID from Partner Center
+  publisherDisplayName: Arshad Shah               # publisher display name in Partner Center
+  applicationId: Verql                            # alphanumeric, no spaces/dots
+  displayName: Verql
+  backgroundColor: "#1e1e2e"
+  languages:
+    - en-US
 
 linux:
+  # AppImage → GitHub Releases (the electron-updater feed). Snap → Snap Store,
+  # where snapd auto-refreshes installed snaps, so Snap is not part of the
+  # electron-updater feed and is not published to GitHub (see `snap.publish`).
   target:
     - AppImage
+    - snap
   category: Development
   # AppImage isn't signed at the binary level; the release pipeline
   # publishes a detached GPG signature for the sha256sums file instead.
+
+snap:
+  grade: stable
+  confinement: strict
+  # Snap is uploaded to the Snap Store by `snapcraft upload` in CI, never to
+  # GitHub Releases. CI builds it with `--publish never`; this `publish: null`
+  # is belt-and-suspenders so it can't inherit the top-level github provider.
+  publish: null

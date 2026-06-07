@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, nativeImage, shell, type MenuItemConstructorO
 import path from 'path'
 import fs from 'fs'
 import { registerIpcHandlers } from './ipc-handlers'
+import { initAutoUpdater } from './updater/auto-update'
 import { IPC_EVENTS } from '@shared/ipc'
 import { t } from '@shared/i18n'
 
@@ -269,6 +270,11 @@ app.whenReady().then(() => {
   registerIpcHandlers()
   buildAppMenu()
   createWindow()
+
+  // Background auto-update for the Linux AppImage only (no-ops on every other
+  // channel — see src/main/updater/auto-update.ts). Store/Snap/Homebrew each
+  // manage their own updates.
+  initAutoUpdater()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
