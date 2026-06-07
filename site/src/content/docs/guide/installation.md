@@ -6,7 +6,7 @@ sidebar:
 ---
 
 Verql ships pre-built binaries for macOS, Linux, and Windows. Pick your platform
-below. The current release is **v0.9.0**.
+below.
 
 All downloads are published on the
 [GitHub Releases page](https://github.com/arshad-shah/verql/releases).
