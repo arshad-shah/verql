@@ -9,6 +9,7 @@ import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import { useAIStore } from '@/stores/ai'
 import { useQueryHistoryStore } from '@/stores/query-history'
 import { initTabPersistence, restoreOpenTabs } from '@/stores/tab-persistence'
+import { installRendererDiagnostics } from '@/lib/store-diagnostics'
 import { hydrateSavedQueries } from '@/components/saved-queries/SavedQueriesPanel'
 import './styles/globals.css'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -50,6 +51,9 @@ function AppLoader() {
 
       await hydrate()
       initSettingsListener()
+      // Wire verbose renderer diagnostics (state + perf). Capture stays off
+      // until the dev flips the Activity panel's verbose toggle.
+      installRendererDiagnostics()
       // Restore the previous session's query tabs before the shell paints,
       // gated by the user's preference. Persistence runs regardless so the
       // snapshot stays fresh if they enable restore later.

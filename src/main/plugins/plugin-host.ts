@@ -3,6 +3,7 @@ import path from 'path'
 import os from 'os'
 import { execFileSync } from 'child_process'
 import { app } from 'electron'
+import { recordActivity } from '../activity/recorder'
 import type { PluginManifest, LoadedPlugin } from './types'
 import type { PluginStatus, BootReport, PluginContext } from './sdk/types'
 import { createPluginContext, disposePluginContext } from './sdk/index'
@@ -900,7 +901,31 @@ export class PluginBootCoordinator {
       } else if (p.status.state === 'error') {
         console.log(`[plugins] \u2717 ${p.name}: error(${p.status.phase}) — ${p.status.error} [${p.durationMs}ms]`)
       }
+      // Mirror each plugin's final boot state into the activity stream so devs
+      // can see what loaded (and what failed) without reading the terminal.
+      const st = p.status
+      const level = st.state === 'error' ? 'error' : st.state === 'degraded' ? 'warn' : 'success'
+      recordActivity({
+        kind: 'plugin',
+        level,
+        title: `${p.name}: ${st.state}`,
+        source: p.name,
+        durationMs: p.durationMs,
+        detail: st.state === 'error' || st.state === 'degraded' ? st.error : undefined,
+        metadata: {
+          state: st.state,
+          ...(st.state === 'active' ? { contributions: st.contributions } : {}),
+          ...(st.state === 'error' ? { phase: st.phase } : {}),
+        },
+      })
     }
     console.log(`[plugins] Boot complete: ${report.active} active, ${report.degraded} degraded, ${report.failed} failed`)
+    recordActivity({
+      kind: 'plugin',
+      level: report.failed > 0 ? 'error' : report.degraded > 0 ? 'warn' : 'info',
+      title: `Boot complete: ${report.active} active, ${report.degraded} degraded, ${report.failed} failed`,
+      source: 'plugin-host',
+      metadata: { total: report.total, active: report.active, degraded: report.degraded, failed: report.failed },
+    })
   }
 }

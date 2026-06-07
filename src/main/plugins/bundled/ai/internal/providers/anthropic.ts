@@ -1,5 +1,6 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 import type { AIChatMessage } from '@shared/ai-types'
+import { tracedFetch } from '../../../../../activity/net'
 
 /**
  * Returns true if the given Anthropic model still accepts the `temperature`
@@ -132,7 +133,7 @@ export class AnthropicProvider implements AIProvider {
         url.searchParams.set('limit', '100')
         if (lastId) url.searchParams.set('after_id', lastId)
 
-        const response = await fetch(url.toString(), {
+        const response = await tracedFetch(url.toString(), {
           headers: {
             'x-api-key': apiKey,
             'anthropic-version': '2023-06-01',
@@ -224,7 +225,7 @@ export class AnthropicProvider implements AIProvider {
       )
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await tracedFetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
