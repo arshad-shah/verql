@@ -60,6 +60,9 @@ interface UiState {
   commandPaletteOpen: boolean
   setCommandPaletteOpen: (open: boolean) => void
   toggleCommandPalette: () => void
+  // About modal (Help → About Verql)
+  aboutModalOpen: boolean
+  setAboutModalOpen: (open: boolean) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -127,6 +130,8 @@ export const useUiStore = create<UiState>((set) => ({
   commandPaletteOpen: false,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
+  aboutModalOpen: false,
+  setAboutModalOpen: (open) => set({ aboutModalOpen: open }),
 }))
 
 // Keep the live layout-visibility flags in sync with their persisted appearance

@@ -18,6 +18,7 @@ import { query } from './query'
 import { plugins } from './plugins'
 import { shell } from './shell'
 import { aiui } from './aiui'
+import { about } from './about'
 
 export const en = {
   common,
@@ -32,4 +33,5 @@ export const en = {
   plugins,
   shell,
   aiui,
+  about,
 } as const

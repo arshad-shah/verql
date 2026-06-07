@@ -402,6 +402,20 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  /** App + runtime versions for the in-app About modal. */
+  'app:about-info': {
+    args: []
+    return: {
+      name: string
+      version: string
+      electron: string
+      chrome: string
+      node: string
+      v8: string
+      os: string
+      arch: string
+    }
+  }
   // ── Window controls (custom title bar) ─────────────────────────────────
   // The renderer owns the title bar on every platform. Native window buttons
   // are preserved where the OS offers them (macOS traffic lights, Windows
@@ -816,6 +830,7 @@ export const IPC_CHANNELS = {
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',
+  APP_ABOUT_INFO: 'app:about-info',
   // ── Window controls (custom title bar) ─────────────────────────────────
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggle-maximize',

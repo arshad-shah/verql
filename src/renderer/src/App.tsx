@@ -10,6 +10,7 @@ import { QueryPanel } from '@/components/query/QueryPanel'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
+import { AboutModal } from '@/components/shell/AboutModal'
 import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { editorRegistry } from '@/stores/editor'
@@ -87,6 +88,7 @@ export function App() {
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
   const paletteOpen = useUiStore(s => s.commandPaletteOpen)
+  const aboutModalOpen = useUiStore(s => s.aboutModalOpen)
   // Shared across every close site (tab-bar X, Cmd+W, context menu). The
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
@@ -358,6 +360,7 @@ export function App() {
       <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
         <CommandPalette open={paletteOpen} onClose={() => useUiStore.getState().setCommandPaletteOpen(false)} />
       </SectionErrorBoundary>
+      <AboutModal open={aboutModalOpen} onClose={() => useUiStore.getState().setAboutModalOpen(false)} />
       <SectionErrorBoundary label={t('shell.sectionLabels.mcpApproval')}>
         <MCPApprovalDialog />
       </SectionErrorBoundary>

@@ -17,7 +17,6 @@ import { useSettingsStore } from '@/stores/settings'
 import { editorRegistry } from '@/stores/editor'
 import { tabActions, requestCloseTab } from '@/stores/tab-actions'
 
-const HOMEPAGE_URL = 'https://verql.arshadshah.com'
 const GUIDE_URL = 'https://verql.arshadshah.com/guide/'
 const SDK_URL = 'https://verql.arshadshah.com/plugins/sdk/'
 const ISSUES_URL = 'https://github.com/arshad-shah/verql/issues'
@@ -163,7 +162,7 @@ export function useMenus(): MenuDef[] {
       { kind: 'item', label: t('menu.buildPlugin'), icon: Puzzle, run: () => openExternal(SDK_URL) },
       { kind: 'item', label: t('menu.reportIssue'), icon: Bug, run: () => openExternal(ISSUES_URL) },
       { kind: 'separator' },
-      { kind: 'item', label: t('menu.aboutShort'), icon: Info, run: () => openExternal(HOMEPAGE_URL) },
+      { kind: 'item', label: t('menu.aboutShort'), icon: Info, run: () => useUiStore.getState().setAboutModalOpen(true) },
     ],
   }
 
