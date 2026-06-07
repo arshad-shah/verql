@@ -51,16 +51,13 @@ win:
     - target: appx
       arch: [x64]
 
-# MSIX identity. These values come from Partner Center once the app name is
-# reserved — replace every PLACEHOLDER below before the first Store submission
-# (see .github/maintainers/release.md → "Microsoft Store"):
-#   • identityName / publisher / publisherDisplayName MUST match exactly what
-#     Partner Center shows under Product management → Product identity, or the
-#     Store will reject the upload.
+# MSIX identity. These values come from Partner Center under Product
+# management → Product identity, and MUST match it exactly or the Store
+# rejects the upload (see .github/maintainers/release.md → "Microsoft Store").
 appx:
-  identityName: PLACEHOLDER.Verql                 # e.g. 12345ArshadShah.Verql
-  publisher: CN=PLACEHOLDER-PUBLISHER-ID          # the CN=... GUID from Partner Center
-  publisherDisplayName: Arshad Shah               # publisher display name in Partner Center
+  identityName: Arshadshah.verql                              # Package/Identity/Name
+  publisher: CN=2ABEC305-C7D9-4693-92FC-165FCE8EEA94          # Package/Identity/Publisher
+  publisherDisplayName: Arshad shah                           # Package/Properties/PublisherDisplayName
   applicationId: Verql                            # alphanumeric, no spaces/dots
   displayName: Verql
   backgroundColor: "#1e1e2e"
