@@ -1,5 +1,68 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- [#86](https://github.com/arshad-shah/verql/pull/86) [`a5e74c7`](https://github.com/arshad-shah/verql/commit/a5e74c7c1d0354ccedc613e8b2b68fab719370ef) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Driver-declared EXPLAIN, data-grid browse, and database-explorer fixes
+
+  - **EXPLAIN is now driver-declared.** Each driver's `explain` capability carries
+    the statement to run (Postgres/MySQL `EXPLAIN ANALYZE`, SQLite
+    `EXPLAIN QUERY PLAN`, Snowflake `EXPLAIN`); the app no longer hardcodes a
+    dialect, and the Explain action is hidden for drivers that can't explain
+    (Redis, MongoDB) — fixing the `ERR unknown command 'EXPLAIN'` on Redis.
+  - **Data-grid browse** for non-SQL stores: a new "View data" action opens a
+    key/type/value (Redis) or document (Mongo) grid via the driver's own
+    `getTableData` reader, shown for any driver that declares `hasGetTableData`.
+  - **MySQL explorer** no longer shows server-internal databases and no longer
+    mis-nests schemas (MySQL databases are treated as their own schema).
+  - **GradientSurface** primitive (accent/neutral × subtle/bold) — used by the
+    About modal's hero.
+  - Redis browsing now lists a key prefix's keys instead of erroring; the explorer
+    shows "No columns" for schema-less stores instead of a stuck "Loading…".
+
+- [#86](https://github.com/arshad-shah/verql/pull/86) [`a5e74c7`](https://github.com/arshad-shah/verql/commit/a5e74c7c1d0354ccedc613e8b2b68fab719370ef) Thanks [@arshad-shah](https://github.com/arshad-shah)! - App-designed shell, custom About, and richer diagnostics
+
+  - **Menus & window controls**: replace the native OS application menu on
+    Windows/Linux with an app-designed File / Edit / View / Query / Help menu bar
+    (our own dropdowns + keyboard-shortcut hints, trimmed to what helps), and
+    render the min/max/close window controls with the IconButton primitive.
+  - **About**: a custom in-app "About Verql" modal — branded hero panel, app +
+    build versions with a copyable build block, MIT license, and resource links —
+    replacing the old "open the website" behaviour.
+  - **Diagnostics**: a much more detailed in-app activity stream for debugging —
+    new event kinds (IPC calls, plugin lifecycle, network/API calls, renderer
+    state mutations, performance long-tasks), a structured detail drawer (metadata
+    JSON, duration, error stack), a session error/warning summary, and a verbose
+    capture toggle.
+  - **Design system**: add `size` variants across many primitives and a redesigned
+    Switch (pixel-perfect circular thumb, consistent across every theme); normalize
+    semantic variant names (Button `danger` → `error`, add `success` to Banner);
+    the ColorInput picker now renders in a portal so it can't be clipped; context
+    and dropdown menus hug their content.
+  - **Fixes**: the "show secondary sidebar" / "show bottom dock" settings now take
+    effect live; fill in missing status/accent tokens in the dark, midnight and
+    other themes; open external links via Windows interop under WSL; and don't
+    crash when OS secret encryption is unavailable (headless / WSL).
+
+### Patch Changes
+
+- [#86](https://github.com/arshad-shah/verql/pull/86) [`a5e74c7`](https://github.com/arshad-shah/verql/commit/a5e74c7c1d0354ccedc613e8b2b68fab719370ef) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Redesign the connection form layout into clear, grouped sections. Fields were
+  previously stacked full-width in a single column with duplicate labels and
+  inconsistent section headers. The form now uses titled cards:
+
+  - **General** — database type, name and color side by side, and an auto-commit
+    toggle row.
+  - **Connection** — driver fields laid out in a responsive two-column grid (wide
+    inputs like passwords, selects, and file pickers span the full width), with
+    boolean options grouped into a clean toggle list under an "Options" subheading.
+  - **SSH Tunnel** — collapsible card with a description hint.
+  - A footer action bar pairs **Test Connection** with **Cancel / Save**.
+
+  Fields are still rendered generically from driver and middleware contributions,
+  so the new grid and toggle grouping applies to every database type and any
+  plugin-contributed connection fields.
+
 ## 1.0.0
 
 ### Major Changes
