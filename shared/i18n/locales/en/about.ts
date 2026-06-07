@@ -5,4 +5,7 @@ export const about = {
   viewLicense: 'View license',
   website: 'Website',
   sourceCode: 'Source code',
+  resources: 'Resources',
+  copy: 'Copy',
+  copied: 'Copied',
 } as const
