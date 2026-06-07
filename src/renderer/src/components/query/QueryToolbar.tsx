@@ -11,9 +11,12 @@ interface Props {
   onExplain: () => void
   isExecuting: boolean
   connectionType?: string
+  /** Whether the active driver declares an explain capability. When false the
+   *  Explain action is hidden (e.g. Redis/MongoDB have no EXPLAIN). */
+  canExplain?: boolean
 }
 
-export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, connectionType }: Props) {
+export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, connectionType, canExplain }: Props) {
   const { t } = useTranslation()
   const toolbarContributions = usePluginUIStore(selectContributions('toolbar'))
 
@@ -25,7 +28,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
     <Flex direction="row" align="center" gap="sm" className="flex-1">
       {isExecuting ? (
         <Button
-          variant="danger"
+          variant="error"
           size="sm"
           onClick={onCancel}
           className="flex items-center gap-1.5 bg-error/10 text-error hover:bg-error/20 border-0"
@@ -44,15 +47,17 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
         </Button>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onExplain}
-        disabled={isExecuting}
-        className="flex items-center gap-1.5"
-      >
-        <FileSearch size={12} /> {t('query.toolbar.explain')}
-      </Button>
+      {canExplain && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onExplain}
+          disabled={isExecuting}
+          className="flex items-center gap-1.5"
+        >
+          <FileSearch size={12} /> {t('query.toolbar.explain')}
+        </Button>
+      )}
 
       <Spacer />
 

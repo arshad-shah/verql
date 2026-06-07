@@ -1,9 +1,26 @@
 import React, { useEffect, useRef } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 type SheetSide = 'right' | 'left' | 'bottom'
 
-type SheetProps = {
+const sheetVariants = cva(
+  'backdrop:bg-black/50 bg-bg-secondary border border-border-default p-0 max-h-full text-text-primary shadow-[var(--shadow-elevated)]',
+  {
+    variants: {
+      size: {
+        sm: 'max-w-xs',
+        md: 'max-w-sm',
+        lg: 'max-w-md',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
+
+type SheetProps = VariantProps<typeof sheetVariants> & {
   open: boolean
   onClose: () => void
   side?: SheetSide
@@ -17,7 +34,7 @@ const sideStyles: Record<SheetSide, string> = {
   bottom: 'fixed bottom-0 left-0 w-full rounded-t-lg',
 }
 
-export function Sheet({ open, onClose, side = 'right', className, children }: SheetProps) {
+export function Sheet({ open, onClose, side = 'right', size, className, children }: SheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -41,11 +58,7 @@ export function Sheet({ open, onClose, side = 'right', className, children }: Sh
       ref={dialogRef}
       onClose={onClose}
       onClick={handleClick}
-      className={cn(
-        'backdrop:bg-black/50 bg-bg-secondary border border-border-default p-0 max-h-full max-w-sm text-text-primary shadow-[var(--shadow-elevated)]',
-        sideStyles[side],
-        className
-      )}
+      className={cn(sheetVariants({ size }), sideStyles[side], className)}
     >
       {children}
     </dialog>

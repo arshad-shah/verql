@@ -26,8 +26,8 @@ describe('Button', () => {
     expect(container.firstChild).toHaveClass('border-border-default')
   })
 
-  it('applies danger variant', () => {
-    const { container } = render(<Button variant="danger">Danger</Button>)
+  it('applies error variant', () => {
+    const { container } = render(<Button variant="error">Delete</Button>)
     expect(container.firstChild).toHaveClass('bg-error-emphasis')
   })
 

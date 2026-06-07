@@ -1,6 +1,6 @@
 import React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AlertCircle, Info, AlertTriangle, X } from 'lucide-react'
+import { AlertCircle, Info, AlertTriangle, CheckCircle, X } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { Flex } from '../layout/Flex'
 import { Text } from '../typography/Text'
@@ -12,6 +12,7 @@ const bannerVariants = cva(
     variants: {
       variant: {
         default: 'bg-bg-elevated text-text-primary',
+        success: 'bg-success/10 text-success',
         info: 'bg-info/10 text-info',
         warning: 'bg-warning/10 text-warning',
         error: 'bg-error/10 text-error',
@@ -25,6 +26,7 @@ const bannerVariants = cva(
 
 const variantIcons = {
   default: Info,
+  success: CheckCircle,
   info: Info,
   warning: AlertTriangle,
   error: AlertCircle,
@@ -32,6 +34,7 @@ const variantIcons = {
 
 const variantTextColor = {
   default: undefined,
+  success: 'success',
   info: undefined,
   warning: 'warning',
   error: 'error',

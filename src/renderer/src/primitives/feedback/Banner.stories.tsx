@@ -9,7 +9,7 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'info', 'warning', 'error'],
+      options: ['default', 'success', 'info', 'warning', 'error'],
     },
   },
 } satisfies Meta<typeof Banner>
@@ -29,6 +29,7 @@ export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 480 }}>
       <Banner variant="default">Default system message banner.</Banner>
+      <Banner variant="success">Success: changes saved.</Banner>
       <Banner variant="info">Info: scheduled maintenance on Sunday 02:00 UTC.</Banner>
       <Banner variant="warning">Warning: your trial expires in 3 days.</Banner>
       <Banner variant="error">Error: failed to sync — check connection.</Banner>

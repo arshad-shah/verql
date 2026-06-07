@@ -95,6 +95,7 @@ interface TabsState {
   setTabIsolation: (id: string, isolationLevel: string) => void
   setTabReadOnly: (id: string, readOnly: boolean) => void
   openErDiagram: (connectionId: string, schema: string) => string
+  openTableData: (connectionId: string, tableName: string, schema: string) => string
   openConnectionForm: (editingId?: string) => string
   openPluginDetail: (pluginName: string, displayName: string) => string
   openInstallPlugin: () => string
@@ -270,6 +271,25 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       tabs: [...s.tabs, tab],
       activeTabId: id
     }))
+    return id
+  },
+
+  openTableData: (connectionId: string, tableName: string, schema: string) => {
+    const id = `table-${connectionId}-${schema}-${tableName}`
+    const existing = get().tabs.find(t => t.id === id)
+    if (existing) {
+      set({ activeTabId: id })
+      return id
+    }
+    const tab: import('@shared/types').TableTab = {
+      id,
+      type: 'table',
+      title: tableName,
+      connectionId,
+      tableName,
+      schema,
+    }
+    set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
     return id
   },
 

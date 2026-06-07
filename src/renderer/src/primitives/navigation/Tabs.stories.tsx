@@ -59,6 +59,30 @@ export const Default: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: function Render() {
+    const [activeSm, setActiveSm] = useState('data')
+    const [activeMd, setActiveMd] = useState('data')
+    const [activeLg, setActiveLg] = useState('data')
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: 560 }}>
+        <div>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Small</p>
+          <Tabs tabs={TABS} activeTab={activeSm} onTabChange={setActiveSm} size="sm" />
+        </div>
+        <div>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Medium (default)</p>
+          <Tabs tabs={TABS} activeTab={activeMd} onTabChange={setActiveMd} size="md" />
+        </div>
+        <div>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Large</p>
+          <Tabs tabs={TABS} activeTab={activeLg} onTabChange={setActiveLg} size="lg" />
+        </div>
+      </div>
+    )
+  },
+}
+
 export const States: Story = {
   render: function Render() {
     const [activeTwoTab, setActiveTwoTab] = useState('overview')

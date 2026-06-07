@@ -43,6 +43,38 @@ export const Default: Story = {
   ),
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: 480 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size}>
+          <p style={{ fontSize: 12, marginBottom: 8, color: 'var(--color-text-secondary)' }}>Size: {size}</p>
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head size={size}>ID</Table.Head>
+                <Table.Head size={size}>Name</Table.Head>
+                <Table.Head size={size}>Email</Table.Head>
+                <Table.Head size={size}>Role</Table.Head>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {users.map((user) => (
+                <Table.Row key={user.id}>
+                  <Table.Cell size={size}>{user.id}</Table.Cell>
+                  <Table.Cell size={size}>{user.name}</Table.Cell>
+                  <Table.Cell size={size}>{user.email}</Table.Cell>
+                  <Table.Cell size={size}>{user.role}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        </div>
+      ))}
+    </div>
+  ),
+}
+
 export const States: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: 600 }}>

@@ -7,9 +7,11 @@ const textareaVariants = cva(
   {
     variants: {
       size: {
+        xs: 'px-2 py-1.5 text-xs rounded',
         sm: 'px-2.5 py-2 text-xs rounded',
         md: 'px-3 py-2.5 text-sm rounded-md',
         lg: 'px-4 py-3 text-sm rounded-md',
+        xl: 'px-5 py-3.5 text-base rounded-lg',
       },
       error: {
         true: 'border-error focus:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',

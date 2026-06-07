@@ -119,13 +119,19 @@ export class MysqlAdapter implements DbAdapter {
 
   async getSchemas(): Promise<string[]> {
     if (!this.pool) throw new Error('Not connected')
-    const [rows] = await this.pool.query(`SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys') ORDER BY schema_name`)
-    return (rows as { schema_name: string }[]).map(r => r.schema_name)
+    // MySQL has no schema layer distinct from databases — a database *is* a
+    // schema. So the connection's current database is its single schema; the
+    // explorer's generic database → schema → table model then renders each
+    // database with its own tables. (`switchDatabase` updates `config.database`
+    // before the explorer fetches schemas for an expanded database node.)
+    // Keeping this quirk in the driver lets the renderer stay dialect-agnostic.
+    return this.config.database ? [this.config.database as string] : []
   }
 
   async getDatabases(): Promise<string[]> {
     if (!this.pool) throw new Error('Not connected')
-    const [rows] = await this.pool.query(`SELECT schema_name FROM information_schema.schemata ORDER BY schema_name`)
+    // Exclude server-internal schemas so the explorer only lists user databases.
+    const [rows] = await this.pool.query(`SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys') ORDER BY schema_name`)
     return (rows as { schema_name: string }[]).map(r => r.schema_name)
   }
 

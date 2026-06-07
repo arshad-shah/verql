@@ -1,7 +1,24 @@
 import React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
-export interface EmptyStateProps {
+const emptyStateVariants = cva(
+  'flex flex-col items-center justify-center text-center',
+  {
+    variants: {
+      size: {
+        sm: 'py-6',
+        md: 'py-12',
+        lg: 'py-16',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
+
+export interface EmptyStateProps extends VariantProps<typeof emptyStateVariants> {
   title: string
   description?: string
   icon?: React.ReactNode
@@ -9,13 +26,10 @@ export interface EmptyStateProps {
   className?: string
 }
 
-export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
+export function EmptyState({ title, description, icon, action, size, className }: EmptyStateProps) {
   return (
     <div
-      className={cn(
-        'flex flex-col items-center justify-center py-12 text-center',
-        className
-      )}
+      className={cn(emptyStateVariants({ size }), className)}
     >
       {icon && <div className="mb-4">{icon}</div>}
       <p className="text-base font-semibold text-text-primary">{title}</p>

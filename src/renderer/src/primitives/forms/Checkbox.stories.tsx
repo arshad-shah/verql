@@ -22,6 +22,19 @@ export const Default: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-4">
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <label key={size} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+          <Checkbox size={size} defaultChecked aria-label={`size ${size}`} />
+          {size}
+        </label>
+      ))}
+    </div>
+  ),
+}
+
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-3">

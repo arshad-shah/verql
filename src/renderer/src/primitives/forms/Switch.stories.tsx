@@ -34,11 +34,48 @@ export const States: Story = {
         { label: 'Disabled off', disabled: true },
         { label: 'Disabled on', defaultChecked: true, disabled: true },
       ].map(({ label, ...props }) => (
-        <label key={label} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+        // The Switch renders its own <label>, so pair it with text in a plain row.
+        <div key={label} className="flex items-center gap-2 text-sm text-text-primary">
           <Switch label={label} {...props} />
-          {label}
-        </label>
+          <span>{label}</span>
+        </div>
       ))}
+    </div>
+  ),
+}
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-6">
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size} className="flex items-center gap-2 text-sm text-text-primary">
+          <Switch label={`${size} off`} size={size} />
+          <Switch label={`${size} on`} size={size} defaultChecked />
+          <span className="text-text-secondary">{size}</span>
+        </div>
+      ))}
+    </div>
+  ),
+}
+
+/** Verifies the toggle reads cleanly on every bundled theme. */
+export const Themes: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      {['nightshift', 'dark', 'light', 'midnight', 'dracula', 'nord', 'solarized', 'catppuccin', 'lab', 'inkpaper'].map(
+        (theme) => (
+          <div
+            key={theme}
+            data-theme={theme}
+            className="flex items-center gap-4 rounded-lg border border-border-default bg-bg-primary p-3"
+          >
+            <span className="w-24 text-xs text-text-secondary">{theme}</span>
+            <Switch label={`${theme} off`} />
+            <Switch label={`${theme} on`} defaultChecked />
+            <Switch label={`${theme} disabled`} defaultChecked disabled />
+          </div>
+        )
+      )}
     </div>
   ),
 }

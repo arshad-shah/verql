@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Verql · About modal prototypes</title>
+<style>
+  :root{
+    --bg-primary:#0B0F16; --bg-secondary:#0E121B; --bg-tertiary:#131825; --bg-elevated:#161B26;
+    --bg-inset:#0E121B;
+    --text-primary:#E8ECF3; --text-secondary:#B8C0D1; --text-tertiary:#7C8499; --text-muted:#7C8499;
+    --accent:#2bd9a3; --accent-emphasis:#00c990; --accent-muted:#002d22;
+    --border-default:rgba(232,236,243,.08); --border-strong:rgba(232,236,243,.16); --border-subtle:rgba(232,236,243,.04);
+    --hover:rgba(232,236,243,.06); --danger:#e81123; --warning:#FFB23D;
+    --shadow-modal:0 24px 70px rgba(0,0,0,.6); --radius:14px;
+    --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+    --font-display:"Georgia","Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--font-ui); color:var(--text-primary);
+    background:
+      radial-gradient(1100px 560px at 12% -10%, rgba(43,217,163,.06), transparent 60%),
+      radial-gradient(900px 480px at 100% 0%, rgba(124,111,247,.05), transparent 55%),
+      #06080d;
+    padding:40px clamp(16px,5vw,72px) 100px;
+  }
+  .page-head{max-width:1000px;margin:0 auto 36px}
+  .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 8px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--text-secondary);font-size:14px;max-width:64ch;margin:0}
+
+  .stack{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+  .spec{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .spec .num{font-family:var(--font-mono);font-size:12px;color:var(--accent);border:1px solid var(--border-strong);border-radius:6px;padding:2px 7px}
+  .spec h2{font-size:18px;margin:0;letter-spacing:-.01em}
+  .spec p{margin:0;color:var(--text-tertiary);font-size:13px}
+
+  /* a dimmed stage that frames each modal like it sits over the app */
+  .stage{
+    border:1px solid var(--border-default); border-radius:16px; overflow:hidden;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 14px, transparent 14px 28px),
+      var(--bg-primary);
+    display:flex; align-items:center; justify-content:center; padding:40px;
+    position:relative; min-height:340px;
+  }
+  .stage::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(1px)}
+  .modal{position:relative;background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:var(--radius);box-shadow:var(--shadow-modal);overflow:hidden}
+
+  /* brand mark */
+  .mark{border-radius:13px;background:linear-gradient(140deg,var(--accent),var(--accent-emphasis));
+    box-shadow:0 0 0 1px rgba(43,217,163,.25), 0 6px 18px rgba(0,0,0,.45);display:grid;place-items:center;color:#04231b;font-weight:800;font-family:var(--font-ui)}
+  .mark.lg{width:56px;height:56px;font-size:24px}
+  .mark.xl{width:72px;height:72px;font-size:30px;border-radius:18px}
+  .mark.sm{width:34px;height:34px;font-size:15px;border-radius:9px}
+
+  .badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-muted);color:var(--accent);border:1px solid rgba(43,217,163,.25)}
+  .muted{color:var(--text-muted)} .sec{color:var(--text-secondary)}
+  .divider{height:1px;background:var(--border-default)}
+  .mono{font-family:var(--font-mono)}
+
+  .btn{font-family:inherit;font-size:13px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--border-default);background:transparent;color:var(--text-primary);transition:background .12s,border-color .12s}
+  .btn:hover{background:var(--hover);border-color:var(--border-strong)}
+  .btn.solid{background:var(--accent-emphasis);border-color:transparent;color:#04231b;font-weight:600}
+  .btn.solid:hover{background:var(--accent)}
+  .x{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--text-muted);cursor:pointer;border:0;background:none}
+  .x:hover{background:var(--hover);color:var(--text-primary)}
+
+  a.link{color:var(--accent);text-decoration:none;font-size:13px;cursor:pointer}
+  a.link:hover{text-decoration:underline}
+  .linkrow{display:flex;flex-wrap:wrap;gap:14px}
+  .iconlink{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);text-decoration:none;cursor:pointer;padding:6px 8px;border-radius:8px}
+  .iconlink:hover{background:var(--hover);color:var(--text-primary)}
+  .iconlink .gi{width:15px;height:15px;color:var(--text-tertiary)}
+
+  /* version list */
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}
+  .kv .row{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+  .kv .k{color:var(--text-muted)} .kv .v{color:var(--text-secondary);font-family:var(--font-mono)}
+
+  svg.gi{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <p class="eyebrow">Verql · Prototype</p>
+    <h1>About Verql — modal designs</h1>
+    <p class="sub">Four directions for the in-app About modal, styled with the live Nightshift tokens (version/build values are sample data). Shown over a dimmed app backdrop. Pick one and I'll build it.</p>
+  </div>
+
+  <div class="stack">
+
+    <!-- ★ CHOSEN · HERO SPLIT + COPYABLE BUILD -->
+    <section>
+      <div class="spec"><span class="num" style="color:#04231b;background:var(--accent);border-color:var(--accent)">★ Chosen</span><h2>Hero split + copyable build block</h2><p>Direction 2's branded panel, with direction 3's copyable build info. The Copy button works.</p></div>
+      <div class="stage">
+        <div class="modal" style="width:620px;display:flex">
+          <!-- Left: brand hero -->
+          <div style="width:230px;padding:30px 26px;display:flex;flex-direction:column;gap:16px;justify-content:center;
+            background:
+              radial-gradient(140px 140px at 28% 18%, rgba(43,217,163,.28), transparent 70%),
+              linear-gradient(160deg, #0c1f1a, #0b0f16);
+            border-right:1px solid var(--border-default)">
+            <div class="mark xl">V</div>
+            <div>
+              <div style="font-size:24px;font-weight:700;letter-spacing:-.01em">Verql</div>
+              <div class="badge" style="margin-top:7px">v1.0.0</div>
+            </div>
+            <div class="sec" style="font-size:12.5px;line-height:1.55">A fast, plugin-powered desktop database client.</div>
+            <div style="flex:1"></div>
+            <div class="muted" style="font-size:10.5px">MIT · © 2026 Arshad Shah</div>
+          </div>
+          <!-- Right: build + resources -->
+          <div style="flex:1;padding:26px 26px 22px;position:relative">
+            <button class="x" aria-label="Close"><svg class="gi" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+
+            <div class="muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Build</div>
+            <div style="position:relative">
+              <pre id="buildBlock" class="mono" style="margin:0;background:var(--bg-inset);border:1px solid var(--border-default);border-radius:10px;padding:13px 14px;font-size:11.5px;color:var(--text-secondary);line-height:1.7;overflow:auto">electron   38.2.2
+node       22.21.1
+chromium   140.0.7339
+v8         14.0.365
+platform   linux · x64</pre>
+              <button class="btn" id="copyBtn" style="position:absolute;top:8px;right:8px;padding:3px 10px;font-size:11px;display:flex;align-items:center;gap:5px">
+                <svg class="gi" viewBox="0 0 16 16" style="width:12px;height:12px"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/></svg>
+                <span id="copyLabel">Copy</span>
+              </button>
+            </div>
+
+            <div class="divider" style="margin:18px 0"></div>
+            <div class="muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Resources</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 8px">
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></svg>Website</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M3 2.5h7l3 3v8H3z"/><path d="M6 7h5M6 9.5h5"/></svg>User Guide</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M5 3H3v3M11 3h2v3M5 13H3v-3M11 13h2v-3"/><rect x="6" y="6" width="4" height="4"/></svg>Build a Plugin</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M6 12c-3 1-3-1.5-4-2m8 4v-2.2c0-.7-.2-1.1-.5-1.4 2-.2 3.5-1 3.5-3.7 0-.8-.3-1.5-.8-2 .1-.3.3-1-.1-2 0 0-.7-.2-2.2.8a7 7 0 00-4 0C4.7 1.5 4 1.7 4 1.7c-.4 1-.2 1.7-.1 2-.5.5-.8 1.2-.8 2 0 2.7 1.5 3.5 3.5 3.7-.3.3-.4.7-.5 1.2"/></svg>Source code</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v4M8 11h.01"/></svg>Report an Issue</a>
+            </div>
+
+            <div class="divider" style="margin:16px 0"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <a class="link" style="font-size:12px">View license</a>
+              <button class="btn">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 · REFINED CLASSIC -->
+    <section>
+      <div class="spec"><span class="num">01</span><h2>Refined classic (centered)</h2><p>Polished version of today's layout — brand, version, tagline, build grid, links.</p></div>
+      <div class="stage">
+        <div class="modal" style="width:460px">
+          <button class="x" aria-label="Close"><svg class="gi" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+          <div style="padding:28px 28px 22px">
+            <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px">
+              <div class="mark lg">V</div>
+              <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px;font-weight:700">Verql</span><span class="badge">v1.0.0</span></div>
+              <div class="sec" style="font-size:13px;max-width:300px">A fast, plugin-powered desktop database client.</div>
+            </div>
+            <div class="divider" style="margin:20px 0"></div>
+            <div class="kv">
+              <div class="row"><span class="k">Electron</span><span class="v">38.2.2</span></div>
+              <div class="row"><span class="k">Node</span><span class="v">22.21.1</span></div>
+              <div class="row"><span class="k">Chromium</span><span class="v">140.0</span></div>
+              <div class="row"><span class="k">V8</span><span class="v">14.0</span></div>
+              <div class="row"><span class="k">Platform</span><span class="v">linux · x64</span></div>
+            </div>
+            <div class="divider" style="margin:20px 0"></div>
+            <div class="muted" style="font-size:12px;margin-bottom:8px">MIT License · © 2026 Arshad Shah · <a class="link">View license</a></div>
+            <div class="linkrow"><a class="link">Website</a><a class="link">User Guide</a><a class="link">Build a Plugin</a><a class="link">Source code</a><a class="link">Report an Issue</a></div>
+            <div style="display:flex;justify-content:flex-end;margin-top:22px"><button class="btn">Close</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · HERO SPLIT -->
+    <section>
+      <div class="spec"><span class="num">02</span><h2>Hero split</h2><p>Branded gradient panel on the left, info + links on the right. Most premium.</p></div>
+      <div class="stage">
+        <div class="modal" style="width:600px;display:flex">
+          <div style="width:218px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;justify-content:center;
+            background:
+              radial-gradient(120px 120px at 30% 20%, rgba(43,217,163,.25), transparent 70%),
+              linear-gradient(160deg, #0c1f1a, #0b0f16);
+            border-right:1px solid var(--border-default)">
+            <div class="mark xl">V</div>
+            <div><div style="font-size:22px;font-weight:700;letter-spacing:-.01em">Verql</div><div class="badge" style="margin-top:6px">v1.0.0</div></div>
+            <div class="sec" style="font-size:12.5px;line-height:1.5">A fast, plugin-powered desktop database client.</div>
+          </div>
+          <div style="flex:1;padding:26px 26px 22px;position:relative">
+            <button class="x" aria-label="Close"><svg class="gi" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+            <div class="muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Build</div>
+            <div class="kv" style="grid-template-columns:1fr 1fr">
+              <div class="row"><span class="k">Electron</span><span class="v">38.2.2</span></div>
+              <div class="row"><span class="k">Node</span><span class="v">22.21.1</span></div>
+              <div class="row"><span class="k">Chromium</span><span class="v">140.0</span></div>
+              <div class="row"><span class="k">V8</span><span class="v">14.0</span></div>
+              <div class="row"><span class="k">Platform</span><span class="v">linux · x64</span></div>
+            </div>
+            <div class="divider" style="margin:18px 0"></div>
+            <div class="muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Resources</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></svg>Website</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M3 2.5h7l3 3v8H3z"/><path d="M6 7h5M6 9.5h5"/></svg>User Guide</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M5 3H3v3M11 3h2v3M5 13H3v-3M11 13h2v-3"/><rect x="6" y="6" width="4" height="4"/></svg>Build a Plugin</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><path d="M6 12c-3 1-3-1.5-4-2m8 4v-2.2c0-.7-.2-1.1-.5-1.4 2-.2 3.5-1 3.5-3.7 0-.8-.3-1.5-.8-2 .1-.3.3-1-.1-2 0 0-.7-.2-2.2.8a7 7 0 00-4 0C4.7 1.5 4 1.7 4 1.7c-.4 1-.2 1.7-.1 2-.5.5-.8 1.2-.8 2 0 2.7 1.5 3.5 3.5 3.7-.3.3-.4.7-.5 1.2"/></svg>Source code</a>
+              <a class="iconlink"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v4M8 11h.01"/></svg>Report an Issue</a>
+            </div>
+            <div class="divider" style="margin:16px 0"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="muted" style="font-size:11px">MIT · © 2026 Arshad Shah</span>
+              <button class="btn">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · EDITORIAL / DEV -->
+    <section>
+      <div class="spec"><span class="num">03</span><h2>Editorial / dev</h2><p>Big wordmark, build info as a copyable code block. Developer-flavoured.</p></div>
+      <div class="stage">
+        <div class="modal" style="width:480px">
+          <button class="x" aria-label="Close"><svg class="gi" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+          <div style="padding:30px 30px 24px">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+              <div class="mark lg">V</div>
+              <div>
+                <div style="font-family:var(--font-display);font-size:34px;line-height:1;letter-spacing:-.01em">Verql</div>
+                <div class="muted mono" style="font-size:11px;margin-top:6px;letter-spacing:.06em">VERSION 1.0.0 · MIT</div>
+              </div>
+            </div>
+            <div class="sec" style="font-size:13px;margin:14px 0 16px">A fast, plugin-powered desktop database client.</div>
+            <div style="position:relative">
+              <pre class="mono" style="margin:0;background:var(--bg-inset);border:1px solid var(--border-default);border-radius:10px;padding:14px;font-size:11.5px;color:var(--text-secondary);line-height:1.7;overflow:auto">electron   38.2.2
+node       22.21.1
+chromium   140.0.7339
+v8         14.0.365
+platform   linux · x64</pre>
+              <button class="btn" style="position:absolute;top:8px;right:8px;padding:3px 9px;font-size:11px">Copy</button>
+            </div>
+            <div class="linkrow" style="margin-top:18px;gap:16px">
+              <a class="link">Website ↗</a><a class="link">Docs ↗</a><a class="link">GitHub ↗</a><a class="link">Issues ↗</a>
+            </div>
+            <div class="muted" style="font-size:11px;margin-top:16px">© 2026 Arshad Shah. Released under the MIT License.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · COMPACT -->
+    <section>
+      <div class="spec"><span class="num">04</span><h2>Compact</h2><p>Small, scannable — header row, tidy build list, icon links, one-line legal.</p></div>
+      <div class="stage">
+        <div class="modal" style="width:380px">
+          <button class="x" aria-label="Close"><svg class="gi" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+          <div style="padding:20px">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
+              <div class="mark sm">V</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:700">Verql <span class="muted mono" style="font-size:11px;font-weight:400">v1.0.0</span></div>
+                <div class="muted" style="font-size:11.5px">Plugin-powered database client</div>
+              </div>
+            </div>
+            <div style="background:var(--bg-inset);border:1px solid var(--border-default);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:5px">
+              <div class="row" style="display:flex;justify-content:space-between;font-size:11.5px"><span class="muted">Electron</span><span class="mono sec">38.2.2</span></div>
+              <div class="row" style="display:flex;justify-content:space-between;font-size:11.5px"><span class="muted">Chromium</span><span class="mono sec">140.0</span></div>
+              <div class="row" style="display:flex;justify-content:space-between;font-size:11.5px"><span class="muted">Node</span><span class="mono sec">22.21.1</span></div>
+              <div class="row" style="display:flex;justify-content:space-between;font-size:11.5px"><span class="muted">Platform</span><span class="mono sec">linux · x64</span></div>
+            </div>
+            <div class="linkrow" style="margin-top:14px;justify-content:space-between">
+              <a class="iconlink" style="padding:5px 6px"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13"/></svg>Web</a>
+              <a class="iconlink" style="padding:5px 6px"><svg class="gi" viewBox="0 0 16 16"><path d="M3 2.5h7l3 3v8H3z"/></svg>Docs</a>
+              <a class="iconlink" style="padding:5px 6px"><svg class="gi" viewBox="0 0 16 16"><path d="M6 12c-3 1-3-1.5-4-2m8 4v-2.2c0-.7-.2-1.1-.5-1.4 2-.2 3.5-1 3.5-3.7 0-.8-.3-1.5-.8-2 .1-.3.3-1-.1-2 0 0-.7-.2-2.2.8a7 7 0 00-4 0C4.7 1.5 4 1.7 4 1.7c-.4 1-.2 1.7-.1 2-.5.5-.8 1.2-.8 2 0 2.7 1.5 3.5 3.5 3.7-.3.3-.4.7-.5 1.2"/></svg>GitHub</a>
+              <a class="iconlink" style="padding:5px 6px"><svg class="gi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v4M8 11h.01"/></svg>Issues</a>
+            </div>
+            <div class="muted" style="font-size:10.5px;margin-top:14px;text-align:center">MIT License · © 2026 Arshad Shah</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+  <script>
+    const btn = document.getElementById('copyBtn')
+    btn?.addEventListener('click', async () => {
+      const text = document.getElementById('buildBlock').textContent
+      try { await navigator.clipboard.writeText(text) } catch { /* ignore */ }
+      const label = document.getElementById('copyLabel')
+      label.textContent = 'Copied'
+      btn.style.color = 'var(--accent)'
+      setTimeout(() => { label.textContent = 'Copy'; btn.style.color = '' }, 1400)
+    })
+  </script>
+</body>
+</html>

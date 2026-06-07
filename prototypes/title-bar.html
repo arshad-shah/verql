@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Verql · Title-bar prototypes</title>
+<style>
+  /* ── Nightshift theme tokens (mirrored from primitives/theme/tokens.css) ── */
+  :root{
+    --bg-primary:#0B0F16; --bg-secondary:#0E121B; --bg-tertiary:#131825; --bg-elevated:#161B26;
+    --text-primary:#E8ECF3; --text-secondary:#B8C0D1; --text-tertiary:#7C8499; --text-muted:#7C8499;
+    --accent:#2bd9a3; --accent-emphasis:#00c990; --accent-muted:#002d22;
+    --border-default:rgba(232,236,243,.08); --border-strong:rgba(232,236,243,.16); --border-subtle:rgba(232,236,243,.04);
+    --hover:rgba(232,236,243,.06); --danger:#e81123; --success:#2bd9a3; --warning:#FFB23D;
+    --shadow-dropdown:0 8px 28px rgba(0,0,0,.55); --radius:10px;
+    --titlebar-h:40px;
+    --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--font-ui); color:var(--text-primary);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(43,217,163,.06), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(124,111,247,.05), transparent 55%),
+      #06080d;
+    padding:40px clamp(16px,5vw,72px) 96px; line-height:1.45;
+  }
+  .page-head{max-width:980px;margin:0 auto 40px}
+  .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 8px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--text-secondary);font-size:14px;max-width:62ch;margin:0}
+  .hint{color:var(--text-tertiary);font-size:12.5px;margin:10px 0 0}
+
+  .stack{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+  .spec{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .spec .num{font-family:var(--font-mono);font-size:12px;color:var(--accent);border:1px solid var(--border-strong);border-radius:6px;padding:2px 7px}
+  .spec h2{font-size:18px;margin:0;letter-spacing:-.01em}
+  .spec p{margin:0;color:var(--text-tertiary);font-size:13px}
+
+  /* ── Faux app window ── */
+  .win{
+    border:1px solid var(--border-default); border-radius:var(--radius); overflow:hidden;
+    background:var(--bg-primary); box-shadow:0 24px 60px rgba(0,0,0,.45);
+  }
+  .titlebar{
+    height:var(--titlebar-h); display:flex; align-items:stretch;
+    background:var(--bg-secondary); border-bottom:1px solid var(--border-default);
+    user-select:none; position:relative;
+  }
+  .tb-left,.tb-center,.tb-right{display:flex;align-items:stretch}
+  .tb-left{gap:0}
+  .tb-spacer{flex:1}
+  .drag{flex:1} /* visual only */
+
+  .brand{display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;font-size:13px}
+  .brand .mark{width:16px;height:16px;border-radius:5px;background:
+    linear-gradient(140deg,var(--accent),var(--accent-emphasis)); box-shadow:0 0 0 1px rgba(43,217,163,.25), 0 2px 6px rgba(0,0,0,.4);}
+  .brand .name{letter-spacing:-.01em}
+
+  /* menubar buttons */
+  .menubtn{display:flex;align-items:center;padding:0 10px;font-size:12.5px;color:var(--text-secondary);
+    background:none;border:0;cursor:pointer;font-family:inherit;transition:background .12s,color .12s}
+  .menubtn:hover,.menubtn[aria-expanded="true"]{background:var(--hover);color:var(--text-primary)}
+
+  /* icon button (≡, quick actions) */
+  .iconbtn{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;min-width:34px;
+    background:none;border:0;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:12.5px;transition:background .12s,color .12s}
+  .iconbtn:hover{background:var(--hover);color:var(--text-primary)}
+  .iconbtn .ico{font-size:14px;line-height:1}
+  .sep{width:1px;background:var(--border-default);margin:8px 6px}
+
+  /* connection chip */
+  .conn{display:flex;align-items:center;gap:8px;padding:0 10px;height:26px;align-self:center;border-radius:7px;
+    border:1px solid var(--border-default);background:var(--bg-tertiary);color:var(--text-primary);font-size:12.5px;cursor:pointer;transition:border-color .12s,background .12s}
+  .conn:hover{border-color:var(--border-strong);background:var(--bg-elevated)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(43,217,163,.18)}
+  .dot.off{background:var(--text-tertiary);box-shadow:none}
+  .caret{color:var(--text-tertiary);font-size:10px}
+
+  /* command palette pill */
+  .palette{display:flex;align-items:center;gap:8px;height:26px;align-self:center;padding:0 10px 0 8px;border-radius:7px;
+    border:1px solid var(--border-default);background:var(--bg-tertiary);color:var(--text-tertiary);font-size:12.5px;cursor:text;min-width:0;transition:border-color .12s}
+  .palette:hover{border-color:var(--border-strong)}
+  .palette.center{flex:0 1 420px}
+  .palette .ph{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .palette-ico{font-size:12px;color:var(--text-tertiary)}
+
+  /* kbd */
+  kbd{font-family:var(--font-mono);font-size:10.5px;line-height:1;color:var(--text-secondary);
+    background:var(--bg-elevated);border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:4px;padding:3px 5px;min-width:16px;text-align:center;display:inline-block}
+  .kbd-row{display:inline-flex;gap:3px;margin-left:auto;padding-left:24px}
+
+  /* window controls */
+  .winctl{display:flex;align-items:stretch}
+  .wc{width:46px;display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--text-muted);cursor:pointer;font-size:14px;transition:background .12s,color .12s}
+  .wc:hover{background:rgba(255,255,255,.10);color:var(--text-primary)}
+  .wc.close:hover{background:var(--danger);color:#fff}
+  .wc svg{width:14px;height:14px}
+
+  /* ── dropdown menu (our DropdownMenu primitive look) ── */
+  .menu-anchor{position:relative;display:flex}
+  .menu{
+    position:absolute;top:calc(100% + 4px);min-width:240px;z-index:30;
+    background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:var(--radius);
+    box-shadow:var(--shadow-dropdown);padding:6px;display:none;
+    animation:pop .12s cubic-bezier(.34,1.56,.64,1);
+  }
+  .menu.left{left:8px} .menu.right{right:8px}
+  .menu.open{display:block}
+  @keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+  .mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:7px;border:0;background:none;
+    color:var(--text-primary);font-family:inherit;font-size:13px;cursor:pointer;text-align:left;white-space:nowrap;transition:background .1s}
+  .mi:hover{background:var(--hover)}
+  .mi .mi-ico{width:16px;color:var(--text-tertiary);font-size:13px;display:inline-flex;justify-content:center}
+  .mi .mi-label{flex:1}
+  .mi.danger{color:#ff8a80}
+  .mi.danger .mi-ico{color:#ff8a80}
+  .mi-sep{height:1px;background:var(--border-default);margin:6px 6px}
+  .mi-head{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);padding:8px 10px 4px}
+  .mi .dot{margin-right:2px}
+  .mi .tag{font-size:10.5px;color:var(--text-tertiary)}
+
+  /* faux app body so the bar is shown in context */
+  .body{height:120px;background:var(--bg-primary);display:flex}
+  .body .rail{width:46px;border-right:1px solid var(--border-default);background:var(--bg-secondary)}
+  .body .tabs{height:34px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;gap:2px;padding:0 8px}
+  .body .col{flex:1;display:flex;flex-direction:column}
+  .tab{font-size:12px;color:var(--text-secondary);padding:6px 12px;border-radius:7px 7px 0 0}
+  .tab.active{color:var(--text-primary);background:var(--bg-primary);border:1px solid var(--border-default);border-bottom-color:transparent}
+  .editor{flex:1;padding:12px 14px;font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary)}
+  .editor .kw{color:var(--accent)} .editor .str{color:var(--warning)}
+
+  .legend{max-width:980px;margin:48px auto 0;color:var(--text-tertiary);font-size:12.5px;border-top:1px solid var(--border-default);padding-top:16px}
+  .legend b{color:var(--text-secondary);font-weight:600}
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <p class="eyebrow">Verql · Prototype</p>
+    <h1>App-designed title bar</h1>
+    <p class="sub">Four directions for replacing the native OS menus with app-designed dropdowns (our DropdownMenu + Kbd primitives), styled with the live Nightshift tokens. Click a menu / ≡ / connection chip to open its dropdown.</p>
+    <p class="hint">Shown for the custom frame (Windows / Linux). Shortcuts use Ctrl; macOS keeps native traffic lights.</p>
+  </div>
+
+  <div class="stack">
+
+    <!-- 1 · UNIFIED TOOLBAR -->
+    <section>
+      <div class="spec"><span class="num">01</span><h2>Unified toolbar</h2><p>One ≡ app menu + inline quick-actions + connection chip + palette. Recommended.</p></div>
+      <div class="win">
+        <div class="titlebar">
+          <div class="tb-left">
+            <div class="menu-anchor">
+              <button class="iconbtn" data-menu="u-app" aria-expanded="false"><span class="ico">☰</span></button>
+              <div class="menu left" id="u-app">
+                <button class="mi"><span class="mi-ico">▦</span><span class="mi-label">New Query</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>N</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⊕</span><span class="mi-label">New Connection…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⌕</span><span class="mi-label">Command Palette…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>K</kbd></span></button>
+                <button class="mi"><span class="mi-ico">▷</span><span class="mi-label">Run Query</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>↵</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⤓</span><span class="mi-label">Export Results…</span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⚙</span><span class="mi-label">Settings</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>,</kbd></span></button>
+                <button class="mi"><span class="mi-ico">?</span><span class="mi-label">Help &amp; Docs</span></button>
+              </div>
+            </div>
+            <div class="brand"><span class="mark"></span><span class="name">Verql</span></div>
+            <div class="sep"></div>
+            <button class="iconbtn"><span class="ico" style="color:var(--accent)">▷</span> Run <span class="kbd-row" style="padding-left:8px"><kbd>Ctrl</kbd><kbd>↵</kbd></span></button>
+            <button class="iconbtn"><span class="ico">＋</span> Query</button>
+          </div>
+          <div class="tb-spacer drag"></div>
+          <div class="tb-right" style="align-items:center;gap:8px;padding-right:6px">
+            <div class="menu-anchor">
+              <button class="conn" data-menu="u-conn" aria-expanded="false"><span class="dot"></span> prod-db <span class="caret">▾</span></button>
+              <div class="menu right" id="u-conn">
+                <div class="mi-head">Connections</div>
+                <button class="mi"><span class="dot"></span><span class="mi-label">prod-db</span><span class="tag">connected</span></button>
+                <button class="mi"><span class="dot" style="background:var(--warning);box-shadow:0 0 0 3px rgba(255,178,61,.18)"></span><span class="mi-label">staging</span></button>
+                <button class="mi"><span class="dot off"></span><span class="mi-label">local-sqlite</span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⊕</span><span class="mi-label">New Connection…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span></button>
+              </div>
+            </div>
+            <div class="palette" style="width:150px"><span class="palette-ico">⌕</span><span class="ph">Search…</span><span class="kbd-row" style="padding-left:8px"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+          </div>
+          <div class="winctl">
+            <button class="wc" title="Minimize"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="wc" title="Maximize"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>
+            <button class="wc close" title="Close"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.4"/></svg></button>
+          </div>
+        </div>
+        <div class="appbody"></div>
+      </div>
+    </section>
+
+    <!-- 2 · CLASSIC MENU BAR -->
+    <section>
+      <div class="spec"><span class="num">02</span><h2>Classic menu bar</h2><p>Familiar File / Edit / View / Query / Help — our dropdowns with Kbd hints.</p></div>
+      <div class="win">
+        <div class="titlebar">
+          <div class="tb-left">
+            <div class="brand"><span class="mark"></span><span class="name">Verql</span></div>
+            <div class="menu-anchor">
+              <button class="menubtn" data-menu="c-file" aria-expanded="false">File</button>
+              <div class="menu left" id="c-file">
+                <button class="mi"><span class="mi-ico">▦</span><span class="mi-label">New Query</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>N</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⊕</span><span class="mi-label">New Connection…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⌂</span><span class="mi-label">Open SQL File…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>O</kbd></span></button>
+                <button class="mi"><span class="mi-ico">▢</span><span class="mi-label">Save</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>S</kbd></span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">✕</span><span class="mi-label">Close Tab</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>W</kbd></span></button>
+              </div>
+            </div>
+            <button class="menubtn">Edit</button>
+            <button class="menubtn">View</button>
+            <div class="menu-anchor">
+              <button class="menubtn" data-menu="c-query" aria-expanded="false">Query</button>
+              <div class="menu left" id="c-query">
+                <button class="mi"><span class="mi-ico" style="color:var(--accent)">▷</span><span class="mi-label">Run</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>↵</kbd></span></button>
+                <button class="mi"><span class="mi-ico">▶</span><span class="mi-label">Run Selection</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>↵</kbd></span></button>
+                <button class="mi"><span class="mi-ico">■</span><span class="mi-label">Cancel</span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">❏</span><span class="mi-label">Format SQL</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>F</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⤓</span><span class="mi-label">Export Results…</span></button>
+              </div>
+            </div>
+            <button class="menubtn">Help</button>
+          </div>
+          <div class="tb-spacer drag"></div>
+          <div class="winctl">
+            <button class="wc" title="Minimize"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="wc" title="Maximize"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>
+            <button class="wc close" title="Close"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.4"/></svg></button>
+          </div>
+        </div>
+        <div class="appbody"></div>
+      </div>
+    </section>
+
+    <!-- 3 · CONNECTION-FORWARD -->
+    <section>
+      <div class="spec"><span class="num">03</span><h2>Connection-forward</h2><p>Active connection is the hero; menus stay compact.</p></div>
+      <div class="win">
+        <div class="titlebar">
+          <div class="tb-left">
+            <div class="brand" style="padding-right:8px"><span class="mark"></span></div>
+            <div class="menu-anchor">
+              <button class="conn" style="height:28px" data-menu="x-conn" aria-expanded="false"><span class="dot"></span> prod-db <span class="caret">▾</span></button>
+              <div class="menu left" id="x-conn">
+                <div class="mi-head">Connections</div>
+                <button class="mi"><span class="dot"></span><span class="mi-label">prod-db</span><span class="tag">connected</span></button>
+                <button class="mi"><span class="dot" style="background:var(--warning);box-shadow:0 0 0 3px rgba(255,178,61,.18)"></span><span class="mi-label">staging</span></button>
+                <button class="mi"><span class="dot off"></span><span class="mi-label">local-sqlite</span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⊕</span><span class="mi-label">New Connection…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⛁</span><span class="mi-label">Manage Connections…</span></button>
+              </div>
+            </div>
+            <div class="sep"></div>
+            <button class="menubtn">File</button>
+            <button class="menubtn">Edit</button>
+            <button class="menubtn">View</button>
+            <button class="menubtn">Query</button>
+            <button class="menubtn">Help</button>
+          </div>
+          <div class="tb-spacer drag"></div>
+          <div class="tb-right" style="align-items:center;padding-right:6px">
+            <div class="palette" style="width:130px"><span class="palette-ico">⌕</span><span class="ph">Search…</span><span class="kbd-row" style="padding-left:8px"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+          </div>
+          <div class="winctl">
+            <button class="wc" title="Minimize"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="wc" title="Maximize"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>
+            <button class="wc close" title="Close"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.4"/></svg></button>
+          </div>
+        </div>
+        <div class="appbody"></div>
+      </div>
+    </section>
+
+    <!-- 4 · COMMAND CENTER -->
+    <section>
+      <div class="spec"><span class="num">04</span><h2>Command center</h2><p>Centered palette is the focal point; one ≡ menu holds the rest.</p></div>
+      <div class="win">
+        <div class="titlebar">
+          <div class="tb-left">
+            <div class="menu-anchor">
+              <button class="iconbtn" data-menu="cc-app" aria-expanded="false"><span class="ico">☰</span></button>
+              <div class="menu left" id="cc-app">
+                <button class="mi"><span class="mi-ico">▦</span><span class="mi-label">New Query</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>N</kbd></span></button>
+                <button class="mi"><span class="mi-ico">⊕</span><span class="mi-label">New Connection…</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span></button>
+                <div class="mi-sep"></div>
+                <button class="mi"><span class="mi-ico">⚙</span><span class="mi-label">Settings</span><span class="kbd-row"><kbd>Ctrl</kbd><kbd>,</kbd></span></button>
+                <button class="mi"><span class="mi-ico">?</span><span class="mi-label">Help &amp; Docs</span></button>
+              </div>
+            </div>
+            <div class="brand"><span class="mark"></span><span class="name">Verql</span></div>
+          </div>
+          <div class="tb-spacer drag" style="justify-content:center;align-items:center;display:flex">
+            <div class="palette center"><span class="palette-ico">⌕</span><span class="ph">Search tables, run a command, jump to a query…</span><span class="kbd-row" style="padding-left:8px"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+          </div>
+          <div class="winctl">
+            <button class="wc" title="Minimize"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="wc" title="Maximize"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>
+            <button class="wc close" title="Close"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.4"/></svg></button>
+          </div>
+        </div>
+        <div class="appbody"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legend">
+    <p><b>Notes.</b> Dropdowns use the DropdownMenu primitive look (bg-elevated, 0600-style shadow, springy open) and the Kbd primitive for shortcut hints. The proposed (trimmed) menu set: New Query / New Connection · Command Palette · Run / Run Selection / Cancel / Format SQL / Export · Settings · Help — the OS-only items (Cut/Copy/Paste, Minimize/Zoom, etc.) are dropped since the editor + window controls already cover them.</p>
+  </div>
+
+<script>
+  // shared faux body injected into each window for context
+  const bodyHTML = `
+    <div class="body">
+      <div class="rail"></div>
+      <div class="col">
+        <div class="tabs"><span class="tab active">query_1.sql</span><span class="tab">users</span><span class="tab">orders</span></div>
+        <div class="editor"><span class="kw">SELECT</span> id, email, created_at<br><span class="kw">FROM</span> users<br><span class="kw">WHERE</span> status = <span class="str">'active'</span><br><span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span> <span class="kw">LIMIT</span> 100;</div>
+      </div>
+    </div>`;
+  document.querySelectorAll('.appbody').forEach(el => el.outerHTML = bodyHTML);
+
+  // dropdown open/close
+  function closeAll(except){
+    document.querySelectorAll('.menu.open').forEach(m=>{ if(m!==except){m.classList.remove('open'); const t=document.querySelector('[data-menu="'+m.id+'"]'); if(t)t.setAttribute('aria-expanded','false');}});
+  }
+  document.querySelectorAll('[data-menu]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const m=document.getElementById(btn.getAttribute('data-menu'));
+      const willOpen=!m.classList.contains('open');
+      closeAll(m);
+      m.classList.toggle('open',willOpen);
+      btn.setAttribute('aria-expanded',String(willOpen));
+    });
+  });
+  document.addEventListener('click',()=>closeAll(null));
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeAll(null); });
+</script>
+</body>
+</html>

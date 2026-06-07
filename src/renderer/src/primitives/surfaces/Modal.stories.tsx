@@ -34,7 +34,7 @@ export const Default: Story = {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button variant="danger" onClick={handleClose}>Delete</Button>
+              <Button variant="error" onClick={handleClose}>Delete</Button>
             </div>
           </div>
         </Modal>
@@ -47,5 +47,32 @@ export const Default: Story = {
     const cancelButton = canvas.getByText('Cancel')
     await user.click(cancelButton)
     await expect(args.onClose).toHaveBeenCalled()
+  },
+}
+
+export const Sizes: Story = {
+  args: { open: false, onClose: fn() },
+  render: () => {
+    const [size, setSize] = useState<'sm' | 'md' | 'lg' | null>(null)
+    return (
+      <div style={{ display: 'flex', gap: 8 }}>
+        {(['sm', 'md', 'lg'] as const).map((s) => (
+          <Button key={s} variant="outline" onClick={() => setSize(s)}>
+            Open {s}
+          </Button>
+        ))}
+        <Modal open={size !== null} onClose={() => setSize(null)} size={size ?? 'md'}>
+          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-primary)' }}>size="{size}"</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              This modal uses the "{size}" size variant.
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <Button variant="ghost" onClick={() => setSize(null)}>Close</Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    )
   },
 }

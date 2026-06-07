@@ -49,3 +49,28 @@ export const Default: Story = {
     await expect(sheetHeading).not.toBeVisible()
   },
 }
+
+export const Sizes: Story = {
+  args: { open: false, onClose: fn() },
+  render: () => {
+    const [size, setSize] = useState<'sm' | 'md' | 'lg' | null>(null)
+    return (
+      <div style={{ display: 'flex', gap: 8 }}>
+        {(['sm', 'md', 'lg'] as const).map((s) => (
+          <Button key={s} variant="outline" onClick={() => setSize(s)}>
+            Open {s}
+          </Button>
+        ))}
+        <Sheet open={size !== null} onClose={() => setSize(null)} side="right" size={size ?? 'md'}>
+          <div style={{ padding: 24, color: 'var(--color-text-primary)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>size="{size}"</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+              This sheet uses the "{size}" width variant.
+            </div>
+            <Button variant="ghost" onClick={() => setSize(null)}>Close</Button>
+          </div>
+        </Sheet>
+      </div>
+    )
+  },
+}

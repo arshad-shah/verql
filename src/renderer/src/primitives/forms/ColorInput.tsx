@@ -1,4 +1,14 @@
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
+import React, { forwardRef, useState } from 'react'
+import {
+  useFloating,
+  useDismiss,
+  useInteractions,
+  FloatingPortal,
+  offset,
+  flip,
+  shift,
+  autoUpdate,
+} from '@floating-ui/react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 import { ColorPicker } from './ColorPicker'
@@ -40,9 +50,19 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
     const isControlled = controlledValue !== undefined
     const [internalValue, setInternalValue] = useState(defaultValue)
     const [isOpen, setIsOpen] = useState(false)
-    const containerRef = useRef<HTMLDivElement>(null)
 
     const currentValue = isControlled ? controlledValue : internalValue
+
+    const { refs, floatingStyles, context } = useFloating({
+      placement: 'bottom-start',
+      open: isOpen,
+      onOpenChange: setIsOpen,
+      whileElementsMounted: autoUpdate,
+      middleware: [offset(4), flip({ padding: 8 }), shift({ padding: 8 })],
+    })
+
+    const dismiss = useDismiss(context)
+    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss])
 
     const setValue = (v: string) => {
       if (!isControlled) setInternalValue(v)
@@ -67,28 +87,8 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
       setValue(hex)
     }
 
-    useEffect(() => {
-      if (!isOpen) return
-      const handler = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-          setIsOpen(false)
-        }
-      }
-      document.addEventListener('mousedown', handler)
-      return () => document.removeEventListener('mousedown', handler)
-    }, [isOpen])
-
-    useEffect(() => {
-      if (!isOpen) return
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setIsOpen(false)
-      }
-      document.addEventListener('keydown', handler)
-      return () => document.removeEventListener('keydown', handler)
-    }, [isOpen])
-
     return (
-      <div ref={containerRef} className="relative">
+      <div ref={refs.setReference} className="relative" {...getReferenceProps()}>
         <div className={cn(colorInputVariants({ size }), disabled && 'opacity-50 pointer-events-none', className)}>
           <button
             type="button"
@@ -116,13 +116,19 @@ export const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
         </div>
 
         {isOpen && showPicker && (
-          <div className="absolute top-full left-0 mt-1 z-50">
-            <ColorPicker
-              value={isValidHex(currentValue) ? currentValue : defaultValue}
-              onChange={handlePickerChange}
-              presets={presets}
-            />
-          </div>
+          <FloatingPortal>
+            <div
+              ref={refs.setFloating}
+              style={{ ...floatingStyles, zIndex: 50 }}
+              {...getFloatingProps()}
+            >
+              <ColorPicker
+                value={isValidHex(currentValue) ? currentValue : defaultValue}
+                onChange={handlePickerChange}
+                presets={presets}
+              />
+            </div>
+          </FloatingPortal>
         )}
       </div>
     )

@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import type { IpcChannelMap } from '@shared/ipc'
+import { recordActivity } from '../activity/recorder'
 import type { DbAdapter } from '../db/adapter'
 import type { ConfigStore } from '../config/store'
 import type { KeyringService } from '../keyring'
@@ -19,8 +20,43 @@ export type Handle = <K extends keyof IpcChannelMap>(
   handler: (...args: IpcChannelMap[K]['args']) => IpcChannelMap[K]['return'] | Promise<IpcChannelMap[K]['return']>
 ) => void
 
+// Activity-stream channels are excluded from IPC tracing to avoid a feedback
+// loop (recording an entry would itself record an entry).
+const TRACE_EXCLUDED = new Set<string>(['activity:list', 'activity:clear', 'activity:record'])
+
+/** Trace every typed IPC call into the activity stream (kind `ipc`, debug level)
+ *  so devs can see exactly what crosses the bridge and how long it took. We
+ *  record only channel + timing + ok/err — never argument values, which may
+ *  carry secrets. */
 export const handle: Handle = (channel, handler) => {
-  ipcMain.handle(channel, (_event, ...args) =>
-    handler(...(args as Parameters<typeof handler>))
-  )
+  ipcMain.handle(channel, async (_event, ...args) => {
+    if (TRACE_EXCLUDED.has(channel as string)) {
+      return handler(...(args as Parameters<typeof handler>))
+    }
+    const start = Date.now()
+    try {
+      const result = await handler(...(args as Parameters<typeof handler>))
+      recordActivity({
+        kind: 'ipc',
+        level: 'debug',
+        title: `${channel} · ${Date.now() - start}ms`,
+        source: String(channel),
+        durationMs: Date.now() - start,
+        metadata: { channel, args: args.length },
+      })
+      return result
+    } catch (err) {
+      recordActivity({
+        kind: 'ipc',
+        level: 'error',
+        title: `${channel} failed`,
+        source: String(channel),
+        durationMs: Date.now() - start,
+        detail: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        metadata: { channel },
+      })
+      throw err
+    }
+  })
 }

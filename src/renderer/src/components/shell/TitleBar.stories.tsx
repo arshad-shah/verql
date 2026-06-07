@@ -1,20 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { TitleBar, type TitleBarPlatform } from './TitleBar'
-import type { MenuBarItem } from './MenuBar'
 
 // The title bar is owned by the app on every platform. Window controls differ:
 // macOS keeps native traffic lights (drawn by the OS — simulated here only so
 // the reserved left inset reads correctly), while Windows + Linux render the
-// real app-drawn WindowControls (shown here exactly as in the app, via the
-// actual TitleBar component).
-
-const SAMPLE_MENU: MenuBarItem[] = [
-  { id: 0, label: 'File', enabled: true },
-  { id: 1, label: 'Edit', enabled: true },
-  { id: 2, label: 'View', enabled: true },
-  { id: 3, label: 'Window', enabled: true },
-  { id: 4, label: 'Help', enabled: true },
-]
+// real app-drawn WindowControls and the app-designed MenuBar (shown here exactly
+// as in the app, via the actual TitleBar component).
 
 /** Simulated macOS traffic lights, positioned where the OS draws them. */
 function MacTrafficLights() {
@@ -32,7 +23,7 @@ function WindowPreview({ platform }: { platform: TitleBarPlatform }) {
   return (
     <div className="w-[820px] overflow-hidden rounded-lg border border-border shadow-2xl">
       <div className="relative">
-        <TitleBar platform={platform} menuItems={platform === 'darwin' ? undefined : SAMPLE_MENU} />
+        <TitleBar platform={platform} />
         {platform === 'darwin' && <MacTrafficLights />}
         {/* Windows + Linux: the real WindowControls render inside TitleBar. */}
       </div>

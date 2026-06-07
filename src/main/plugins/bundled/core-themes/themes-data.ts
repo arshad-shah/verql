@@ -134,6 +134,12 @@ const DARK_CSS = `
   --color-accent: var(--raw-purple-500);
   --color-accent-hover: var(--raw-purple-400);
   --color-accent-muted: var(--raw-purple-900);
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
+
+  --color-success: var(--raw-mint-400);
+  --color-warning: var(--raw-amber-500);
+  --color-error: var(--raw-red-500);
+  --color-info: var(--raw-blue-500);
 
   --color-hover: rgba(255, 255, 255, 0.05);
   --color-active: rgba(255, 255, 255, 0.1);
@@ -229,6 +235,11 @@ const MIDNIGHT_CSS = `
   --color-accent: #8b7cf8;
   --color-accent-hover: #a89bf9;
   --color-accent-muted: #1a1533;
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
   --color-hover: rgba(255, 255, 255, 0.04);
   --color-active: rgba(255, 255, 255, 0.08);
   --color-focus-ring: #8b7cf8;
@@ -271,6 +282,7 @@ const DRACULA_CSS = `
   --color-accent: #bd93f9;
   --color-accent-hover: #caa9fa;
   --color-accent-muted: #2d2540;
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
   --color-success: #50fa7b;
   --color-warning: #f1fa8c;
   --color-error: #ff5555;
@@ -317,6 +329,7 @@ const NORD_CSS = `
   --color-accent: #88c0d0;
   --color-accent-hover: #8fbcbb;
   --color-accent-muted: #1e2a30;
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
   --color-success: #a3be8c;
   --color-warning: #ebcb8b;
   --color-error: #bf616a;
@@ -363,6 +376,7 @@ const SOLARIZED_CSS = `
   --color-accent: #268bd2;
   --color-accent-hover: #2aa198;
   --color-accent-muted: #0a2a3a;
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
   --color-success: #859900;
   --color-warning: #b58900;
   --color-error: #dc322f;
@@ -409,6 +423,7 @@ const CATPPUCCIN_CSS = `
   --color-accent: #cba6f7;
   --color-accent-hover: #b4befe;
   --color-accent-muted: #2a2240;
+  --color-accent-emphasis: color-mix(in oklab, var(--color-accent), black 14%);
   --color-success: #a6e3a1;
   --color-warning: #f9e2af;
   --color-error: #f38ba8;

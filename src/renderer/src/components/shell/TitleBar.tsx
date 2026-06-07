@@ -3,7 +3,7 @@ import appIconUrl from '@brand/icon-light.svg?url'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { platform as detectedPlatform } from '@/lib/platform'
 import { WindowControls } from './WindowControls'
-import { MenuBar, type MenuBarItem } from './MenuBar'
+import { MenuBar } from './MenuBar'
 
 const isDev = import.meta.env.DEV
 
@@ -13,9 +13,6 @@ export type TitleBarPlatform = NodeJS.Platform | 'web'
 
 interface TitleBarProps {
   platform?: TitleBarPlatform
-  /** Preview-only: inject menu items so Storybook can show the menu bar
-   *  without the Electron IPC bridge. The app fetches them over IPC. */
-  menuItems?: MenuBarItem[]
 }
 
 /**
@@ -31,7 +28,7 @@ interface TitleBarProps {
  *
  * The whole bar is a drag region; interactive bits opt out with `no-drag`.
  */
-export function TitleBar({ platform = detectedPlatform, menuItems }: TitleBarProps = {}) {
+export function TitleBar({ platform = detectedPlatform }: TitleBarProps = {}) {
   const { t } = useTranslation()
   const isMac = platform === 'darwin'
   return (
@@ -43,7 +40,7 @@ export function TitleBar({ platform = detectedPlatform, menuItems }: TitleBarPro
         style={{ marginLeft: 'env(titlebar-area-x, 0px)', width: 'env(titlebar-area-width, 100%)' }}
       >
         <div className={`no-drag flex items-center gap-2 ${isMac ? 'pl-20' : 'pl-4'}`}>
-          <img src={appIconUrl} width={18} height={18} alt="" aria-hidden="true" />
+          <img src={appIconUrl} width={24} height={24} alt="" aria-hidden="true" />
           <Text size="sm" weight="semibold" color="primary" className="tracking-wide">
             {t('shell.titleBar.appName')}
           </Text>
@@ -53,9 +50,9 @@ export function TitleBar({ platform = detectedPlatform, menuItems }: TitleBarPro
             </Badge>
           )}
         </div>
-        {/* Windows/Linux render the app menu here (macOS uses the global menu
-            bar). The buttons pop the real native submenus over IPC. */}
-        {!isMac && <MenuBar items={menuItems} />}
+        {/* Windows/Linux render our app-designed menu bar here (macOS uses the
+            global native menu). */}
+        {!isMac && <MenuBar />}
         <div className="flex-1 h-full" />
         {/* Windows + Linux draw their own controls (macOS uses native traffic
             lights). They're h-full so they always match the bar height. */}

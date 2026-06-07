@@ -146,6 +146,7 @@ export function activate(ctx: PluginContext): void {
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(PG_QUOTE),
+    explain: { supportsAnalyze: true, format: 'tree', statement: 'EXPLAIN ANALYZE' },
     generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,

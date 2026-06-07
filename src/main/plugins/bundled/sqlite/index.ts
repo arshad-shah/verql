@@ -145,7 +145,7 @@ export function activate(ctx: PluginContext): void {
     errorRules: sqliteErrorRules,
     defaultSchemaCandidates: ['main'],
     connectionFields: [
-      { key: 'database', label: 'Database File', type: 'file', required: true },
+      { key: 'database', label: 'Database File', type: 'file-path', accept: '.db,.sqlite,.sqlite3,.db3', required: true },
     ],
     sampleQuery: async (table, schema) => {
       const qualified = schema && schema !== 'main'
@@ -154,6 +154,7 @@ export function activate(ctx: PluginContext): void {
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SQLITE_QUOTE),
+    explain: { supportsAnalyze: false, format: 'text', statement: 'EXPLAIN QUERY PLAN' },
     generateMigrationDdl: async (tableName, columns) => {
       // SQLite quirk: the rowid alias is only created when the column is
       // declared exactly as `INTEGER PRIMARY KEY` (no NOT NULL needed —

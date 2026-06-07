@@ -1,4 +1,5 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
+import { tracedFetch } from '../../../../../activity/net'
 
 /** Hosts that are never a legitimate Ollama endpoint but are classic SSRF
  *  targets (cloud metadata, wildcard binds). */
@@ -55,7 +56,7 @@ export class OllamaProvider implements AIProvider {
 
   async models(): Promise<AIProviderModel[]> {
     try {
-      const response = await fetch(`${this.safeBase()}/api/tags`)
+      const response = await tracedFetch(`${this.safeBase()}/api/tags`)
       if (!response.ok) return []
       const data = (await response.json()) as { models?: Array<{ name: string; details?: { parameter_size?: string } }> }
       const tags = data.models ?? []
@@ -82,7 +83,7 @@ export class OllamaProvider implements AIProvider {
 
   private async fetchContextLength(name: string): Promise<number> {
     try {
-      const response = await fetch(`${this.safeBase()}/api/show`, {
+      const response = await tracedFetch(`${this.safeBase()}/api/show`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: name }),
@@ -135,7 +136,7 @@ export class OllamaProvider implements AIProvider {
 
     let response: Response
     try {
-      response = await fetch(`${this.safeBase()}/api/chat`, {
+      response = await tracedFetch(`${this.safeBase()}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -7,9 +7,11 @@ import { StatusBar } from '@/components/shell/StatusBar'
 import { TabBar } from '@/components/shell/tab-bar'
 import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
+import { TableDataView } from '@/components/table/TableDataView'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
+import { AboutModal } from '@/components/shell/AboutModal'
 import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
 import { editorRegistry } from '@/stores/editor'
@@ -27,7 +29,7 @@ import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
-import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import type { QueryTab, TableTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
 import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
 import { initAppActionBridge } from '@/lib/app-actions/bridge'
@@ -86,7 +88,8 @@ export function App() {
   }, [loadConnections])
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
-  const [paletteOpen, setPaletteOpen] = useState(false)
+  const paletteOpen = useUiStore(s => s.commandPaletteOpen)
+  const aboutModalOpen = useUiStore(s => s.aboutModalOpen)
   // Shared across every close site (tab-bar X, Cmd+W, context menu). The
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
@@ -110,7 +113,7 @@ export function App() {
           addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
         },
         [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },
-        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => setPaletteOpen(prev => !prev),
+        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => useUiStore.getState().toggleCommandPalette(),
         [KEYBINDING_ACTION.SAVE_QUERY]: () => { if (activeTabId) void tabActions.save(activeTabId) },
         [KEYBINDING_ACTION.TOGGLE_SIDEBAR]: () => useUiStore.getState().toggleSidebar(),
         [KEYBINDING_ACTION.FOCUS_EDITOR]: () => editorRegistry.get()?.editor.focus(),
@@ -185,7 +188,7 @@ export function App() {
         addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
       }),
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
-      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
+      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => useUiStore.getState().toggleCommandPalette()),
     ]
 
     const handleStatusBarNewConn = () => openConnectionForm()
@@ -267,6 +270,9 @@ export function App() {
               <SectionErrorBoundary label={activeTab?.title ?? t('shell.sectionLabels.tab')} resetKey={activeTabId}>
                 {activeTab?.type === 'query' && (
                   <QueryPanel tab={activeTab as QueryTab} />
+                )}
+                {activeTab?.type === 'table' && (
+                  <TableDataView tab={activeTab as TableTab} />
                 )}
                 {activeTab?.type === 'er-diagram' && (
                   <ERDiagram
@@ -356,8 +362,9 @@ export function App() {
       )}
       <ToastContainer />
       <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
-        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        <CommandPalette open={paletteOpen} onClose={() => useUiStore.getState().setCommandPaletteOpen(false)} />
       </SectionErrorBoundary>
+      <AboutModal open={aboutModalOpen} onClose={() => useUiStore.getState().setAboutModalOpen(false)} />
       <SectionErrorBoundary label={t('shell.sectionLabels.mcpApproval')}>
         <MCPApprovalDialog />
       </SectionErrorBoundary>
@@ -379,7 +386,7 @@ export function App() {
           <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
             <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
             <Button
-              variant="danger"
+              variant="error"
               size="sm"
               onClick={async () => {
                 const id = pendingCloseId

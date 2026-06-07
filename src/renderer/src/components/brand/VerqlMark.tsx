@@ -22,7 +22,6 @@ import { useTheme } from '@/primitives/theme/ThemeProvider'
 import colorUrl from '@/assets/brand/verql-mark-color.svg?url'
 import lightUrl from '@/assets/brand/verql-mark-mono-light.svg?url'
 import darkUrl from '@/assets/brand/verql-mark-mono-dark.svg?url'
-import heroUrl from '@/assets/brand/verql-hero.svg?url'
 
 type Variant = 'color' | 'light' | 'dark' | 'auto'
 
@@ -66,34 +65,6 @@ export function VerqlMark({
       aria-hidden={alt === '' ? true : undefined}
       className={className}
       style={style}
-      draggable={false}
-    />
-  )
-}
-
-/**
- * Hero variant — V-bars framed by a soft ring + tonal halo. Stays in
- * `currentColor` since it's used inside themed surfaces (welcome page,
- * empty states). Imported as a URL and consumed as `<img>` for the same
- * "no tricks" reason as the mark.
- */
-export function VerqlHero({
-  size = 120,
-  className,
-  alt = '',
-}: {
-  size?: number
-  className?: string
-  alt?: string
-}) {
-  return (
-    <img
-      src={heroUrl}
-      width={size}
-      height={size}
-      alt={alt}
-      aria-hidden={alt === '' ? true : undefined}
-      className={className}
       draggable={false}
     />
   )

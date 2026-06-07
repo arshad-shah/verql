@@ -42,3 +42,20 @@ export const Short: Story = {
     ],
   },
 }
+
+export const Sizes: Story = {
+  render: () => {
+    const items = [
+      { label: 'Connections', onClick: fn() },
+      { label: 'my-postgres', onClick: fn() },
+      { label: 'public' },
+    ]
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Breadcrumb items={items} size="sm" />
+        <Breadcrumb items={items} size="md" />
+        <Breadcrumb items={items} size="lg" />
+      </div>
+    )
+  },
+}

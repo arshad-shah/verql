@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Power, PowerOff, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
-import { PluginIcon } from './PluginsPanel'
+import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'

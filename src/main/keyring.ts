@@ -2,9 +2,15 @@ import { safeStorage, app } from 'electron'
 import fs from 'fs'
 import path from 'path'
 
+// Tag for entries we could not encrypt (no OS keyring backend available, e.g.
+// headless / WSL2 Linux). A ':' never appears in base64, so a tagged value can
+// never be mistaken for a legacy (untagged) encrypted blob.
+const PLAINTEXT_PREFIX = 'plain:'
+
 export class KeyringService {
   private filePath: string
   private cache: Record<string, string> = {}
+  private warnedNoEncryption = false
 
   constructor() {
     const userDataPath = app.getPath('userData')
@@ -13,10 +19,34 @@ export class KeyringService {
     this.load()
   }
 
+  // Encrypt via the OS keyring when available; otherwise fall back to an
+  // obfuscated (NOT encrypted) representation so secret writes don't crash on
+  // platforms without a backend. The credentials file is mode 0600 either way.
+  private encode(value: string): string {
+    if (safeStorage.isEncryptionAvailable()) {
+      return safeStorage.encryptString(value).toString('base64')
+    }
+    if (!this.warnedNoEncryption) {
+      this.warnedNoEncryption = true
+      console.warn(
+        '[keyring] OS encryption is unavailable; storing secrets WITHOUT encryption ' +
+          '(credentials file is restricted to mode 0600). Install/enable a keyring ' +
+          '(e.g. gnome-keyring/libsecret) for at-rest encryption.'
+      )
+    }
+    return PLAINTEXT_PREFIX + Buffer.from(value, 'utf-8').toString('base64')
+  }
+
+  private decode(encoded: string): string {
+    if (encoded.startsWith(PLAINTEXT_PREFIX)) {
+      return Buffer.from(encoded.slice(PLAINTEXT_PREFIX.length), 'base64').toString('utf-8')
+    }
+    return safeStorage.decryptString(Buffer.from(encoded, 'base64'))
+  }
+
   async store(profileId: string, key: string, value: string): Promise<void> {
     const compositeKey = `${profileId}:${key}`
-    const encrypted = safeStorage.encryptString(value)
-    this.cache[compositeKey] = encrypted.toString('base64')
+    this.cache[compositeKey] = this.encode(value)
     this.save()
   }
 
@@ -29,8 +59,7 @@ export class KeyringService {
     const encoded = this.cache[compositeKey]
     if (!encoded) return null
     try {
-      const buffer = Buffer.from(encoded, 'base64')
-      return safeStorage.decryptString(buffer)
+      return this.decode(encoded)
     } catch {
       // safeStorage's underlying OS key changed (keychain reset, OS reinstall,
       // OAuth token lost). The stored ciphertext is unrecoverable — drop it so
@@ -51,8 +80,7 @@ export class KeyringService {
     if (!value) {
       delete this.cache[compositeKey]
     } else {
-      const encrypted = safeStorage.encryptString(value)
-      this.cache[compositeKey] = encrypted.toString('base64')
+      this.cache[compositeKey] = this.encode(value)
     }
     this.save()
   }

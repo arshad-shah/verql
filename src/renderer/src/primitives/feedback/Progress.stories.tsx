@@ -7,6 +7,7 @@ const meta = {
   argTypes: {
     value: { control: { type: 'range', min: 0, max: 100, step: 1 } },
     max: { control: 'number' },
+    size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
   },
 } satisfies Meta<typeof Progress>
 
@@ -29,6 +30,19 @@ export const States: Story = {
         <div key={value}>
           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 4 }}>{value}%</div>
           <Progress value={value} aria-label={`Progress ${value}%`} />
+        </div>
+      ))}
+    </div>
+  ),
+}
+
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size}>
+          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 4 }}>{size}</div>
+          <Progress value={60} size={size} aria-label={`Progress ${size}`} />
         </div>
       ))}
     </div>

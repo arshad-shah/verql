@@ -18,6 +18,7 @@ import { TypeMapperRegistryImpl } from './plugins/sdk/type-mapper-registry'
 import { ThemeRegistryImpl } from './plugins/sdk/theme-registry'
 import { DragDropRegistryImpl } from './plugins/sdk/drag-drop-registry'
 import { ActivityLog } from './activity/log'
+import { setActivitySink } from './activity/recorder'
 import { ActivityBatcher } from './activity/batcher'
 import { createLogger } from './logging/logger'
 import { BrowserWindow } from 'electron'
@@ -109,6 +110,9 @@ export function registerIpcHandlers(): void {
   // surface it, streamed to the renderer for the Activity panel.
   const activityLog = new ActivityLog()
   services.provide('activity-log', activityLog)
+  // Let any main-side subsystem (IPC tracer, plugin host, network) record into
+  // this one stream without threading the log through every constructor.
+  setActivitySink(activityLog)
   // Attention seam: a delivery-agnostic relay for "the user's response is
   // needed" (approval prompts, alerts). Producers (AI/MCP approvals) publish
   // to it; the bundled `os-notifications` plugin subscribes and surfaces them
@@ -174,6 +178,8 @@ export function registerIpcHandlers(): void {
 
   handle(IPC_CHANNELS.ACTIVITY_LIST, async (query) => activityLog.list(query))
   handle(IPC_CHANNELS.ACTIVITY_CLEAR, async () => activityLog.clear())
+  // Renderer-originated diagnostics (store mutations, perf) join the one stream.
+  handle(IPC_CHANNELS.ACTIVITY_RECORD, async (entry) => { activityLog.record(entry) })
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
 
   // Query formatting is plugin-owned: each driver contributes a formatter for

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
-import { ExplainResult } from './ExplainPanel'
+import { ExplainResult } from './ExplainResult'
 import { useExplainStore } from '@/stores/explain'
 
 // Stub the IPC bridge so the component doesn't error when it registers

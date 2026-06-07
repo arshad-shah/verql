@@ -55,6 +55,14 @@ interface UiState {
   setBottomDockActivePanel: (panel: BottomPanelId) => void
   toggleBottomDock: () => void
   setBottomDockHeight: (height: number) => void
+  // Command palette — open state lives here so the keybinding, the in-app menu,
+  // and the native-menu IPC event all toggle one source of truth.
+  commandPaletteOpen: boolean
+  setCommandPaletteOpen: (open: boolean) => void
+  toggleCommandPalette: () => void
+  // About modal (Help → About Verql)
+  aboutModalOpen: boolean
+  setAboutModalOpen: (open: boolean) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -119,4 +127,25 @@ export const useUiStore = create<UiState>((set) => ({
     const clamped = Math.min(640, Math.max(120, height))
     useSettingsStore.getState().set('appearance.bottomDockHeight', clamped)
   },
+  commandPaletteOpen: false,
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+  toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
+  aboutModalOpen: false,
+  setAboutModalOpen: (open) => set({ aboutModalOpen: open }),
 }))
+
+// Keep the live layout-visibility flags in sync with their persisted appearance
+// settings. These flags are *seeded* once from settings at store creation (which
+// runs before settings hydrate from disk) and are also toggled transiently by
+// buttons/keybindings — so without this bridge, changing the setting (or the
+// persisted value loading at startup) would never reach the live UI.
+useSettingsStore.subscribe((state, prev) => {
+  const a = state.settings.appearance
+  const p = prev.settings.appearance
+  if (a.showSecondarySidebar !== p.showSecondarySidebar) {
+    useUiStore.setState({ secondarySidebarVisible: a.showSecondarySidebar })
+  }
+  if (a.showBottomDock !== p.showBottomDock) {
+    useUiStore.setState({ bottomDockVisible: a.showBottomDock })
+  }
+})

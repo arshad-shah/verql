@@ -212,7 +212,7 @@ export function activate(ctx: PluginContext): void {
           { value: 'https://okta.example.com', label: 'Okta (enter URL)' },
         ],
       },
-      { key: 'privateKeyPath', label: 'Private Key File', type: 'file' },
+      { key: 'privateKeyPath', label: 'Private Key File', type: 'file-path', accept: '.pem,.p8,.key' },
       { key: 'passphrase', label: 'Key Passphrase', type: 'password' },
       { key: 'role', label: 'Role', type: 'select', fetchable: true, step: 1 },
       { key: 'warehouse', label: 'Warehouse', type: 'select', fetchable: true, step: 1 },
@@ -226,6 +226,7 @@ export function activate(ctx: PluginContext): void {
       return `SELECT * FROM ${qualified} LIMIT 100;`
     },
     getTableData: createRelationalGetTableData(SNOWFLAKE_QUOTE),
+    explain: { supportsAnalyze: false, format: 'text', statement: 'EXPLAIN' },
     generateMigrationDdl: async (tableName, columns) =>
       generateCreateTable(
         tableName,

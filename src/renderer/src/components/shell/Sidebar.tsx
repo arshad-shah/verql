@@ -11,7 +11,7 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip } from '@/primitives'
+import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip, Tabs } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export function Sidebar() {
@@ -73,25 +73,10 @@ export function Sidebar() {
         )}
         {activePanel === ACTIVITY_PANEL.QUERY && (
           <Flex direction="column" className="h-full">
-            {/* Segmented toggle between persisted saved queries and the
-                run-history log. Both are query-scoped lists, so they share
-                this sidebar slot rather than taking a second activity icon. */}
-            <Flex gap="xs" className="px-2 pt-2 pb-1">
-              {(['saved', 'history'] as const).map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={() => setQueryView(view)}
-                  className={`flex-1 rounded-md px-2 py-1 text-xs capitalize transition-colors ${
-                    queryView === view
-                      ? 'bg-bg-tertiary text-text-primary'
-                      : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-                  }`}
-                >
-                  {view === 'saved' ? t('shell.sidebar.saved') : t('shell.sidebar.history')}
-                </button>
-              ))}
-            </Flex>
+            <Tabs size="md" className="px-2" tabs={[
+              { id: 'saved', label: t('shell.sidebar.saved') },
+              { id: 'history', label: t('shell.sidebar.history') },
+            ]} activeTab={queryView} onTabChange={(id) => setQueryView(id as 'saved' | 'history')} />
             <Box className="flex-1 min-h-0">
               {queryView === 'saved' ? <SavedQueriesPanel /> : <QueryHistoryPanel />}
             </Box>

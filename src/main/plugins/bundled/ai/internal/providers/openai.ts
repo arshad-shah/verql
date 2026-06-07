@@ -1,5 +1,6 @@
 import type { AIProvider, AIProviderModel, AIProviderChatRequest, AIProviderChunk } from '../types'
 import type { AIToolCallRequest } from '@shared/ai-types'
+import { tracedFetch } from '../../../../../activity/net'
 
 const CHAT_MODEL_PREFIXES = ['gpt-4o', 'gpt-4.1', 'o1', 'o3', 'o4']
 
@@ -88,7 +89,7 @@ export class OpenAIProvider implements AIProvider {
     if (!apiKey) return []
 
     try {
-      const response = await fetch('https://api.openai.com/v1/models', {
+      const response = await tracedFetch('https://api.openai.com/v1/models', {
         headers: { Authorization: `Bearer ${apiKey}` },
       })
 
@@ -168,7 +169,7 @@ export class OpenAIProvider implements AIProvider {
       }))
     }
 
-    const response = await fetch(API_URL, {
+    const response = await tracedFetch(API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,

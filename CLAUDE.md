@@ -53,13 +53,23 @@ pnpm storybook        # Start Storybook on port 6006
 pnpm postinstall      # Rebuild native modules (better-sqlite3)
 ```
 
+### Local test databases
+
+Spin up seeded databases to validate connections against every native + bundled
+driver. `scripts/test-dbs.sh {up|down|reset|seed|sqlite|status}` runs the
+Postgres/MySQL/Mongo/Redis containers from `docker-compose.yml` (seeded from
+`docker/seed/`) and builds a seeded `docker/testdb.sqlite` via
+`scripts/make-sqlite-testdb.sh`. Connection details (hosts, ports, credentials)
+live in [`docker/README.md`](./docker/README.md).
+
 ## Architecture
 
 ### Electron Process Model
 
 Three-layer split: **main** (Node.js), **preload** (IPC bridge), **renderer** (React SPA).
 
-- `src/main/` — Electron main process: window creation, native menus, IPC handlers, database adapters, plugin system, import/export
+- `src/main/` — Electron main process: window creation, menus, IPC handlers, database adapters, plugin system, import/export
+  - The custom title bar owns the menu on every platform: macOS keeps the native app menu, while Windows/Linux render an app-designed menu bar (`components/shell/MenuBar.tsx` + `menu-model.tsx`) driven by `window:*` IPC (edit roles, fullscreen, reload, devtools, open-external). Window min/max/close use the `IconButton` primitive (`WindowControls.tsx`); a custom in-app About modal (`AboutModal.tsx`) is fed by `app:about-info`.
 - `src/preload/` — Sandboxed bridge exposing `window.electronAPI` with typed `invoke()` and `on()` methods
 - `src/renderer/src/` — React 19 frontend: components, stores, primitives design system
 - `shared/` — TypeScript types and IPC channel definitions shared across processes
@@ -105,7 +115,7 @@ The assistant is a bundled plugin (`src/main/plugins/bundled/ai/`). It registers
 
 ### Design System
 
-Primitives in `src/renderer/src/primitives/` organized by category: `forms/`, `layout/`, `surfaces/`, `data-display/`, `feedback/`, `navigation/`, `typography/`. All use CVA (class-variance-authority) for variant-based styling.
+Primitives in `src/renderer/src/primitives/` organized by category: `forms/`, `layout/`, `surfaces/`, `data-display/`, `feedback/`, `navigation/`, `typography/`. All use CVA (class-variance-authority) for variant-based styling. Variant names follow the semantic tokens (Button's destructive variant is `error`, not `danger`; Banner has a `success` variant); most primitives expose a `size` variant. `Switch` is a hidden checkbox + visual track driven by `--color-switch-*` tokens; `surfaces/GradientSurface` paints a theme-derived gradient (`tone` × `intensity`).
 
 Three-layer theming in `primitives/theme/tokens.css`: raw color scale → semantic tokens (remapped per theme) → component tokens. Themes: dark, light, midnight. Applied via `data-theme` attribute, managed by `ThemeProvider`.
 

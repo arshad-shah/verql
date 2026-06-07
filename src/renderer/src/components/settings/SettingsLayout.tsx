@@ -1,6 +1,6 @@
 import { JSX, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { Flex, Box, ScrollArea, Text, Divider, Input, IconButton } from '@/primitives'
+import { Flex, Box, ScrollArea, Text, Divider, Input, IconButton, SearchInput } from '@/primitives'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 import { useToastStore } from '@/stores/toast'
@@ -100,30 +100,7 @@ export function SettingsLayout() {
       {/* Left rail: search + category nav. */}
       <Flex direction="column" className="w-60 border-r border-border-default shrink-0 bg-bg-secondary">
         <Box className="px-3 pt-3 pb-2 border-b border-border-default">
-          {/* VS Code-style search: bordered field at the very top of the
-              settings surface. We use the existing Input primitive so theme
-              + density tokens carry through automatically. */}
-          <Flex align="center" gap="xs" className="rounded-md border border-border-default bg-bg-tertiary px-2 py-1 focus-within:border-accent">
-            <Search size={12} className="text-text-muted shrink-0" />
-            <Input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder={t('settings.layout.searchPlaceholder')}
-              size="sm"
-              className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
-            />
-            {query && (
-              <IconButton
-                label={t('settings.layout.clearSearch')}
-                size="xs"
-                variant="ghost"
-                onClick={() => setQuery('')}
-                className="shrink-0 -mr-0.5"
-              >
-                <X size={11} />
-              </IconButton>
-            )}
-          </Flex>
+          <SearchInput size={"lg"} onClear={() => setQuery("")} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('settings.layout.searchPlaceholder')} className="mt-2" />
         </Box>
         <ScrollArea direction="vertical" className="flex-1">
           <Box paddingY="sm">

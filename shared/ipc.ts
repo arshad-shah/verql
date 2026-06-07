@@ -2,7 +2,7 @@ import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaI
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
-import type { ActivityEntry, ActivityQuery } from './activity'
+import type { ActivityEntry, ActivityQuery, ActivityKind, ActivityLevel } from './activity'
 import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry } from './appdata'
 
 export interface IpcChannelMap {
@@ -26,6 +26,22 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  /** Record a renderer-originated diagnostic entry (store mutations, perf
+   *  signals) into the unified main-owned activity stream. */
+  'activity:record': {
+    args: [entry: {
+      kind: ActivityKind
+      level?: ActivityLevel
+      title: string
+      detail?: string
+      source?: string
+      durationMs?: number
+      stack?: string
+      metadata?: Record<string, unknown>
+      traceId?: string
+    }]
+    return: void
+  }
   'db:query': {
     args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
@@ -41,6 +57,13 @@ export interface IpcChannelMap {
   'db:get-tables': {
     args: [profileId: string, schema?: string]
     return: SchemaTable[]
+  }
+  /** Browse a table's data via the driver's own reader (the same one export
+   *  uses). Lets non-SQL drivers (Redis key/value, Mongo documents) render a
+   *  data grid the renderer can't build from a SELECT. */
+  'db:get-table-data': {
+    args: [profileId: string, table: string, schema?: string]
+    return: { rows: Record<string, unknown>[]; columns: SchemaColumn[] }
   }
   'db:get-columns': {
     args: [profileId: string, table: string, schema?: string]
@@ -250,7 +273,7 @@ export interface IpcChannelMap {
   }
   'plugins:connection-fields': {
     args: []
-    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[] }[] }[]
+    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[]; accept?: string }[] }[]
   }
   'plugins:middleware-fields': {
     args: []
@@ -402,6 +425,20 @@ export interface IpcChannelMap {
     args: []
     return: void
   }
+  /** App + runtime versions for the in-app About modal. */
+  'app:about-info': {
+    args: []
+    return: {
+      name: string
+      version: string
+      electron: string
+      chrome: string
+      node: string
+      v8: string
+      os: string
+      arch: string
+    }
+  }
   // ── Window controls (custom title bar) ─────────────────────────────────
   // The renderer owns the title bar on every platform. Native window buttons
   // are preserved where the OS offers them (macOS traffic lights, Windows
@@ -438,6 +475,32 @@ export interface IpcChannelMap {
    *  so the title-bar menu bar drives the real, single-source-of-truth menu. */
   'window:menu:popup': {
     args: [payload: { id: number; x: number; y: number }]
+    return: void
+  }
+  /** Run a native edit role on the focused web contents, so the app-designed
+   *  Edit menu (custom title bar) drives Undo/Redo/Cut/Copy/Paste/Select All. */
+  'window:edit-role': {
+    args: [role: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll']
+    return: void
+  }
+  /** Toggle full screen; returns the resulting full-screen state. */
+  'window:toggle-fullscreen': {
+    args: []
+    return: boolean
+  }
+  /** Reload the renderer (View menu, dev builds). */
+  'window:reload': {
+    args: []
+    return: void
+  }
+  /** Toggle the Chromium devtools (View menu, dev builds). */
+  'window:toggle-devtools': {
+    args: []
+    return: void
+  }
+  /** Open an external URL in the user's default browser (Help menu links). */
+  'window:open-external': {
+    args: [url: string]
     return: void
   }
   /** Returns whether any updater can manage this install + which channel. */
@@ -664,6 +727,7 @@ export const IPC_CHANNELS = {
   DB_SET_ACTIVE_CONNECTION: 'db:set-active-connection',
   ACTIVITY_LIST: 'activity:list',
   ACTIVITY_CLEAR: 'activity:clear',
+  ACTIVITY_RECORD: 'activity:record',
   DB_QUERY: 'db:query',
   DB_FORMAT_QUERY: 'db:format-query',
   DB_TEST_CONNECTION: 'db:test-connection',
@@ -674,6 +738,7 @@ export const IPC_CHANNELS = {
   DB_PARSE_PLAN: 'db:parse-plan',
   // ── Schema introspection ───────────────────────────────────────────────
   DB_GET_TABLES: 'db:get-tables',
+  DB_GET_TABLE_DATA: 'db:get-table-data',
   DB_GET_COLUMNS: 'db:get-columns',
   DB_GET_INDEXES: 'db:get-indexes',
   DB_GET_SCHEMAS: 'db:get-schemas',
@@ -790,6 +855,7 @@ export const IPC_CHANNELS = {
   MCP_APPROVAL_RESPONSE: 'mcp:approval-response',
   // ── App lifecycle ──────────────────────────────────────────────────────
   APP_RESTART: 'app:restart',
+  APP_ABOUT_INFO: 'app:about-info',
   // ── Window controls (custom title bar) ─────────────────────────────────
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_TOGGLE_MAXIMIZE: 'window:toggle-maximize',
@@ -797,6 +863,11 @@ export const IPC_CHANNELS = {
   WINDOW_IS_MAXIMIZED: 'window:is-maximized',
   WINDOW_MENU_LIST: 'window:menu:list',
   WINDOW_MENU_POPUP: 'window:menu:popup',
+  WINDOW_EDIT_ROLE: 'window:edit-role',
+  WINDOW_TOGGLE_FULLSCREEN: 'window:toggle-fullscreen',
+  WINDOW_RELOAD: 'window:reload',
+  WINDOW_TOGGLE_DEVTOOLS: 'window:toggle-devtools',
+  WINDOW_OPEN_EXTERNAL: 'window:open-external',
   // ── Updater ────────────────────────────────────────────────────────────
   UPDATER_STATUS: 'updater:status',
   UPDATER_CHECK: 'updater:check',

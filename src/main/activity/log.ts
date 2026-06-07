@@ -15,6 +15,9 @@ export interface RecordInput {
   detail?: string
   source?: string
   durationMs?: number
+  stack?: string
+  metadata?: Record<string, unknown>
+  traceId?: string
 }
 
 const DEFAULT_CAP = 1000
@@ -25,6 +28,20 @@ const MAX_TEXT = 2000
 function clip(text: string | undefined): string | undefined {
   if (text === undefined) return undefined
   return text.length > MAX_TEXT ? text.slice(0, MAX_TEXT - 1) + '…' : text
+}
+
+/** Bound the structured payload so a huge metadata blob can't bloat the ring or
+ *  the IPC batch. Drops the payload entirely if it can't be serialised. */
+const MAX_META = 8000
+function clipMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+  if (!meta) return undefined
+  try {
+    const json = JSON.stringify(meta)
+    if (json.length <= MAX_META) return meta
+    return { _truncated: true, preview: json.slice(0, MAX_META) + '…' }
+  } catch {
+    return { _unserializable: true }
+  }
 }
 
 /**
@@ -47,6 +64,9 @@ export class ActivityLog implements ActivityReader {
       detail: clip(input.detail),
       source: input.source,
       durationMs: input.durationMs,
+      stack: clip(input.stack),
+      metadata: clipMetadata(input.metadata),
+      traceId: input.traceId,
     }
     this.entries.push(entry)
     if (this.entries.length > this.cap) {

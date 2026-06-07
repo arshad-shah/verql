@@ -18,6 +18,12 @@ export interface ExplainCapability {
   supportsAnalyze: boolean
   /** 'tree' = renderer draws an ExplainNode tree; 'text' = raw plan text. */
   format: 'tree' | 'text'
+  /** The statement prepended to a query to produce its plan — e.g.
+   *  'EXPLAIN ANALYZE' (Postgres/MySQL), 'EXPLAIN QUERY PLAN' (SQLite),
+   *  'EXPLAIN' (Snowflake). The renderer prepends this verbatim and never
+   *  hardcodes an EXPLAIN dialect. Drivers that can't explain omit the whole
+   *  `explain` capability, which hides the Explain action. */
+  statement: string
 }
 
 export interface InspectionCapability {

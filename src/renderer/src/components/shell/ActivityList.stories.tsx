@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { ActivityList } from './ActivityPanel'
+import { ActivityList } from './ActivityList'
 import type { ActivityEntry } from '@shared/activity'
 
 const now = Date.now()
@@ -23,7 +23,7 @@ function Harness({ entries }: { entries: ActivityEntry[] }) {
 }
 
 const meta: Meta<typeof Harness> = {
-  title: 'Shell/ActivityPanel',
+  title: 'Shell/ActivityList',
   component: Harness,
   parameters: { layout: 'centered' },
 }
