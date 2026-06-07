@@ -28,6 +28,7 @@ import { usePanelResize } from '@/hooks/usePanelResize'
 import { useAppKeyboardShortcuts } from '@/hooks/useAppKeyboardShortcuts'
 import { useFileDropForwarding } from '@/hooks/useFileDropForwarding'
 import { useShellMenuEvents } from '@/hooks/useShellMenuEvents'
+import { useUpdateNotifier } from '@/hooks/useUpdateNotifier'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Register CodeLens statement contributions once at module init. Re-registration
@@ -88,6 +89,9 @@ export function App() {
   useAppKeyboardShortcuts({ activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab })
   useFileDropForwarding()
   useShellMenuEvents({ activeConnectionId, addQueryTab, openConnectionForm })
+  // Surface "update available" (from the one-shot launch check) as a toast +
+  // notification + the Settings banner.
+  useUpdateNotifier()
 
   // Panel resize behavior (draft-during-drag, commit-on-release, collapse on
   // double-click) is shared across the three handles via usePanelResize.

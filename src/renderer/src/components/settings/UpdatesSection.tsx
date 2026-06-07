@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Stack, Flex, Button, Text } from '@/primitives'
+import { Stack, Flex, Button, Text, Banner } from '@/primitives'
 import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
+import { useUpdaterStore } from '@/stores/updater'
 import { SettingRow } from './SettingRow'
 
 type ProgressEvent = IpcEventMap['updater:progress'][0]
@@ -28,6 +29,10 @@ export function UpdatesSection() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   const [action, setAction] = useState<ActionState>({ kind: 'idle' })
+  // Set by the one-shot launch check (see useUpdateNotifier) so the banner
+  // shows proactively without the user pressing "Check for updates".
+  const pending = useUpdaterStore(s => s.pending)
+  const clearPending = useUpdaterStore(s => s.setPending)
 
   // One detection pass on mount. The active channel can't change at runtime,
   // so there's no need to re-query.
@@ -103,6 +108,24 @@ export function UpdatesSection() {
 
   return (
     <Stack gap="sm">
+      {pending && action.kind !== 'done' && (
+        <Banner
+          variant="info"
+          onDismiss={() => clearPending(null)}
+          action={
+            action.kind !== 'updating' ? (
+              <Button variant="solid" size="sm" onClick={update}>
+                {t('settings.updates.installUpdate')}
+              </Button>
+            ) : undefined
+          }
+        >
+          {t('settings.updates.availableMessage', {
+            version: pending.latestVersion,
+            manager: pending.displayName,
+          })}
+        </Banner>
+      )}
       <SettingRow
         label={t('settings.updates.label')}
         description={t('settings.updates.description', { manager: status.displayName, version: versionLabel })}

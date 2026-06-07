@@ -17,33 +17,44 @@ How you update depends on how you installed Verql:
 
 | Install method | How to update |
 |----------------|---------------|
-| Homebrew (macOS) | `brew upgrade --cask verql` |
+| Microsoft Store (Windows) | Automatic — the Store updates Verql for you |
+| Snap (Linux) | Automatic — `snapd` refreshes Verql in the background |
+| `.AppImage` (Linux) | **Automatic in-app** — Verql checks on launch, downloads, and installs on quit |
+| `.exe` / NSIS (Windows) | **Automatic in-app** — same as the AppImage |
+| Homebrew (macOS) | `brew upgrade --cask verql` (Verql notifies you on launch when a new version exists) |
 | `.dmg` (macOS) | Download the newer `.dmg` and reinstall |
-| `.AppImage` (Linux) | Download the newer `.AppImage` and replace the file |
-| `.exe` (Windows) | Download the newer installer and run it over the top |
 
-Releases are published on the
+Direct downloads are published on the
 [GitHub Releases page](https://github.com/arshad-shah/verql/releases). Always
 [verify your download](/guide/installation/#verifying-your-download), especially on
-Windows where the installer is unsigned.
+Windows where the `.exe` is unsigned.
+
+## In-app auto-update (Linux AppImage & Windows `.exe`)
+
+If you installed the **AppImage** (Linux) or the **NSIS `.exe`** (Windows) from
+GitHub Releases, Verql updates itself: on launch it checks for a newer release,
+downloads it in the background, and applies it the next time you quit. You don't
+have to do anything.
+
+## Store updates (Microsoft Store & Snap)
+
+If you installed from the **Microsoft Store** or the **Snap Store**, those
+platforms keep Verql up to date automatically on their own schedule — there's
+nothing to do, and Verql's in-app updater stays out of the way.
 
 ## Homebrew updates (macOS)
 
-If you installed via Homebrew, updating is just:
+If you installed via Homebrew, update with:
 
 ```bash
 brew upgrade --cask verql
 ```
 
-Verql can also help from inside the app: when it detects that it's running from a
-**Homebrew-managed install**, it can check for a newer version and offer to
-update for you. Accepting runs the `brew upgrade --cask verql` for you, and then
-you restart Verql to finish applying the update.
-
-> The in-app update mechanism is channel-pluggable, so other distribution
-> channels can be wired in over time. For now, the in-app "update for me" flow
-> is for Homebrew-managed installs; on other platforms, update by downloading the
-> latest release.
+Verql helps from inside the app: on launch, a Homebrew-managed install checks for
+a newer cask and — if one exists — shows a toast, a notification, a desktop
+notification, and a banner in **Settings → Updates**. It doesn't run `brew` for
+you automatically; use the command above (or the in-app "update for me" button in
+Settings → Updates, which runs it and prompts you to restart).
 
 ## Staying informed
 

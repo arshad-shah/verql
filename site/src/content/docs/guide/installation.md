@@ -8,14 +8,17 @@ sidebar:
 Verql ships pre-built binaries for macOS, Linux, and Windows. Pick your platform
 below.
 
-All downloads are published on the
-[GitHub Releases page](https://github.com/arshad-shah/verql/releases).
+| Platform | Format | Where | Updates |
+|----------|--------|-------|---------|
+| macOS | Homebrew cask **or** `.dmg` (Intel + Apple Silicon) | [GitHub Releases](https://github.com/arshad-shah/verql/releases) / Homebrew | `brew upgrade`; app notifies on launch |
+| Linux | `.AppImage` | [GitHub Releases](https://github.com/arshad-shah/verql/releases) | Automatic in-app |
+| Linux | Snap | [Snap Store](https://snapcraft.io/) | Automatic (`snapd`) |
+| Windows | MSIX | [Microsoft Store](https://apps.microsoft.com/) | Automatic (Store) |
+| Windows | `.exe` (NSIS installer) | [GitHub Releases](https://github.com/arshad-shah/verql/releases) | Automatic in-app |
 
-| Platform | Format | Notes |
-|----------|--------|-------|
-| macOS | Homebrew cask **or** `.dmg` (Intel + Apple Silicon) | Signed and notarised. |
-| Linux | `.AppImage` | Portable, no installer needed. |
-| Windows | `.exe` (NSIS installer) | **Unsigned** — SmartScreen will warn the first time. |
+The macOS `.dmg` is signed and notarised; the Microsoft Store signs the MSIX.
+The direct-download Windows `.exe` is **unsigned** — SmartScreen will warn the
+first time.
 
 [← Back to the User Guide](/guide/)
 
@@ -64,18 +67,36 @@ uninstall beyond deleting the file. To get a launcher entry and desktop
 integration, tools like [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher)
 can register it for you.
 
+## Linux: Snap
+
+If you prefer a managed install that updates itself, install from the
+[Snap Store](https://snapcraft.io/):
+
+```bash
+sudo snap install verql
+```
+
+`snapd` keeps it up to date automatically.
+
 ## Windows
+
+### Option A: Microsoft Store (recommended)
+
+Install Verql from the [Microsoft Store](https://apps.microsoft.com/) — it's
+signed, installs cleanly with no SmartScreen warning, and updates automatically.
+
+### Option B: Download the `.exe`
 
 1. Download the `.exe` (NSIS installer) from the
    [Releases page](https://github.com/arshad-shah/verql/releases).
-2. Run it and follow the installer.
+2. Run it and follow the installer. It then **auto-updates itself** on launch.
 
-> **Heads up: the Windows build is unsigned.** The first time you run the
-> installer, Microsoft Defender SmartScreen will likely show a blue
+> **Heads up: the direct-download `.exe` is unsigned.** The first time you run
+> the installer, Microsoft Defender SmartScreen will likely show a blue
 > "Windows protected your PC" warning. This is expected for an unsigned app — it
 > does not mean the file is malicious. To proceed, click **More info**, then
-> **Run anyway**. To be sure you have a genuine download, verify the checksum as
-> described below. See also
+> **Run anyway**. To avoid this entirely, install from the Microsoft Store
+> instead. See also
 > [Troubleshooting → Windows SmartScreen](/guide/troubleshooting/#windows-smartscreen).
 
 ## Verifying your download
@@ -105,15 +126,16 @@ your asset's filename.
 
 ## Keeping Verql updated
 
-How you update depends on how you installed:
+Most installs update themselves:
 
-- **Homebrew (macOS):** run `brew upgrade --cask verql`. Verql can also detect
-  when it's running from a Homebrew-managed install and offer to update from
-  inside the app — when you accept, it triggers the `brew upgrade` for you and
-  then restarts to apply.
-- **`.dmg` / `.AppImage` / `.exe`:** download the newer version from the
-  [Releases page](https://github.com/arshad-shah/verql/releases) and reinstall
-  over the top.
+- **Microsoft Store / Snap:** automatic, on the store's own schedule.
+- **`.AppImage` (Linux) / `.exe` (Windows):** automatic in-app — Verql checks on
+  launch, downloads in the background, and installs on quit.
+- **Homebrew (macOS):** run `brew upgrade --cask verql`. Verql notifies you on
+  launch when a newer cask exists and offers an in-app "update for me" button
+  that runs `brew` and prompts a restart.
+- **`.dmg` (macOS):** download the newer version from the
+  [Releases page](https://github.com/arshad-shah/verql/releases) and reinstall.
 
 See [Keeping Verql updated](/guide/updating/) for the full picture.
 

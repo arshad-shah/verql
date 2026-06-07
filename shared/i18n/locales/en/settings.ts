@@ -62,6 +62,10 @@ export const settings = {
     checkForUpdates: 'Check for updates',
     installUpdate: 'Install update',
     restartToApply: 'Restart to apply',
+    // Shown by the one-shot launch check (toast, notification centre, banner).
+    available: 'Update available',
+    availableMessage: 'Version {version} is available via {manager}.',
+    dismiss: 'Dismiss',
   },
 
   // Plugin-contributed settings rows (PluginContributedSettings).

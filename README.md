@@ -39,15 +39,26 @@ Pre-built binaries are published to
 
 | Platform | Format | Where | Updates |
 |----------|--------|-------|---------|
-| macOS    | `.dmg` (Intel + Apple Silicon) | GitHub Releases / Homebrew cask | Homebrew (`brew upgrade --cask verql`) |
+| macOS    | `.dmg` (Intel + Apple Silicon) | GitHub Releases / Homebrew cask | Homebrew (`brew upgrade --cask verql`); the app notifies on launch when a new version exists |
 | Linux    | `.AppImage` | GitHub Releases | **In-app auto-update** (electron-updater) |
 | Linux    | Snap | [Snap Store](https://snapcraft.io/) | `snapd` auto-refresh |
 | Windows  | MSIX | [Microsoft Store](https://apps.microsoft.com/) | Microsoft Store |
+| Windows  | `.exe` (NSIS installer) | GitHub Releases | **In-app auto-update** (electron-updater) |
 
-Auto-updates differ per channel by design: only the Linux **AppImage** is
-driven by electron-updater (it polls GitHub Releases). The Microsoft Store,
-Snap (`snapd`), and Homebrew each manage their own updates, so the in-app
-updater stays out of their way.
+Every GitHub Releases artifact ships with a cosign-signed checksum file for
+verification (`sha256sums*.txt` + `.sig`/`.pem`). The macOS dmg is also
+Apple-signed & notarised; the Windows `.exe` is currently **unsigned** (you'll
+see a SmartScreen warning on first run), while the Microsoft Store signs the
+MSIX.
+
+**Auto-updates differ per channel by design.** electron-updater drives only the
+GitHub-distributed builds — the Linux **AppImage** and the Windows **NSIS
+`.exe`** — which check on launch, download in the background, and install on
+quit. The Microsoft Store and Snap (`snapd`) auto-update themselves, so the
+in-app updater stays out of their way. On **macOS/Homebrew** the app does a
+one-time check on launch and, if a newer cask exists, surfaces a toast + a
+notification + an OS notification + a banner in Settings → Updates (it doesn't
+run `brew` for you).
 
 Verifying a release:
 

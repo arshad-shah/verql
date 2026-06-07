@@ -33,7 +33,7 @@ depend on neither.
 |-------|------|----------|
 | **Attention seam** (host glue) | a delivery-agnostic relay: `request` / `resolve` / `subscribe`; provided as the `attention` service | `src/main/attention/attention-hub.ts` |
 | **`os-notifications` plugin** (domain logic) | delivery policy (enable, only-when-unfocused, approvals), de-dupe, urgency; provides the `os-notifications` service | `src/main/plugins/bundled/os-notifications/` |
-| **Producers** | announce *what* needs attention; never decide *how* it's shown | AI `conversation-manager.ts`, `mcp/server.ts` |
+| **Producers** | announce *what* needs attention; never decide *how* it's shown | AI `conversation-manager.ts`, `mcp/server.ts`, the update launch-check `updater/launch-check.ts` (an `info` request when a new version is found) |
 
 ## System context
 

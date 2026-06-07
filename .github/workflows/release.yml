@@ -244,14 +244,15 @@ jobs:
           echo "Uploading $snap_file to the stable channel"
           snapcraft upload --release=stable "$snap_file"
 
-  # ─── 1c. Windows: MSIX → Microsoft Store (Job B) ─────────────────────────
-  publish-microsoft-store:
-    name: Build & publish (Microsoft Store)
+  # ─── 1c. Windows: MSIX → Microsoft Store + NSIS → GitHub Releases (Job B) ─
+  build-windows:
+    name: Build & publish (Windows)
     needs: guard
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
-      contents: read    # nothing is written to GitHub; the Store receives the MSIX
+      contents: read    # NSIS assets are attached to the draft by the `publish` job
+      id-token: write   # sigstore keyless signing of the NSIS checksums
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -271,10 +272,13 @@ jobs:
       - name: Build (electron-vite)
         run: pnpm exec electron-vite build
 
-      # MSIX only; never published to GitHub. The Store distributes + updates it.
-      - name: Build MSIX (appx)
-        run: pnpm exec electron-builder --win appx --publish never
+      # Build both Windows targets in one pass: appx (→ Store) and nsis (→ GitHub,
+      # which also emits latest.yml for electron-updater). `--publish never`; the
+      # NSIS assets are attached to the draft release by the `publish` job.
+      - name: Build MSIX + NSIS
+        run: pnpm exec electron-builder --win --publish never
 
+      # ─── MSIX → Microsoft Store ───────────────────────────────────────────
       - name: Setup Microsoft Store CLI
         uses: microsoft/setup-msstore-cli@v1
 
@@ -296,13 +300,51 @@ jobs:
           echo "Publishing $appx"
           msstore publish "$appx" -id "${{ vars.MICROSOFT_STORE_PRODUCT_ID }}"
 
-  # ─── 2. Aggregate macOS assets + SBOM onto the draft release ──────────────
+      # ─── NSIS → GitHub Releases (auto-update feed) ────────────────────────
+      # Checksum + cosign the .exe + latest.yml, then hand everything to the
+      # `publish` job as an artifact (it attaches them to the draft release).
+      - name: Compute SHA-256 of Windows artifacts
+        shell: bash
+        run: |
+          cd dist
+          : > sha256sums-win.txt
+          for f in *.exe latest.yml; do
+            [ -f "$f" ] && sha256sum "$f" | tee -a sha256sums-win.txt
+          done
+
+      - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+      - name: Sign Windows sha256sums with cosign keyless
+        shell: bash
+        run: |
+          cd dist
+          [ -s sha256sums-win.txt ] || { echo "nothing to sign"; exit 0; }
+          cosign sign-blob --yes \
+            --output-signature sha256sums-win.txt.sig \
+            --output-certificate sha256sums-win.txt.pem \
+            sha256sums-win.txt
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: verql-windows
+          path: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml
+            dist/sha256sums-win.txt
+            dist/sha256sums-win.txt.sig
+            dist/sha256sums-win.txt.pem
+          if-no-files-found: warn
+          retention-days: 7
+
+  # ─── 2. Aggregate macOS + Windows assets + SBOM onto the draft release ────
   # The draft release for this tag is created by `build-linux` (electron-builder
-  # --publish always). This job adds the macOS assets, SBOM and release notes to
-  # it, then leaves it as a draft for the maintainer to review + publish.
+  # --publish always). This job adds the macOS + Windows-NSIS assets, the SBOM
+  # and release notes to it, then leaves it as a draft for the maintainer to
+  # review + publish.
   publish:
     name: Publish release
-    needs: [build-macos, build-linux]
+    needs: [build-macos, build-linux, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write     # only this job + build-linux write to the release

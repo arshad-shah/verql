@@ -26,36 +26,40 @@ This document covers cutting a new release end-to-end:
                   │       │       │
         ┌─────────┘       │       └─────────┐
         ▼                 ▼                       ▼
-   ┌─────────┐   ┌────────────────────┐   ┌──────────────┐
-   │ macOS   │   │  Linux             │   │ Windows      │
-   │ build   │   │  AppImage ─▶ GH    │   │ MSIX ─▶      │
-   │ + sign  │   │   Release (draft,  │   │  Microsoft   │
-   │ + notar │   │   electron-updater)│   │  Store       │
-   │         │   │  Snap ─▶ Snap Store│   │ (msstore CLI)│
-   └─────────┘   └────────────────────┘   └──────────────┘
-        │                 │
-        └────────┬────────┘
+   ┌─────────┐   ┌────────────────────┐   ┌────────────────────┐
+   │ macOS   │   │  Linux             │   │ Windows            │
+   │ build   │   │  AppImage ─▶ GH    │   │  MSIX ─▶ MS Store  │
+   │ + sign  │   │   Release (draft,  │   │   (msstore CLI)    │
+   │ + notar │   │   electron-updater)│   │  NSIS .exe ─▶ GH   │
+   │         │   │  Snap ─▶ Snap Store│   │   (electron-updater)│
+   └─────────┘   └────────────────────┘   └────────────────────┘
+        │                 │                       │
+        └────────┬────────┴───────────────────────┘
                  ▼
-        ┌──────────────────────┐
-        │ Aggregate (macOS) +  │
-        │ attach to the draft  │
-        │ - sha256sums.txt     │
-        │ - cosign signature   │
-        │ - CycloneDX SBOM     │
-        └──────────────────────┘
+        ┌──────────────────────────┐
+        │ Aggregate (macOS + NSIS) │
+        │ attach to the draft      │
+        │ - sha256sums*.txt        │
+        │ - cosign signatures      │
+        │ - CycloneDX SBOM         │
+        └──────────────────────────┘
                  │
                  ▼
           Maintainer reviews
-          and clicks Publish ──▶ AppImage auto-update goes live;
+          and clicks Publish ──▶ AppImage + Windows .exe auto-update goes live;
                                   homebrew-bump.yml fires.
 ```
 
-The **Linux AppImage** is the only channel wired to electron-updater (the
-in-app updater is hard-guarded to AppImage installs in
+electron-updater drives the two **GitHub-distributed** builds — the Linux
+**AppImage** and the Windows **NSIS `.exe`** (detected at runtime via
+`process.env.APPIMAGE` / `!process.windowsStore` in
 [`src/main/updater/auto-update.ts`](../../src/main/updater/auto-update.ts)).
-**Snap** (via `snapd`) and the **Microsoft Store** manage their own updates and
-publish to their respective stores immediately on tag, independent of the draft
-GitHub Release.
+**Snap** (`snapd`) and the **Microsoft Store** manage their own updates and
+publish to their stores immediately on tag, independent of the draft GitHub
+Release. **macOS/Homebrew** does a one-time launch check
+([`src/main/updater/launch-check.ts`](../../src/main/updater/launch-check.ts))
+that notifies (toast + notification + OS notification + Settings banner) but
+never runs `brew` itself.
 
 The release workflow is in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 
@@ -124,11 +128,21 @@ If you'd rather use a traditional GPG key:
 The current pipeline uses sigstore by default because it requires no
 key material at all.
 
-### Windows — **Microsoft Store (MSIX)**
+### Windows — **Microsoft Store (MSIX) + GitHub (NSIS)**
 
-Windows ships as an **MSIX** distributed through the Microsoft Store, which
-code-signs the package and handles updates. No code-signing certificate is
-needed (that's why the old NSIS/SmartScreen problem is gone).
+Windows ships two ways from the same `build-windows` job:
+
+- **MSIX → Microsoft Store**, which code-signs the package and handles its own
+  updates (no code-signing certificate needed on our side).
+- **NSIS `.exe` → GitHub Releases** as a direct download with a `latest.yml`
+  feed that electron-updater consumes. This `.exe` is **unsigned** — users get a
+  SmartScreen "Unrecognized App" warning on first run (click *More info → Run
+  anyway*), and the cosign-signed `sha256sums-win.txt` provides provenance.
+  `verifyUpdateCodeSignature: false` in `electron-builder.yml` is required so
+  electron-updater will apply updates to the unsigned build. To get rid of the
+  SmartScreen warning later, add **Azure Trusted Signing**
+  ([Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action),
+  ~$10/month, no hardware token) and sign the `.exe` in the `build-windows` job.
 
 **One-time setup — do this before the first tag:**
 
@@ -229,10 +243,9 @@ Provided automatically by GitHub Actions. The workflow's job-level
 
 ## What the user gets
 
-A published release on
-`https://github.com/arshad-shah/verql/releases/tag/vX.Y.Z` includes:
-
-A published GitHub Release contains the macOS + Linux **direct-download** assets:
+A published GitHub Release on
+`https://github.com/arshad-shah/verql/releases/tag/vX.Y.Z` contains the
+macOS + Linux + Windows **direct-download** assets:
 
 | Asset | Platform | What it is |
 |-------|----------|------------|
@@ -240,9 +253,11 @@ A published GitHub Release contains the macOS + Linux **direct-download** assets
 | `verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
 | `verql-X.Y.Z-*-mac.zip` | macOS (both arches) | For the macOS auto-updater feed |
 | `verql-X.Y.Z-x64.AppImage` | Linux x64 | Portable, **electron-updater** target |
-| `latest-mac.yml` / `latest-linux.yml` | macOS / Linux | Auto-updater feeds |
+| `verql-X.Y.Z-x64.exe` (+`.blockmap`) | Windows x64 | NSIS installer, **unsigned**, **electron-updater** target |
+| `latest-mac.yml` / `latest-linux.yml` / `latest.yml` | macOS / Linux / Windows | Auto-updater feeds |
 | `sha256sums.txt` (+`.sig`/`.pem`) | macOS | Hashes + sigstore signature/cert |
 | `sha256sums-linux.txt` (+`.sig`/`.pem`) | Linux | Hashes + sigstore signature/cert |
+| `sha256sums-win.txt` (+`.sig`/`.pem`) | Windows | Hashes + sigstore signature/cert |
 | `verql-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
 
 The **MSIX (Windows)** and **Snap (Linux)** builds are *not* attached to the
@@ -281,21 +296,27 @@ mutated it after the build.
    trusted-signing action (or wire `electron-builder` to call
    `signtool.exe` via the SignPath toolset).
 
-### `latest*.yml` auto-updates — **wired (AppImage)**
+### `latest*.yml` auto-updates — **wired (AppImage + Windows NSIS)**
 
-This is now live for the Linux AppImage:
+This is live for both GitHub-distributed builds:
 
-- `electron-updater` is a dependency; `latest-linux.yml` is published to the
+- `electron-updater` is a dependency. `latest-linux.yml` is published to the
   GitHub Release by `electron-builder --publish always` in the `build-linux`
-  job.
+  job; the Windows `latest.yml` + `.exe` are produced in `build-windows` and
+  attached to the same draft by the `publish` job.
 - `src/main/index.ts` calls `initAutoUpdater()` on app ready, which runs
-  `autoUpdater.checkForUpdatesAndNotify()` — but only inside a packaged Linux
-  AppImage (`src/main/updater/auto-update.ts` gates on `process.env.APPIMAGE`,
-  with an `APP_UPDATER_ENABLED=1|0` override). The Store/Snap/Homebrew channels
-  are deliberately excluded because they self-update.
+  `autoUpdater.checkForUpdatesAndNotify()` — gated by
+  `isElectronUpdaterEnabled()` in `src/main/updater/auto-update.ts` to a
+  packaged Linux AppImage (`process.env.APPIMAGE`) or Windows NSIS build
+  (`!process.windowsStore`), with an `APP_UPDATER_ENABLED=1|0` override. The
+  Store/Snap/Homebrew channels are excluded because they self-update.
+- **macOS/Homebrew** has no electron-updater; instead
+  `src/main/updater/launch-check.ts` runs a one-shot check on launch and, if the
+  cask is outdated, fans out to a toast + notification + OS notification (via
+  the attention seam) + a Settings → Updates banner. It never runs `brew`.
 
-Because the GitHub Release is created as a **draft**, AppImage clients only
-pick up the new version once a maintainer publishes it.
+Because the GitHub Release is created as a **draft**, AppImage / Windows clients
+only pick up the new version once a maintainer publishes it.
 
 ### Promote a draft release
 
@@ -305,7 +326,8 @@ before users see them. Once you're happy:
 1. Go to https://github.com/arshad-shah/verql/releases
 2. Find the draft, click Edit
 3. Click "Publish release"
-4. Linux AppImage users get notified by the in-app auto-updater, and
-   `homebrew-bump.yml` fires to update the macOS cask. (Microsoft Store
-   and Snap users already received their update when CI submitted to those
-   stores on tag.)
+4. Linux AppImage and Windows NSIS (`.exe`) users get notified by the in-app
+   auto-updater, and `homebrew-bump.yml` fires to update the macOS cask
+   (macOS users then see the launch-check notification). Microsoft Store and
+   Snap users already received their update when CI submitted to those stores
+   on tag.

@@ -9,15 +9,18 @@ import { autoUpdater } from 'electron-updater'
  * for package-manager installs. This module is the *push* channel — it checks
  * GitHub Releases on launch and downloads/notifies automatically.
  *
- * It is wired for exactly ONE distribution channel: the Linux **AppImage**.
+ * It is wired for the two channels distributed via **GitHub Releases**:
+ *   • Linux **AppImage**
+ *   • Windows **NSIS** (.exe) — the direct download, NOT the Store build.
  * Every other channel manages its own updates and must never be driven by
  * electron-updater:
- *   • Microsoft Store (MSIX) — the Store updates the app.
- *   • Snap                   — snapd auto-refreshes installed snaps.
- *   • macOS                  — Homebrew (handled out-of-band).
+ *   • Microsoft Store (MSIX) — the Store updates the app (`process.windowsStore`).
+ *   • Snap                   — snapd auto-refreshes installed snaps (`SNAP`).
+ *   • macOS                  — Homebrew (handled out-of-band; see launch-check.ts).
  *
- * electron-updater itself only supports AppImage on Linux (not .deb, not
- * .snap), so this guard also keeps it from running where the library can't act.
+ * electron-updater only supports AppImage on Linux (not .deb/.snap) and NSIS on
+ * Windows (not appx/MSIX), so this guard keeps it from running where the
+ * library can't act anyway.
  */
 
 const LOG_PREFIX = '[auto-updater]'
@@ -33,32 +36,40 @@ function log(message: string, ...args: unknown[]): void {
  *  1. `APP_UPDATER_ENABLED` env var as an explicit override (`'1'`/`'true'`
  *     forces on, `'0'`/`'false'` forces off). Lets CI smoke-tests and power
  *     users opt in/out without rebuilding.
- *  2. Otherwise: enabled only for a packaged Linux AppImage. The AppImage
- *     runtime sets `process.env.APPIMAGE` to the path of the mounted image —
- *     this is the canonical, reliable "am I an AppImage?" signal. snapd sets
- *     `SNAP` instead (so snaps are excluded), and the MSIX/Store build runs on
- *     Windows where `APPIMAGE` is never set. `app.isPackaged` keeps it off in
- *     `pnpm dev`.
+ *  2. Otherwise, only for a packaged install on one of the GitHub-distributed
+ *     channels:
+ *       • Linux: the **AppImage** — the runtime sets `process.env.APPIMAGE`
+ *         to the mounted image path (the canonical "am I an AppImage?"
+ *         signal). snapd sets `SNAP` instead, so Snap installs are excluded.
+ *       • Windows: the **NSIS** build — distinguished from the Microsoft Store
+ *         (MSIX) build by `process.windowsStore`, which Electron sets to true
+ *         only when running as a Store app. The Store build also ships no
+ *         update feed, so this is belt-and-suspenders.
+ *     macOS is intentionally excluded — it updates via Homebrew (launch-check.ts).
  *
- * Chosen over `process.platform` alone because a single Linux build can be
- * shipped as both an AppImage *and* a Snap; only the `APPIMAGE` env var tells
- * the two runtimes apart.
+ * `process.platform` alone is insufficient: a single Linux build ships as both
+ * an AppImage and a Snap, and a single Windows build ships as both NSIS and
+ * MSIX; only `APPIMAGE` / `windowsStore` tell the runtimes apart.
  */
-export function isAppImageUpdaterEnabled(): boolean {
+export function isElectronUpdaterEnabled(): boolean {
   const override = process.env.APP_UPDATER_ENABLED?.toLowerCase()
   if (override === '1' || override === 'true') return true
   if (override === '0' || override === 'false') return false
 
-  return app.isPackaged && process.platform === 'linux' && Boolean(process.env.APPIMAGE)
+  if (!app.isPackaged) return false
+  if (process.platform === 'linux') return Boolean(process.env.APPIMAGE)
+  if (process.platform === 'win32') return !process.windowsStore
+  return false
 }
 
 /**
  * Wire `electron-updater` and kick off a check. Safe to call unconditionally
- * on app ready — it no-ops on every channel except the AppImage.
+ * on app ready — it no-ops on every channel except the GitHub-distributed
+ * AppImage / NSIS builds.
  */
 export function initAutoUpdater(): void {
-  if (!isAppImageUpdaterEnabled()) {
-    log('disabled for this install (not a packaged Linux AppImage)')
+  if (!isElectronUpdaterEnabled()) {
+    log('disabled for this install (not a GitHub-distributed AppImage/NSIS build)')
     return
   }
 

@@ -964,6 +964,9 @@ export interface IpcEventShapes {
     | { phase: 'done'; restartRequired: boolean }
     | { phase: 'error'; message: string }
   ]
+  /** A new version was found by the one-shot launch check. Drives the in-app
+   *  surfaces (toast, notification centre, settings banner). */
+  UPDATER_AVAILABLE: [payload: { displayName: string; currentVersion: string; latestVersion: string }]
 }
 
 export const IPC_EVENTS = {
@@ -982,6 +985,7 @@ export const IPC_EVENTS = {
   NOTIFICATIONS_SHOW: 'notifications:show',
   THEMES_CHANGED: 'themes:changed',
   UPDATER_PROGRESS: 'updater:progress',
+  UPDATER_AVAILABLE: 'updater:available',
   APP_ACTION_PERFORM: 'app:action:perform',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximize-changed'
 } as const satisfies Record<keyof IpcEventShapes, string>

@@ -50,6 +50,7 @@ import { registerAppHandlers } from './ipc/app'
 import { registerUpdaterHandlers } from './ipc/updater'
 import { registerWindowHandlers } from './ipc/window'
 import { createUpdaterRegistry } from './updater'
+import { runLaunchUpdateCheck } from './updater/launch-check'
 import { getSecretFieldKeys, SECRET_PLACEHOLDER } from './ipc/secrets'
 
 export function registerIpcHandlers(): void {
@@ -194,8 +195,14 @@ export function registerIpcHandlers(): void {
   registerDialogHandlers(handle)
   registerMigrationHandlers(handle, typeMapperRegistry, ctx.driverRegistry)
   registerAppHandlers(handle)
-  registerUpdaterHandlers(handle, createUpdaterRegistry())
+  const updaterRegistry = createUpdaterRegistry()
+  registerUpdaterHandlers(handle, updaterRegistry)
   registerWindowHandlers()
+
+  // One-shot update check on launch for package-manager channels (Homebrew).
+  // Fire-and-forget: it shells out to a slow tool and must never block startup.
+  // electron-updater channels (AppImage/NSIS) are handled in index.ts.
+  void runLaunchUpdateCheck(updaterRegistry, attentionHub)
 
   const mcpServer = registerMcpHandlers(ctx, handle, connectionAccess, settingsStore, toolRegistry, attentionHub)
 

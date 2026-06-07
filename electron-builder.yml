@@ -42,14 +42,24 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
   # gatekeeperAssess: false  # left at default; CI runs codesign + notarytool
 
-# Windows: shipped as an MSIX (appx) and distributed through the Microsoft
-# Store. The Store code-signs the package and drives its own updates, so
-# electron-updater is intentionally NOT wired for this build and electron-
-# builder generates no update feed (app-update.yml) for the appx target.
+# Windows ships two ways:
+#   • appx (MSIX) → the Microsoft Store. The Store code-signs it and drives its
+#     own updates; electron-builder generates no update feed for the appx target.
+#   • nsis (.exe) → GitHub Releases as a direct download, with a latest.yml feed
+#     that electron-updater consumes (the NSIS build is detected at runtime via
+#     `!process.windowsStore`; see src/main/updater/auto-update.ts).
 win:
   target:
     - target: appx
       arch: [x64]
+    - target: nsis
+      arch: [x64]
+  # The GitHub .exe is shipped UNSIGNED (no code-signing cert). Without this,
+  # electron-updater refuses to apply an update whose Authenticode signature it
+  # can't verify, so auto-update would silently never install. Users still see a
+  # SmartScreen warning on first run; the cosign-signed checksums on the release
+  # provide provenance. (The Store MSIX is unaffected — the Store signs it.)
+  verifyUpdateCodeSignature: false
 
 # MSIX identity. These values come from Partner Center under Product
 # management → Product identity, and MUST match it exactly or the Store
