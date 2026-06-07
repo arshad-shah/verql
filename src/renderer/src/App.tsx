@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { BottomDock, useHasBottomPanels } from '@/components/shell/BottomDock'
 import { ActivityBar } from '@/components/shell/ActivityBar'
 import { Sidebar } from '@/components/shell/Sidebar'
@@ -6,36 +6,29 @@ import { TitleBar } from '@/components/shell/TitleBar'
 import { StatusBar } from '@/components/shell/StatusBar'
 import { TabBar } from '@/components/shell/tab-bar'
 import { ToastContainer } from '@/components/shell/ToastContainer'
-import { QueryPanel } from '@/components/query/QueryPanel'
-import { TableDataView } from '@/components/table/TableDataView'
-import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
-import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { AboutModal } from '@/components/shell/AboutModal'
-import { Flex, Box, ResizeHandle, Modal, Button, Text, Stack } from '@/primitives'
+import { ActiveTabView } from '@/components/shell/ActiveTabView'
+import { TabCloseGuard } from '@/components/shell/TabCloseGuard'
+import { Flex, Box, ResizeHandle } from '@/primitives'
 import { useTabsStore } from '@/stores/tabs'
-import { editorRegistry } from '@/stores/editor'
-import { tabActions, requestCloseTab as routeCloseTab, usePendingClose } from '@/stores/tab-actions'
+import { tabActions, usePendingClose } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { useConnectionsStore } from '@/stores/connections'
-import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
-import { PluginDetailView } from '@/components/plugins/PluginDetailView'
-import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import { MCPApprovalDialog } from '@/components/ai/MCPApprovalDialog'
 import { PluginRestartBanner } from '@/components/plugins/PluginRestartBanner'
 import { SectionErrorBoundary } from '@/components/shell/SectionErrorBoundary'
-import { SettingsLayout } from '@/components/settings/SettingsLayout'
-import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
-import type { QueryTab, TableTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
 import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
 import { initAppActionBridge } from '@/lib/app-actions/bridge'
-import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { usePanelResize } from '@/hooks/usePanelResize'
-import { notifyError } from '@/lib/notify-error'
+import { useAppKeyboardShortcuts } from '@/hooks/useAppKeyboardShortcuts'
+import { useFileDropForwarding } from '@/hooks/useFileDropForwarding'
+import { useShellMenuEvents } from '@/hooks/useShellMenuEvents'
+import { useTranslation } from '@/i18n/I18nProvider'
 
 // Register CodeLens statement contributions once at module init. Re-registration
 // is a no-op (the registry replaces by dbType), so HMR remains safe.
@@ -44,11 +37,6 @@ registerBuiltinStatementContributions()
 // wire the main-process agentic action bridge to the renderer registry.
 registerBuiltinAppActions()
 initAppActionBridge()
-import { IPC_EVENTS, IPC_CHANNELS } from '@shared/ipc'
-import { KEYBINDING_ACTION } from '@shared/settings'
-import { usePluginCommands } from '@/stores/plugin-commands'
-import { matchesAccelerator } from '@/lib/accelerators'
-import { useTranslation } from '@/i18n/I18nProvider'
 
 export function App() {
   const { t } = useTranslation()
@@ -94,115 +82,12 @@ export function App() {
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
   const clearPendingClose = usePendingClose(s => s.clear)
-  // Local convenience wrapper — every Cmd+W / programmatic close in App.tsx
-  // goes through this so dirty-check stays consistent with the tab-bar.
-  const requestCloseTab = (tabId: string) => routeCloseTab(tabId, closeTab)
 
-  // Keyboard shortcuts + native menu events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Built-in shortcuts are data-driven from the user's keybindings setting
-      // (Settings → Keybindings), so a rebind there takes effect immediately.
-      // `execute-query` is owned by the Monaco editor (it registers the binding
-      // itself, also from this setting) and intentionally has no entry here.
-      // Save dispatches to whichever tab is in front via tabActions so it works
-      // for query, settings, and any future tab kind.
-      const actions: Record<string, () => void> = {
-        [KEYBINDING_ACTION.NEW_TAB]: () => {
-          const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
-          addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
-        },
-        [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },
-        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => useUiStore.getState().toggleCommandPalette(),
-        [KEYBINDING_ACTION.SAVE_QUERY]: () => { if (activeTabId) void tabActions.save(activeTabId) },
-        [KEYBINDING_ACTION.TOGGLE_SIDEBAR]: () => useUiStore.getState().toggleSidebar(),
-        [KEYBINDING_ACTION.FOCUS_EDITOR]: () => editorRegistry.get()?.editor.focus(),
-        [KEYBINDING_ACTION.TOGGLE_SECONDARY_SIDEBAR]: () => useUiStore.getState().toggleSecondarySidebar(),
-        [KEYBINDING_ACTION.TOGGLE_BOTTOM_DOCK]: () => useUiStore.getState().toggleBottomDock(),
-      }
-      const keybindings = useSettingsStore.getState().settings.keybindings
-      for (const kb of keybindings) {
-        const handler = actions[kb.id]
-        if (!handler) continue
-        if (kb.keys.some(k => matchesAccelerator(e, k))) {
-          e.preventDefault()
-          handler()
-          return
-        }
-      }
-      // Reopen-closed-tab isn't a user-configurable binding; keep it fixed.
-      const mod = e.metaKey || e.ctrlKey
-      if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
-        e.preventDefault()
-        reopenTab()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-
-    // Plugin keybindings: any command contributed with a `keybinding` field
-    // becomes a global accelerator. We parse the binding string once per
-    // command and dispatch through the same IPC path the command palette uses
-    // (`plugins:ui:action`) so behaviour stays identical whether the user
-    // pressed the key or clicked the palette entry.
-    const pluginKeydown = (e: KeyboardEvent) => {
-      const { commands, execute } = usePluginCommands.getState()
-      for (const cmd of commands) {
-        if (!cmd.keybinding) continue
-        if (matchesAccelerator(e, cmd.keybinding)) {
-          e.preventDefault()
-          execute(cmd.pluginId, cmd.commandId).catch(() => {})
-          return
-        }
-      }
-    }
-    window.addEventListener('keydown', pluginKeydown)
-    usePluginCommands.getState().fetch()
-
-    // File drop → plugin drag-drop providers. We forward the dropped file
-    // paths to the main process which routes to the matching extension
-    // handler (e.g. `.sqlite` → sqlite plugin opens it). The renderer stays
-    // ignorant of which extensions are claimed; the registry decides.
-    const handleDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes('Files')) {
-        e.preventDefault()
-      }
-    }
-    const handleDrop = (e: DragEvent) => {
-      if (!e.dataTransfer) return
-      const files = Array.from(e.dataTransfer.files)
-      if (files.length === 0) return
-      e.preventDefault()
-      for (const f of files) {
-        const path = (f as File & { path?: string }).path
-        if (!path) continue
-        window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_DRAG_DROP, path).catch(() => {})
-      }
-    }
-    window.addEventListener('dragover', handleDragOver)
-    window.addEventListener('drop', handleDrop)
-
-    // Listen for native menu commands
-    const cleanups = [
-      window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => {
-        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
-        addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
-      }),
-      window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
-      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => useUiStore.getState().toggleCommandPalette()),
-    ]
-
-    const handleStatusBarNewConn = () => openConnectionForm()
-    window.addEventListener('statusbar:new-connection', handleStatusBarNewConn)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keydown', pluginKeydown)
-      window.removeEventListener('dragover', handleDragOver)
-      window.removeEventListener('drop', handleDrop)
-      window.removeEventListener('statusbar:new-connection', handleStatusBarNewConn)
-      cleanups.forEach(cleanup => cleanup())
-    }
-  }, [activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab, openConnectionForm])
+  // Global shell behaviour — keyboard shortcuts, dropped-file forwarding and
+  // native-menu commands — lives in focused hooks (see ./hooks).
+  useAppKeyboardShortcuts({ activeConnectionId, activeTabId, addQueryTab, closeTab, reopenTab })
+  useFileDropForwarding()
+  useShellMenuEvents({ activeConnectionId, addQueryTab, openConnectionForm })
 
   // Panel resize behavior (draft-during-drag, commit-on-release, collapse on
   // double-click) is shared across the three handles via usePanelResize.
@@ -266,44 +151,7 @@ export function App() {
         <Flex direction="column" className="flex-1 overflow-hidden">
           { activeTab && <TabBar /> }
           <Flex direction="column" className="flex-1 overflow-hidden">
-            <Box className="flex-1 overflow-hidden">
-              <SectionErrorBoundary label={activeTab?.title ?? t('shell.sectionLabels.tab')} resetKey={activeTabId}>
-                {activeTab?.type === 'query' && (
-                  <QueryPanel tab={activeTab as QueryTab} />
-                )}
-                {activeTab?.type === 'table' && (
-                  <TableDataView tab={activeTab as TableTab} />
-                )}
-                {activeTab?.type === 'er-diagram' && (
-                  <ERDiagram
-                    connectionId={(activeTab as ErDiagramTab).connectionId}
-                    schema={(activeTab as ErDiagramTab).schema}
-                  />
-                )}
-                {activeTab?.type === 'connection-form' && (
-                  <ConnectionFormView
-                    tabId={activeTab.id}
-                    editingId={(activeTab as ConnectionFormTab).editingId}
-                  />
-                )}
-                {activeTab?.type === 'plugin-detail' && (
-                  <PluginDetailView
-                    pluginName={(activeTab as PluginDetailTab).pluginName}
-                  />
-                )}
-                {activeTab?.type === 'install-plugin' && (
-                  <InstallPluginTab />
-                )}
-                {activeTab?.type === 'settings' && (
-                  <SettingsLayout />
-                )}
-              </SectionErrorBoundary>
-              {!activeTab && (
-                <SectionErrorBoundary label={t('shell.sectionLabels.welcome')}>
-                  <WelcomeScreen />
-                </SectionErrorBoundary>
-              )}
-            </Box>
+            <ActiveTabView activeTab={activeTab} activeTabId={activeTabId} />
             {bottomDockVisible && hasBottomPanels && (
               <>
                 <ResizeHandle
@@ -371,82 +219,11 @@ export function App() {
       <SectionErrorBoundary label={t('shell.sectionLabels.pluginRestartBanner')}>
         <PluginRestartBanner />
       </SectionErrorBoundary>
-      {pendingCloseId !== null && tabActions.hasOpenTransaction(pendingCloseId) ? (
-        // Transaction close-guard: user must Commit or Rollback before the tab closes.
-        // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
-        <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
-          <Stack gap="md" className="p-4">
-            <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
-            <Text size="sm" color="secondary">
-              {t('shell.confirmTransaction.message', {
-                label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
-              })}
-            </Text>
-          </Stack>
-          <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-            <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
-            <Button
-              variant="error"
-              size="sm"
-              onClick={async () => {
-                const id = pendingCloseId
-                if (!id) return
-                try {
-                  await tabActions.rollbackTransaction(id)
-                  clearPendingClose()
-                  closeTab(id)
-                } catch (err) {
-                  notifyError(err, {
-                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
-                  })
-                  // leave dialog open so the user can retry or cancel
-                }
-              }}
-            >
-              {t('shell.confirmTransaction.rollbackAndClose')}
-            </Button>
-            <Button
-              variant="solid"
-              size="sm"
-              onClick={async () => {
-                const id = pendingCloseId
-                if (!id) return
-                try {
-                  await tabActions.commitTransaction(id)
-                  clearPendingClose()
-                  closeTab(id)
-                } catch (err) {
-                  notifyError(err, {
-                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
-                  })
-                  // leave dialog open so the user can retry or cancel
-                }
-              }}
-            >
-              {t('shell.confirmTransaction.commitAndClose')}
-            </Button>
-          </Flex>
-        </Modal>
-      ) : (
-        <ConfirmDialog
-          open={pendingCloseId !== null}
-          title={t('shell.confirmClose.unsavedTitle')}
-          message={(() => {
-            if (!pendingCloseId) return ''
-            const label = tabActions.get(pendingCloseId)?.label ?? t('shell.confirmClose.thisTab')
-            return t('shell.confirmClose.unsavedMessage', { label })
-          })()}
-          confirmLabel={t('shell.confirmClose.discardChanges')}
-          cancelLabel={t('shell.confirmClose.keepEditing')}
-          variant="danger"
-          onCancel={clearPendingClose}
-          onConfirm={() => {
-            const id = pendingCloseId
-            clearPendingClose()
-            if (id) closeTab(id)
-          }}
-        />
-      )}
+      <TabCloseGuard
+        pendingCloseId={pendingCloseId}
+        clearPendingClose={clearPendingClose}
+        closeTab={closeTab}
+      />
     </Flex>
   )
 }
