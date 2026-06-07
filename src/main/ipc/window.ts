@@ -1,5 +1,25 @@
 import { ipcMain, BrowserWindow, Menu, shell, type IpcMainInvokeEvent } from 'electron'
+import { execFile } from 'node:child_process'
+import os from 'node:os'
 import { IPC_CHANNELS } from '@shared/ipc'
+
+/** Under WSL, shell.openExternal() shells out to xdg-open, which has no browser
+ *  handler (and exits 0 regardless), so links silently no-op. Detect WSL so we
+ *  can route through Windows interop instead. */
+const IS_WSL = process.platform === 'linux' && /microsoft/i.test(os.release())
+
+function openExternalUrl(url: string): void {
+  if (IS_WSL) {
+    // Hand the URL to the Windows shell so it opens in the user's default
+    // browser. execFile (no shell) keeps the URL a single literal arg.
+    execFile('cmd.exe', ['/c', 'start', '', url], { windowsHide: true }, (err) => {
+      // If interop is unavailable, fall back to the normal path as a last resort.
+      if (err) void shell.openExternal(url).catch(() => {})
+    })
+    return
+  }
+  void shell.openExternal(url).catch(() => {})
+}
 
 /** Resolve the window that issued the IPC call — multi-window safe, unlike
  *  `getFocusedWindow()` which can be wrong if focus moved mid-flight. */
@@ -104,7 +124,7 @@ export function registerWindowHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.WINDOW_OPEN_EXTERNAL, (_event, url) => {
     // Only allow web links — never file:// or app: schemes from the renderer.
     if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
-      void shell.openExternal(url)
+      openExternalUrl(url)
     }
   })
 }
