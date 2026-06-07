@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link } from '@/primitives'
+import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link, Box, Flex, Stack } from '@/primitives'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -75,10 +75,13 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
 
   return (
     <Modal open={open} onClose={onClose} size="lg" className="overflow-hidden">
-      <div className="flex max-sm:flex-col">
+      <Flex className="max-sm:flex-col">
         {/* Brand hero */}
-        <div
-          className="w-[230px] shrink-0 max-sm:w-full flex flex-col gap-4 p-7 justify-center border-r border-border-default max-sm:border-r-0 max-sm:border-b"
+        <Flex
+          direction="column"
+          gap="lg"
+          justify="center"
+          className="w-[230px] shrink-0 max-sm:w-full p-7 border-r border-border-default max-sm:border-r-0 max-sm:border-b"
           style={{
             background:
               'radial-gradient(150px 150px at 28% 18%, color-mix(in oklab, var(--color-accent) 26%, transparent), transparent 70%),' +
@@ -86,17 +89,17 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           }}
         >
           <VerqlMark size={60} />
-          <div>
+          <Stack gap="xs">
             <Text size="xl" weight="bold" color="primary">Verql</Text>
-            {info && <div className="mt-1.5"><Badge variant="accent" size="sm">v{info.version}</Badge></div>}
-          </div>
+            {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
+          </Stack>
           <Text size="sm" color="secondary" className="leading-relaxed">{t('about.tagline')}</Text>
-          <div className="flex-1 max-sm:hidden" />
+          <Box className="flex-1 max-sm:hidden" />
           <Text size="xs" color="muted">{t('about.license')}</Text>
-        </div>
+        </Flex>
 
         {/* Build + resources */}
-        <div className="relative flex-1 p-6">
+        <Box padding="xl" className="relative flex-1">
           <IconButton
             variant="ghost"
             size="xs"
@@ -107,22 +110,22 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
             <X size={15} />
           </IconButton>
 
-          <div className="flex items-center justify-between">
+          <Flex align="center" justify="between">
             <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
             <IconButton variant="ghost" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild}>
               {copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />}
             </IconButton>
-          </div>
-          <div className="mt-1 flex flex-col gap-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
+          </Flex>
+          <Flex direction="column" gap="xs" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
             {rows.length === 0
               ? <Text size="xs" color="muted">…</Text>
               : rows.map(([k, v]) => <KeyValue key={k} label={k} value={v} monospace size="sm" />)}
-          </div>
+          </Flex>
 
           <Divider className="my-4" />
 
           <Text size="xs" color="muted" className="uppercase tracking-wider">{t('about.resources')}</Text>
-          <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-0.5">
+          <Box className="mt-2 grid grid-cols-2 gap-x-2 gap-y-0.5">
             {links.map(({ label, icon: Icon, url }) => (
               <Button
                 key={label}
@@ -135,18 +138,18 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
                 <span className="truncate">{label}</span>
               </Button>
             ))}
-          </div>
+          </Box>
 
           <Divider className="my-4" />
 
-          <div className="flex items-center justify-between">
+          <Flex align="center" justify="between">
             <Link size="sm" onClick={() => openExternal(LICENSE_URL)} className="cursor-pointer">
               {t('about.viewLicense')}
             </Link>
             <Button variant="outline" size="sm" onClick={onClose}>{t('common.close')}</Button>
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </Box>
+      </Flex>
     </Modal>
   )
 }
