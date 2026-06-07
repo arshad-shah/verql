@@ -233,7 +233,7 @@ export const shell = {
     noChartAvailable: 'No chart available',
   },
   queryPlan: {
-    empty: 'Run EXPLAIN ANALYZE to see the query plan',
+    empty: 'Run an explain query to see the execution plan',
     header: 'Query Execution Plan · Max cost: {cost}',
   },
   er: {
@@ -246,7 +246,7 @@ export const shell = {
     title: 'Export {tableName}',
     close: 'Close',
     format: 'Format',
-    includeCreateTable: 'Include CREATE TABLE',
+    includeCreateTable: 'Include schema definition',
     exportedTo: 'Exported to {filePath}',
     errorPrefix: 'Error: {message}',
     cancel: 'Cancel',

@@ -24,10 +24,10 @@ function destructiveReason(sql: string): string | null {
 }
 
 export interface QueryExecution {
-  runSql: (override?: string) => Promise<void>
+  runStatement: (override?: string) => Promise<void>
   handleExecute: () => void
   handleCancel: () => Promise<void>
-  explainSql: (sqlOverride?: string) => Promise<void>
+  explainStatement: (sqlOverride?: string) => Promise<void>
   handleExplain: () => void
 }
 
@@ -82,7 +82,7 @@ export function useQueryExecution(
    * prefer the user's visual selection in the editor — IDE-style "run only
    * the highlighted text" — falling back to the whole buffer.
    */
-  const runSql = useCallback(async (override?: string) => {
+  const runStatement = useCallback(async (override?: string) => {
     if (!tab.connectionId) return
     const selected = override?.trim() || editorRegistry.getSelectedSql()
     const sql = (selected || tab.sql).trim()
@@ -194,7 +194,7 @@ export function useQueryExecution(
     }
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, executeWithSchema, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
 
-  const handleExecute = useCallback(() => runSql(), [runSql])
+  const handleExecute = useCallback(() => runStatement(), [runStatement])
 
   const handleCancel = useCallback(async () => {
     if (!tab.connectionId) return
@@ -206,7 +206,7 @@ export function useQueryExecution(
     setTabExecuting(tab.id, false)
   }, [tab.id, tab.connectionId, setTabExecuting])
 
-  const explainSql = useCallback(async (sqlOverride?: string) => {
+  const explainStatement = useCallback(async (sqlOverride?: string) => {
     if (!tab.connectionId) return
     // The explain statement is driver-declared (capabilities.explain); the app
     // never hardcodes an EXPLAIN dialect. Drivers without it can't explain.
@@ -231,7 +231,7 @@ export function useQueryExecution(
     }
   }, [tab.id, tab.connectionId, tab.sql, tab.schema, caps, executeWithSchema, setTabExecuting, setTabResults, setTabError, refreshQueryPlan])
 
-  const handleExplain = useCallback(() => explainSql(), [explainSql])
+  const handleExplain = useCallback(() => explainStatement(), [explainStatement])
 
-  return { runSql, handleExecute, handleCancel, explainSql, handleExplain }
+  return { runStatement, handleExecute, handleCancel, explainStatement, handleExplain }
 }

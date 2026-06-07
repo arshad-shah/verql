@@ -33,7 +33,7 @@ export function QueryPanel({ tab }: Props) {
     if (dbType) fetchCaps(dbType).catch(() => {})
   }, [dbType, fetchCaps])
 
-  const { runSql, handleExecute, handleCancel, explainSql, handleExplain } = useQueryExecution(tab, dbType, caps)
+  const { runStatement, handleExecute, handleCancel, explainStatement, handleExplain } = useQueryExecution(tab, dbType, caps)
   const { onToggleAutoCommit, doCommit, doRollback, onCommit, onRollback } = useQueryTransactions(tab)
   const { handleSave, saveDialogOpen, setSaveDialogOpen, saveDialogName, setSaveDialogName, confirmSaveDialog } =
     useQuerySaveDialog(tab, dbType)
@@ -52,9 +52,9 @@ export function QueryPanel({ tab }: Props) {
         return t?.type === 'query' && t.isDirty
       },
       label: tab.title,
-      runStatement: (sql) => { void runSql(sql) },
+      runStatement: (sql) => { void runStatement(sql) },
       // Only expose the per-statement Explain when the driver can explain.
-      explainStatement: caps?.explain ? (sql) => { void explainSql(sql) } : undefined,
+      explainStatement: caps?.explain ? (sql) => { void explainStatement(sql) } : undefined,
       txnStatus: () => {
         const t = useTabsStore.getState().tabs.find((t) => t.id === tab.id)
         return (t?.type === 'query' ? t.txn?.status : undefined) ?? 'none'
@@ -65,7 +65,7 @@ export function QueryPanel({ tab }: Props) {
       rollbackTransaction: doRollback,
     })
     return () => tabActions.unregister(tab.id)
-  }, [tab.id, tab.title, handleSave, runSql, explainSql, caps, doCommit, doRollback])
+  }, [tab.id, tab.title, handleSave, runStatement, explainStatement, caps, doCommit, doRollback])
 
   return (
     <Flex direction="column" className="h-full">
