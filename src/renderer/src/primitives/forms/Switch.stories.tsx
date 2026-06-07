@@ -44,6 +44,20 @@ export const States: Story = {
   ),
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-6">
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size} className="flex items-center gap-2 text-sm text-text-primary">
+          <Switch label={`${size} off`} size={size} />
+          <Switch label={`${size} on`} size={size} defaultChecked />
+          <span className="text-text-secondary">{size}</span>
+        </div>
+      ))}
+    </div>
+  ),
+}
+
 /** Verifies the toggle reads cleanly on every bundled theme. */
 export const Themes: Story = {
   render: () => (
