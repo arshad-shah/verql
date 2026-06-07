@@ -111,6 +111,7 @@ export function TableNode({
             canViewData={canViewData}
             onViewData={openData}
             onOpenInQueryTab={openInQueryTab}
+            objectNoun={nouns.object.one}
             onCopySampleQuery={copySampleQuery}
           />
         </button>
@@ -190,6 +191,7 @@ export function TableNode({
             canViewData={canViewData}
             onViewData={openData}
             onOpenInQueryTab={openInQueryTab}
+            objectNoun={nouns.object.one}
             onExportTable={onExportTable ? () => onExportTable(tableName) : undefined}
           />
         </button>
@@ -210,7 +212,7 @@ export function TableNode({
             </p>
           ) : (
             tableColumns.map((col) => (
-              <ColumnRow key={col.name} column={col} tableName={tableName} />
+              <ColumnRow key={col.name} column={col} tableName={tableName} connectionId={connectionId} />
             ))
           )}
         </div>

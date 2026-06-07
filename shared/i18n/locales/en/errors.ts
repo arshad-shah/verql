@@ -4,16 +4,21 @@
 // whether a regex captured a name), both variants live here as `message` and
 // `messageGeneric`. Dynamic captures (column/table/constraint names) are passed
 // as `{name}` interpolation vars from the call site.
+//
+// Query-semantic codes describe their concepts with driver-supplied NOUNS —
+// `{object}`/`{field}`/`{record}` (+ plural and Title-cased `{Object}`/… forms)
+// — interpolated by db-error.ts from the active driver's `nouns` capability, so
+// a Mongo/Redis error reads "collection"/"document"/"key" instead of SQL terms.
 export const errors = {
   COLUMN_NOT_FOUND: {
-    title: 'Column not found',
-    message: "The column `{name}` doesn't exist in any of the tables in this query.",
-    hint: "Check the spelling, confirm the column belongs to a table you've referenced, and that you're using the right alias if columns share names."
+    title: '{Field} not found',
+    message: "The {field} `{name}` doesn't exist in any of the {objects} in this query.",
+    hint: "Check the spelling, confirm the {field} belongs to a {object} you've referenced, and that you're using the right alias if {fields} share names."
   },
   TABLE_NOT_FOUND: {
-    title: 'Table not found',
-    message: "The table `{name}` doesn't exist in the active schema.",
-    hint: 'Verify the table name and the schema/database selector at the top of the tab.'
+    title: '{Object} not found',
+    message: "The {object} `{name}` doesn't exist in the active schema.",
+    hint: 'Verify the {object} name and the schema/database selector at the top of the tab.'
   },
   SCHEMA_NOT_FOUND: {
     title: 'Schema not found',
@@ -21,10 +26,10 @@ export const errors = {
     hint: 'Pick a schema from the selector, or check that you connected to the right database.'
   },
   SYNTAX_ERROR: {
-    title: 'SQL syntax error',
+    title: 'Syntax error',
     message: 'The parser choked near `{token}`.',
-    messageGeneric: "The SQL parser couldn't make sense of this query.",
-    hint: 'Look just before the highlighted token — most SQL syntax errors come from the line above, not the line reported.'
+    messageGeneric: "The parser couldn't make sense of this query.",
+    hint: 'Look just before the highlighted token — most syntax errors come from the line above, not the line reported.'
   },
   PERMISSION_DENIED: {
     title: 'Permission denied',
@@ -57,28 +62,28 @@ export const errors = {
   },
   UNIQUE_VIOLATION: {
     title: 'Duplicate value',
-    message: 'A row with this value already exists (constraint `{constraint}`).',
-    messageGeneric: 'A row with this value already exists.',
-    hint: 'Use a different unique value, or update the existing row instead of inserting.'
+    message: 'A {record} with this value already exists (constraint `{constraint}`).',
+    messageGeneric: 'A {record} with this value already exists.',
+    hint: 'Use a different unique value, or update the existing {record} instead of inserting.'
   },
   NOT_NULL_VIOLATION: {
-    title: 'Required column missing',
-    message: 'Column `{column}` is required but no value was provided.',
-    messageGeneric: 'A required column is missing a value.'
+    title: 'Required {field} missing',
+    message: '{Field} `{column}` is required but no value was provided.',
+    messageGeneric: 'A required {field} is missing a value.'
   },
   FOREIGN_KEY_VIOLATION: {
     title: 'Foreign key constraint failed',
     message:
-      "A referenced row in another table doesn't exist (or you're deleting a row that other tables still point to).",
-    hint: 'Insert the parent row first, or remove the referencing rows before deleting.'
+      "A referenced {record} in another {object} doesn't exist (or you're deleting a {record} that other {objects} still point to).",
+    hint: 'Insert the parent {record} first, or remove the referencing {records} before deleting.'
   },
   CHECK_VIOLATION: {
     title: 'Check constraint failed',
-    message: 'A column value violates a CHECK constraint defined on the table.'
+    message: 'A {field} value violates a CHECK constraint defined on the {object}.'
   },
   TYPE_MISMATCH: {
     title: 'Type mismatch',
-    message: "A value doesn't match the column's declared type.",
+    message: "A value doesn't match the {field}'s declared type.",
     hint: 'Cast explicitly (e.g. `value::int`) or fix the input — quoted numbers, malformed dates, and NULL where NOT NULL is expected are the usual culprits.'
   },
   DIVISION_BY_ZERO: {
@@ -97,9 +102,9 @@ export const errors = {
     hint: 'Run `ROLLBACK` to clear the transaction, then re-run your statements.'
   },
   DUPLICATE_TABLE: {
-    title: 'Table already exists',
-    message: 'A table named `{name}` already exists.',
-    messageGeneric: 'A table with that name already exists.',
+    title: '{Object} already exists',
+    message: 'A {object} named `{name}` already exists.',
+    messageGeneric: 'A {object} with that name already exists.',
     hint: 'Use `CREATE TABLE IF NOT EXISTS` or drop the existing one first.'
   },
   KEYRING_DECRYPT_FAILED: {

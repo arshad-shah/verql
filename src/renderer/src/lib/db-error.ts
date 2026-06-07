@@ -19,6 +19,7 @@
 import { t } from '@shared/i18n'
 import type { DbErrorCode } from '@shared/db-errors'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
+import { resolveDataNouns, nounVars } from '@/lib/data-nouns'
 
 export type { DbErrorCode } from '@shared/db-errors'
 
@@ -49,18 +50,21 @@ interface RenderedError {
 }
 
 // Renders a friendly message for a driver-matched code. `cap` is the first
-// non-empty capture group from the driver's regex (the offending name/token).
-// These mirror the original message logic 1:1; only the regexes moved to drivers.
-const DRIVER_RENDERERS: Partial<Record<DbErrorCode, (cap?: string) => RenderedError>> = {
-  COLUMN_NOT_FOUND: (cap) => ({
-    title: t('errors.COLUMN_NOT_FOUND.title'),
-    message: t('errors.COLUMN_NOT_FOUND.message', { name: cap || 'referenced' }),
-    hint: t('errors.COLUMN_NOT_FOUND.hint'),
+// non-empty capture group from the driver's regex (the offending name/token);
+// `nv` is the driver's noun vars (object/field/record) so query-semantic copy
+// reads in the driver's own terms. These mirror the original message logic 1:1;
+// only the regexes moved to drivers and the nouns became driver-supplied.
+type NounVars = Record<string, string>
+const DRIVER_RENDERERS: Partial<Record<DbErrorCode, (cap?: string, nv?: NounVars) => RenderedError>> = {
+  COLUMN_NOT_FOUND: (cap, nv) => ({
+    title: t('errors.COLUMN_NOT_FOUND.title', nv),
+    message: t('errors.COLUMN_NOT_FOUND.message', { name: cap || 'referenced', ...nv }),
+    hint: t('errors.COLUMN_NOT_FOUND.hint', nv),
   }),
-  TABLE_NOT_FOUND: (cap) => ({
-    title: t('errors.TABLE_NOT_FOUND.title'),
-    message: t('errors.TABLE_NOT_FOUND.message', { name: cap || 'referenced' }),
-    hint: t('errors.TABLE_NOT_FOUND.hint'),
+  TABLE_NOT_FOUND: (cap, nv) => ({
+    title: t('errors.TABLE_NOT_FOUND.title', nv),
+    message: t('errors.TABLE_NOT_FOUND.message', { name: cap || 'referenced', ...nv }),
+    hint: t('errors.TABLE_NOT_FOUND.hint', nv),
   }),
   SCHEMA_NOT_FOUND: (cap) => ({
     title: t('errors.SCHEMA_NOT_FOUND.title'),
@@ -72,33 +76,33 @@ const DRIVER_RENDERERS: Partial<Record<DbErrorCode, (cap?: string) => RenderedEr
     message: cap ? t('errors.SYNTAX_ERROR.message', { token: cap }) : t('errors.SYNTAX_ERROR.messageGeneric'),
     hint: t('errors.SYNTAX_ERROR.hint'),
   }),
-  UNIQUE_VIOLATION: (cap) => ({
-    title: t('errors.UNIQUE_VIOLATION.title'),
-    message: cap ? t('errors.UNIQUE_VIOLATION.message', { constraint: cap }) : t('errors.UNIQUE_VIOLATION.messageGeneric'),
-    hint: t('errors.UNIQUE_VIOLATION.hint'),
+  UNIQUE_VIOLATION: (cap, nv) => ({
+    title: t('errors.UNIQUE_VIOLATION.title', nv),
+    message: cap ? t('errors.UNIQUE_VIOLATION.message', { constraint: cap, ...nv }) : t('errors.UNIQUE_VIOLATION.messageGeneric', nv),
+    hint: t('errors.UNIQUE_VIOLATION.hint', nv),
   }),
-  NOT_NULL_VIOLATION: (cap) => ({
-    title: t('errors.NOT_NULL_VIOLATION.title'),
-    message: cap ? t('errors.NOT_NULL_VIOLATION.message', { column: cap }) : t('errors.NOT_NULL_VIOLATION.messageGeneric'),
+  NOT_NULL_VIOLATION: (cap, nv) => ({
+    title: t('errors.NOT_NULL_VIOLATION.title', nv),
+    message: cap ? t('errors.NOT_NULL_VIOLATION.message', { column: cap, ...nv }) : t('errors.NOT_NULL_VIOLATION.messageGeneric', nv),
   }),
-  FOREIGN_KEY_VIOLATION: () => ({
-    title: t('errors.FOREIGN_KEY_VIOLATION.title'),
-    message: t('errors.FOREIGN_KEY_VIOLATION.message'),
-    hint: t('errors.FOREIGN_KEY_VIOLATION.hint'),
+  FOREIGN_KEY_VIOLATION: (_cap, nv) => ({
+    title: t('errors.FOREIGN_KEY_VIOLATION.title', nv),
+    message: t('errors.FOREIGN_KEY_VIOLATION.message', nv),
+    hint: t('errors.FOREIGN_KEY_VIOLATION.hint', nv),
   }),
-  CHECK_VIOLATION: () => ({
-    title: t('errors.CHECK_VIOLATION.title'),
-    message: t('errors.CHECK_VIOLATION.message'),
+  CHECK_VIOLATION: (_cap, nv) => ({
+    title: t('errors.CHECK_VIOLATION.title', nv),
+    message: t('errors.CHECK_VIOLATION.message', nv),
   }),
-  TYPE_MISMATCH: () => ({
-    title: t('errors.TYPE_MISMATCH.title'),
-    message: t('errors.TYPE_MISMATCH.message'),
-    hint: t('errors.TYPE_MISMATCH.hint'),
+  TYPE_MISMATCH: (_cap, nv) => ({
+    title: t('errors.TYPE_MISMATCH.title', nv),
+    message: t('errors.TYPE_MISMATCH.message', nv),
+    hint: t('errors.TYPE_MISMATCH.hint', nv),
   }),
-  DUPLICATE_TABLE: (cap) => ({
-    title: t('errors.DUPLICATE_TABLE.title'),
-    message: cap ? t('errors.DUPLICATE_TABLE.message', { name: cap }) : t('errors.DUPLICATE_TABLE.messageGeneric'),
-    hint: t('errors.DUPLICATE_TABLE.hint'),
+  DUPLICATE_TABLE: (cap, nv) => ({
+    title: t('errors.DUPLICATE_TABLE.title', nv),
+    message: cap ? t('errors.DUPLICATE_TABLE.message', { name: cap, ...nv }) : t('errors.DUPLICATE_TABLE.messageGeneric', nv),
+    hint: t('errors.DUPLICATE_TABLE.hint', nv),
   }),
   DIVISION_BY_ZERO: () => ({
     title: t('errors.DIVISION_BY_ZERO.title'),
@@ -209,7 +213,11 @@ export function parseDbError(input: string | Error | unknown, dbType?: string): 
   // 1. Driver-owned query-semantic classification (regexes from the driver's
   //    errorRules capability; messages from DRIVER_RENDERERS here).
   if (dbType) {
-    const rules = useDriverCapabilitiesStore.getState().byType[dbType]?.errorRules ?? []
+    const caps = useDriverCapabilitiesStore.getState().byType[dbType]
+    const rules = caps?.errorRules ?? []
+    // The driver's own nouns (table/column/row, collection/field/document, …),
+    // so query-semantic messages read in its terms; generic words otherwise.
+    const nv = nounVars(resolveDataNouns(caps?.nouns, t))
     for (const rule of rules) {
       const render = DRIVER_RENDERERS[rule.code]
       if (!render) continue
@@ -218,7 +226,7 @@ export function parseDbError(input: string | Error | unknown, dbType?: string): 
       const m = raw.match(re)
       if (m) {
         const cap = m.slice(1).find((x) => x != null && x !== '')
-        const r = render(cap)
+        const r = render(cap, nv)
         return { code: rule.code, title: r.title, message: r.message, hint: r.hint, raw }
       }
     }

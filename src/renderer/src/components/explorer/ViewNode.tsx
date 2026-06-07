@@ -171,7 +171,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
             </p>
           ) : (
             cols.map((col) => (
-              <ColumnRow key={col.name} column={col} tableName={viewName} />
+              <ColumnRow key={col.name} column={col} tableName={viewName} connectionId={connectionId} />
             ))
           )}
         </div>

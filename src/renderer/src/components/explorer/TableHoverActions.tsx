@@ -7,6 +7,8 @@ interface Props {
   canViewData: boolean
   onViewData: () => void
   onOpenInQueryTab: () => void
+  /** The driver's noun for the object (table/collection/key), for the export label. */
+  objectNoun: string
   /** Collapsed rows expose "copy sample query"; pass to show the Play action. */
   onCopySampleQuery?: () => void
   /** Expanded cards expose "export table"; pass to show the Download action. */
@@ -16,7 +18,7 @@ interface Props {
 /** The hover-revealed quick actions shown on a table tree node — shared by the
  *  collapsed row and the expanded card, which differ only in the trailing
  *  action (copy-sample-query vs. export-table). */
-export function TableHoverActions({ canViewData, onViewData, onOpenInQueryTab, onCopySampleQuery, onExportTable }: Props) {
+export function TableHoverActions({ canViewData, onViewData, onOpenInQueryTab, objectNoun, onCopySampleQuery, onExportTable }: Props) {
   const { t } = useTranslation()
   return (
     <span
@@ -61,9 +63,9 @@ export function TableHoverActions({ canViewData, onViewData, onOpenInQueryTab, o
         </Tooltip>
       )}
       {onExportTable && (
-        <Tooltip content={t('explorer.tooltip.exportTable')} side="top">
+        <Tooltip content={t('explorer.tooltip.exportTable', { object: objectNoun })} side="top">
           <IconButton
-            label={t('explorer.action.exportTable')}
+            label={t('explorer.action.exportTable', { object: objectNoun })}
             size="xs"
             variant="ghost"
             className="h-5 w-5"

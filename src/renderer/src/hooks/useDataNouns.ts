@@ -1,14 +1,11 @@
 import { useEffect } from 'react'
-import type { DataNoun } from '@shared/driver-capabilities'
 import { useConnectionsStore } from '@/stores/connections'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { useTranslation } from '@/i18n/I18nProvider'
+import { resolveDataNouns, type ResolvedNouns } from '@/lib/data-nouns'
 
-export interface ResolvedNouns {
-  object: DataNoun
-  field: DataNoun
-  record: DataNoun
-}
+export type { ResolvedNouns } from '@/lib/data-nouns'
+export { titleCase, nounVars } from '@/lib/data-nouns'
 
 /** Resolves the data-concept nouns (object/field/record) for a connection's
  *  driver, so the schema explorer can label things in the driver's own terms
@@ -26,15 +23,5 @@ export function useDataNouns(connectionId: string | null): ResolvedNouns {
   const fetch = useDriverCapabilitiesStore((s) => s.fetch)
   useEffect(() => { if (type) fetch(type).catch(() => {}) }, [type, fetch])
 
-  const n = caps?.nouns
-  return {
-    object: n?.object ?? { one: t('explorer.noun.object.one'), many: t('explorer.noun.object.many') },
-    field: n?.field ?? { one: t('explorer.noun.field.one'), many: t('explorer.noun.field.many') },
-    record: n?.record ?? { one: t('explorer.noun.record.one'), many: t('explorer.noun.record.many') },
-  }
-}
-
-/** Title-case a lower-case noun for use as a standalone label/header. */
-export function titleCase(noun: string): string {
-  return noun.charAt(0).toUpperCase() + noun.slice(1)
+  return resolveDataNouns(caps?.nouns, t)
 }

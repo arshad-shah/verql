@@ -212,11 +212,13 @@ ctx.drivers.register('cassandra', {
     field:  { one: 'column', many: 'columns' }, // a field within an object
     record: { one: 'row', many: 'rows' },       // a single record
   },
-  // Scope today: nouns drive the explorer's prominent labels (search
-  // placeholder, primary group header, loading/empty states, "no fields", row
-  // counts). Still to do (follow-up): the per-action context-menu/button labels
-  // ("Copy table name", "Export table") and the relational wording baked into
-  // the `errors.ts` i18n catalogue — both should resolve through `nouns` too.
+  // Nouns drive every relational label the shell shows: the explorer's search
+  // placeholder, group header, loading/empty states and row counts; the
+  // context-menu / hover labels ("Copy {object} name", "Export {object}", "Copy
+  // {field} name"); and the query-semantic error copy in `errors.ts` (a
+  // not-found / duplicate / constraint error reads in the driver's terms). The
+  // renderer resolves them in one place — `lib/data-nouns.ts` (`resolveDataNouns`
+  // + `nounVars`), surfaced reactively via the `useDataNouns` hook.
 
   // Driver-owned error classification. Each rule's regex (matched
   // case-insensitively against the cleaned message; first capture group → the

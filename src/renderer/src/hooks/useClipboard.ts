@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
-import type { MessageKey } from '@shared/i18n'
+import type { MessageKey, TranslationVars } from '@shared/i18n'
 import { useToastStore } from '@/stores/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export interface CopyOptions {
-  /** Show a success toast with this i18n message after copying. */
-  toast?: MessageKey
+  /** Show a success toast after copying. Pass a bare message key, or
+   *  `{ key, vars }` when the message interpolates values (e.g. driver nouns). */
+  toast?: MessageKey | { key: MessageKey; vars: TranslationVars }
   /** How long the returned `copied` flag stays true, in ms. Default 1200. */
   resetDelay?: number
 }
@@ -22,7 +23,12 @@ export function useClipboard(): { copied: boolean; copy: (text: string, options?
 
   const copy = useCallback((text: string, options?: CopyOptions) => {
     navigator.clipboard.writeText(text)
-      .then(() => { if (options?.toast) addToast({ type: 'success', title: t(options.toast) }) })
+      .then(() => {
+        const tt = options?.toast
+        if (!tt) return
+        const title = typeof tt === 'string' ? t(tt) : t(tt.key, tt.vars)
+        addToast({ type: 'success', title })
+      })
       .catch(() => { /* clipboard blocked — silent */ })
     setCopied(true)
     if (timer.current) clearTimeout(timer.current)

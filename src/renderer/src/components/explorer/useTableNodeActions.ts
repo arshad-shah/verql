@@ -6,6 +6,7 @@ import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginContextMenu'
 import { useClipboard } from '@/hooks/useClipboard'
+import { resolveDataNouns } from '@/lib/data-nouns'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -46,6 +47,7 @@ export function useTableNodeActions(
   // the relational drivers) can render the browse grid — no db-type branching.
   const caps = useDriverCapabilitiesStore((s) => profile ? s.resolveCapabilities(connectionId, profile.type) : null)
   const canViewData = Boolean(caps?.hasGetTableData)
+  const nouns = resolveDataNouns(caps?.nouns, t)
   useEffect(() => { if (profile?.type) void useDriverCapabilitiesStore.getState().fetch(profile.type) }, [profile?.type])
 
   const openData = () => { openTableData(connectionId, tableName, schema) }
@@ -65,7 +67,7 @@ export function useTableNodeActions(
   }
 
   function copyTableName() {
-    copy(tableName, { toast: 'explorer.toast.copiedTableName' })
+    copy(tableName, { toast: { key: 'explorer.toast.copiedTableName', vars: { object: nouns.object.one } } })
   }
 
   async function copySampleQuery() {
@@ -82,7 +84,7 @@ export function useTableNodeActions(
       onSelect: openInQueryTab,
     },
     {
-      label: t('explorer.menu.copyTableName'),
+      label: t('explorer.menu.copyTableName', { object: nouns.object.one }),
       onSelect: copyTableName,
     },
     {
@@ -92,7 +94,7 @@ export function useTableNodeActions(
     ...(onExportTable
       ? [
           {
-            label: t('explorer.menu.exportTable'),
+            label: t('explorer.menu.exportTable', { object: nouns.object.one }),
             onSelect: () => onExportTable(tableName),
           },
         ]
