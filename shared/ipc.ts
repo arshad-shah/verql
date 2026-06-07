@@ -2,7 +2,7 @@ import type { ConnectionProfile, QueryResult, SchemaTable, SchemaColumn, SchemaI
 import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
-import type { ActivityEntry, ActivityQuery } from './activity'
+import type { ActivityEntry, ActivityQuery, ActivityKind, ActivityLevel } from './activity'
 import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry } from './appdata'
 
 export interface IpcChannelMap {
@@ -24,6 +24,22 @@ export interface IpcChannelMap {
   }
   'activity:clear': {
     args: []
+    return: void
+  }
+  /** Record a renderer-originated diagnostic entry (store mutations, perf
+   *  signals) into the unified main-owned activity stream. */
+  'activity:record': {
+    args: [entry: {
+      kind: ActivityKind
+      level?: ActivityLevel
+      title: string
+      detail?: string
+      source?: string
+      durationMs?: number
+      stack?: string
+      metadata?: Record<string, unknown>
+      traceId?: string
+    }]
     return: void
   }
   'db:query': {
@@ -704,6 +720,7 @@ export const IPC_CHANNELS = {
   DB_SET_ACTIVE_CONNECTION: 'db:set-active-connection',
   ACTIVITY_LIST: 'activity:list',
   ACTIVITY_CLEAR: 'activity:clear',
+  ACTIVITY_RECORD: 'activity:record',
   DB_QUERY: 'db:query',
   DB_FORMAT_QUERY: 'db:format-query',
   DB_TEST_CONNECTION: 'db:test-connection',

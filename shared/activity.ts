@@ -14,6 +14,10 @@ export type ActivityKind =
   | 'connection'   // connect / disconnect / failed
   | 'notification' // something surfaced to the user
   | 'network'      // an outbound request the app initiated (AI providers, …)
+  | 'ipc'          // a renderer→main IPC call (channel, timing, ok/err)
+  | 'plugin'       // a plugin lifecycle event (boot/activate/deactivate/error)
+  | 'store'        // a renderer state-store mutation (which keys changed)
+  | 'perf'         // a performance signal (long task, slow render)
   | 'log'          // a diagnostic log line from the app/glue (for devs)
 
 export type ActivityLevel = 'debug' | 'info' | 'success' | 'warn' | 'error'
@@ -32,6 +36,13 @@ export interface ActivityEntry {
   source?: string
   /** Duration in ms when the event represents an operation. */
   durationMs?: number
+  /** Full error stack, when the entry represents a failure. */
+  stack?: string
+  /** Structured payload for the detail drawer (args, request/response, diffs).
+   *  Must be secret-free and JSON-serialisable. */
+  metadata?: Record<string, unknown>
+  /** Correlates related entries (e.g. an IPC call and the query it triggered). */
+  traceId?: string
 }
 
 export interface ActivityQuery {

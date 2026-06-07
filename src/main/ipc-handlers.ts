@@ -174,6 +174,8 @@ export function registerIpcHandlers(): void {
 
   handle(IPC_CHANNELS.ACTIVITY_LIST, async (query) => activityLog.list(query))
   handle(IPC_CHANNELS.ACTIVITY_CLEAR, async () => activityLog.clear())
+  // Renderer-originated diagnostics (store mutations, perf) join the one stream.
+  handle(IPC_CHANNELS.ACTIVITY_RECORD, async (entry) => { activityLog.record(entry) })
   registerExportImportHandlers(ctx, handle, { exporterRegistry, importerRegistry })
 
   // Query formatting is plugin-owned: each driver contributes a formatter for
