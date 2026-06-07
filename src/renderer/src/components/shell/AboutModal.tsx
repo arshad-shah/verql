@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link, Box, Flex, Stack } from '@/primitives'
+import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -77,26 +77,18 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal open={open} onClose={onClose} size="lg" className="overflow-hidden">
       <Flex className="max-sm:flex-col">
         {/* Brand hero */}
-        <Flex
-          direction="column"
-          gap="lg"
-          justify="center"
-          className="w-[230px] shrink-0 max-sm:w-full p-7 border-r border-border-default max-sm:border-r-0 max-sm:border-b"
-          style={{
-            background:
-              'radial-gradient(150px 150px at 28% 18%, color-mix(in oklab, var(--color-accent) 26%, transparent), transparent 70%),' +
-              'linear-gradient(160deg, color-mix(in oklab, var(--color-accent) 12%, var(--color-bg-primary)), var(--color-bg-primary))',
-          }}
-        >
-          <VerqlMark size={60} />
-          <Stack gap="xs">
-            <Text size="xl" weight="bold" color="primary">Verql</Text>
-            {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
-          </Stack>
-          <Text size="sm" color="secondary" className="leading-relaxed">{t('about.tagline')}</Text>
-          <Box className="flex-1 max-sm:hidden" />
-          <Text size="xs" color="muted">{t('about.license')}</Text>
-        </Flex>
+        <GradientSurface className="w-[230px] shrink-0 max-sm:w-full border-r border-border-default max-sm:border-r-0 max-sm:border-b">
+          <Flex direction="column" gap="lg" justify="center" className="h-full p-7">
+            <VerqlMark size={60} />
+            <Stack gap="xs">
+              <Text size="xl" weight="bold" color="primary">Verql</Text>
+              {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
+            </Stack>
+            <Text size="sm" color="secondary" className="leading-relaxed">{t('about.tagline')}</Text>
+            <Box className="flex-1 max-sm:hidden" />
+            <Text size="xs" color="muted">{t('about.license')}</Text>
+          </Flex>
+        </GradientSurface>
 
         {/* Build + resources */}
         <Box padding="xl" className="relative flex-1">
