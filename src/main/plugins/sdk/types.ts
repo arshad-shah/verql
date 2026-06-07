@@ -4,7 +4,7 @@ import type { DbAdapter } from '../../db/adapter'
 import type { UIRegistry } from './ui-registry'
 import type { CompletionRegistry } from './completion-registry'
 import type { AIAccess } from './ai-access'
-import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
+import type { SessionCapability, ExplainCapability, InspectionCapability, RuntimeCapabilityOverlay, DataNouns } from '@shared/driver-capabilities'
 import type { DbErrorRule } from '@shared/db-errors'
 import type { JsonSchemaObject } from './tool-schema'
 export type { DriverCapabilities } from '@shared/driver-capabilities'
@@ -203,6 +203,10 @@ export interface DriverFactory {
     tableName: string,
     columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[],
   ): Promise<string>
+  /** Nouns this driver uses for its data concepts (object/field/record), so the
+   *  schema explorer can label things in the driver's own terms instead of
+   *  assuming SQL "table/column/row". Omit ⇒ the renderer uses generic words. */
+  nouns?: DataNouns
   /** Transaction / auto-commit / read-only capabilities. Omit ⇒ no txn UI. */
   session?: SessionCapability
   /** Execution-plan capabilities. Omit ⇒ no Explain action. */

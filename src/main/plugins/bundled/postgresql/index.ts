@@ -125,6 +125,11 @@ export function activate(ctx: PluginContext): void {
     placeholderStyle: 'numbered',
     editorLanguage: 'sql',
     statementSyntax: 'sql',
+    nouns: {
+      object: { one: 'table', many: 'tables' },
+      field: { one: 'column', many: 'columns' },
+      record: { one: 'row', many: 'rows' },
+    },
     errorRules: postgresErrorRules,
     defaultSchemaCandidates: ['public'],
     connectionFields: [

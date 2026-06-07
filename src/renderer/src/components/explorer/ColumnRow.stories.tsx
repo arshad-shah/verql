@@ -9,7 +9,7 @@ import type { SchemaColumn } from '@shared/types'
 const meta: Meta<typeof ColumnRow> = {
   title: 'Components/Explorer/ColumnRow',
   component: ColumnRow,
-  args: { tableName: 'users' },
+  args: { tableName: 'users', connectionId: 'demo' },
   decorators: [
     (Story) => (
       <div

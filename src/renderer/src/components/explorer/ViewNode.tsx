@@ -3,7 +3,8 @@ import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
-import { useToastStore } from '@/stores/toast'
+import { useClipboard } from '@/hooks/useClipboard'
+import { useDataNouns } from '@/hooks/useDataNouns'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
@@ -28,7 +29,8 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
   const fetchColumns = useSchemaStore((s) => s.fetchColumns)
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
-  const addToast = useToastStore((s) => s.addToast)
+  const { copy } = useClipboard()
+  const nouns = useDataNouns(connectionId)
   const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
 
   const nodeKey = `view:${connectionId}:${schema}:${viewName}`
@@ -64,19 +66,13 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
     },
     {
       label: t('explorer.menu.copyViewName'),
-      onSelect: () => {
-        navigator.clipboard.writeText(viewName).then(() => {
-          addToast({ type: 'success', title: t('explorer.toast.copiedViewName') })
-        })
-      },
+      onSelect: () => copy(viewName, { toast: 'explorer.toast.copiedViewName' }),
     },
     {
       label: t('explorer.menu.copySampleQuery'),
       onSelect: async () => {
         const query = await getSampleQuery()
-        navigator.clipboard.writeText(query).then(() => {
-          addToast({ type: 'success', title: t('explorer.toast.copiedSampleQuery') })
-        })
+        copy(query, { toast: 'explorer.toast.copiedSampleQuery' })
       },
     },
   ]
@@ -171,11 +167,11 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
               className="text-xs px-2 py-1.5"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
-              {t('explorer.loading.columns')}
+              {t('explorer.loading.columns', { fields: nouns.field.many })}
             </p>
           ) : (
             cols.map((col) => (
-              <ColumnRow key={col.name} column={col} tableName={viewName} />
+              <ColumnRow key={col.name} column={col} tableName={viewName} connectionId={connectionId} />
             ))
           )}
         </div>

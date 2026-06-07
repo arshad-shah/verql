@@ -1,19 +1,14 @@
 import { useEffect } from 'react'
-import { ChevronRight, ChevronDown, Table2, ExternalLink, Play, Download, Rows3 } from 'lucide-react'
+import { ChevronRight, ChevronDown, Table2 } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
-import { useTabsStore } from '@/stores/tabs'
-import { useConnectionsStore } from '@/stores/connections'
-import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
-import { useToastStore } from '@/stores/toast'
-import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginContextMenu'
-import { IconButton } from '@/primitives/forms/Button'
-import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
-import { IPC_CHANNELS } from '@shared/ipc'
+import { TableHoverActions } from './TableHoverActions'
+import { useTableNodeActions } from './useTableNodeActions'
+import { formatCompactNumber } from '@/lib/format'
+import { useDataNouns } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface TableNodeProps {
@@ -23,12 +18,6 @@ interface TableNodeProps {
   depth: number
   onExportTable?: (tableName: string) => void
   highlightQuery?: string
-}
-
-function formatRowCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
-  return String(count)
 }
 
 export function TableNode({
@@ -58,18 +47,9 @@ export function TableNode({
   const tableIndexes = indexes.get(cacheKey) ?? []
   const rowCount = rowCounts.get(cacheKey)
 
-  const addQueryTab = useTabsStore((s) => s.addQueryTab)
-  const updateTabSql = useTabsStore((s) => s.updateTabSql)
-  const addToast = useToastStore((s) => s.addToast)
-  const pluginTableItems = usePluginContextMenuItems('table')
-  const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
-  const openTableData = useTabsStore((s) => s.openTableData)
-  // Capability-gated: any driver that provides a data reader (Redis/Mongo, and
-  // the relational drivers) can render the browse grid — no db-type branching.
-  const caps = useDriverCapabilitiesStore((s) => profile ? s.resolveCapabilities(connectionId, profile.type) : null)
-  const canViewData = Boolean(caps?.hasGetTableData)
-  useEffect(() => { if (profile?.type) void useDriverCapabilitiesStore.getState().fetch(profile.type) }, [profile?.type])
-  const openData = () => { openTableData(connectionId, tableName, schema) }
+  const { canViewData, openData, openInQueryTab, copySampleQuery, menuItems } =
+    useTableNodeActions(connectionId, tableName, schema, onExportTable)
+  const nouns = useDataNouns(connectionId)
 
   // Lazy-fetch when expanded
   useEffect(() => {
@@ -83,60 +63,6 @@ export function TableNode({
   function handleToggle() {
     toggleTreeNode(nodeKey)
   }
-
-  async function getSampleQuery(): Promise<string> {
-    try {
-      return await window.electronAPI.invoke(IPC_CHANNELS.DB_SAMPLE_QUERY, connectionId, tableName, schema) as string
-    } catch {
-      return `SELECT * FROM ${tableName} LIMIT 100;`
-    }
-  }
-
-  async function openInQueryTab() {
-    const query = await getSampleQuery()
-    const tabId = addQueryTab(connectionId, schema, { autoCommit: initialAutoCommit(profile) })
-    updateTabSql(tabId, query)
-  }
-
-  function copyTableName() {
-    navigator.clipboard.writeText(tableName).then(() => {
-      addToast({ type: 'success', title: t('explorer.toast.copiedTableName') })
-    })
-  }
-
-  async function copySampleQuery() {
-    const query = await getSampleQuery()
-    navigator.clipboard.writeText(query).then(() => {
-      addToast({ type: 'success', title: t('explorer.toast.copiedSampleQuery') })
-    })
-  }
-
-  const menuItems = [
-    ...(canViewData
-      ? [{ label: t('explorer.menu.viewData'), onSelect: openData }]
-      : []),
-    {
-      label: t('explorer.menu.openInQueryTab'),
-      onSelect: openInQueryTab,
-    },
-    {
-      label: t('explorer.menu.copyTableName'),
-      onSelect: copyTableName,
-    },
-    {
-      label: t('explorer.menu.copySampleQuery'),
-      onSelect: copySampleQuery,
-    },
-    ...(onExportTable
-      ? [
-          {
-            label: t('explorer.menu.exportTable'),
-            onSelect: () => onExportTable(tableName),
-          },
-        ]
-      : []),
-    ...pluginTableItems,
-  ]
 
   const paddingLeft = 8 + depth * 16
 
@@ -154,7 +80,7 @@ export function TableNode({
         className="text-xs shrink-0"
         style={{ color: 'var(--color-text-secondary)' }}
       >
-        {formatRowCount(rowCount)}
+        {formatCompactNumber(rowCount)}
       </span>
     ) : null
 
@@ -181,47 +107,13 @@ export function TableNode({
           </span>
           {rowCountDisplay}
 
-          {/* Hover actions */}
-          <span
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {canViewData && (
-              <Tooltip content={t('explorer.tooltip.viewData')} side="top">
-                <IconButton
-                  label={t('explorer.action.viewData')}
-                  size="xs"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  onClick={openData}
-                >
-                  <Rows3 size={10} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
-              <IconButton
-                label={t('explorer.action.openInQueryTab')}
-                size="xs"
-                variant="ghost"
-                className="h-5 w-5"
-                onClick={openInQueryTab}
-              >
-                <ExternalLink size={10} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip content={t('explorer.tooltip.copySampleQuery')} side="top">
-              <IconButton
-                label={t('explorer.action.copySampleQuery')}
-                size="xs"
-                variant="ghost"
-                className="h-5 w-5"
-                onClick={copySampleQuery}
-              >
-                <Play size={10} />
-              </IconButton>
-            </Tooltip>
-          </span>
+          <TableHoverActions
+            canViewData={canViewData}
+            onViewData={openData}
+            onOpenInQueryTab={openInQueryTab}
+            objectNoun={nouns.object.one}
+            onCopySampleQuery={copySampleQuery}
+          />
         </button>
       </ContextMenu>
     )
@@ -279,7 +171,7 @@ export function TableNode({
                   color: 'var(--color-text-secondary)',
                 }}
               >
-                {t('explorer.table.rows', { value: formatRowCount(rowCount), n: rowCount })}
+                {t('explorer.table.rows', { value: formatCompactNumber(rowCount), records: rowCount === 1 ? nouns.record.one : nouns.record.many })}
               </span>
             )}
             {tableIndexes.length > 0 && (
@@ -295,49 +187,13 @@ export function TableNode({
             )}
           </span>
 
-          {/* Hover actions */}
-          <span
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {canViewData && (
-              <Tooltip content={t('explorer.tooltip.viewData')} side="top">
-                <IconButton
-                  label={t('explorer.action.viewData')}
-                  size="xs"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  onClick={openData}
-                >
-                  <Rows3 size={10} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
-              <IconButton
-                label={t('explorer.action.openInQueryTab')}
-                size="xs"
-                variant="ghost"
-                className="h-5 w-5"
-                onClick={openInQueryTab}
-              >
-                <ExternalLink size={10} />
-              </IconButton>
-            </Tooltip>
-            {onExportTable && (
-              <Tooltip content={t('explorer.tooltip.exportTable')} side="top">
-                <IconButton
-                  label={t('explorer.action.exportTable')}
-                  size="xs"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  onClick={() => onExportTable(tableName)}
-                >
-                  <Download size={10} />
-                </IconButton>
-              </Tooltip>
-            )}
-          </span>
+          <TableHoverActions
+            canViewData={canViewData}
+            onViewData={openData}
+            onOpenInQueryTab={openInQueryTab}
+            objectNoun={nouns.object.one}
+            onExportTable={onExportTable ? () => onExportTable(tableName) : undefined}
+          />
         </button>
 
         {/* Column rows */}
@@ -350,11 +206,13 @@ export function TableNode({
               {/* Distinguish "loaded, but this driver has no columns" (e.g. Redis)
                   from "still fetching" — otherwise schema-less drivers show a
                   perpetual "Loading columns…". */}
-              {columns.has(cacheKey) ? t('explorer.noColumns') : t('explorer.loading.columns')}
+              {columns.has(cacheKey)
+                ? t('explorer.noColumns', { fields: nouns.field.many })
+                : t('explorer.loading.columns', { fields: nouns.field.many })}
             </p>
           ) : (
             tableColumns.map((col) => (
-              <ColumnRow key={col.name} column={col} tableName={tableName} />
+              <ColumnRow key={col.name} column={col} tableName={tableName} connectionId={connectionId} />
             ))
           )}
         </div>

@@ -1,4 +1,5 @@
 // src/main/ai/conversation-manager.ts
+import { errorMessage } from '@shared/errors'
 import { randomUUID } from 'crypto'
 import type { AIChatMessage, AIStreamEvent, AIToolCallRequest } from '@shared/ai-types'
 import type { AIContextProvider } from './types'
@@ -296,7 +297,7 @@ export class ConversationManager {
               display: result.display
             }}
           } catch (err) {
-            const errMsg = err instanceof Error ? err.message : String(err)
+            const errMsg = errorMessage(err)
             const resultContent = JSON.stringify({ error: errMsg })
             toolCalls.push({ call: chunk.toolCall, resultContent })
             yield { type: 'tool-result', result: {

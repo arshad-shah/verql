@@ -6,13 +6,8 @@ import {
 import { useAIStore } from '@/stores/ai'
 import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
+import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
-  return String(n)
-}
 
 /**
  * Top of the chat panel. Combines conversation switcher, model name, and a
@@ -137,10 +132,10 @@ export function ChatPanelHeader() {
             </div>
             <Flex align="center" justify="between" className="text-[10px]">
               <Text size="xs" color="muted">
-                {t('aiui.header.used', { used: formatTokens(totalTokens), total: formatTokens(contextWindow) })}
+                {t('aiui.header.used', { used: formatCompactNumber(totalTokens), total: formatCompactNumber(contextWindow) })}
               </Text>
               <Text size="xs" weight="medium" className={remainingTone}>
-                {t('aiui.header.remaining', { remaining: formatTokens(remaining ?? 0) })}
+                {t('aiui.header.remaining', { remaining: formatCompactNumber(remaining ?? 0) })}
               </Text>
             </Flex>
           </>

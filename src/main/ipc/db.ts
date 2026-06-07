@@ -1,4 +1,5 @@
 import type { ConnectionProfile } from '@shared/types'
+import { errorMessage } from '@shared/errors'
 import type { DbAdapter } from '../db/adapter'
 import type { ActivityLog } from '../activity/log'
 import { createAdapter } from '../db/factory'
@@ -60,7 +61,7 @@ export function registerDbHandlers(
         if (adapter && ctx.activeAdapters.get(profileId) !== adapter) {
           await adapter.disconnect().catch(() => { /* best-effort cleanup */ })
         }
-        const message = err instanceof Error ? err.message : String(err)
+        const message = errorMessage(err)
         activity?.record({ kind: 'connection', level: 'error', title: `Connection to ${connName(profileId)} failed`, detail: message, source: profileId })
         return { success: false as const, error: message }
       } finally {
@@ -121,7 +122,7 @@ export function registerDbHandlers(
     } catch (err) {
       activity.record({
         kind: 'query', level: 'error', title: 'Query failed',
-        detail: `${sql}\n\n${err instanceof Error ? err.message : String(err)}`,
+        detail: `${sql}\n\n${errorMessage(err)}`,
         source: connName(profileId),
       })
       throw err

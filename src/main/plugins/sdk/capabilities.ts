@@ -14,6 +14,7 @@ export function serializeStaticCapabilities(factory: DriverFactory): DriverCapab
     defaultSchemaCandidates: factory.defaultSchemaCandidates,
     hasSampleQuery: typeof factory.sampleQuery === 'function',
     hasGetTableData: typeof factory.getTableData === 'function',
+    nouns: factory.nouns,
     session: factory.session,
     explain: factory.explain,
     sessionInspection: factory.sessionInspection,

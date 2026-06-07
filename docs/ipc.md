@@ -28,38 +28,55 @@ string-literal `invoke()` / `on()` calls and fails the build if it finds one
 that isn't a known channel — and a forgotten constant is a clear regression
 signal.
 
+## The single-source model
+
+Each channel is described in two complementary halves, both in `shared/ipc.ts`:
+
+- **`IpcChannelShapes`** — an interface keyed by the channel's **constant name**
+  (`DB_EXPLAIN_QUERY`) carrying its `args` tuple and `return` type.
+- **`IPC_CHANNELS`** — the const object mapping that same constant name to its
+  **wire string** (`'db:explain-query'`).
+
+The wire string is written **exactly once** (in `IPC_CHANNELS`). The
+renderer-/main-facing `IpcChannelMap` (keyed by wire string, the shape
+`invoke`/`handle`/the preload bridge consume) is **derived** by joining the two
+halves — so the channel name can never be duplicated or drift out of sync.
+`IPC_CHANNELS` is declared `… as const satisfies Record<keyof IpcChannelShapes,
+string>`, which forces its key set to match `IpcChannelShapes` exactly: a
+missing or orphan entry is a compile error.
+
 ## Adding a new invoke channel
 
-It's a three-step edit, **all in `shared/ipc.ts`**:
+It's a two-step edit, **all in `shared/ipc.ts`**:
 
-1. Add the channel definition to the `IpcChannelMap` type. Be precise about
-   the `args` tuple and the `return` type — these are what the renderer
-   actually sees through `window.electronAPI.invoke()`.
+1. Add the channel's contract to `IpcChannelShapes`, keyed by its constant
+   name. Be precise about the `args` tuple and the `return` type — these are
+   what the renderer actually sees through `window.electronAPI.invoke()`.
 
    ```ts
-   interface IpcChannelMap {
+   export interface IpcChannelShapes {
      // …
-     'db:explain-query': {
+     DB_EXPLAIN_QUERY: {
        args: [profileId: string, sql: string]
        return: { plan: string; cost: number }
      }
    }
    ```
 
-2. Add the matching constant to `IPC_CHANNELS`. Follow the existing
-   `SCREAMING_SNAKE_CASE` convention; the section comment groups it under
-   the right domain (`DB`, `PLUGINS`, `AI`, …).
+2. Add the matching constant + wire string to `IPC_CHANNELS`. Follow the
+   existing `SCREAMING_SNAKE_CASE` convention; the section comment groups it
+   under the right domain (`DB`, `PLUGINS`, `AI`, …).
 
    ```ts
    export const IPC_CHANNELS = {
      // …
      DB_EXPLAIN_QUERY: 'db:explain-query',
-   } as const satisfies Record<string, IpcChannel>
+   } as const satisfies Record<keyof IpcChannelShapes, string>
    ```
 
-   The `satisfies` clause makes TypeScript reject any value that isn't a
-   key of `IpcChannelMap` — so a typo here is a compile-time error, not a
-   runtime mystery.
+   The `satisfies` clause makes TypeScript reject the build unless every
+   `IpcChannelShapes` key has exactly one constant here (and vice versa) — so a
+   forgotten or mistyped name is a compile-time error, not a runtime mystery.
 
 3. Implement the handler. Pick the right file under `src/main/ipc/` based
    on the domain prefix:
@@ -110,27 +127,34 @@ signature already passes through any channel that's in the map.
 ## Adding a new broadcast event
 
 Broadcasts go the other way: `main → renderer`. They don't return a value.
+They follow the same single-source model as channels — payload tuple in
+`IpcEventShapes` (keyed by constant name), wire string once in `IPC_EVENTS`,
+and `IpcEventMap` derived from the two.
 
-1. Add the event to `IpcEventMap` in `shared/ipc.ts`:
+1. Add the event's payload tuple to `IpcEventShapes` in `shared/ipc.ts`,
+   keyed by its constant name:
 
    ```ts
-   export interface IpcEventMap {
+   export interface IpcEventShapes {
      // …
-     'db:long-query-progress': [payload: { profileId: string; pct: number }]
+     DB_LONG_QUERY_PROGRESS: [payload: { profileId: string; pct: number }]
    }
    ```
 
-2. Add the constant to `IPC_EVENTS`:
+2. Add the constant + wire string to `IPC_EVENTS`:
 
    ```ts
    export const IPC_EVENTS = {
      // …
      DB_LONG_QUERY_PROGRESS: 'db:long-query-progress'
-   } as const satisfies Record<string, IpcEvent>
+   } as const satisfies Record<keyof IpcEventShapes, string>
    ```
 
-3. Emit it from main. Inside a plugin use `ctx.broadcast(...)`; in the IPC
-   handlers, use `BrowserWindow.getAllWindows().forEach(w => w.webContents.send(IPC_EVENTS.X, payload))`.
+3. Emit it from main. Inside a plugin use `ctx.broadcast(...)`; in orchestrator
+   code use the typed `broadcast(IPC_EVENTS.X, payload)` helper from
+   [`ipc/broadcast.ts`](../src/main/ipc/broadcast.ts) — never hand-roll a
+   `BrowserWindow.getAllWindows()` loop (the helper is typed by `IpcEventMap`,
+   so a wrong payload is a compile error).
 
 4. Subscribe in the renderer:
 
@@ -145,8 +169,8 @@ Broadcasts go the other way: `main → renderer`. They don't return a value.
 
 | Check | Where | What breaks if you skip a step |
 |-------|-------|--------------------------------|
-| Compile-time channel registration | `IPC_CHANNELS` uses `satisfies Record<string, IpcChannel>` | Typo → build fail |
-| Compile-time map coverage | `tests/unit/ipc-channels-coverage.test.ts` has `Exclude<IpcChannel, ChannelValues>` | Forgot a constant → build fail |
+| Single-source key coverage | `IPC_CHANNELS` / `IPC_EVENTS` use `satisfies Record<keyof IpcChannelShapes, string>` | Constant without a shape (or shape without a constant) → build fail |
+| Compile-time map coverage | `tests/unit/ipc-channels-coverage.test.ts` re-asserts the shape↔constant key sets match | Drift between the two halves → build fail |
 | Runtime call-site audit | Same test scans source for string-literal `invoke`/`on` calls | Hand-rolled string literal → test fail |
 | Renderer typing | `window.electronAPI.invoke<K>()` | Wrong args / wrong return → build fail |
 | Handler typing | `handle: Handle` in `ipc/context.ts` | Wrong args / wrong return → build fail |

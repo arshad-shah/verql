@@ -1,42 +1,66 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
-import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel, type IpcEvent } from '../../shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS, type IpcChannelShapes, type IpcEventShapes, type IpcChannelMap, type IpcEventMap } from '../../shared/ipc'
 
 /**
  * Coverage guard for the central IPC registry.
  *
- * Two invariants:
- *   (1) every `IpcChannelMap` key appears as a value of `IPC_CHANNELS`
- *   (2) every `IpcEventMap` key appears as a value of `IPC_EVENTS`
+ * The wire string of every channel/event now lives in exactly one place — the
+ * value in `IPC_CHANNELS` / `IPC_EVENTS` — while the `args`/`return` (or event
+ * payload) contract lives in `IpcChannelShapes` / `IpcEventShapes`, keyed by
+ * the same CONSTANT NAME. The single invariant that keeps the two halves from
+ * drifting is therefore:
  *
- * `satisfies Record<string, IpcChannel>` already proves the inverse — that
- * no constant points at a non-channel — so together they make the registry
- * the single source of truth.
+ *   the key set of `IPC_CHANNELS` === the key set of `IpcChannelShapes`
+ *   the key set of `IPC_EVENTS`   === the key set of `IpcEventShapes`
  *
- * Both invariants are enforced at compile time via the type-level checks
- * below; the runtime assertions exist for clarity in failure reports.
+ * This is already enforced at the definition site by the
+ * `satisfies Record<keyof IpcChannelShapes, string>` clause, but we re-assert
+ * it here at compile time so a regression produces a clear, located failure,
+ * and keep the runtime call-site scan that bans inline string literals.
  */
 
 // ─── Compile-time coverage check ────────────────────────────────────────────
 //
-// `IpcChannelKeysCovered<T>` evaluates to `never` (no error) when every
-// channel/event name is present as a constant value. If a key is missing,
-// the type resolves to the missing literal type and the `_assert` constant
-// fails to typecheck — breaking the build.
+// Each `Missing*` type resolves to `never` when the constant registry and its
+// shape interface share an identical key set. If they diverge, it resolves to
+// the offending constant-name union and the `as never` assignment fails to
+// typecheck — breaking the build with the missing name in the error.
 
-type ChannelValues = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS]
-type EventValues = typeof IPC_EVENTS[keyof typeof IPC_EVENTS]
+type MissingChannelShapes = Exclude<keyof typeof IPC_CHANNELS, keyof IpcChannelShapes>
+type OrphanChannelShapes = Exclude<keyof IpcChannelShapes, keyof typeof IPC_CHANNELS>
+type MissingEventShapes = Exclude<keyof typeof IPC_EVENTS, keyof IpcEventShapes>
+type OrphanEventShapes = Exclude<keyof IpcEventShapes, keyof typeof IPC_EVENTS>
 
-type MissingChannels = Exclude<IpcChannel, ChannelValues>
-type MissingEvents = Exclude<IpcEvent, EventValues>
+const _missingChannelShapes: MissingChannelShapes = undefined as never
+const _orphanChannelShapes: OrphanChannelShapes = undefined as never
+const _missingEventShapes: MissingEventShapes = undefined as never
+const _orphanEventShapes: OrphanEventShapes = undefined as never
+void _missingChannelShapes
+void _orphanChannelShapes
+void _missingEventShapes
+void _orphanEventShapes
 
-// If any channel is missing from IPC_CHANNELS, MissingChannels resolves to
-// the offending union and this assignment fails.
-const _missingChannels: MissingChannels = undefined as never
-const _missingEvents: MissingEvents = undefined as never
-void _missingChannels
-void _missingEvents
+// ─── Derivation check ───────────────────────────────────────────────────────
+//
+// The wire-string-keyed maps consumed by invoke/handle/preload are *derived*
+// from the constant-name-keyed shapes. Pin that the join is correct: the shape
+// reached via a wire string must equal the shape authored under its constant
+// name. `AssertEqual` resolves to `never` on a mismatch, failing the build.
+
+type AssertEqual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never
+
+const _channelDerivation: AssertEqual<
+  IpcChannelMap[typeof IPC_CHANNELS.DB_CONNECT],
+  IpcChannelShapes['DB_CONNECT']
+> = true
+const _eventDerivation: AssertEqual<
+  IpcEventMap[typeof IPC_EVENTS.AI_CHAT_EVENT],
+  IpcEventShapes['AI_CHAT_EVENT']
+> = true
+void _channelDerivation
+void _eventDerivation
 
 describe('IPC channel registry coverage', () => {
   it('every invoke channel name is unique (no accidental duplicates)', () => {

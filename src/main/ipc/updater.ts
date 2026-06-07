@@ -1,5 +1,6 @@
-import { BrowserWindow } from 'electron'
 import { IPC_EVENTS } from '@shared/ipc'
+import { errorMessage } from '@shared/errors'
+import { broadcast } from './broadcast'
 import type { Handle } from './context'
 import type { UpdaterRegistry } from '../updater'
 import type { UpdateProgress } from '../updater/types'
@@ -31,17 +32,13 @@ export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistr
       return { started: false as const, reason: 'no-updater' as const }
     }
 
-    const broadcast = (payload: UpdateProgress) => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.UPDATER_PROGRESS, payload)
-      }
-    }
+    const sendProgress = (payload: UpdateProgress) => broadcast(IPC_EVENTS.UPDATER_PROGRESS, payload)
 
     // Fire-and-forget: long-running shell command. Progress is streamed via
     // the `updater:progress` event so the UI can show a spinner without
     // blocking the IPC reply.
-    active.update(broadcast).catch((err) => {
-      broadcast({ phase: 'error', message: err instanceof Error ? err.message : String(err) })
+    active.update(sendProgress).catch((err) => {
+      sendProgress({ phase: 'error', message: errorMessage(err) })
     })
 
     return { started: true as const }

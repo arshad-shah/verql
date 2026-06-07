@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react'
+import { type MouseEvent } from 'react'
 import { useNotificationsStore, type Notification } from '@/stores/notifications'
 import {
   Bell,
@@ -14,8 +14,9 @@ import {
 } from 'lucide-react'
 import { Flex, Text, Button, EmptyState } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
+import { formatRelativeTime } from '@/lib/format-time'
+import { useClipboard } from '@/hooks/useClipboard'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { t } from '@shared/i18n'
 
 const typeIcons: Record<Notification['type'], typeof AlertCircle> = {
   error: AlertCircle,
@@ -38,17 +39,6 @@ const typeBgColors: Record<Notification['type'], string> = {
   success: 'bg-success/10',
 }
 
-function formatRelativeTime(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return t('shell.notifications.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return t('shell.notifications.minutesAgo', { count: minutes })
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return t('shell.notifications.hoursAgo', { count: hours })
-  const days = Math.floor(hours / 24)
-  return t('shell.notifications.daysAgo', { count: days })
-}
-
 function buildCopyPayload(n: Notification): string {
   const parts = [n.title]
   if (n.message) parts.push(n.message)
@@ -63,18 +53,12 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const { t } = useTranslation()
   const { markRead, removeNotification } = useNotificationsStore()
   const Icon = typeIcons[notification.type]
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useClipboard()
   const isError = notification.type === 'error'
 
-  const handleCopy = async (e: MouseEvent) => {
+  const handleCopy = (e: MouseEvent) => {
     e.stopPropagation()
-    try {
-      await navigator.clipboard.writeText(buildCopyPayload(notification))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* clipboard blocked — silent */
-    }
+    copy(buildCopyPayload(notification), { resetDelay: 1500 })
   }
 
   return (

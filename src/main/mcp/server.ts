@@ -8,6 +8,8 @@ import { isWriteToolCall, jsonSchemaToZodShape } from '../plugins/sdk/tool-schem
 import type { Tool, ToolRegistry } from '../plugins/sdk/types'
 import type { AttentionHub } from '../attention/attention-hub'
 import { IPC_EVENTS } from '@shared/ipc'
+import { broadcast } from '../ipc/broadcast'
+import { errorMessage } from '@shared/errors'
 import type { MCPServerStatus, MCPStartResult, MCPActivityEntry, MCPApprovalRequest } from '@shared/mcp'
 
 interface MCPGate { disabledTools: string[]; readOnly: boolean }
@@ -84,7 +86,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
   function record(entry: MCPActivityEntry): void {
     activity.push(entry)
     if (activity.length > 100) activity.shift()
-    BrowserWindow.getAllWindows()[0]?.webContents.send(IPC_EVENTS.MCP_ACTIVITY_EVENT, entry)
+    broadcast(IPC_EVENTS.MCP_ACTIVITY_EVENT, entry)
   }
 
   function requestApproval(tool: Tool, params: Record<string, unknown>): Promise<boolean> {
@@ -151,7 +153,7 @@ export function createMCPServer(deps: MCPServerDeps): MCPServerInstance {
           return { content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }], isError: !result.success }
         } catch (err) {
           record({ id: crypto.randomUUID(), timestamp: startedAt, toolId: tool.id, paramsSummary: summarizeParams(args), status: 'error', durationMs: Date.now() - startedAt })
-          return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
+          return { content: [{ type: 'text', text: `Error: ${errorMessage(err)}` }], isError: true }
         }
       })
     }

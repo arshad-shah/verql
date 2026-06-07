@@ -1,6 +1,13 @@
 export const explorer = {
   search: {
-    placeholder: 'Fuzzy search tables, views…',
+    placeholder: 'Fuzzy search {objects}…',
+  },
+  /** Generic fallback nouns, used when the active driver doesn't declare its
+   *  own via the `nouns` capability (see shared/driver-capabilities.ts). */
+  noun: {
+    object: { one: 'object', many: 'objects' },
+    field: { one: 'field', many: 'fields' },
+    record: { one: 'record', many: 'records' },
   },
   empty: {
     noConnection: {
@@ -21,14 +28,14 @@ export const explorer = {
   },
   loading: {
     generic: 'Loading…',
-    tables: 'Loading tables…',
-    columns: 'Loading columns…',
+    tables: 'Loading {objects}…',
+    columns: 'Loading {fields}…',
   },
-  noColumns: 'No columns — use View data to browse',
+  noColumns: 'No {fields} — use View data to browse',
   status: {
     noMatches: 'No matches',
     noMatchesFor: 'No matches for "{query}"',
-    noTables: 'No tables',
+    noTables: 'No {objects}',
     cannotAccessDatabase: 'Cannot access this database',
   },
   object: {
@@ -38,7 +45,7 @@ export const explorer = {
     triggerOn: 'on {parent}',
   },
   table: {
-    rows: '{value} {n, plural, one {row} other {rows}}',
+    rows: '{value} {records}',
     indexes: '{value} {n, plural, one {idx} other {idx}}',
   },
   tooltip: {
@@ -48,7 +55,7 @@ export const explorer = {
     openInNewTab: 'Open in new tab',
     viewData: 'View data',
     copySampleQuery: 'Copy sample query',
-    exportTable: 'Export table',
+    exportTable: 'Export {object}',
   },
   action: {
     erDiagram: 'ER Diagram',
@@ -57,7 +64,7 @@ export const explorer = {
     openInQueryTab: 'Open in query tab',
     viewData: 'View data',
     copySampleQuery: 'Copy sample query',
-    exportTable: 'Export table',
+    exportTable: 'Export {object}',
   },
   menu: {
     openErDiagram: 'Open ER Diagram',
@@ -65,22 +72,22 @@ export const explorer = {
     copySchemaName: 'Copy schema name',
     viewData: 'View data',
     openInQueryTab: 'Open in query tab',
-    copyTableName: 'Copy table name',
+    copyTableName: 'Copy {object} name',
     copySampleQuery: 'Copy sample query',
-    exportTable: 'Export table',
+    exportTable: 'Export {object}',
     copyViewName: 'Copy view name',
     copyDatabaseName: 'Copy database name',
-    copyColumnName: 'Copy column name',
+    copyColumnName: 'Copy {field} name',
     copyQualifiedName: 'Copy qualified name',
   },
   toast: {
     schemaRefreshed: 'Schema refreshed',
     schemaRefreshFailed: 'Failed to refresh schema',
     copiedSchemaName: 'Copied schema name',
-    copiedTableName: 'Copied table name',
+    copiedTableName: 'Copied {object} name',
     copiedViewName: 'Copied view name',
     copiedDatabaseName: 'Copied database name',
-    copiedColumnName: 'Copied column name',
+    copiedColumnName: 'Copied {field} name',
     copiedQualifiedName: 'Copied qualified name',
     copiedSampleQuery: 'Copied sample query',
     refreshedDatabase: 'Refreshed {name}',

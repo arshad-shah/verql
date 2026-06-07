@@ -1,4 +1,5 @@
 import type { Disposable, Tool, ToolContext, ToolDefinition, ToolRegistry, ToolResult } from './types'
+import { errorMessage } from '@shared/errors'
 import { toJsonSchema } from './tool-schema'
 
 /** Optional sink for tool-call activity. Set by the host so executions show up
@@ -67,7 +68,7 @@ export class ToolRegistryImpl implements ToolRegistry {
     } catch (err) {
       this.activityRecorder({
         toolId: id, params, success: false, durationMs: Date.now() - start,
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage(err),
       })
       throw err
     }

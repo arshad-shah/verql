@@ -34,7 +34,7 @@ export const actions = {
   newQueryTab: {
     title: 'Open Query Tab',
     description:
-      'Open a new SQL query tab, optionally pre-filled with SQL. Use this to scaffold DDL such as CREATE TABLE, ALTER, or a migration script for the user to review. Nothing runs until the user executes it.'
+      'Open a new query tab, optionally pre-filled with code appropriate to the active connection. Use this to scaffold schema changes or a migration script for the user to review. Nothing runs until the user executes it.'
   },
   openSavedQuery: {
     title: 'Open Saved Query',
@@ -49,7 +49,7 @@ export const actions = {
   insertIntoEditor: {
     title: 'Insert into Editor',
     description:
-      'Insert SQL into the active query editor, replacing the current selection (or inserting at the cursor when nothing is selected). The user reviews and runs it; nothing executes automatically.'
+      'Insert code into the active query editor, replacing the current selection (or inserting at the cursor when nothing is selected). The user reviews and runs it; nothing executes automatically.'
   },
   connectDatabase: {
     title: 'Connect to Database',
@@ -96,8 +96,8 @@ export const actions = {
     noSavedQueryMatch: 'No saved query matches "{arg}".',
     noActiveEditor: 'No active editor. Open or focus a query tab first.',
     noEditorContent: 'No editor content to format.',
-    provideSql: 'Provide SQL to insert.',
-    noActiveSqlEditor: 'No active SQL editor. Open or focus a query tab first.',
+    provideSql: 'Provide code to insert.',
+    noActiveSqlEditor: 'No active editor. Open or focus a query tab first.',
     noMatchingConnection: 'No matching saved connection. Use a name or id from the saved connections list.',
     couldntConnect: 'Couldn\'t connect to "{name}".',
     noConnectionToDisconnect: 'No connection to disconnect. Specify one by name or id.',

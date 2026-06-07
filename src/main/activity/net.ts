@@ -1,4 +1,5 @@
 import { recordActivity } from './recorder'
+import { errorMessage } from '@shared/errors'
 
 /**
  * fetch() wrapper that records a `network` activity entry. Records only method,
@@ -30,7 +31,7 @@ export async function tracedFetch(input: string | URL | Request, init?: RequestI
       title: `${method} ${path} failed`,
       source: host,
       durationMs: Date.now() - start,
-      detail: err instanceof Error ? err.message : String(err),
+      detail: errorMessage(err),
       stack: err instanceof Error ? err.stack : undefined,
       metadata: { method, url: path },
     })

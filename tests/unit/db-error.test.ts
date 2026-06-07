@@ -78,6 +78,55 @@ describe('parseDbError — SQLite (driver rules)', () => {
   })
 })
 
+describe('parseDbError — driver nouns in messages', () => {
+  // A non-SQL driver that maps a couple of codes and declares its own nouns;
+  // the friendly copy must read in those terms, not SQL "table/column/row".
+  beforeAll(() => {
+    useDriverCapabilitiesStore.setState((s) => ({
+      byType: {
+        ...s.byType,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        docstore: {
+          errorRules: [
+            { code: 'TABLE_NOT_FOUND', pattern: 'collection ([^ ]+) not found' },
+            { code: 'COLUMN_NOT_FOUND', pattern: 'field ([^ ]+) missing' },
+          ],
+          nouns: {
+            object: { one: 'collection', many: 'collections' },
+            field: { one: 'field', many: 'fields' },
+            record: { one: 'document', many: 'documents' },
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+      },
+    }))
+  })
+
+  it('uses the driver object noun for TABLE_NOT_FOUND', () => {
+    const r = parseDbError('collection orders not found', 'docstore')
+    expect(r.code).toBe('TABLE_NOT_FOUND')
+    expect(r.title).toBe('Collection not found')
+    expect(r.message).toContain('collection')
+    expect(r.message).not.toContain('table')
+  })
+
+  it('uses the driver field noun for COLUMN_NOT_FOUND', () => {
+    const r = parseDbError('field email missing', 'docstore')
+    expect(r.code).toBe('COLUMN_NOT_FOUND')
+    expect(r.title).toBe('Field not found')
+    expect(r.message).not.toContain('column')
+  })
+
+  it('falls back to generic nouns when the driver declares none', () => {
+    useDriverCapabilitiesStore.setState((s) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      byType: { ...s.byType, plainstore: { errorRules: [{ code: 'TABLE_NOT_FOUND', pattern: 'object ([^ ]+) gone' }] } as any },
+    }))
+    const r = parseDbError('object foo gone', 'plainstore')
+    expect(r.title).toBe('Object not found')
+  })
+})
+
 describe('parseDbError — host rules (no dbType needed)', () => {
   const cases: [string, string][] = [
     ['password authentication failed for user "x"', 'AUTH_FAILED'],

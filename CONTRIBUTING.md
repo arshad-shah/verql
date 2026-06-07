@@ -53,12 +53,44 @@ These are enforced by tests; CI will fail if they regress.
    built from user / introspection data must be escaped via the helper
    in `src/main/db/identifier.ts`. No template-literal `\`"${name}"\``
    patterns.
-3. **IPC channels are centrally registered.** Add the channel to
-   `IpcChannelMap` AND `IPC_CHANNELS` in `shared/ipc.ts`. Use
+3. **IPC channels are centrally registered.** Add the channel's `args`/
+   `return` shape to `IpcChannelShapes` (keyed by its constant name) and its
+   wire string to `IPC_CHANNELS`, both in `shared/ipc.ts` — the wire string
+   lives in exactly one place and `IpcChannelMap` is derived from the two. Use
    `IPC_CHANNELS.X` at every call site — never inline string literals.
    (`tests/unit/ipc-channels-coverage.test.ts`)
 4. **No new dependency vulnerabilities.** The CI `audit` job fails on
    any high or critical advisory.
+5. **DB-agnostic app language.** The shell/glue and the renderer describe the
+   database in generic terms — never assume SQL. Don't hardcode "SQL", "EXPLAIN
+   ANALYZE", "CREATE TABLE", or relational nouns (table/column/row) in
+   user-facing strings; a driver may be Mongo, Redis, or anything. Lean on
+   driver capabilities (`editorLanguage`, `explain.statement`, and the `nouns`
+   capability — object/field/record — resolved in the renderer via
+   `useDataNouns`, falling back to generic words).
+
+## Reduce code: centralize, don't duplicate
+
+Keeping the codebase small is a standing requirement, not a nice-to-have.
+**Before adding a helper, hook, formatter, or a copy-pasted block, check whether
+one already exists. If the same logic appears in two or more places, unify it
+into a single shared implementation instead of adding a third copy.** A change
+should then live in exactly one place.
+
+- **Pure helpers** live in `src/renderer/src/lib/` — e.g. `format.ts`
+  (`formatCompactNumber`) and `format-time.ts` (`formatRelativeTime`,
+  `formatClockTime`).
+- **Reusable behaviour** (React state/effects) lives in
+  `src/renderer/src/hooks/`. Prefer **one flexible hook over several
+  near-identical variants** — e.g. `useClipboard()` is the single
+  copy-to-clipboard hook for every surface: it returns a transient `copied`
+  flag (inline checkmarks) and `copy(text, { toast })` adds an optional success
+  toast (context menus / hover actions).
+- **Feature-specific** hooks/sub-components are co-located with the feature
+  (e.g. `components/query/hooks/`, `components/connections/form/`).
+
+When a component grows large, split its concerns into co-located hooks and
+sub-components rather than letting one file accumulate unrelated responsibilities.
 
 ## Pull request workflow
 

@@ -15,13 +15,8 @@ import {
   type InlineAIState,
 } from '@/lib/monaco-ai-completion'
 import { StatusBarSegment } from '@/components/shell/status-bar/StatusBarSegment'
+import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
-  return String(n)
-}
 
 /**
  * AI segment for the status bar. Plugin-owned: the AI bundled plugin
@@ -101,7 +96,7 @@ export function AIStatusSegment() {
           <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-accent">
             <span>{t('aiui.status.contextWindow')}</span>
             <span className="font-mono text-text-primary text-[10.5px] normal-case tracking-normal">
-              {formatTokens(totalTokens)} / {formatTokens(contextWindow)}
+              {formatCompactNumber(totalTokens)} / {formatCompactNumber(contextWindow)}
             </span>
           </div>
           <div className="h-1 rounded bg-bg-tertiary overflow-hidden">
@@ -111,7 +106,7 @@ export function AIStatusSegment() {
             />
           </div>
           <Text size="xs" weight="medium" className={`block text-right ${pct >= 90 ? 'text-error' : pct >= 70 ? 'text-warning' : 'text-success'}`}>
-            {t('aiui.status.tokensRemaining', { remaining: formatTokens(remaining) })}
+            {t('aiui.status.tokensRemaining', { remaining: formatCompactNumber(remaining) })}
           </Text>
         </div>
       ) : null}

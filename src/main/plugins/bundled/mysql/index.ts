@@ -138,6 +138,11 @@ export function activate(ctx: PluginContext): void {
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
     statementSyntax: 'sql',
+    nouns: {
+      object: { one: 'table', many: 'tables' },
+      field: { one: 'column', many: 'columns' },
+      record: { one: 'row', many: 'rows' },
+    },
     errorRules: mysqlErrorRules,
     defaultSchemaUseConnectionDatabase: true,
     connectionFields: [
