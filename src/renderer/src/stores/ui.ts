@@ -120,3 +120,19 @@ export const useUiStore = create<UiState>((set) => ({
     useSettingsStore.getState().set('appearance.bottomDockHeight', clamped)
   },
 }))
+
+// Keep the live layout-visibility flags in sync with their persisted appearance
+// settings. These flags are *seeded* once from settings at store creation (which
+// runs before settings hydrate from disk) and are also toggled transiently by
+// buttons/keybindings — so without this bridge, changing the setting (or the
+// persisted value loading at startup) would never reach the live UI.
+useSettingsStore.subscribe((state, prev) => {
+  const a = state.settings.appearance
+  const p = prev.settings.appearance
+  if (a.showSecondarySidebar !== p.showSecondarySidebar) {
+    useUiStore.setState({ secondarySidebarVisible: a.showSecondarySidebar })
+  }
+  if (a.showBottomDock !== p.showBottomDock) {
+    useUiStore.setState({ bottomDockVisible: a.showBottomDock })
+  }
+})
