@@ -58,6 +58,13 @@ export interface IpcChannelMap {
     args: [profileId: string, schema?: string]
     return: SchemaTable[]
   }
+  /** Browse a table's data via the driver's own reader (the same one export
+   *  uses). Lets non-SQL drivers (Redis key/value, Mongo documents) render a
+   *  data grid the renderer can't build from a SELECT. */
+  'db:get-table-data': {
+    args: [profileId: string, table: string, schema?: string]
+    return: { rows: Record<string, unknown>[]; columns: SchemaColumn[] }
+  }
   'db:get-columns': {
     args: [profileId: string, table: string, schema?: string]
     return: SchemaColumn[]
@@ -731,6 +738,7 @@ export const IPC_CHANNELS = {
   DB_PARSE_PLAN: 'db:parse-plan',
   // ── Schema introspection ───────────────────────────────────────────────
   DB_GET_TABLES: 'db:get-tables',
+  DB_GET_TABLE_DATA: 'db:get-table-data',
   DB_GET_COLUMNS: 'db:get-columns',
   DB_GET_INDEXES: 'db:get-indexes',
   DB_GET_SCHEMAS: 'db:get-schemas',

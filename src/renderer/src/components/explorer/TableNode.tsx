@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
-import { ChevronRight, ChevronDown, Table2, ExternalLink, Play, Download } from 'lucide-react'
+import { ChevronRight, ChevronDown, Table2, ExternalLink, Play, Download, Rows3 } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
+import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { useToastStore } from '@/stores/toast'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
@@ -62,6 +63,13 @@ export function TableNode({
   const addToast = useToastStore((s) => s.addToast)
   const pluginTableItems = usePluginContextMenuItems('table')
   const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
+  const openTableData = useTabsStore((s) => s.openTableData)
+  // Capability-gated: any driver that provides a data reader (Redis/Mongo, and
+  // the relational drivers) can render the browse grid — no db-type branching.
+  const caps = useDriverCapabilitiesStore((s) => profile ? s.resolveCapabilities(connectionId, profile.type) : null)
+  const canViewData = Boolean(caps?.hasGetTableData)
+  useEffect(() => { if (profile?.type) void useDriverCapabilitiesStore.getState().fetch(profile.type) }, [profile?.type])
+  const openData = () => { openTableData(connectionId, tableName, schema) }
 
   // Lazy-fetch when expanded
   useEffect(() => {
@@ -104,6 +112,9 @@ export function TableNode({
   }
 
   const menuItems = [
+    ...(canViewData
+      ? [{ label: t('explorer.menu.viewData'), onSelect: openData }]
+      : []),
     {
       label: t('explorer.menu.openInQueryTab'),
       onSelect: openInQueryTab,
@@ -175,6 +186,19 @@ export function TableNode({
             className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
+            {canViewData && (
+              <Tooltip content={t('explorer.tooltip.viewData')} side="top">
+                <IconButton
+                  label={t('explorer.action.viewData')}
+                  size="xs"
+                  variant="ghost"
+                  className="h-5 w-5"
+                  onClick={openData}
+                >
+                  <Rows3 size={10} />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
               <IconButton
                 label={t('explorer.action.openInQueryTab')}
@@ -276,6 +300,19 @@ export function TableNode({
             className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
+            {canViewData && (
+              <Tooltip content={t('explorer.tooltip.viewData')} side="top">
+                <IconButton
+                  label={t('explorer.action.viewData')}
+                  size="xs"
+                  variant="ghost"
+                  className="h-5 w-5"
+                  onClick={openData}
+                >
+                  <Rows3 size={10} />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
               <IconButton
                 label={t('explorer.action.openInQueryTab')}

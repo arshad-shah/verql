@@ -3,4 +3,5 @@ export const common = {
   cancel: 'Cancel',
   close: 'Close',
   save: 'Save',
+  refresh: 'Refresh',
 } as const

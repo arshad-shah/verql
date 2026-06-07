@@ -7,6 +7,7 @@ import { StatusBar } from '@/components/shell/StatusBar'
 import { TabBar } from '@/components/shell/tab-bar'
 import { ToastContainer } from '@/components/shell/ToastContainer'
 import { QueryPanel } from '@/components/query/QueryPanel'
+import { TableDataView } from '@/components/table/TableDataView'
 import { ERDiagram } from '@/components/er/ERDiagram'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
@@ -28,7 +29,7 @@ import { SettingsLayout } from '@/components/settings/SettingsLayout'
 import { WelcomeScreen } from '@/components/shell/WelcomeScreen'
 import { SecondarySidebar } from '@/components/shell/SecondarySidebar'
 import { SecondaryActivityBar } from '@/components/shell/SecondaryActivityBar'
-import type { QueryTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import type { QueryTab, TableTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
 import { registerBuiltinStatementContributions } from '@/lib/statement-contributions'
 import { registerBuiltinAppActions } from '@/lib/app-actions/builtins'
 import { initAppActionBridge } from '@/lib/app-actions/bridge'
@@ -269,6 +270,9 @@ export function App() {
               <SectionErrorBoundary label={activeTab?.title ?? t('shell.sectionLabels.tab')} resetKey={activeTabId}>
                 {activeTab?.type === 'query' && (
                   <QueryPanel tab={activeTab as QueryTab} />
+                )}
+                {activeTab?.type === 'table' && (
+                  <TableDataView tab={activeTab as TableTab} />
                 )}
                 {activeTab?.type === 'er-diagram' && (
                   <ERDiagram

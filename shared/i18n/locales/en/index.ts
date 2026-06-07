@@ -19,6 +19,7 @@ import { plugins } from './plugins'
 import { shell } from './shell'
 import { aiui } from './aiui'
 import { about } from './about'
+import { table } from './table'
 
 export const en = {
   common,
@@ -34,4 +35,5 @@ export const en = {
   shell,
   aiui,
   about,
+  table,
 } as const
