@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { errorMessage } from '@shared/errors'
 import {
   ArrowUpRight, Settings, Plus, PanelLeft, SquarePlus, Network, AlertTriangle, type LucideIcon
 } from 'lucide-react'
@@ -57,7 +58,7 @@ export function ActionChip({ actionId, params, children }: Props) {
       useToastStore.getState().addToast({
         type: 'error',
         title: t('aiui.actionChip.actionFailed'),
-        message: err instanceof Error ? err.message : String(err)
+        message: errorMessage(err)
       })
     } finally {
       setBusy(false)

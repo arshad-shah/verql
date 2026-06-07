@@ -21,7 +21,7 @@ import { ActivityLog } from './activity/log'
 import { setActivitySink } from './activity/recorder'
 import { ActivityBatcher } from './activity/batcher'
 import { createLogger } from './logging/logger'
-import { BrowserWindow } from 'electron'
+import { broadcast } from './ipc/broadcast'
 import { KeyringService } from './keyring'
 import { AppDataStore } from './appdata/store'
 import { ConnectionAccessImpl } from './plugins/sdk/connection-access'
@@ -123,9 +123,7 @@ export function registerIpcHandlers(): void {
   // migration, a chatty AI loop, verbose logging) becomes a few IPC
   // round-trips instead of one per entry, keeping the Activity panel smooth.
   const activityBatcher = new ActivityBatcher((entries) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.ACTIVITY_BATCH, entries)
-    }
+    broadcast(IPC_EVENTS.ACTIVITY_BATCH, entries)
   })
   activityLog.subscribe(activityBatcher.push)
   // App logger (glue): mirrors to the console AND records into the activity
@@ -154,9 +152,7 @@ export function registerIpcHandlers(): void {
         title: n.title,
         detail: n.message,
       })
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.NOTIFICATIONS_SHOW, n)
-      }
+      broadcast(IPC_EVENTS.NOTIFICATIONS_SHOW, n)
     }
   }
 
@@ -303,9 +299,7 @@ export function registerIpcHandlers(): void {
   // Broadcast `themes:changed` whenever the registry mutates (plugin
   // activation / deactivation) so the renderer can refetch + reinject.
   themeRegistry.onChange(() => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.THEMES_CHANGED)
-    }
+    broadcast(IPC_EVENTS.THEMES_CHANGED)
   })
 
   handle('plugins:drag-drop', async (filePath) => {

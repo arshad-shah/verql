@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron'
+import { errorMessage } from '@shared/errors'
 import type { IpcChannelMap } from '@shared/ipc'
 import { recordActivity } from '../activity/recorder'
 import type { DbAdapter } from '../db/adapter'
@@ -52,7 +53,7 @@ export const handle: Handle = (channel, handler) => {
         title: `${channel} failed`,
         source: String(channel),
         durationMs: Date.now() - start,
-        detail: err instanceof Error ? err.message : String(err),
+        detail: errorMessage(err),
         stack: err instanceof Error ? err.stack : undefined,
         metadata: { channel },
       })

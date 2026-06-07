@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import { BrowserWindow, dialog } from 'electron'
+import { dialog } from 'electron'
+import { broadcast } from './broadcast'
 import { PluginBootCoordinator } from '../plugins/plugin-host'
 import { IPC_EVENTS } from '@shared/ipc'
 import { PERMISSION_INFO, type PluginPermission } from '../plugins/sdk/permissions'
@@ -68,9 +69,7 @@ export function registerPluginHandlers(
     name: string,
     event: 'activated' | 'deactivated' | 'installed' | 'uninstalled'
   ) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send(IPC_EVENTS.PLUGINS_LIFECYCLE, { name, event })
-    }
+    broadcast(IPC_EVENTS.PLUGINS_LIFECYCLE, { name, event })
   }
 
   handle('plugins:activate', async (name) => {
@@ -333,7 +332,6 @@ export function registerPluginHandlers(
   })
 
   uiRegistry.onChange(() => {
-    const win = BrowserWindow.getAllWindows()[0]
-    if (win) win.webContents.send(IPC_EVENTS.PLUGINS_UI_CONTRIBUTIONS_CHANGED)
+    broadcast(IPC_EVENTS.PLUGINS_UI_CONTRIBUTIONS_CHANGED)
   })
 }

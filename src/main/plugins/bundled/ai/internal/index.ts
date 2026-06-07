@@ -1,4 +1,5 @@
 // src/main/plugins/bundled/ai/internal/index.ts
+import { errorMessage } from '@shared/errors'
 //
 // The AI core. Called from src/main/plugins/bundled/ai/index.ts at plugin
 // activation time. Nothing in this module talks to Electron's `ipcMain`
@@ -224,7 +225,7 @@ export function startAIModule(deps: AIDeps): AIModule {
       } catch (err) {
         deps.broadcast('ai:chat:event', streamId, {
           type: 'error',
-          error: err instanceof Error ? err.message : String(err)
+          error: errorMessage(err)
         } satisfies AIStreamEvent)
       } finally {
         activeStreams.delete(streamId)
@@ -338,7 +339,7 @@ export function startAIModule(deps: AIDeps): AIModule {
         )
         deps.broadcast('ai:explain:event', { streamId, kind: 'done', durationMs })
       } catch (err) {
-        deps.broadcast('ai:explain:event', { streamId, kind: 'error', message: err instanceof Error ? err.message : String(err) })
+        deps.broadcast('ai:explain:event', { streamId, kind: 'error', message: errorMessage(err) })
       } finally {
         explainAborts.delete(streamId)
       }

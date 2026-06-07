@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { errorMessage } from '@shared/errors'
 import path from 'path'
 import os from 'os'
 import { execFileSync } from 'child_process'
@@ -350,7 +351,7 @@ export class PluginBootCoordinator {
       plugin.context = undefined
       plugin.status = {
         state: 'error',
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage(err),
         phase: 'activate'
       }
       return plugin
@@ -402,7 +403,7 @@ export class PluginBootCoordinator {
       plugin.context = undefined
       plugin.status = {
         state: 'error',
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage(err),
         phase: 'activate',
       }
       return plugin

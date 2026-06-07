@@ -150,8 +150,11 @@ and `IpcEventMap` derived from the two.
    } as const satisfies Record<keyof IpcEventShapes, string>
    ```
 
-3. Emit it from main. Inside a plugin use `ctx.broadcast(...)`; in the IPC
-   handlers, use `BrowserWindow.getAllWindows().forEach(w => w.webContents.send(IPC_EVENTS.X, payload))`.
+3. Emit it from main. Inside a plugin use `ctx.broadcast(...)`; in orchestrator
+   code use the typed `broadcast(IPC_EVENTS.X, payload)` helper from
+   [`ipc/broadcast.ts`](../src/main/ipc/broadcast.ts) — never hand-roll a
+   `BrowserWindow.getAllWindows()` loop (the helper is typed by `IpcEventMap`,
+   so a wrong payload is a compile error).
 
 4. Subscribe in the renderer:
 

@@ -1,4 +1,5 @@
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
+import { errorMessage } from '@shared/errors'
 import { appActions } from './registry'
 import { useToastStore } from '@/stores/toast'
 
@@ -41,7 +42,7 @@ export function initAppActionBridge(): void {
       await appActions.run(p.actionId, p.params ?? {})
       report(true)
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = errorMessage(err)
       report(false, message)
       useToastStore.getState().addToast({
         type: 'error',
