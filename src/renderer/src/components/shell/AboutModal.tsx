@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Modal, Text, Badge, Divider, Button } from '@/primitives'
+import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link } from '@/primitives'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -26,9 +26,10 @@ type AboutInfo = {
 const openExternal = (url: string) =>
   void window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_OPEN_EXTERNAL, url)
 
-/** Custom in-app "About Verql" — a hero-split modal (branded panel + a copyable
- *  build block and resource links) so we own the design rather than the OS's
- *  native about panel. Opened from Help → About via the ui store. */
+/** Custom in-app "About Verql" — a hero-split modal (branded panel + the build
+ *  versions as KeyValue rows with a copy-all action, plus resource links) so we
+ *  own the design rather than the OS's native about panel. Opened from
+ *  Help → About via the ui store. Built from primitives throughout. */
 export function AboutModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AboutInfo | null>(null)
@@ -56,9 +57,9 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
         ['platform', `${info.os} · ${info.arch}`],
       ]
     : []
-  const buildText = rows.map(([k, v]) => `${k.padEnd(10)}${v}`).join('\n')
 
   const copyBuild = async () => {
+    const buildText = rows.map(([k, v]) => `${k.padEnd(10)}${v}`).join('\n')
     try { await navigator.clipboard.writeText(`Verql v${info?.version ?? ''}\n${buildText}`) } catch { /* ignore */ }
     setCopied(true)
     setTimeout(() => setCopied(false), 1400)
@@ -96,28 +97,26 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         {/* Build + resources */}
         <div className="relative flex-1 p-6">
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            size="xs"
+            label={t('common.close')}
             onClick={onClose}
-            aria-label={t('common.close')}
-            className="absolute top-3 right-3 grid place-items-center w-7 h-7 rounded-md text-text-muted hover:text-text-primary hover:bg-hover"
+            className="absolute top-3 right-3"
           >
             <X size={15} />
-          </button>
+          </IconButton>
 
-          <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
-          <div className="relative mt-2">
-            <pre className="m-0 font-mono text-[11.5px] leading-relaxed text-text-secondary bg-bg-inset border border-border-default rounded-lg p-3 overflow-auto">
-              {buildText || '…'}
-            </pre>
-            <button
-              type="button"
-              onClick={copyBuild}
-              className="absolute top-2 right-2 flex items-center gap-1.5 rounded-md border border-border-default px-2 py-1 text-[11px] text-text-secondary hover:bg-hover hover:border-border-strong"
-            >
-              {copied ? <Check size={12} className="text-accent" /> : <Copy size={12} />}
-              {copied ? t('about.copied') : t('about.copy')}
-            </button>
+          <div className="flex items-center justify-between">
+            <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
+            <IconButton variant="ghost" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild}>
+              {copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />}
+            </IconButton>
+          </div>
+          <div className="mt-1 flex flex-col gap-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
+            {rows.length === 0
+              ? <Text size="xs" color="muted">…</Text>
+              : rows.map(([k, v]) => <KeyValue key={k} label={k} value={v} monospace size="sm" />)}
           </div>
 
           <Divider className="my-4" />
@@ -125,24 +124,25 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           <Text size="xs" color="muted" className="uppercase tracking-wider">{t('about.resources')}</Text>
           <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-0.5">
             {links.map(({ label, icon: Icon, url }) => (
-              <button
+              <Button
                 key={label}
-                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => openExternal(url)}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-text-secondary hover:text-text-primary hover:bg-hover text-left"
+                className="w-full justify-start gap-2 font-normal text-text-secondary"
               >
                 <Icon size={15} className="shrink-0 text-text-tertiary" />
                 <span className="truncate">{label}</span>
-              </button>
+              </Button>
             ))}
           </div>
 
           <Divider className="my-4" />
 
           <div className="flex items-center justify-between">
-            <button type="button" onClick={() => openExternal(LICENSE_URL)} className="text-[12px] text-accent hover:underline">
+            <Link size="sm" onClick={() => openExternal(LICENSE_URL)} className="cursor-pointer">
               {t('about.viewLicense')}
-            </button>
+            </Link>
             <Button variant="outline" size="sm" onClick={onClose}>{t('common.close')}</Button>
           </div>
         </div>
