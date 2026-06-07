@@ -53,8 +53,10 @@ These are enforced by tests; CI will fail if they regress.
    built from user / introspection data must be escaped via the helper
    in `src/main/db/identifier.ts`. No template-literal `\`"${name}"\``
    patterns.
-3. **IPC channels are centrally registered.** Add the channel to
-   `IpcChannelMap` AND `IPC_CHANNELS` in `shared/ipc.ts`. Use
+3. **IPC channels are centrally registered.** Add the channel's `args`/
+   `return` shape to `IpcChannelShapes` (keyed by its constant name) and its
+   wire string to `IPC_CHANNELS`, both in `shared/ipc.ts` — the wire string
+   lives in exactly one place and `IpcChannelMap` is derived from the two. Use
    `IPC_CHANNELS.X` at every call site — never inline string literals.
    (`tests/unit/ipc-channels-coverage.test.ts`)
 4. **No new dependency vulnerabilities.** The CI `audit` job fails on

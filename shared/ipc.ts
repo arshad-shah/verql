@@ -5,30 +5,39 @@ import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from '
 import type { ActivityEntry, ActivityQuery, ActivityKind, ActivityLevel } from './activity'
 import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry } from './appdata'
 
-export interface IpcChannelMap {
-  'db:connect': {
+// ─── Channel shapes ──────────────────────────────────────────────────────────
+//
+// The `args` / `return` contract for every invoke channel, keyed by the
+// channel's CONSTANT NAME (e.g. `DB_CONNECT`) rather than its wire string.
+// The wire string itself is written exactly once — as the value in
+// `IPC_CHANNELS` below — and `IpcChannelMap` is derived by joining the two.
+// This is what eliminates the old name-duplication where each channel string
+// appeared both as a map key and as a constant value.
+
+export interface IpcChannelShapes {
+  DB_CONNECT: {
     args: [profileId: string]
     return: { success: boolean; error?: string }
   }
-  'db:disconnect': {
+  DB_DISCONNECT: {
     args: [profileId: string]
     return: void
   }
-  'db:set-active-connection': {
+  DB_SET_ACTIVE_CONNECTION: {
     args: [profileId: string | null]
     return: void
   }
-  'activity:list': {
+  ACTIVITY_LIST: {
     args: [query?: ActivityQuery]
     return: ActivityEntry[]
   }
-  'activity:clear': {
+  ACTIVITY_CLEAR: {
     args: []
     return: void
   }
   /** Record a renderer-originated diagnostic entry (store mutations, perf
    *  signals) into the unified main-owned activity stream. */
-  'activity:record': {
+  ACTIVITY_RECORD: {
     args: [entry: {
       kind: ActivityKind
       level?: ActivityLevel
@@ -42,156 +51,156 @@ export interface IpcChannelMap {
     }]
     return: void
   }
-  'db:query': {
+  DB_QUERY: {
     args: [profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }]
     return: QueryResult
   }
-  'db:format-query': {
+  DB_FORMAT_QUERY: {
     args: [language: string, connectionType: string, source: string]
     return: { formatted: string; changed: boolean }
   }
-  'db:test-connection': {
+  DB_TEST_CONNECTION: {
     args: [profile: ConnectionProfile]
     return: { success: boolean; error?: string; version?: string; details?: Record<string, string> }
   }
-  'db:get-tables': {
+  DB_GET_TABLES: {
     args: [profileId: string, schema?: string]
     return: SchemaTable[]
   }
   /** Browse a table's data via the driver's own reader (the same one export
    *  uses). Lets non-SQL drivers (Redis key/value, Mongo documents) render a
    *  data grid the renderer can't build from a SELECT. */
-  'db:get-table-data': {
+  DB_GET_TABLE_DATA: {
     args: [profileId: string, table: string, schema?: string]
     return: { rows: Record<string, unknown>[]; columns: SchemaColumn[] }
   }
-  'db:get-columns': {
+  DB_GET_COLUMNS: {
     args: [profileId: string, table: string, schema?: string]
     return: SchemaColumn[]
   }
-  'db:get-indexes': {
+  DB_GET_INDEXES: {
     args: [profileId: string, table: string, schema?: string]
     return: SchemaIndex[]
   }
-  'db:get-schemas': {
+  DB_GET_SCHEMAS: {
     args: [profileId: string]
     return: string[]
   }
-  'db:get-databases': {
+  DB_GET_DATABASES: {
     args: [profileId: string]
     return: string[]
   }
-  'db:get-row-count': {
+  DB_GET_ROW_COUNT: {
     args: [profileId: string, table: string, schema?: string]
     return: number
   }
-  'db:get-schema-objects': {
+  DB_GET_SCHEMA_OBJECTS: {
     args: [profileId: string, schema?: string]
     return: SchemaObject[]
   }
-  'db:switch-database': {
+  DB_SWITCH_DATABASE: {
     args: [profileId: string, database: string]
     return: void
   }
-  'db:switch-warehouse': {
+  DB_SWITCH_WAREHOUSE: {
     args: [profileId: string, warehouse: string]
     return: void
   }
-  'db:switch-role': {
+  DB_SWITCH_ROLE: {
     args: [profileId: string, role: string]
     return: void
   }
-  'connections:list': {
+  CONNECTIONS_LIST: {
     args: []
     return: ConnectionProfile[]
   }
-  'connections:save': {
+  CONNECTIONS_SAVE: {
     args: [profile: ConnectionProfile]
     return: ConnectionProfile
   }
-  'connections:delete': {
+  CONNECTIONS_DELETE: {
     args: [profileId: string]
     return: void
   }
-  'db:set-schema': {
+  DB_SET_SCHEMA: {
     args: [profileId: string, schema: string]
     return: void
   }
-  'db:cancel-query': {
+  DB_CANCEL_QUERY: {
     args: [profileId: string]
     return: void
   }
-  'db:get-table-names': {
+  DB_GET_TABLE_NAMES: {
     args: [profileId: string, schema?: string]
     return: string[]
   }
-  'db:sample-query': {
+  DB_SAMPLE_QUERY: {
     args: [profileId: string, table: string, schema?: string]
     return: string
   }
-  'db:driver-capabilities': {
+  DB_DRIVER_CAPABILITIES: {
     args: [type: string]
     return: DriverCapabilities | null
   }
   /** Parse an EXPLAIN result into a normalized plan tree via the driver. Returns
    *  [] when the driver has no plan parser or the rows aren't a plan. */
-  'db:parse-plan': {
+  DB_PARSE_PLAN: {
     args: [profileId: string, result: QueryResult]
     return: PlanNode[]
   }
-  'db:session:open': {
+  DB_SESSION_OPEN: {
     args: [profileId: string, sessionId: string, opts?: SessionOpts]
     return: void
   }
-  'db:session:close': {
+  DB_SESSION_CLOSE: {
     args: [profileId: string, sessionId: string]
     return: void
   }
-  'db:session:set-autocommit': {
+  DB_SESSION_SET_AUTOCOMMIT: {
     args: [profileId: string, sessionId: string, enabled: boolean]
     return: void
   }
-  'db:txn:begin': {
+  DB_TXN_BEGIN: {
     args: [profileId: string, sessionId: string, opts?: SessionOpts]
     return: void
   }
-  'db:txn:commit': {
+  DB_TXN_COMMIT: {
     args: [profileId: string, sessionId: string]
     return: void
   }
-  'db:txn:rollback': {
+  DB_TXN_ROLLBACK: {
     args: [profileId: string, sessionId: string]
     return: void
   }
-  'db:connection-capabilities': {
+  DB_CONNECTION_CAPABILITIES: {
     args: [profileId: string]
     return: RuntimeCapabilityOverlay | null
   }
-  'export:table': {
+  EXPORT_TABLE: {
     args: [profileId: string, tableName: string, format: 'sql' | 'csv' | 'json', options?: { schema?: string; includeSchema?: boolean }]
     return: { filePath: string } | { cancelled: true }
   }
-  'export:query-result': {
+  EXPORT_QUERY_RESULT: {
     args: [rows: Record<string, unknown>[], fields: string[], format: 'csv' | 'json']
     return: { filePath: string } | { cancelled: true }
   }
-  'import:csv': {
+  IMPORT_CSV: {
     args: [profileId: string, tableName: string, columnMapping: Record<string, string>, onConflict: 'skip' | 'update' | 'error']
     return: { inserted: number; skipped: number; errors: string[] } | { cancelled: true }
   }
-  'import:sql': {
+  IMPORT_SQL: {
     args: [profileId: string]
     return: { executed: number; errors: string[] } | { cancelled: true }
   }
-  'migration:type-map': {
+  MIGRATION_TYPE_MAP: {
     args: [sourceType: string, from: DatabaseType, to: DatabaseType]
     return: { source: string; target: string; lossy: boolean; note?: string }
   }
-  'migration:generate-ddl': {
+  MIGRATION_GENERATE_DDL: {
     args: [tableName: string, columns: { name: string; dataType: string; nullable: boolean; isPrimaryKey: boolean; defaultValue: string | null }[], from: DatabaseType, to: DatabaseType]
     return: { ddl: string; mappings: { source: string; target: string; lossy: boolean; note?: string }[] }
   }
-  'plugins:list': {
+  PLUGINS_LIST: {
     args: []
     return: {
       name: string
@@ -208,7 +217,7 @@ export interface IpcChannelMap {
       grantedPermissions: string[]
     }[]
   }
-  'plugins:get-permissions': {
+  PLUGINS_GET_PERMISSIONS: {
     args: [name: string]
     return: {
       trusted: boolean
@@ -217,39 +226,39 @@ export interface IpcChannelMap {
       info: Record<string, { title: string; description: string; enforced: boolean; sensitive: boolean }>
     } | null
   }
-  'plugins:set-permissions': {
+  PLUGINS_SET_PERMISSIONS: {
     args: [name: string, permissions: string[]]
     return: { granted: string[] }
   }
-  'plugins:activate': {
+  PLUGINS_ACTIVATE: {
     args: [name: string]
     return: { success: boolean; error?: string }
   }
-  'plugins:deactivate': {
+  PLUGINS_DEACTIVATE: {
     args: [name: string]
     return: void
   }
-  'plugins:install-from-path': {
+  PLUGINS_INSTALL_FROM_PATH: {
     args: [path: string]
     return: { success: boolean; name?: string; error?: string }
   }
-  'plugins:install-from-zip': {
+  PLUGINS_INSTALL_FROM_ZIP: {
     args: [zipPath: string]
     return: { success: boolean; name?: string; error?: string }
   }
-  'plugins:open-install-dialog': {
+  PLUGINS_OPEN_INSTALL_DIALOG: {
     args: []
     return: string | null
   }
-  'plugins:uninstall': {
+  PLUGINS_UNINSTALL: {
     args: [name: string]
     return: void
   }
-  'plugins:errors': {
+  PLUGINS_ERRORS: {
     args: [name: string]
     return: { timestamp: number; error: string; stack?: string }[]
   }
-  'plugins:get-settings': {
+  PLUGINS_GET_SETTINGS: {
     args: [name: string]
     return: {
       schema: {
@@ -267,40 +276,40 @@ export interface IpcChannelMap {
       values: Record<string, unknown>
     }
   }
-  'plugins:set-setting': {
+  PLUGINS_SET_SETTING: {
     args: [name: string, key: string, value: unknown]
     return: void
   }
-  'plugins:connection-fields': {
+  PLUGINS_CONNECTION_FIELDS: {
     args: []
     return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[]; accept?: string }[] }[]
   }
-  'plugins:middleware-fields': {
+  PLUGINS_MIDDLEWARE_FIELDS: {
     args: []
     return: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[]
   }
-  'plugins:ui:get-contributions': {
+  PLUGINS_UI_GET_CONTRIBUTIONS: {
     args: [surface: string]
     return: import('./plugin-ui-types').UIContribution[]
   }
-  'plugins:ui:resolve': {
+  PLUGINS_UI_RESOLVE: {
     args: [pluginId: string, resolverId: string, context: import('./plugin-ui-types').ResolverContext]
     return: { value: string; label: string }[]
   }
-  'plugins:ui:action': {
+  PLUGINS_UI_ACTION: {
     args: [pluginId: string, commandId: string, payload: Record<string, unknown>]
     return: void
   }
   /** Renderer reports the outcome of a `app:action:perform` request back to the AI tool. */
-  'app:action:result': {
+  APP_ACTION_RESULT: {
     args: [payload: { requestId: string; success: boolean; error?: string }]
     return: void
   }
-  'plugins:ui:contributions-changed': {
+  PLUGINS_UI_CONTRIBUTIONS_CHANGED: {
     args: []
     return: void
   }
-  'plugins:get-commands': {
+  PLUGINS_GET_COMMANDS: {
     args: []
     return: {
       pluginId: string
@@ -310,123 +319,123 @@ export interface IpcChannelMap {
       keybinding?: string
     }[]
   }
-  'plugins:completions': {
+  PLUGINS_COMPLETIONS: {
     args: [driverId: string, connectionId: string, context: import('./plugin-ui-types').CompletionContext]
     return: import('./plugin-ui-types').CompletionItem[]
   }
-  'settings:get-all': {
+  SETTINGS_GET_ALL: {
     args: []
     return: AppSettings
   }
-  'settings:get': {
+  SETTINGS_GET: {
     args: [category: string]
     return: unknown
   }
-  'settings:set': {
+  SETTINGS_SET: {
     args: [keyPath: string, value: unknown]
     return: void
   }
-  'settings:reset': {
+  SETTINGS_RESET: {
     args: [category: string]
     return: unknown
   }
-  'dialog:open-file': {
+  DIALOG_OPEN_FILE: {
     args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
     return: { filePath: string; content: string } | { cancelled: true }
   }
-  'dialog:open-file-path': {
+  DIALOG_OPEN_FILE_PATH: {
     args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
     return: { filePath: string } | { cancelled: true }
   }
-  'db:connection-options': {
+  DB_CONNECTION_OPTIONS: {
     args: [profile: ConnectionProfile, fields: string[]]
     return: Record<string, string[]>
   }
-  'keyring:store': {
+  KEYRING_STORE: {
     args: [profileId: string, key: string, value: string]
     return: void
   }
-  'keyring:retrieve': {
+  KEYRING_RETRIEVE: {
     args: [profileId: string, key: string]
     return: string | null
   }
-  'keyring:delete': {
+  KEYRING_DELETE: {
     args: [profileId: string, key: string]
     return: void
   }
   // ─── AI ─────────────────────────────────────────────────────────────────────
-  'ai:chat:start': {
+  AI_CHAT_START: {
     args: [request: AIChatStartRequest]
     return: { streamId: string }
   }
-  'ai:chat:abort': {
+  AI_CHAT_ABORT: {
     args: [streamId: string]
     return: void
   }
-  'ai:chat:approval-response': {
+  AI_CHAT_APPROVAL_RESPONSE: {
     args: [requestId: string, approved: boolean]
     return: void
   }
-  'ai:providers:list': {
+  AI_PROVIDERS_LIST: {
     args: []
     return: AIProviderInfo[]
   }
-  'ai:providers:list-configured': {
+  AI_PROVIDERS_LIST_CONFIGURED: {
     args: []
     return: AIProviderInfo[]
   }
-  'ai:providers:set-active': {
+  AI_PROVIDERS_SET_ACTIVE: {
     args: [providerId: string]
     return: void
   }
-  'ai:providers:get-active': {
+  AI_PROVIDERS_GET_ACTIVE: {
     args: []
     return: AIProviderInfo | null
   }
-  'ai:models:list': {
+  AI_MODELS_LIST: {
     args: []
     return: AIModelInfo[]
   }
-  'ai:models:set-active': {
+  AI_MODELS_SET_ACTIVE: {
     args: [modelId: string]
     return: void
   }
-  'ai:models:get-active': {
+  AI_MODELS_GET_ACTIVE: {
     args: []
     return: string | null
   }
-  'ai:messages:list': {
+  AI_MESSAGES_LIST: {
     args: []
     return: AIChatMessage[]
   }
-  'ai:messages:clear': {
+  AI_MESSAGES_CLEAR: {
     args: []
     return: void
   }
-  'ai:messages:set': {
+  AI_MESSAGES_SET: {
     args: [messages: AIChatMessage[]]
     return: void
   }
-  'ai:tools:list': {
+  AI_TOOLS_LIST: {
     args: []
     return: { id: string; name: string; description: string; permission: 'read' | 'write' }[]
   }
-  'ai:keys:has': {
+  AI_KEYS_HAS: {
     args: [provider: 'openai' | 'anthropic']
     return: boolean
   }
-  'ai:keys:set': {
+  AI_KEYS_SET: {
     args: [provider: 'openai' | 'anthropic', value: string]
     return: void
   }
   /** Triggers a soft relaunch of the app. Renderer prompts the user via the
    *  plugin-lifecycle banner; only the user's confirmation calls this. */
-  'app:restart': {
+  APP_RESTART: {
     args: []
     return: void
   }
   /** App + runtime versions for the in-app About modal. */
-  'app:about-info': {
+  APP_ABOUT_INFO: {
     args: []
     return: {
       name: string
@@ -445,80 +454,80 @@ export interface IpcChannelMap {
   // Window Controls Overlay); Linux has no overlay API, so the renderer draws
   // its own controls and drives them through these channels.
   /** Minimise the window that sent the request. */
-  'window:minimize': {
+  WINDOW_MINIMIZE: {
     args: []
     return: void
   }
   /** Toggle maximise/restore; returns the resulting maximised state. */
-  'window:toggle-maximize': {
+  WINDOW_TOGGLE_MAXIMIZE: {
     args: []
     return: boolean
   }
   /** Close the window that sent the request. */
-  'window:close': {
+  WINDOW_CLOSE: {
     args: []
     return: void
   }
   /** Current maximised state — used to pick the maximise vs. restore icon. */
-  'window:is-maximized': {
+  WINDOW_IS_MAXIMIZED: {
     args: []
     return: boolean
   }
   /** Top-level application-menu items (File/Edit/View/…), so the custom title
    *  bar can render a menu bar on Windows/Linux where the native one is hidden.
    *  macOS keeps its global menu bar and doesn't use this. */
-  'window:menu:list': {
+  WINDOW_MENU_LIST: {
     args: []
     return: { id: number; label: string; enabled: boolean }[]
   }
   /** Pop the native submenu for a top-level menu item at viewport coords (x,y),
    *  so the title-bar menu bar drives the real, single-source-of-truth menu. */
-  'window:menu:popup': {
+  WINDOW_MENU_POPUP: {
     args: [payload: { id: number; x: number; y: number }]
     return: void
   }
   /** Run a native edit role on the focused web contents, so the app-designed
    *  Edit menu (custom title bar) drives Undo/Redo/Cut/Copy/Paste/Select All. */
-  'window:edit-role': {
+  WINDOW_EDIT_ROLE: {
     args: [role: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll']
     return: void
   }
   /** Toggle full screen; returns the resulting full-screen state. */
-  'window:toggle-fullscreen': {
+  WINDOW_TOGGLE_FULLSCREEN: {
     args: []
     return: boolean
   }
   /** Reload the renderer (View menu, dev builds). */
-  'window:reload': {
+  WINDOW_RELOAD: {
     args: []
     return: void
   }
   /** Toggle the Chromium devtools (View menu, dev builds). */
-  'window:toggle-devtools': {
+  WINDOW_TOGGLE_DEVTOOLS: {
     args: []
     return: void
   }
   /** Open an external URL in the user's default browser (Help menu links). */
-  'window:open-external': {
+  WINDOW_OPEN_EXTERNAL: {
     args: [url: string]
     return: void
   }
   /** Returns whether any updater can manage this install + which channel. */
-  'updater:status': {
+  UPDATER_STATUS: {
     args: []
     return:
       | { available: false }
       | { available: true; id: string; displayName: string; currentVersion: string }
   }
   /** Asks the active updater whether a new version is available. */
-  'updater:check': {
+  UPDATER_CHECK: {
     args: []
     return:
       | { supported: false }
       | { supported: true; currentVersion: string; latestVersion: string | null; available: boolean }
   }
   /** Kicks off the update install. Progress streams on `updater:progress`. */
-  'updater:update': {
+  UPDATER_UPDATE: {
     args: []
     return:
       | { started: true }
@@ -529,7 +538,7 @@ export interface IpcChannelMap {
    * core category. Used to render plugin-contributed rows alongside core
    * settings in their target category. Disabled plugins are excluded.
    */
-  'plugins:get-categorized-settings': {
+  PLUGINS_GET_CATEGORIZED_SETTINGS: {
     args: [category: string]
     return: {
       pluginName: string
@@ -549,35 +558,35 @@ export interface IpcChannelMap {
     }[]
   }
   // ─── AI Enhancements ────────────────────────────────────────────────────────
-  'ai:generate-sql': {
+  AI_GENERATE_SQL: {
     args: [request: { prompt: string; connectionId: string; schema?: string }]
     return: { sql: string }
   }
-  'ai:complete-sql': {
+  AI_COMPLETE_SQL: {
     args: [request: { sql: string; cursorOffset: number; connectionId: string; schema?: string }]
     return: { completion: string }
   }
-  'ai:explain-results': {
+  AI_EXPLAIN_RESULTS: {
     args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
     return: { explanation: string; model: string; durationMs: number }
   }
-  'ai:explain:start': {
+  AI_EXPLAIN_START: {
     args: [request: { sql: string; columns: string[]; rowCount: number; sampleRows: Record<string, unknown>[] }]
     return: { streamId: string; model: string }
   }
-  'ai:explain:abort': {
+  AI_EXPLAIN_ABORT: {
     args: [streamId: string]
     return: void
   }
-  'ai:conversation:summarize': {
+  AI_CONVERSATION_SUMMARIZE: {
     args: [messages: AIChatMessage[]]
     return: { summary: string }
   }
-  'ai:permission:get-profile': {
+  AI_PERMISSION_GET_PROFILE: {
     args: []
     return: 'read-only' | 'ask-write' | 'auto'
   }
-  'ai:permission:set-profile': {
+  AI_PERMISSION_SET_PROFILE: {
     args: [profile: 'read-only' | 'ask-write' | 'auto']
     return: void
   }
@@ -585,102 +594,102 @@ export interface IpcChannelMap {
   // Durable home for high-growth datasets that used to live in renderer
   // localStorage. See docs/proposals/internal-app-data-store.md.
   /** All conversations (with messages) plus the last-active id. */
-  'appdata:conversations:list': {
+  APPDATA_CONVERSATIONS_LIST: {
     args: []
     return: ConversationsSnapshot
   }
   /** Replace one conversation and its messages in a single transaction. */
-  'appdata:conversations:upsert': {
+  APPDATA_CONVERSATIONS_UPSERT: {
     args: [conversation: StoredConversation]
     return: void
   }
-  'appdata:conversations:delete': {
+  APPDATA_CONVERSATIONS_DELETE: {
     args: [id: string]
     return: void
   }
   /** Remember which conversation is active across restarts. */
-  'appdata:conversations:set-active': {
+  APPDATA_CONVERSATIONS_SET_ACTIVE: {
     args: [id: string | null]
     return: void
   }
   /** One-time migration import. No-ops when conversations already exist. */
-  'appdata:conversations:import': {
+  APPDATA_CONVERSATIONS_IMPORT: {
     args: [conversations: StoredConversation[], activeConversationId: string | null]
     return: { imported: number }
   }
-  'appdata:saved-queries:list': {
+  APPDATA_SAVED_QUERIES_LIST: {
     args: []
     return: SavedQuery[]
   }
-  'appdata:saved-queries:upsert': {
+  APPDATA_SAVED_QUERIES_UPSERT: {
     args: [query: SavedQuery]
     return: void
   }
-  'appdata:saved-queries:delete': {
+  APPDATA_SAVED_QUERIES_DELETE: {
     args: [id: string]
     return: void
   }
   /** One-time migration import. No-ops when saved queries already exist. */
-  'appdata:saved-queries:import': {
+  APPDATA_SAVED_QUERIES_IMPORT: {
     args: [queries: SavedQuery[]]
     return: { imported: number }
   }
   /** Newest-first recorded query runs, capped to `limit`. */
-  'appdata:query-history:list': {
+  APPDATA_QUERY_HISTORY_LIST: {
     args: [limit?: number]
     return: QueryHistoryEntry[]
   }
   /** Record one run; prunes to the newest `maxItems` server-side. */
-  'appdata:query-history:add': {
+  APPDATA_QUERY_HISTORY_ADD: {
     args: [entry: QueryHistoryEntry, maxItems: number]
     return: void
   }
-  'appdata:query-history:delete': {
+  APPDATA_QUERY_HISTORY_DELETE: {
     args: [id: string]
     return: void
   }
-  'appdata:query-history:clear': {
+  APPDATA_QUERY_HISTORY_CLEAR: {
     args: []
     return: void
   }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
-  'mcp:start': {
+  MCP_START: {
     args: []
     return: import('./mcp').MCPStartResult
   }
-  'mcp:stop': {
+  MCP_STOP: {
     args: []
     return: void
   }
-  'mcp:status': {
+  MCP_STATUS: {
     args: []
     return: import('./mcp').MCPServerStatus
   }
-  'mcp:tools': {
+  MCP_TOOLS: {
     args: []
     return: import('./mcp').MCPToolInfo[]
   }
-  'mcp:set-tool-enabled': {
+  MCP_SET_TOOL_ENABLED: {
     args: [toolId: string, enabled: boolean]
     return: void
   }
-  'mcp:activity': {
+  MCP_ACTIVITY: {
     args: []
     return: import('./mcp').MCPActivityEntry[]
   }
-  'mcp:regenerate-token': {
+  MCP_REGENERATE_TOKEN: {
     args: []
     return: import('./mcp').MCPServerStatus
   }
-  'mcp:reload': {
+  MCP_RELOAD: {
     args: []
     return: import('./mcp').MCPServerStatus
   }
-  'mcp:approval-response': {
+  MCP_APPROVAL_RESPONSE: {
     args: [requestId: string, approved: boolean]
     return: void
   }
-  'themes:list': {
+  THEMES_LIST: {
     args: []
     return: {
       id: string
@@ -697,7 +706,7 @@ export interface IpcChannelMap {
       source?: string
     }[]
   }
-  'plugins:drag-drop': {
+  PLUGINS_DRAG_DROP: {
     args: [filePath: string]
     return: { handled: boolean }
   }
@@ -705,20 +714,19 @@ export interface IpcChannelMap {
 
 // ─── Central channel registry ───────────────────────────────────────────────
 //
-// Use these constants instead of inline string literals at every IPC call
-// site. Adding a new channel is a three-step operation, all in this file:
+// `IPC_CHANNELS` is the single source of truth for every channel's wire
+// string. Adding a new invoke channel is a two-step edit, both in this file:
 //
-//   1. Add the channel definition to `IpcChannelMap` above (args + return).
-//   2. Add the matching constant to `IPC_CHANNELS` below.
-//   3. Use `IPC_CHANNELS.<NAME>` from both main and renderer.
+//   1. Add the channel's `args` + `return` to `IpcChannelShapes` above, keyed
+//      by its CONSTANT NAME (e.g. `DB_EXPLAIN_QUERY`).
+//   2. Add the matching constant + wire string to `IPC_CHANNELS` below
+//      (e.g. `DB_EXPLAIN_QUERY: 'db:explain-query'`).
 //
-// The `satisfies` clause makes TypeScript reject any constant whose value
-// isn't a key of `IpcChannelMap`. The coverage test (tests/unit/ipc-channels-
-// coverage.test.ts) makes TypeScript reject any IpcChannelMap key that
-// doesn't appear in IPC_CHANNELS. Together they keep this registry the
-// single source of truth.
-
-export type IpcChannel = keyof IpcChannelMap
+// The wire string is written exactly once (step 2). The `satisfies
+// Record<keyof IpcChannelShapes, string>` clause forces `IPC_CHANNELS` to
+// have exactly the same set of keys as `IpcChannelShapes` — a missing or
+// orphan entry is a compile error — so the two halves can never drift. Use
+// `IPC_CHANNELS.<NAME>` from both main and renderer; never an inline literal.
 
 export const IPC_CHANNELS = {
   // ── Database lifecycle ─────────────────────────────────────────────────
@@ -878,56 +886,75 @@ export const IPC_CHANNELS = {
   PLUGINS_DRAG_DROP: 'plugins:drag-drop',
   // ── AI app actions ─────────────────────────────────────────────────────
   APP_ACTION_RESULT: 'app:action:result'
-} as const satisfies Record<string, IpcChannel>
+} as const satisfies Record<keyof IpcChannelShapes, string>
+
+/** The union of every channel's wire string (e.g. `'db:connect'`). */
+export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
+
+/** Map a constant-name key to its wire string. The conditional guards the
+ *  index so TypeScript accepts it; the `never` branch is unreachable because
+ *  `IPC_CHANNELS satisfies Record<keyof IpcChannelShapes, string>` proves the
+ *  key sets are identical. */
+type ChannelWire<K extends keyof IpcChannelShapes> =
+  K extends keyof typeof IPC_CHANNELS ? (typeof IPC_CHANNELS)[K] : never
+
+/** The wire-string-keyed contract consumed by `invoke`, `handle`, the preload
+ *  bridge and the plugin SDK — derived from `IpcChannelShapes` + `IPC_CHANNELS`
+ *  so the channel name lives in exactly one place. */
+export type IpcChannelMap = {
+  [K in keyof IpcChannelShapes as ChannelWire<K>]: IpcChannelShapes[K]
+}
 
 // ─── Broadcast events (main → renderer push) ────────────────────────────────
 //
 // Unlike invoke channels these are one-way notifications without a return
 // value. The renderer subscribes via `window.electronAPI.on(IPC_EVENTS.X, …)`.
-// The contract here keeps both sides honest about payload shape.
+// Same single-source model as channels: the payload tuple is declared in
+// `IpcEventShapes` (keyed by constant name) and the wire string lives once in
+// `IPC_EVENTS`; `IpcEventMap` is derived from the two.
 
-export interface IpcEventMap {
+export interface IpcEventShapes {
   /** Stream events for an in-flight AI chat (delta tokens, tool calls, …). */
-  'ai:chat:event': [event: AIStreamEvent]
+  AI_CHAT_EVENT: [event: AIStreamEvent]
   /** Stream events for an in-flight explain-results stream. */
-  'ai:explain:event': [event:
+  AI_EXPLAIN_EVENT: [event:
     | { streamId: string; kind: 'token'; text: string }
     | { streamId: string; kind: 'done'; durationMs: number }
     | { streamId: string; kind: 'error'; message: string }
   ]
   /** MCP server requested user approval for a sensitive action. */
-  'mcp:approval-request': [request: import('./mcp').MCPApprovalRequest]
+  MCP_APPROVAL_REQUEST: [request: import('./mcp').MCPApprovalRequest]
   /** MCP server recorded a tool call. */
-  'mcp:activity-event': [entry: import('./mcp').MCPActivityEntry]
+  MCP_ACTIVITY_EVENT: [entry: import('./mcp').MCPActivityEntry]
   /** A new entry was appended to the app activity log. */
-  'activity:event': [entry: ActivityEntry]
+  ACTIVITY_EVENT: [entry: ActivityEntry]
   /** A coalesced batch of newly-appended activity entries (oldest-first within
    *  the batch). The main process buffers entries and flushes them on a short
    *  timer / size threshold so a busy stream is one IPC round-trip, not N. */
-  'activity:batch': [entries: ActivityEntry[]]
+  ACTIVITY_BATCH: [entries: ActivityEntry[]]
   /** App menu accelerator: focus / create a new query tab. */
-  'menu:new-query-tab': []
+  MENU_NEW_QUERY_TAB: []
   /** App menu accelerator: open the new-connection form. */
-  'menu:new-connection': []
+  MENU_NEW_CONNECTION: []
   /** App menu accelerator: toggle the command palette. */
-  'menu:toggle-command-palette': []
+  MENU_TOGGLE_COMMAND_PALETTE: []
   /** A plugin transitioned through its lifecycle. */
-  'plugins:lifecycle': [payload: { name: string; event: 'activated' | 'deactivated' | 'installed' | 'uninstalled' }]
+  PLUGINS_LIFECYCLE: [payload: { name: string; event: 'activated' | 'deactivated' | 'installed' | 'uninstalled' }]
   /** Plugin UI contributions have changed; renderer should refetch. */
-  'plugins:ui:contributions-changed': []
+  PLUGINS_UI_CONTRIBUTIONS_CHANGED: []
   /** A setting changed; renderer mirrors should refresh. */
-  'settings:changed': [payload: { keyPath: string; value: unknown }]
+  SETTINGS_CHANGED: [payload: { keyPath: string; value: unknown }]
   /** A plugin requested a toast notification. */
-  'notifications:show': [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
+  NOTIFICATIONS_SHOW: [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
   /** The set of registered themes changed. */
-  'themes:changed': []
+  THEMES_CHANGED: []
   /** The AI asked to perform an in-app action; the renderer runs it. */
-  'app:action:perform': [payload: { requestId: string; actionId: string; params: Record<string, unknown> }]
+  APP_ACTION_PERFORM: [payload: { requestId: string; actionId: string; params: Record<string, unknown> }]
   /** The window's maximise state changed — the custom title bar swaps its
    *  maximise/restore icon in response. */
-  'window:maximize-changed': [isMaximized: boolean]
+  WINDOW_MAXIMIZE_CHANGED: [isMaximized: boolean]
   /** Progress update for an in-flight `updater:update` install. */
-  'updater:progress': [payload:
+  UPDATER_PROGRESS: [payload:
     | { phase: 'idle' }
     | { phase: 'checking' }
     | { phase: 'downloading'; percent?: number }
@@ -936,8 +963,6 @@ export interface IpcEventMap {
     | { phase: 'error'; message: string }
   ]
 }
-
-export type IpcEvent = keyof IpcEventMap
 
 export const IPC_EVENTS = {
   AI_CHAT_EVENT: 'ai:chat:event',
@@ -957,4 +982,16 @@ export const IPC_EVENTS = {
   UPDATER_PROGRESS: 'updater:progress',
   APP_ACTION_PERFORM: 'app:action:perform',
   WINDOW_MAXIMIZE_CHANGED: 'window:maximize-changed'
-} as const satisfies Record<string, IpcEvent>
+} as const satisfies Record<keyof IpcEventShapes, string>
+
+/** The union of every event's wire string (e.g. `'ai:chat:event'`). */
+export type IpcEvent = (typeof IPC_EVENTS)[keyof typeof IPC_EVENTS]
+
+type EventWire<K extends keyof IpcEventShapes> =
+  K extends keyof typeof IPC_EVENTS ? (typeof IPC_EVENTS)[K] : never
+
+/** The wire-string-keyed event contract, derived from `IpcEventShapes` +
+ *  `IPC_EVENTS` so each event name lives in exactly one place. */
+export type IpcEventMap = {
+  [K in keyof IpcEventShapes as EventWire<K>]: IpcEventShapes[K]
+}
