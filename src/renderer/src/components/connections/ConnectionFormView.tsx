@@ -1,11 +1,11 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent, type ReactNode } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import {
-  ScrollArea, Container, Stack, Flex, Box, Divider,
+  ScrollArea, Container, Stack, Flex, Box, Grid, Divider,
   Heading, Text,
   FormField, Input, NumberInput, PasswordInput, Select, Switch, ColorInput, FileContentInput,
   Button, Spinner
@@ -35,6 +35,19 @@ interface MiddlewareField {
 }
 
 const COLOR_PRESETS = ['#7c6ff7', '#28c840', '#e5c07b', '#61afef', '#ff5f57', '#c678dd']
+
+/** A titled card that groups related fields together. */
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <Box className="border border-border-subtle rounded-lg bg-bg-secondary overflow-hidden">
+      <Box className="px-4 py-3 border-b border-border-subtle">
+        <Text size="sm" weight="semibold" color="primary">{title}</Text>
+        {description && <Text size="xs" color="muted" className="mt-0.5">{description}</Text>}
+      </Box>
+      <Box className="p-4">{children}</Box>
+    </Box>
+  )
+}
 
 export function ConnectionFormView({ tabId, editingId }: Props) {
   const { t } = useTranslation()
@@ -83,6 +96,11 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   const hasFetchableFields = fetchableFields.length > 0
   const steps = [...new Set(fetchableFields.map(f => f.step ?? 1))].sort((a, b) => a - b)
   const currentStep = steps.find(s => !completedSteps.has(s)) ?? (steps.length > 0 ? Math.max(...steps) + 1 : 0)
+
+  // Static (non-fetchable, non-grouped) driver fields, split for layout.
+  const staticFields = activePluginDriver?.connectionFields.filter(f => !f.group && !f.fetchable) ?? []
+  const staticInputs = staticFields.filter(f => f.type !== 'boolean')
+  const staticToggles = staticFields.filter(f => f.type === 'boolean')
 
   const update = (patch: Record<string, unknown>) => setProfile(p => ({ ...p, ...patch }))
 
@@ -134,7 +152,19 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
   const handleCancel = () => closeTab(tabId)
 
-  const renderPluginField = (field: PluginField) => {
+  /** A compact toggle row: label on the left, switch on the right. */
+  const renderToggle = (key: string, label: string, checked: boolean, onChange: (checked: boolean) => void) => (
+    <Flex key={key} direction="row" align="center" justify="between" gap="md" className="min-h-8">
+      <Text size="sm" color="secondary">{label}</Text>
+      <Switch label={label} checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    </Flex>
+  )
+
+  // Wide fields read better spanning the full width of the 2-column grid.
+  const fieldSpan = (field: PluginField) =>
+    field.type === 'select' || field.type === 'file' || field.type === 'password' ? 'col-span-2' : ''
+
+  const renderPluginField = (field: PluginField, className?: string) => {
     const value = profile[field.key] ?? field.default ?? ''
 
     if (field.fetchable && field.type === 'select') {
@@ -143,7 +173,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
       if (isAuthenticated && options.length > 0) {
         return (
-          <FormField key={field.key} label={field.label}>
+          <FormField key={field.key} label={field.label} className={className}>
             <Select
               size="lg"
               searchable
@@ -157,7 +187,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       }
 
       return (
-        <FormField key={field.key} label={field.label}>
+        <FormField key={field.key} label={field.label} className={className}>
           <Input
             value={String(value)}
             onChange={(e) => update({ [field.key]: e.target.value })}
@@ -171,7 +201,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
     if (!field.fetchable && field.type === 'select' && field.options) {
       return (
-        <FormField key={field.key} label={field.label}>
+        <FormField key={field.key} label={field.label} className={className}>
           <Select
             size="lg"
             value={String(value)}
@@ -182,22 +212,9 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
       )
     }
 
-    if (field.type === 'boolean') {
-      return (
-        <Flex key={field.key} direction="row" align="center" gap="md">
-          <Switch
-            label={field.label}
-            checked={!!profile[field.key]}
-            onChange={(e) => update({ [field.key]: e.target.checked })}
-          />
-          <Text size="lg" color="secondary">{field.label}</Text>
-        </Flex>
-      )
-    }
-
     if (field.type === 'password') {
       return (
-        <FormField key={field.key} label={field.label}>
+        <FormField key={field.key} label={field.label} className={className}>
           <PasswordInput
             value={String(value)}
             onChange={(e) => update({ [field.key]: e.target.value })}
@@ -209,7 +226,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
     if (field.type === 'number') {
       return (
-        <FormField key={field.key} label={field.label}>
+        <FormField key={field.key} label={field.label} className={className}>
           <NumberInput
             value={Number(value) || 0}
             onChange={(v) => update({ [field.key]: v })}
@@ -221,7 +238,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
     if (field.type === 'file') {
       return (
-        <FormField key={field.key} label={field.label}>
+        <FormField key={field.key} label={field.label} className={className}>
           <FileContentInput
             value={String(value)}
             onChange={(content) => update({ [field.key]: content })}
@@ -233,7 +250,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     }
 
     return (
-      <FormField key={field.key} label={field.label}>
+      <FormField key={field.key} label={field.label} className={className}>
         <Input
           required={field.required}
           value={String(value)}
@@ -263,7 +280,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           'border-border-subtle opacity-60'
         }`}
       >
-        <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
+        <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
             isCompleted ? 'bg-bg-success text-text-on-solid' :
             isActive ? 'bg-bg-accent text-text-on-solid' :
@@ -276,8 +293,10 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
           </Text>
         </Flex>
         {(isActive || isCompleted) && (
-          <Stack gap="md" className="px-3 pb-3">
-            {stepFields.map(renderPluginField)}
+          <Stack gap="md" className="px-4 pb-4">
+            <Grid columns={2} gap="md">
+              {stepFields.map(f => renderPluginField(f, fieldSpan(f)))}
+            </Grid>
             {isActive && !isCompleted && (
               <div>
                 <Button
@@ -300,69 +319,81 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
     <ScrollArea direction="vertical" className="h-full bg-bg-primary">
       <Container size="md" className="py-8">
         <form onSubmit={handleSubmit}>
-          <Stack gap="xl">
+          <Stack gap="lg">
             {/* Header */}
-            <Flex direction="row" align="center" justify="between">
+            <Stack gap="xs">
               <Heading level={2}>{editingId ? t('connections.form.editTitle') : t('connections.form.newTitle')}</Heading>
-              <Flex direction="row" gap="md">
-                <Button type="button" variant="outline" size="md" onClick={handleCancel}>{t('common.cancel')}</Button>
-                <Button type="submit" variant="solid" size="md">
-                  {editingId ? t('connections.form.saveChanges') : t('connections.form.addConnection')}
-                </Button>
-              </Flex>
-            </Flex>
-
-            <Divider />
-
-            {/* Database Type */}
-            <Stack gap="md">
-              <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.databaseType')}</Text>
-              <FormField label={t('connections.form.databaseType')}>
-                <Select
-                  size="lg"
-                  value={String(profile.type)}
-                  onChange={(v) => handleTypeChange(v as DatabaseType)}
-                  options={allTypes}
-                />
-              </FormField>
             </Stack>
 
-            {/* General */}
-            <Stack gap="md">
-              <Text size="sm" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.general')}</Text>
-              <FormField label={t('connections.form.connectionName')}>
-                <Input
-                  required
-                  value={String(profile.name ?? '')}
-                  onChange={(e) => update({ name: e.target.value })}
-                  placeholder={t('connections.form.connectionNamePlaceholder')}
-                  size="lg"
-                />
-              </FormField>
-              <FormField label={t('connections.form.color')}>
-                <ColorInput
-                  value={String(profile.color ?? '#7c6ff7')}
-                  onChange={(v) => update({ color: v })}
-                  presets={COLOR_PRESETS}
-                  size="lg"
-                />
-              </FormField>
-              <Flex direction="row" align="center" gap="md">
-                <Switch
-                  label={t('connections.form.autoCommit')}
-                  checked={profile.defaultAutoCommit !== false}
-                  onChange={(e) => update({ defaultAutoCommit: e.target.checked })}
-                />
-                <Text size="lg" color="secondary">{t('connections.form.autoCommit')}</Text>
-              </Flex>
-            </Stack>
-
-            {/* Connection fields — non-fetchable, non-grouped */}
-            {activePluginDriver && (
+            {/* General — identity */}
+            <Section title={t('connections.form.general')} description={t('connections.form.generalDescription')}>
               <Stack gap="md">
-                <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">{t('connections.form.connection')}</Text>
-                {activePluginDriver.connectionFields.filter(f => !f.group && !f.fetchable).map(renderPluginField)}
+                <FormField label={t('connections.form.databaseType')}>
+                  <Select
+                    size="lg"
+                    value={String(profile.type)}
+                    onChange={(v) => handleTypeChange(v as DatabaseType)}
+                    options={allTypes}
+                  />
+                </FormField>
+                <Grid columns={2} gap="md">
+                  <FormField label={t('connections.form.connectionName')}>
+                    <Input
+                      required
+                      value={String(profile.name ?? '')}
+                      onChange={(e) => update({ name: e.target.value })}
+                      placeholder={t('connections.form.connectionNamePlaceholder')}
+                      size="lg"
+                    />
+                  </FormField>
+                  <FormField label={t('connections.form.color')}>
+                    <ColorInput
+                      value={String(profile.color ?? '#7c6ff7')}
+                      onChange={(v) => update({ color: v })}
+                      presets={COLOR_PRESETS}
+                      size="lg"
+                    />
+                  </FormField>
+                </Grid>
+                <Divider />
+                {renderToggle(
+                  'defaultAutoCommit',
+                  t('connections.form.autoCommit'),
+                  profile.defaultAutoCommit !== false,
+                  (checked) => update({ defaultAutoCommit: checked })
+                )}
               </Stack>
+            </Section>
+
+            {/* Connection — driver fields */}
+            {activePluginDriver && staticFields.length > 0 && (
+              <Section title={t('connections.form.connection')} description={t('connections.form.connectionDescription')}>
+                <Stack gap="md">
+                  {staticInputs.length > 0 && (
+                    <Grid columns={2} gap="md">
+                      {staticInputs.map(f => renderPluginField(f, fieldSpan(f)))}
+                    </Grid>
+                  )}
+                  {staticToggles.length > 0 && (
+                    <>
+                      <Divider />
+                      <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">
+                        {t('connections.form.options')}
+                      </Text>
+                      <Stack gap="xs">
+                        {staticToggles.map(f =>
+                          renderToggle(
+                            f.key,
+                            f.label,
+                            !!profile[f.key],
+                            (checked) => update({ [f.key]: checked })
+                          )
+                        )}
+                      </Stack>
+                    </>
+                  )}
+                </Stack>
+              </Section>
             )}
 
             {/* Step-based auth wizard for fetchable fields */}
@@ -374,7 +405,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   authStatus === 'authenticating' ? 'border-accent/30' :
                   'border-border-subtle'
                 }`}>
-                  <Flex direction="row" align="center" gap="sm" className="px-3 py-2">
+                  <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
                       authStatus === 'authenticated' ? 'bg-bg-success text-text-on-solid' :
                       authStatus === 'authenticating' ? 'bg-bg-accent text-text-on-solid' :
@@ -386,7 +417,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       {t('connections.wizard.stepAuthenticate')}
                     </Text>
                   </Flex>
-                  <Stack gap="sm" className="px-3 pb-3">
+                  <Stack gap="sm" className="px-4 pb-4">
                     {authStatus === 'authenticated' ? (
                       <Flex direction="row" align="center" gap="md">
                         <Text size="sm" color="success">{t('connections.wizard.authenticatedSuccess')}</Text>
@@ -430,26 +461,41 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
 
             {/* SSH Tunnel */}
             {sshFields.length > 0 && (
-              <Box className="border border-border-subtle rounded-lg overflow-hidden">
+              <Box className="border border-border-subtle rounded-lg overflow-hidden bg-bg-secondary">
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setSshExpanded(!sshExpanded)}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-none border-0 h-auto justify-start"
+                  className="w-full flex items-center gap-2 px-4 py-3 rounded-none border-0 h-auto justify-start"
                 >
-                  {sshExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <Text size="lg" color="secondary">{t('connections.form.sshTunnel')}</Text>
+                  {sshExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  <Stack gap="xs" className="items-start text-left">
+                    <Text size="sm" weight="semibold" color="primary">{t('connections.form.sshTunnel')}</Text>
+                    {!sshExpanded && <Text size="xs" color="muted">{t('connections.form.sshTunnelDescription')}</Text>}
+                  </Stack>
                 </Button>
                 {sshExpanded && (
-                  <Stack gap="md" className="px-3 pb-3">
-                    {sshFields.map(renderPluginField)}
-                  </Stack>
+                  <Box className="px-4 pb-4 border-t border-border-subtle pt-4">
+                    <Grid columns={2} gap="md">
+                      {sshFields.map(f => renderPluginField(f as PluginField, fieldSpan(f as PluginField)))}
+                    </Grid>
+                  </Box>
                 )}
               </Box>
             )}
 
-            {/* Test Connection */}
-            <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
+            <Divider />
+
+            {/* Footer actions */}
+            <Flex direction="row" align="start" justify="between" gap="md">
+              <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
+              <Flex direction="row" gap="sm">
+                <Button type="button" variant="outline" size="lg" onClick={handleCancel}>{t('common.cancel')}</Button>
+                <Button type="submit" variant="solid" size="lg">
+                  {editingId ? t('connections.form.saveChanges') : t('connections.form.addConnection')}
+                </Button>
+              </Flex>
+            </Flex>
           </Stack>
         </form>
       </Container>
