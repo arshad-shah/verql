@@ -86,7 +86,7 @@ export function App() {
   }, [loadConnections])
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const hasBottomPanels = useHasBottomPanels()
-  const [paletteOpen, setPaletteOpen] = useState(false)
+  const paletteOpen = useUiStore(s => s.commandPaletteOpen)
   // Shared across every close site (tab-bar X, Cmd+W, context menu). The
   // store gives us a single pending tab id; setting it raises the dialog.
   const pendingCloseId = usePendingClose(s => s.pendingId)
@@ -110,7 +110,7 @@ export function App() {
           addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
         },
         [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },
-        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => setPaletteOpen(prev => !prev),
+        [KEYBINDING_ACTION.COMMAND_PALETTE]: () => useUiStore.getState().toggleCommandPalette(),
         [KEYBINDING_ACTION.SAVE_QUERY]: () => { if (activeTabId) void tabActions.save(activeTabId) },
         [KEYBINDING_ACTION.TOGGLE_SIDEBAR]: () => useUiStore.getState().toggleSidebar(),
         [KEYBINDING_ACTION.FOCUS_EDITOR]: () => editorRegistry.get()?.editor.focus(),
@@ -185,7 +185,7 @@ export function App() {
         addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
       }),
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),
-      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => setPaletteOpen(prev => !prev)),
+      window.electronAPI.on(IPC_EVENTS.MENU_TOGGLE_COMMAND_PALETTE, () => useUiStore.getState().toggleCommandPalette()),
     ]
 
     const handleStatusBarNewConn = () => openConnectionForm()
@@ -356,7 +356,7 @@ export function App() {
       )}
       <ToastContainer />
       <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
-        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        <CommandPalette open={paletteOpen} onClose={() => useUiStore.getState().setCommandPaletteOpen(false)} />
       </SectionErrorBoundary>
       <SectionErrorBoundary label={t('shell.sectionLabels.mcpApproval')}>
         <MCPApprovalDialog />

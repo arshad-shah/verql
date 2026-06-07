@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, Menu, type IpcMainInvokeEvent } from 'electron'
+import { ipcMain, BrowserWindow, Menu, shell, type IpcMainInvokeEvent } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc'
 
 /** Resolve the window that issued the IPC call — multi-window safe, unlike
@@ -62,4 +62,49 @@ export function registerWindowHandlers(): void {
       item.submenu.popup({ window: win, x: Math.round(x), y: Math.round(y) })
     },
   )
+
+  // ── App-designed menus (custom title bar) ────────────────────────────────
+  // The in-app File/Edit/View/Query/Help bar drives these instead of the native
+  // submenus, so we control the design. Edit roles act on the focused web
+  // contents so Cut/Copy/Paste/Undo work in Monaco and any input.
+
+  ipcMain.handle(
+    IPC_CHANNELS.WINDOW_EDIT_ROLE,
+    (event, role: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => {
+      const wc = windowFor(event)?.webContents
+      if (!wc) return
+      // Each role maps to a built-in WebContents editing command.
+      switch (role) {
+        case 'undo': wc.undo(); break
+        case 'redo': wc.redo(); break
+        case 'cut': wc.cut(); break
+        case 'copy': wc.copy(); break
+        case 'paste': wc.paste(); break
+        case 'selectAll': wc.selectAll(); break
+      }
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_FULLSCREEN, (event) => {
+    const win = windowFor(event)
+    if (!win) return false
+    const next = !win.isFullScreen()
+    win.setFullScreen(next)
+    return next
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_RELOAD, (event) => {
+    windowFor(event)?.webContents.reload()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_DEVTOOLS, (event) => {
+    windowFor(event)?.webContents.toggleDevTools()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_OPEN_EXTERNAL, (_event, url) => {
+    // Only allow web links — never file:// or app: schemes from the renderer.
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+      void shell.openExternal(url)
+    }
+  })
 }

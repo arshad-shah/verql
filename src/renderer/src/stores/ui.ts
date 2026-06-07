@@ -55,6 +55,11 @@ interface UiState {
   setBottomDockActivePanel: (panel: BottomPanelId) => void
   toggleBottomDock: () => void
   setBottomDockHeight: (height: number) => void
+  // Command palette — open state lives here so the keybinding, the in-app menu,
+  // and the native-menu IPC event all toggle one source of truth.
+  commandPaletteOpen: boolean
+  setCommandPaletteOpen: (open: boolean) => void
+  toggleCommandPalette: () => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -119,6 +124,9 @@ export const useUiStore = create<UiState>((set) => ({
     const clamped = Math.min(640, Math.max(120, height))
     useSettingsStore.getState().set('appearance.bottomDockHeight', clamped)
   },
+  commandPaletteOpen: false,
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+  toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
 }))
 
 // Keep the live layout-visibility flags in sync with their persisted appearance

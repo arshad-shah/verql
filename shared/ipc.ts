@@ -250,7 +250,7 @@ export interface IpcChannelMap {
   }
   'plugins:connection-fields': {
     args: []
-    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[] }[] }[]
+    return: { driverId: string; driverName: string; connectionFields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string; fetchable?: boolean; step?: number; options?: { value: string; label: string }[]; accept?: string }[] }[]
   }
   'plugins:middleware-fields': {
     args: []
@@ -438,6 +438,32 @@ export interface IpcChannelMap {
    *  so the title-bar menu bar drives the real, single-source-of-truth menu. */
   'window:menu:popup': {
     args: [payload: { id: number; x: number; y: number }]
+    return: void
+  }
+  /** Run a native edit role on the focused web contents, so the app-designed
+   *  Edit menu (custom title bar) drives Undo/Redo/Cut/Copy/Paste/Select All. */
+  'window:edit-role': {
+    args: [role: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll']
+    return: void
+  }
+  /** Toggle full screen; returns the resulting full-screen state. */
+  'window:toggle-fullscreen': {
+    args: []
+    return: boolean
+  }
+  /** Reload the renderer (View menu, dev builds). */
+  'window:reload': {
+    args: []
+    return: void
+  }
+  /** Toggle the Chromium devtools (View menu, dev builds). */
+  'window:toggle-devtools': {
+    args: []
+    return: void
+  }
+  /** Open an external URL in the user's default browser (Help menu links). */
+  'window:open-external': {
+    args: [url: string]
     return: void
   }
   /** Returns whether any updater can manage this install + which channel. */
@@ -797,6 +823,11 @@ export const IPC_CHANNELS = {
   WINDOW_IS_MAXIMIZED: 'window:is-maximized',
   WINDOW_MENU_LIST: 'window:menu:list',
   WINDOW_MENU_POPUP: 'window:menu:popup',
+  WINDOW_EDIT_ROLE: 'window:edit-role',
+  WINDOW_TOGGLE_FULLSCREEN: 'window:toggle-fullscreen',
+  WINDOW_RELOAD: 'window:reload',
+  WINDOW_TOGGLE_DEVTOOLS: 'window:toggle-devtools',
+  WINDOW_OPEN_EXTERNAL: 'window:open-external',
   // ── Updater ────────────────────────────────────────────────────────────
   UPDATER_STATUS: 'updater:status',
   UPDATER_CHECK: 'updater:check',
