@@ -93,7 +93,7 @@ GROUP BY o.id, u.name, o.total, o.status, o.created_at;
 
 -- Create a second database to test multi-database
 CREATE DATABASE IF NOT EXISTS analytics;
-GRANT ALL PRIVILEGES ON analytics.* TO 'dbstudio'@'%';
+GRANT ALL PRIVILEGES ON analytics.* TO 'verql'@'%';
 
 USE analytics;
 

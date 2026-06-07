@@ -14,6 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 compose() { docker compose "$@"; }
+status() { compose ps; }
 
 up() {
   echo "› Starting databases…"
@@ -37,6 +38,6 @@ case "${1:-up}" in
     bash scripts/make-sqlite-testdb.sh
     ;;
   sqlite) bash scripts/make-sqlite-testdb.sh ;;
-  status) compose ps ;;
+  status) status ;;
   *) echo "usage: $0 {up|down|reset|seed|sqlite|status}" >&2; exit 1 ;;
 esac
