@@ -44,6 +44,26 @@ const onRename = fn()
 const onMove = fn()
 const onDeleteOption = fn()
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 16 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <DropdownMenu
+          key={size}
+          size={size}
+          trigger={<Button variant="outline">size="{size}" <ChevronDown size={12} className="inline" /></Button>}
+          items={[
+            { label: 'Edit table', onSelect: fn() },
+            { label: 'Duplicate', onSelect: fn() },
+            { label: 'Export as CSV', onSelect: fn() },
+            { label: 'Delete', onSelect: fn() },
+          ]}
+        />
+      ))}
+    </div>
+  ),
+}
+
 export const States: Story = {
   render: () => (
     <DropdownMenu

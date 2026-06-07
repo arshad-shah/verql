@@ -80,8 +80,10 @@ function resolveToken(raw: string): string {
 
 /** Icon size to render inside a Kbd of the given size. */
 function glyphSize(size: KbdProps['size']): number {
+  if (size === 'xs') return 9
   if (size === 'sm') return 10
   if (size === 'lg') return 14
+  if (size === 'xl') return 16
   return 12
 }
 

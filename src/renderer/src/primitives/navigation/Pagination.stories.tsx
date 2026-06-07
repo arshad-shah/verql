@@ -55,3 +55,13 @@ export const States: Story = {
     </div>
   ),
 }
+
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Pagination page={2} totalPages={5} onPageChange={fn()} size="sm" aria-label="Small pagination" />
+      <Pagination page={2} totalPages={5} onPageChange={fn()} size="md" aria-label="Medium pagination" />
+      <Pagination page={2} totalPages={5} onPageChange={fn()} size="lg" aria-label="Large pagination" />
+    </div>
+  ),
+}

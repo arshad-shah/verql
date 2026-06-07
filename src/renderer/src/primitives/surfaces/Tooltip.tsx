@@ -15,12 +15,29 @@ import {
   autoUpdate,
   type Placement,
 } from '@floating-ui/react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 type TooltipSide = 'top' | 'bottom' | 'left' | 'right'
 type TooltipAlign = 'start' | 'center' | 'end'
 
-type TooltipProps = {
+const tooltipVariants = cva(
+  'relative font-medium rounded-[9px] bg-bg-elevated border border-border-default text-text-primary shadow-elevated pointer-events-none whitespace-nowrap',
+  {
+    variants: {
+      size: {
+        sm: 'text-[11px] px-2 py-1',
+        md: 'text-xs px-3 py-1.5',
+        lg: 'text-sm px-4 py-2',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
+
+type TooltipProps = VariantProps<typeof tooltipVariants> & {
   content: string
   side?: TooltipSide
   align?: TooltipAlign
@@ -116,6 +133,7 @@ export function Tooltip({
   side = 'top',
   align = 'center',
   delay = 400,
+  size,
   className,
   children,
 }: TooltipProps) {
@@ -178,13 +196,7 @@ export function Tooltip({
             {...getFloatingProps()}
           >
             <div
-              className={cn(
-                'relative px-3 py-1.5 text-xs font-medium rounded-[9px]',
-                'bg-bg-elevated border border-border-default text-text-primary',
-                'shadow-elevated',
-                'pointer-events-none whitespace-nowrap',
-                className
-              )}
+              className={cn(tooltipVariants({ size }), className)}
               style={{
                 ...transitionStyles,
                 letterSpacing: '0.01em',

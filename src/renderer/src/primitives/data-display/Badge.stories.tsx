@@ -11,7 +11,7 @@ const meta = {
     },
     size: {
       control: 'select',
-      options: ['sm', 'md', 'lg'],
+      options: ['xs', 'sm', 'md', 'lg', 'xl'],
     },
   },
 } satisfies Meta<typeof Badge>
@@ -36,6 +36,16 @@ export const Variants: Story = {
             <Badge key={variant} variant={variant} size={size}>{variant}</Badge>
           ))}
         </div>
+      ))}
+    </div>
+  ),
+}
+
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+        <Badge key={size} variant="accent" size={size}>{size}</Badge>
       ))}
     </div>
   ),

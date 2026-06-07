@@ -54,6 +54,40 @@ export const Default: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 24 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <ContextMenu
+          key={size}
+          size={size}
+          items={[
+            { label: 'Open in new tab', onSelect: fn() },
+            { label: 'Copy path', onSelect: fn() },
+            { label: 'Rename', onSelect: fn() },
+            { label: 'Delete', onSelect: fn() },
+          ]}
+        >
+          <div style={{
+            width: 200,
+            height: 100,
+            border: '2px dashed var(--color-border-default)',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 13,
+            color: 'var(--color-text-secondary)',
+            userSelect: 'none',
+          }}>
+            Right-click — size="{size}"
+          </div>
+        </ContextMenu>
+      ))}
+    </div>
+  ),
+}
+
 export const WithDisabledItems: Story = {
   render: () => (
     <ContextMenu

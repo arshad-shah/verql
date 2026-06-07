@@ -24,6 +24,24 @@ export const Default: Story = {
   ),
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: 24 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size} style={{ width: 200, border: '1px solid var(--color-border-default)', borderRadius: 8, overflow: 'hidden' }}>
+          <List>
+            {['Tables', 'Views', 'Indexes'].map((item) => (
+              <List.Item key={item} size={size} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+                {item}
+              </List.Item>
+            ))}
+          </List>
+        </div>
+      ))}
+    </div>
+  ),
+}
+
 export const WithIcons: Story = {
   render: () => (
     <div style={{ width: 240, border: '1px solid var(--color-border-default)', borderRadius: 8, overflow: 'hidden' }}>

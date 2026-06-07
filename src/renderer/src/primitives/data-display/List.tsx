@@ -1,5 +1,22 @@
 import React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
+
+const listItemVariants = cva(
+  'text-text-primary transition-colors duration-[var(--transition-fast)]',
+  {
+    variants: {
+      size: {
+        sm: 'text-xs py-1 px-2',
+        md: 'text-sm py-2 px-3',
+        lg: 'text-base py-3 px-4',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
 
 function ListRoot({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
   return (
@@ -7,9 +24,13 @@ function ListRoot({ className, ...props }: React.HTMLAttributes<HTMLUListElement
   )
 }
 
-function Item({ className, ...props }: React.HTMLAttributes<HTMLLIElement>) {
+interface ItemProps
+  extends React.HTMLAttributes<HTMLLIElement>,
+    VariantProps<typeof listItemVariants> {}
+
+function Item({ className, size, ...props }: ItemProps) {
   return (
-    <li className={cn('px-3 py-2 text-sm text-text-primary transition-colors duration-[var(--transition-fast)]', className)} {...props} />
+    <li className={cn(listItemVariants({ size }), className)} {...props} />
   )
 }
 

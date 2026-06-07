@@ -1,5 +1,38 @@
 import React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
+
+const tableHeadVariants = cva(
+  'text-left font-medium text-text-secondary',
+  {
+    variants: {
+      size: {
+        sm: 'text-xs px-2 py-1',
+        md: 'text-xs px-3 py-2',
+        lg: 'text-base px-4 py-3',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
+
+const tableCellVariants = cva(
+  'text-text-primary',
+  {
+    variants: {
+      size: {
+        sm: 'text-xs px-2 py-1',
+        md: 'px-3 py-2',
+        lg: 'text-base px-4 py-3',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
 
 function TableRoot({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
@@ -28,18 +61,26 @@ function Row({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>)
   )
 }
 
-function Head({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+interface HeadProps
+  extends React.ThHTMLAttributes<HTMLTableCellElement>,
+    VariantProps<typeof tableHeadVariants> {}
+
+function Head({ className, size, ...props }: HeadProps) {
   return (
     <th
-      className={cn('text-left text-xs font-medium text-text-secondary px-3 py-2', className)}
+      className={cn(tableHeadVariants({ size }), className)}
       {...props}
     />
   )
 }
 
-function Cell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+interface CellProps
+  extends React.TdHTMLAttributes<HTMLTableCellElement>,
+    VariantProps<typeof tableCellVariants> {}
+
+function Cell({ className, size, ...props }: CellProps) {
   return (
-    <td className={cn('px-3 py-2 text-text-primary', className)} {...props} />
+    <td className={cn(tableCellVariants({ size }), className)} {...props} />
   )
 }
 

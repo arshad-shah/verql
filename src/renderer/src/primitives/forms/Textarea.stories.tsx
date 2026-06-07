@@ -8,7 +8,7 @@ const meta: Meta<typeof Textarea> = {
   argTypes: {
     size: {
       control: 'select',
-      options: ['sm', 'md', 'lg'],
+      options: ['xs', 'sm', 'md', 'lg', 'xl'],
     },
     error: { control: 'boolean' },
     disabled: { control: 'boolean' },
@@ -37,7 +37,7 @@ export const Default: Story = {
 export const Variants: Story = {
   render: () => (
     <div className="flex flex-col gap-2" style={{ width: 320 }}>
-      {(['sm', 'md', 'lg'] as const).map((size) => (
+      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
         <Textarea key={size} size={size} rows={3} placeholder={`size="${size}"`} />
       ))}
     </div>

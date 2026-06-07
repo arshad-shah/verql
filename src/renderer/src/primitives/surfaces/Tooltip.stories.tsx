@@ -10,6 +10,10 @@ const meta = {
       control: 'select',
       options: ['top', 'bottom', 'left', 'right'],
     },
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+    },
     content: { control: 'text' },
   },
 } satisfies Meta<typeof Tooltip>
@@ -32,6 +36,19 @@ export const Variants: Story = {
       {(['top', 'bottom', 'left', 'right'] as const).map((side) => (
         <Tooltip key={side} content={`Tooltip on ${side}`} side={side}>
           <Button variant="outline" style={{ width: '100%' }}>side="{side}"</Button>
+        </Tooltip>
+      ))}
+    </div>
+  ),
+}
+
+export const Sizes: Story = {
+  args: { content: '', children: null as any },
+  render: () => (
+    <div style={{ display: 'flex', gap: 24, padding: 40 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <Tooltip key={size} content={`size="${size}"`} side="bottom" size={size}>
+          <Button variant="outline">size="{size}"</Button>
         </Tooltip>
       ))}
     </div>

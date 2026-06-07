@@ -20,6 +20,21 @@ export const Default: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <Label key={size} size={size}>
+          {`Label size="${size}"`}
+        </Label>
+      ))}
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Label size="md"')).toBeInTheDocument()
+  },
+}
+
 export const States: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

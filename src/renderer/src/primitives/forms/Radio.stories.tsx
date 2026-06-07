@@ -44,6 +44,19 @@ export const States: Story = {
   ),
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-4">
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <label key={size} className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+          <Radio size={size} name="sizes" value={size} defaultChecked={size === 'md'} aria-label={`size ${size}`} />
+          {size}
+        </label>
+      ))}
+    </div>
+  ),
+}
+
 export const RadioGroup: Story = {
   render: () => (
     <div className="flex flex-col gap-3">

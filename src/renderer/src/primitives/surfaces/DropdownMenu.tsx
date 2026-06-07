@@ -12,6 +12,7 @@ import {
   autoUpdate,
   FloatingPortal,
 } from '@floating-ui/react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 type MenuItem = {
@@ -20,13 +21,29 @@ type MenuItem = {
   disabled?: boolean
 }
 
-type DropdownMenuProps = {
+const menuItemVariants = cva(
+  'w-full text-left hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-(--transition-fast)',
+  {
+    variants: {
+      size: {
+        sm: 'text-xs py-1 px-2',
+        md: 'text-sm py-1.5 px-3',
+        lg: 'text-base py-2 px-4',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+)
+
+type DropdownMenuProps = VariantProps<typeof menuItemVariants> & {
   trigger: React.ReactElement
   items: MenuItem[]
   className?: string
 }
 
-export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
+export function DropdownMenu({ trigger, items, size, className }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const { refs, floatingStyles, context } = useFloating({
@@ -108,7 +125,7 @@ export function DropdownMenu({ trigger, items, className }: DropdownMenuProps) {
                 key={item.label}
                 role="menuitem"
                 disabled={item.disabled}
-                className="w-full text-left px-3 py-1.5 text-sm hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-(--transition-fast)"
+                className={menuItemVariants({ size })}
                 onClick={() => {
                   item.onSelect()
                   setIsOpen(false)

@@ -30,6 +30,16 @@ export const Default: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Link href="#" size="sm">Small link</Link>
+      <Link href="#" size="md">Medium link (default)</Link>
+      <Link href="#" size="lg">Large link</Link>
+    </div>
+  ),
+}
+
 export const InContext: Story = {
   render: () => (
     <p style={{ fontSize: 13, color: 'var(--color-text-primary)', lineHeight: 1.6 }}>

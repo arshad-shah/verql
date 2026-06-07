@@ -7,9 +7,11 @@ const kbdVariants = cva(
   {
     variants: {
       size: {
+        xs: 'text-[9px] px-0.5 py-px rounded-[2px] gap-0.5 min-w-[13px] h-[13px]',
         sm: 'text-[10px] px-1 py-[1px] rounded-[3px] gap-0.5 min-w-[16px] h-[16px]',
         md: 'text-xs px-1.5 py-0.5 rounded gap-0.5 min-w-[20px] h-[20px]',
         lg: 'text-sm px-2 py-1 rounded-md gap-1 min-w-[26px] h-[26px]',
+        xl: 'text-base px-2.5 py-1.5 rounded-md gap-1 min-w-[32px] h-[32px]',
       },
       variant: {
         solid:

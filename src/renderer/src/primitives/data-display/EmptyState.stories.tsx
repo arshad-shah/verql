@@ -44,6 +44,23 @@ export const States: Story = {
   },
 }
 
+export const Sizes: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <div key={size} style={{ border: '1px solid var(--color-border-default)', borderRadius: 8 }}>
+          <EmptyState
+            size={size}
+            title={`Size: ${size}`}
+            description="Vertical density follows the size prop."
+            icon={<Database size={32} className="text-text-muted" />}
+          />
+        </div>
+      ))}
+    </div>
+  ),
+}
+
 export const WithAction: Story = {
   args: {
     title: 'No connections',

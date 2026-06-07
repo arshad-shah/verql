@@ -6,7 +6,7 @@ const meta = {
   title: 'Primitives/Typography/Kbd',
   component: Kbd,
   argTypes: {
-    size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
+    size: { control: 'inline-radio', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     variant: { control: 'inline-radio', options: ['solid', 'outline', 'ghost'] },
   },
 } satisfies Meta<typeof Kbd>
@@ -28,18 +28,12 @@ export const Default: Story = {
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <Row label="sm">
-        <Kbd size="sm">K</Kbd>
-        <Kbd size="sm">Esc</Kbd>
-      </Row>
-      <Row label="md">
-        <Kbd size="md">K</Kbd>
-        <Kbd size="md">Esc</Kbd>
-      </Row>
-      <Row label="lg">
-        <Kbd size="lg">K</Kbd>
-        <Kbd size="lg">Esc</Kbd>
-      </Row>
+      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+        <Row key={size} label={size}>
+          <Kbd size={size}>K</Kbd>
+          <Kbd size={size}>Esc</Kbd>
+        </Row>
+      ))}
     </div>
   ),
 }
