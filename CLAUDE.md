@@ -42,6 +42,20 @@ capability, add a contribution surface + registry (glue) and put the actual
 logic in a plugin — don't hardcode dialect/format/provider behavior in the main
 app or the renderer.
 
+**DB-agnostic language.** The glue + renderer must describe the database
+generically — a driver may not be SQL (Mongo, Redis, future plugins). Don't put
+"SQL", "EXPLAIN ANALYZE", "CREATE TABLE", or relational nouns
+(table/column/row) in user-facing strings; lean on driver capabilities
+(`editorLanguage`, `explain.statement`, and the `nouns` capability —
+object/field/record — resolved in the renderer by `useDataNouns`, with generic
+fallbacks).
+
+**Reduce code: centralize, don't duplicate.** Before adding a helper/hook, look
+for an existing one; when the same logic appears 2+ times, unify it into a
+single shared implementation (pure helpers in `lib/`, reusable behaviour as one
+flexible hook in `hooks/` — e.g. `useClipboard`, not several copy variants).
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
 ## Commands
 
 ```bash

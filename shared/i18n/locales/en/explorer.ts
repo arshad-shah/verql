@@ -1,6 +1,13 @@
 export const explorer = {
   search: {
-    placeholder: 'Fuzzy search tables, views…',
+    placeholder: 'Fuzzy search {objects}…',
+  },
+  /** Generic fallback nouns, used when the active driver doesn't declare its
+   *  own via the `nouns` capability (see shared/driver-capabilities.ts). */
+  noun: {
+    object: { one: 'object', many: 'objects' },
+    field: { one: 'field', many: 'fields' },
+    record: { one: 'record', many: 'records' },
   },
   empty: {
     noConnection: {
@@ -21,14 +28,14 @@ export const explorer = {
   },
   loading: {
     generic: 'Loading…',
-    tables: 'Loading tables…',
-    columns: 'Loading columns…',
+    tables: 'Loading {objects}…',
+    columns: 'Loading {fields}…',
   },
-  noColumns: 'No columns — use View data to browse',
+  noColumns: 'No {fields} — use View data to browse',
   status: {
     noMatches: 'No matches',
     noMatchesFor: 'No matches for "{query}"',
-    noTables: 'No tables',
+    noTables: 'No {objects}',
     cannotAccessDatabase: 'Cannot access this database',
   },
   object: {
@@ -38,7 +45,7 @@ export const explorer = {
     triggerOn: 'on {parent}',
   },
   table: {
-    rows: '{value} {n, plural, one {row} other {rows}}',
+    rows: '{value} {records}',
     indexes: '{value} {n, plural, one {idx} other {idx}}',
   },
   tooltip: {

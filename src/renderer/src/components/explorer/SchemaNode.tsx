@@ -5,6 +5,7 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
+import { useDataNouns, titleCase } from '@/hooks/useDataNouns'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
@@ -48,6 +49,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const openErDiagram = useTabsStore((s) => s.openErDiagram)
   const addToast = useToastStore((s) => s.addToast)
   const { copy } = useClipboard()
+  const nouns = useDataNouns(connectionId)
 
   const allTables = tables.get(tableCacheKey) ?? []
   const allObjects = objects.get(tableCacheKey) ?? []
@@ -206,7 +208,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
               <>
                 <SchemaGroup
                   storageKey={`${tableCacheKey}:tables`}
-                  label={t('explorer.group.tables')}
+                  label={titleCase(nouns.object.many)}
                   count={filteredTables.length}
                   icon={<Table2 size={12} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />}
                   headerPaddingLeft={groupLabelPaddingLeft}

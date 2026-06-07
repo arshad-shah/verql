@@ -8,6 +8,7 @@ import { HighlightedText } from './HighlightedText'
 import { TableHoverActions } from './TableHoverActions'
 import { useTableNodeActions } from './useTableNodeActions'
 import { formatCompactNumber } from '@/lib/format'
+import { useDataNouns } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface TableNodeProps {
@@ -48,6 +49,7 @@ export function TableNode({
 
   const { canViewData, openData, openInQueryTab, copySampleQuery, menuItems } =
     useTableNodeActions(connectionId, tableName, schema, onExportTable)
+  const nouns = useDataNouns(connectionId)
 
   // Lazy-fetch when expanded
   useEffect(() => {
@@ -168,7 +170,7 @@ export function TableNode({
                   color: 'var(--color-text-secondary)',
                 }}
               >
-                {t('explorer.table.rows', { value: formatCompactNumber(rowCount), n: rowCount })}
+                {t('explorer.table.rows', { value: formatCompactNumber(rowCount), records: rowCount === 1 ? nouns.record.one : nouns.record.many })}
               </span>
             )}
             {tableIndexes.length > 0 && (
@@ -202,7 +204,9 @@ export function TableNode({
               {/* Distinguish "loaded, but this driver has no columns" (e.g. Redis)
                   from "still fetching" — otherwise schema-less drivers show a
                   perpetual "Loading columns…". */}
-              {columns.has(cacheKey) ? t('explorer.noColumns') : t('explorer.loading.columns')}
+              {columns.has(cacheKey)
+                ? t('explorer.noColumns', { fields: nouns.field.many })
+                : t('explorer.loading.columns', { fields: nouns.field.many })}
             </p>
           ) : (
             tableColumns.map((col) => (

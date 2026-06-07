@@ -221,6 +221,11 @@ Do not use SQL syntax. Use standard Redis commands.`
     },
     editorLanguage: 'plaintext',
     statementSyntax: 'redis',
+    nouns: {
+      object: { one: 'key', many: 'keys' },
+      field: { one: 'field', many: 'fields' },
+      record: { one: 'entry', many: 'entries' },
+    },
     // "Tables" are key prefixes (e.g. `user:1`,`user:2` → `user`). List the keys
     // under the prefix instead of `GET <prefix>` (a prefix isn't itself a key, so
     // GET returned nil — or WRONGTYPE on a non-string key). Glob metachars in the

@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, type ChangeEvent } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { SearchInput, Box } from '@/primitives'
+import { useDataNouns } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface SearchFilterProps {
@@ -13,6 +14,7 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
   const filterText = useSchemaStore((s) => s.filterText)
   const setFilterText = useSchemaStore((s) => s.setFilterText)
   const activeConnectionId = useConnectionsStore((s) => s.activeConnectionId)
+  const nouns = useDataNouns(activeConnectionId)
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [localValue, setLocalValue] = useState(filterText)
@@ -41,7 +43,7 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
         <SearchInput
           ref={inputRef}
           size="sm"
-          placeholder={t('explorer.search.placeholder')}
+          placeholder={t('explorer.search.placeholder', { objects: nouns.object.many })}
           value={localValue}
           onChange={handleChange}
           onClear={handleClear}

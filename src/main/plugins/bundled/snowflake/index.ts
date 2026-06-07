@@ -196,6 +196,11 @@ export function activate(ctx: PluginContext): void {
     placeholderStyle: 'positional',
     editorLanguage: 'sql',
     statementSyntax: 'sql',
+    nouns: {
+      object: { one: 'table', many: 'tables' },
+      field: { one: 'column', many: 'columns' },
+      record: { one: 'row', many: 'rows' },
+    },
     defaultSchemaCandidates: ['PUBLIC', 'public'],
     connectionFields: [
       { key: 'account', label: 'Account Identifier', type: 'text', required: true },

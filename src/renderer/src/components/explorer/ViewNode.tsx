@@ -4,6 +4,7 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useClipboard } from '@/hooks/useClipboard'
+import { useDataNouns } from '@/hooks/useDataNouns'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
@@ -29,6 +30,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
   const { copy } = useClipboard()
+  const nouns = useDataNouns(connectionId)
   const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
 
   const nodeKey = `view:${connectionId}:${schema}:${viewName}`
@@ -165,7 +167,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
               className="text-xs px-2 py-1.5"
               style={{ color: 'var(--color-text-tertiary)' }}
             >
-              {t('explorer.loading.columns')}
+              {t('explorer.loading.columns', { fields: nouns.field.many })}
             </p>
           ) : (
             cols.map((col) => (

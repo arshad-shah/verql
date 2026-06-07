@@ -30,6 +30,30 @@ export interface InspectionCapability {
   canKill: boolean
 }
 
+/** A singular/plural noun pair the driver uses for one of its data concepts. */
+export interface DataNoun {
+  /** Singular, lower-case (e.g. "table", "collection", "key"). */
+  one: string
+  /** Plural, lower-case (e.g. "tables", "collections", "keys"). */
+  many: string
+}
+
+/** What a driver calls its core data concepts, so the shell can describe schema
+ *  objects without assuming a relational/SQL model. Each is a display label the
+ *  driver supplies; the renderer falls back to a generic, i18n'd noun when a
+ *  driver omits one (the same pattern as `session.transactionLabel`). Examples:
+ *    SQL    → object: table,      field: column, record: row
+ *    Mongo  → object: collection, field: field,  record: document
+ *    Redis  → object: key,        field: field,  record: entry */
+export interface DataNouns {
+  /** Top-level data container: table / collection / key. */
+  object?: DataNoun
+  /** A field within an object: column / field. */
+  field?: DataNoun
+  /** A single record: row / document / entry. */
+  record?: DataNoun
+}
+
 /** Options when opening a session or beginning a transaction. */
 export interface SessionOpts {
   autoCommit?: boolean
@@ -68,6 +92,10 @@ export interface DriverCapabilities {
   defaultSchemaCandidates?: string[]
   hasSampleQuery: boolean
   hasGetTableData: boolean
+  /** Driver-supplied nouns for its data concepts (object/field/record), so the
+   *  shell can label the schema explorer without assuming SQL terminology.
+   *  Omitted nouns fall back to generic words in the renderer. */
+  nouns?: DataNouns
   session?: SessionCapability
   explain?: ExplainCapability
   sessionInspection?: InspectionCapability

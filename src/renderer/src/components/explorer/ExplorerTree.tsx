@@ -10,6 +10,7 @@ import { SchemaNode } from './SchemaNode'
 import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
 import { fuzzyMatch } from '@/lib/fuzzy-match'
+import { useDataNouns, titleCase } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ExplorerTreeProps {
@@ -20,6 +21,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
   const { t } = useTranslation()
   const activeConnectionId = useConnectionsStore((s) => s.activeConnectionId)
   const connectedIds = useConnectionsStore((s) => s.connectedIds)
+  const nouns = useDataNouns(activeConnectionId)
 
   const databases = useSchemaStore((s) => s.databases)
   const schemas = useSchemaStore((s) => s.schemas)
@@ -113,10 +115,10 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
               {filteredTables.length === 0 && filteredViews.length === 0 && (
                 <Text size="xs" color="muted" className="px-4 py-2">
                   {allTables.length === 0
-                    ? t('explorer.loading.tables')
+                    ? t('explorer.loading.tables', { objects: nouns.object.many })
                     : filterText
                     ? t('explorer.status.noMatchesFor', { query: filterText })
-                    : t('explorer.status.noTables')}
+                    : t('explorer.status.noTables', { objects: nouns.object.many })}
                 </Text>
               )}
               {filteredTables.length > 0 && (
@@ -127,7 +129,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                     weight="medium"
                     className="uppercase tracking-wider opacity-40 px-4 py-1"
                   >
-                    {t('explorer.group.tables')}
+                    {titleCase(nouns.object.many)}
                   </Text>
                   {filteredTables.map((t) => (
                     <TableNode
