@@ -11,3 +11,6 @@ coverage/
 .worktrees/
 .superpowers/
 storybook-static/
+
+# Generated SQLite test database (rebuild with scripts/make-sqlite-testdb.sh)
+docker/testdb.sqlite

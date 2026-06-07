@@ -72,6 +72,20 @@ services:
       interval: 5s
       retries: 5
 
+  # One-shot seeder: Redis has no /docker-entrypoint-initdb.d, so a throwaway
+  # container pipes sample keys (string/hash/list/set/zset/TTL) into the server
+  # once it's healthy, then exits. Re-run anytime with `docker compose up redis-seed`.
+  redis-seed:
+    image: redis:7-alpine
+    container_name: verql-redis-seed
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "redis-cli -h redis -a verql < /seed/redis.txt && echo 'redis seeded'"]
+    volumes:
+      - ./docker/seed/redis.txt:/seed/redis.txt:ro
+    restart: "no"
+
 volumes:
   pgdata:
   mysqldata:

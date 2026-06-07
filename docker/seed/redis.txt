@@ -1,0 +1,14 @@
+SET app:name "Verql"
+SET app:version "1.0.0"
+SET session:abc123 "{\"userId\":1,\"role\":\"admin\"}" EX 3600
+MSET counter:visits 42 counter:signups 7
+INCR counter:visits
+HSET user:1 name "Alice Johnson" email "alice@example.com" role "admin"
+HSET user:2 name "Bob Smith" email "bob@example.com" role "user"
+HSET user:3 name "Carol White" email "carol@example.com" role "user"
+RPUSH recent:orders 1001 1002 1003 1004 1005
+LPUSH log:events "page_view /home" "click buy_button" "purchase order:1001"
+SADD tags:gadgets "Widget Pro" "Gizmo Plus"
+SADD tags:tools "Doohickey XL" "Contraption 3000"
+ZADD leaderboard 79.98 alice 49.99 bob 209.98 carol 14.99 dave
+SETEX cache:homepage 120 "<cached html>"
