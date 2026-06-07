@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Key, Link, Hash } from 'lucide-react'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { useClipboardCopy } from '@/hooks/useClipboardCopy'
+import { useClipboard } from '@/hooks/useClipboard'
 import type { SchemaColumn } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -98,18 +98,18 @@ function ConstraintBadge({ column }: { column: SchemaColumn }) {
 
 export function ColumnRow({ column, tableName }: ColumnRowProps) {
   const { t } = useTranslation()
-  const copy = useClipboardCopy()
+  const { copy } = useClipboard()
 
   const qualifiedName = `${tableName}.${column.name}`
 
   const menuItems = [
     {
       label: t('explorer.menu.copyColumnName'),
-      onSelect: () => copy(column.name, 'explorer.toast.copiedColumnName'),
+      onSelect: () => copy(column.name, { toast: 'explorer.toast.copiedColumnName' }),
     },
     {
       label: t('explorer.menu.copyQualifiedName'),
-      onSelect: () => copy(qualifiedName, 'explorer.toast.copiedQualifiedName'),
+      onSelect: () => copy(qualifiedName, { toast: 'explorer.toast.copiedQualifiedName' }),
     },
   ]
 

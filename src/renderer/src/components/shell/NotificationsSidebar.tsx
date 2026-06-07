@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react'
+import { type MouseEvent } from 'react'
 import { useNotificationsStore, type Notification } from '@/stores/notifications'
 import {
   Bell,
@@ -15,6 +15,7 @@ import {
 import { Flex, Text, Button, EmptyState } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
+import { useClipboard } from '@/hooks/useClipboard'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 const typeIcons: Record<Notification['type'], typeof AlertCircle> = {
@@ -52,18 +53,12 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const { t } = useTranslation()
   const { markRead, removeNotification } = useNotificationsStore()
   const Icon = typeIcons[notification.type]
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useClipboard()
   const isError = notification.type === 'error'
 
-  const handleCopy = async (e: MouseEvent) => {
+  const handleCopy = (e: MouseEvent) => {
     e.stopPropagation()
-    try {
-      await navigator.clipboard.writeText(buildCopyPayload(notification))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* clipboard blocked — silent */
-    }
+    copy(buildCopyPayload(notification), { resetDelay: 1500 })
   }
 
   return (

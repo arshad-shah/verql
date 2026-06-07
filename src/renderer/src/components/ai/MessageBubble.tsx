@@ -1,5 +1,5 @@
 import { Sparkles, Copy, Check, RotateCcw, AlertTriangle, GitBranch } from 'lucide-react'
-import { useCopyToClipboard } from '@/hooks/useCopyToClipboard'
+import { useClipboard } from '@/hooks/useClipboard'
 import type { AIChatMessage } from '@shared/ai-types'
 import { Text } from '@/primitives/typography/Text'
 import { IconButton } from '@/primitives/forms/Button'
@@ -32,7 +32,7 @@ function BranchButton({ messageId }: { messageId: string }) {
 
 function CopyButton({ content }: { content: string }) {
   const { t } = useTranslation()
-  const { copied, copy } = useCopyToClipboard(1200)
+  const { copied, copy } = useClipboard()
   return (
     <IconButton
       label={copied ? t('aiui.chat.copied') : t('aiui.chat.copyMessage')}

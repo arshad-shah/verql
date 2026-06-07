@@ -5,7 +5,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { usePluginContextMenuItems } from '@/components/plugin-ui/usePluginContextMenu'
-import { useClipboardCopy } from '@/hooks/useClipboardCopy'
+import { useClipboard } from '@/hooks/useClipboard'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -37,7 +37,7 @@ export function useTableNodeActions(
   const { t } = useTranslation()
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
-  const copy = useClipboardCopy()
+  const { copy } = useClipboard()
   const pluginTableItems = usePluginContextMenuItems('table')
   const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
   const openTableData = useTabsStore((s) => s.openTableData)
@@ -65,12 +65,12 @@ export function useTableNodeActions(
   }
 
   function copyTableName() {
-    copy(tableName, 'explorer.toast.copiedTableName')
+    copy(tableName, { toast: 'explorer.toast.copiedTableName' })
   }
 
   async function copySampleQuery() {
     const query = await getSampleQuery()
-    copy(query, 'explorer.toast.copiedSampleQuery')
+    copy(query, { toast: 'explorer.toast.copiedSampleQuery' })
   }
 
   const menuItems: MenuItem[] = [

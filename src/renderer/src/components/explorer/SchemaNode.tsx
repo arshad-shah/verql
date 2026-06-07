@@ -4,7 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
-import { useClipboardCopy } from '@/hooks/useClipboardCopy'
+import { useClipboard } from '@/hooks/useClipboard'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
@@ -47,7 +47,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
 
   const openErDiagram = useTabsStore((s) => s.openErDiagram)
   const addToast = useToastStore((s) => s.addToast)
-  const copy = useClipboardCopy()
+  const { copy } = useClipboard()
 
   const allTables = tables.get(tableCacheKey) ?? []
   const allObjects = objects.get(tableCacheKey) ?? []
@@ -87,7 +87,7 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   }
 
   function handleCopySchemaName() {
-    copy(schemaName, 'explorer.toast.copiedSchemaName')
+    copy(schemaName, { toast: 'explorer.toast.copiedSchemaName' })
   }
 
   const menuItems = [

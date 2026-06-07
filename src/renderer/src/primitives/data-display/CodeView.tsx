@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
 import { createOnigurumaEngine } from 'shiki/engine/oniguruma'
 import DOMPurify from 'dompurify'
-import { useCopyToClipboard } from '@/hooks/useCopyToClipboard'
+import { useClipboard } from '@/hooks/useClipboard'
 
 const SUPPORTED_LANGS = ['sql', 'json', 'javascript'] as const
 type SupportedLang = typeof SUPPORTED_LANGS[number]
@@ -41,7 +41,7 @@ export interface CodeViewProps {
 
 export function CodeView({ code, language, actions, showCopy = true }: CodeViewProps) {
   const [html, setHtml] = useState<string | null>(null)
-  const { copied, copy } = useCopyToClipboard(1500)
+  const { copied, copy } = useClipboard()
 
   useEffect(() => {
     let cancelled = false
@@ -56,7 +56,7 @@ export function CodeView({ code, language, actions, showCopy = true }: CodeViewP
     return () => { cancelled = true }
   }, [code, language])
 
-  const handleCopy = () => copy(code)
+  const handleCopy = () => copy(code, { resetDelay: 1500 })
 
   const langLabel = LANG_LABELS[language || ''] || language || 'Code'
 

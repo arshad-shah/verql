@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, Database, RefreshCw } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useToastStore } from '@/stores/toast'
-import { useClipboardCopy } from '@/hooks/useClipboardCopy'
+import { useClipboard } from '@/hooks/useClipboard'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
@@ -36,7 +36,7 @@ export function DatabaseNode({
   const clearCache = useSchemaStore((s) => s.clearCache)
 
   const addToast = useToastStore((s) => s.addToast)
-  const copy = useClipboardCopy()
+  const { copy } = useClipboard()
 
   const [switchError, setSwitchError] = useState(false)
 
@@ -84,7 +84,7 @@ export function DatabaseNode({
   }
 
   function handleCopyName() {
-    copy(databaseName, 'explorer.toast.copiedDatabaseName')
+    copy(databaseName, { toast: 'explorer.toast.copiedDatabaseName' })
   }
 
   const menuItems = [

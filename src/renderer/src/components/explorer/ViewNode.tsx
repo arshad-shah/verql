@@ -3,7 +3,7 @@ import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
-import { useClipboardCopy } from '@/hooks/useClipboardCopy'
+import { useClipboard } from '@/hooks/useClipboard'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
@@ -28,7 +28,7 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
   const fetchColumns = useSchemaStore((s) => s.fetchColumns)
   const addQueryTab = useTabsStore((s) => s.addQueryTab)
   const updateTabSql = useTabsStore((s) => s.updateTabSql)
-  const copy = useClipboardCopy()
+  const { copy } = useClipboard()
   const profile = useConnectionsStore((s) => s.connections.find(c => c.id === connectionId) ?? null)
 
   const nodeKey = `view:${connectionId}:${schema}:${viewName}`
@@ -64,13 +64,13 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
     },
     {
       label: t('explorer.menu.copyViewName'),
-      onSelect: () => copy(viewName, 'explorer.toast.copiedViewName'),
+      onSelect: () => copy(viewName, { toast: 'explorer.toast.copiedViewName' }),
     },
     {
       label: t('explorer.menu.copySampleQuery'),
       onSelect: async () => {
         const query = await getSampleQuery()
-        copy(query, 'explorer.toast.copiedSampleQuery')
+        copy(query, { toast: 'explorer.toast.copiedSampleQuery' })
       },
     },
   ]
