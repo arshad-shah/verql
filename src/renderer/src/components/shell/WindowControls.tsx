@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Minus, Square, Copy, X } from 'lucide-react'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
+import { IconButton } from '@/primitives'
 
 /**
  * App-drawn minimise / maximise / close buttons for the custom title bar.
@@ -27,7 +28,7 @@ export function WindowControls() {
       .then((m) => {
         if (active) setMaximized(m === true)
       })
-      .catch(() => {})
+      .catch(() => { })
     const off = api.on(IPC_EVENTS.WINDOW_MAXIMIZE_CHANGED, (isMax) =>
       setMaximized(Boolean(isMax)),
     )
@@ -41,37 +42,36 @@ export function WindowControls() {
     void window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_MINIMIZE)
   }
   const toggleMaximize = (): void => {
-    window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_TOGGLE_MAXIMIZE).then(setMaximized).catch(() => {})
+    window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_TOGGLE_MAXIMIZE).then(setMaximized).catch(() => { })
   }
   const close = (): void => {
     void window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_CLOSE)
   }
 
-  const button =
-    'no-drag flex items-center justify-center w-12 h-full text-text-muted transition-colors ' +
-    'hover:bg-white/10 hover:text-text-primary focus-visible:outline-none focus-visible:bg-white/10'
+  // Title-bar controls are edge-to-edge: full height, 48px wide, square. We use
+  // the IconButton primitive (ghost) and override geometry + the bespoke hover
+  // states (subtle for min/max, Windows red for close) via className — twMerge
+  // lets these win over the variant defaults.
+  const base = 'no-drag w-12 h-full rounded-none text-text-muted focus-visible:shadow-none'
+  const minMax = `${base} hover:bg-white/10 hover:text-text-primary focus-visible:bg-white/10 focus-visible:text-text-primary`
+  const closeBtn = `${base} hover:bg-[#e81123] hover:text-white focus-visible:bg-[#e81123] focus-visible:text-white`
 
   return (
     <div className="no-drag flex items-stretch h-full">
-      <button type="button" onClick={minimize} className={button} aria-label={t('shell.titleBar.minimize')}>
+      <IconButton variant="ghost" onClick={minimize} className={minMax} label={t('shell.titleBar.minimize')}>
         <Minus size={16} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
+      </IconButton>
+      <IconButton
+        variant="ghost"
         onClick={toggleMaximize}
-        className={button}
-        aria-label={maximized ? t('shell.titleBar.restore') : t('shell.titleBar.maximize')}
+        className={minMax}
+        label={maximized ? t('shell.titleBar.restore') : t('shell.titleBar.maximize')}
       >
         {maximized ? <Copy size={13} aria-hidden="true" /> : <Square size={13} aria-hidden="true" />}
-      </button>
-      <button
-        type="button"
-        onClick={close}
-        className="no-drag flex items-center justify-center w-12 h-full text-text-muted transition-colors hover:bg-[#e81123] hover:text-white focus-visible:outline-none focus-visible:bg-[#e81123] focus-visible:text-white"
-        aria-label={t('shell.titleBar.close')}
-      >
+      </IconButton>
+      <IconButton variant="ghost" onClick={close} className={closeBtn} label={t('shell.titleBar.close')}>
         <X size={16} aria-hidden="true" />
-      </button>
+      </IconButton>
     </div>
   )
 }
