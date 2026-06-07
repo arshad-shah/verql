@@ -147,10 +147,11 @@ describe('Switch', () => {
   })
 
   it('applies sizing classes', () => {
+    // The visual track is a <span> (the input is sr-only); md size = h-5 w-9.
     const { container } = render(<Switch label="Toggle" />)
-    const input = container.querySelector('input')
-    expect(input).toHaveClass('h-5')
-    expect(input).toHaveClass('w-9')
+    const track = container.querySelector('span')
+    expect(track).toHaveClass('h-5')
+    expect(track).toHaveClass('w-9')
   })
 
   it('forwards ref', () => {
