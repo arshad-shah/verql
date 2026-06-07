@@ -942,8 +942,10 @@ export interface IpcEventShapes {
   PLUGINS_LIFECYCLE: [payload: { name: string; event: 'activated' | 'deactivated' | 'installed' | 'uninstalled' }]
   /** Plugin UI contributions have changed; renderer should refetch. */
   PLUGINS_UI_CONTRIBUTIONS_CHANGED: []
-  /** A setting changed; renderer mirrors should refresh. */
-  SETTINGS_CHANGED: [payload: { keyPath: string; value: unknown }]
+  /** A setting changed; renderer mirrors should refresh. Sent as two positional
+   *  args — `keyPath` (or a category name on reset) and the new value — matching
+   *  the renderer listener in `stores/settings.ts`. */
+  SETTINGS_CHANGED: [keyPath: string, value: unknown]
   /** A plugin requested a toast notification. */
   NOTIFICATIONS_SHOW: [payload: { kind?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string; durationMs?: number }]
   /** The set of registered themes changed. */

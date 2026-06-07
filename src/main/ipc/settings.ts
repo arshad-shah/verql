@@ -1,7 +1,7 @@
-import { BrowserWindow } from 'electron'
 import type { AppSettings } from '@shared/settings'
 import { IPC_EVENTS } from '@shared/ipc'
 import type { IpcContext, Handle } from './context'
+import { broadcast } from './broadcast'
 import { redactAi, redactSettings } from './secrets'
 
 export function registerSettingsHandlers(ctx: IpcContext, handle: Handle): void {
@@ -22,15 +22,13 @@ export function registerSettingsHandlers(ctx: IpcContext, handle: Handle): void 
       return
     }
     ctx.configStore.setSetting(keyPath as string, value)
-    const mainWindow = BrowserWindow.getAllWindows()[0]
-    mainWindow?.webContents.send(IPC_EVENTS.SETTINGS_CHANGED, keyPath, value)
+    broadcast(IPC_EVENTS.SETTINGS_CHANGED, keyPath as string, value)
   })
 
   handle('settings:reset', async (category) => {
     ctx.configStore.resetCategory(category as keyof AppSettings)
     const updated = ctx.configStore.getSettingsCategory(category as keyof AppSettings)
-    const mainWindow = BrowserWindow.getAllWindows()[0]
-    mainWindow?.webContents.send(IPC_EVENTS.SETTINGS_CHANGED, category, updated)
+    broadcast(IPC_EVENTS.SETTINGS_CHANGED, category, updated)
     return updated
   })
 }

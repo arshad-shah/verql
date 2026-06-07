@@ -135,7 +135,7 @@ Three-layer theming in `primitives/theme/tokens.css`: raw color scale → semant
 
 ### Key Libraries
 
-- **Monaco Editor** — SQL editor with custom completion provider (`lib/monaco-sql.ts`)
+- **Monaco Editor** — query editor with custom completion provider (`lib/monaco-sql.ts`); the language is driver-declared via the `editorLanguage` capability (SQL by default), not assumed
 - **AG Grid** — Query results display with custom dark theme
 - **@xyflow/react** — ER diagram visualization
 - **Recharts** — Chart panel for data visualization
