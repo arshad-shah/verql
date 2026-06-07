@@ -9,7 +9,7 @@ type MenuItem = {
 }
 
 const menuItemVariants = cva(
-  'w-full text-left hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]',
+  'w-full text-left whitespace-nowrap hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-[var(--transition-fast)]',
   {
     variants: {
       size: {
@@ -58,7 +58,7 @@ export function ContextMenu({ items, size, className, children }: ContextMenuPro
           <div
             role="menu"
             className={cn(
-              'fixed z-50 bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px] shadow-[var(--shadow-dropdown)]',
+              'fixed z-50 bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[7rem] shadow-[var(--shadow-dropdown)]',
               className
             )}
             style={{ top: position.y, left: position.x }}

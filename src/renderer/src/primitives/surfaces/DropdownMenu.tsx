@@ -22,7 +22,7 @@ type MenuItem = {
 }
 
 const menuItemVariants = cva(
-  'w-full text-left hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-(--transition-fast)',
+  'w-full text-left whitespace-nowrap hover:bg-hover focus:bg-hover disabled:opacity-50 disabled:pointer-events-none transition-colors duration-(--transition-fast)',
   {
     variants: {
       size: {
@@ -115,7 +115,7 @@ export function DropdownMenu({ trigger, items, size, className }: DropdownMenuPr
             role="menu"
             onKeyDown={handleKeyDown}
             className={cn(
-              'bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[160px] shadow-dropdown',
+              'bg-bg-elevated border border-border-default rounded-lg py-1 min-w-[7rem] shadow-dropdown',
               className
             )}
             style={transitionStyles}
