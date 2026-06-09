@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import type { PlanNode as PlanNodeType } from '@shared/types'
-import { Box, Flex, Text } from '@/primitives'
+import { Box, Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 
 interface Props {
   node: PlanNodeType
@@ -39,16 +40,16 @@ export function PlanNodeView({ node, maxCost, depth = 0 }: Props) {
           {node.type}
         </Text>
 
-        {node.table && <Text size="xs" color="accent">{node.table}</Text>}
+        {node.table && <Text size="xs" color="accent.solid">{node.table}</Text>}
 
         <Box className="flex-1 mx-2 h-2 bg-bg-tertiary rounded-full overflow-hidden">
           <Box className="h-full rounded-full transition-all" style={{ width: `${Math.max(costRatio * 100, 2)}%`, backgroundColor: color }} />
         </Box>
 
-        <Text size="xs" color="muted" className="shrink-0">cost: {node.cost.toFixed(1)}</Text>
-        <Text size="xs" color="muted" className="shrink-0">rows: {node.rows}</Text>
+        <Text size="xs" color="fg.subtle" className="shrink-0">cost: {node.cost.toFixed(1)}</Text>
+        <Text size="xs" color="fg.subtle" className="shrink-0">rows: {node.rows}</Text>
         {node.actualTime !== undefined && (
-          <Text size="xs" color="warning" className="shrink-0">{node.actualTime.toFixed(1)}ms</Text>
+          <Text size="xs" color="feedback.warning.foreground" className="shrink-0">{node.actualTime.toFixed(1)}ms</Text>
         )}
       </Flex>
 
