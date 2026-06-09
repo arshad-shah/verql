@@ -84,21 +84,21 @@ export function QueryHistoryPanel() {
                 ) : (
                   <XCircle size={11} className="text-error shrink-0" />
                 )}
-                <Text size="xs" color="muted" className="shrink-0 text-[10px]">
+                <Text size="xs" color="fg.subtle" className="shrink-0 text-[10px]">
                   {relativeTime(entry.executedAt)}
                 </Text>
                 {entry.connectionType && (
-                  <Text size="xs" color="muted" className="shrink-0 text-[10px] uppercase tracking-wide">
+                  <Text size="xs" color="fg.subtle" className="shrink-0 text-[10px] uppercase tracking-wide">
                     {entry.connectionType}
                   </Text>
                 )}
                 {entry.status === 'ok' && entry.rowCount != null && (
-                  <Text size="xs" color="muted" className="shrink-0 text-[10px]">
+                  <Text size="xs" color="fg.subtle" className="shrink-0 text-[10px]">
                     {t('query.history.rows', { count: entry.rowCount })}
                   </Text>
                 )}
                 {entry.durationMs != null && (
-                  <Text size="xs" color="muted" className="shrink-0 text-[10px]">
+                  <Text size="xs" color="fg.subtle" className="shrink-0 text-[10px]">
                     {t('query.history.duration', { ms: entry.durationMs })}
                   </Text>
                 )}
@@ -122,7 +122,7 @@ export function QueryHistoryPanel() {
                 />
               </Flex>
             </Flex>
-            <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">
+            <Text size="xs" color="fg.subtle" truncate className="text-[10px] mt-0.5 font-mono block">
               {entry.sql}
             </Text>
           </Box>
