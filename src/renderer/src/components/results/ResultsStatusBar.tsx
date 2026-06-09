@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { Download } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
-import { Flex, Text, Button } from '@/primitives'
+import { Flex, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -53,23 +54,27 @@ export function ResultsStatusBar({ results, actions }: Props) {
         {actions}
         <Button
           variant="ghost"
+          colorScheme="neutral"
           size="xs"
           onClick={() => handleExport('csv')}
           disabled={exporting}
-          className="flex items-center gap-1 text-text-muted hover:text-text-primary h-auto py-0"
+          leftIcon={<Download size={10} />}
+          className="h-auto py-0"
           title={t('query.results.exportCsvTitle')}
         >
-          <Download size={10} /> {t('query.results.exportCsv')}
+          {t('query.results.exportCsv')}
         </Button>
         <Button
           variant="ghost"
+          colorScheme="neutral"
           size="xs"
           onClick={() => handleExport('json')}
           disabled={exporting}
-          className="flex items-center gap-1 text-text-muted hover:text-text-primary h-auto py-0"
+          leftIcon={<Download size={10} />}
+          className="h-auto py-0"
           title={t('query.results.exportJsonTitle')}
         >
-          <Download size={10} /> {t('query.results.exportJson')}
+          {t('query.results.exportJson')}
         </Button>
       </Flex>
     </Flex>

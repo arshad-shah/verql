@@ -1,4 +1,5 @@
-import { Flex, Button, Badge, Select } from '@/primitives'
+import { Flex, Badge, Select } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Switch } from '@/primitives/forms/Switch'
 import type { DriverCapabilities } from '@/stores/driver-capabilities'
 import type { QueryTabTxnState } from '@shared/types'
@@ -95,20 +96,20 @@ export function TransactionToolbar({
       {caps.manualTransactions && (
         <Flex direction="row" align="center" gap="xs">
           <Button
-            variant="outline"
+            variant="soft"
+            colorScheme="success"
             size="xs"
             disabled={!isActive}
             onClick={onCommit}
-            className="bg-success/10 text-success hover:bg-success/20 border-0 disabled:opacity-40"
           >
             {t('query.txn.commit')}
           </Button>
           <Button
-            variant="outline"
+            variant="soft"
+            colorScheme="danger"
             size="xs"
             disabled={!isActive}
             onClick={onRollback}
-            className="bg-error/10 text-error hover:bg-error/20 border-0 disabled:opacity-40"
           >
             {rollbackLabel}
           </Button>

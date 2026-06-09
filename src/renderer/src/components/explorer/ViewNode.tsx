@@ -7,7 +7,7 @@ import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns } from '@/hooks/useDataNouns'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -110,13 +110,11 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
           >
             <IconButton
               label={t('explorer.action.openInQueryTab')}
-              size="xs"
-              variant="ghost"
-              className="h-5 w-5"
+              variant="bare"
+              className="h-5 w-5 inline-flex items-center justify-center"
               onClick={handleOpenInTab}
-            >
-              <ExternalLink size={10} />
-            </IconButton>
+              icon={<ExternalLink size={10} />}
+            />
           </span>
         </div>
       </ContextMenu>

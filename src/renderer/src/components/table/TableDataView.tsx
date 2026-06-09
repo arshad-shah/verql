@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Flex, Box, Text, IconButton, Spinner, EmptyState } from '@/primitives'
+import { Flex, Box, Text, Spinner, EmptyState } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { ResultsGrid } from '@/components/results/ResultsGrid'
 import { IPC_CHANNELS } from '@shared/ipc'
 import type { TableTab, QueryResult, SchemaColumn } from '@shared/types'
@@ -54,9 +55,7 @@ export function TableDataView({ tab }: { tab: TableTab }) {
           <Text size="sm" weight="semibold" color="primary" className="truncate">{tab.tableName}</Text>
           {state.result && <Text size="xs" color="muted">{t('table.rows', { value: state.result.rowCount, n: state.result.rowCount })}</Text>}
         </Flex>
-        <IconButton variant="ghost" size="xs" label={t('common.refresh')} onClick={() => void load()} disabled={state.loading}>
-          <RefreshCw size={13} className={state.loading ? 'animate-spin' : undefined} />
-        </IconButton>
+        <IconButton variant="ghost" colorScheme="neutral" size="xs" label={t('common.refresh')} onClick={() => void load()} disabled={state.loading} icon={<RefreshCw size={13} className={state.loading ? 'animate-spin' : undefined} />} />
       </Flex>
       <Box className="flex-1 min-h-0">
         {state.loading ? (

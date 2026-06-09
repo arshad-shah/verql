@@ -7,7 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns, titleCase } from '@/hooks/useDataNouns'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { TableNode } from './TableNode'
 import { ViewNode } from './ViewNode'
@@ -162,26 +162,22 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
               <Tooltip content={t('explorer.tooltip.erDiagram')} side="top">
                 <IconButton
                   label={t('explorer.action.erDiagram')}
-                  size="xs"
-                  variant="ghost"
-                  className="h-5 w-5"
+                  variant="bare"
+                  className="h-5 w-5 inline-flex items-center justify-center"
                   tabIndex={-1}
-                >
-                  <GitFork size={10} />
-                </IconButton>
+                  icon={<GitFork size={10} />}
+                />
               </Tooltip>
             </span>
             <span onClick={(e) => { e.stopPropagation(); handleRefresh() }}>
               <Tooltip content={t('explorer.tooltip.refreshSchema')} side="top">
                 <IconButton
                   label={t('explorer.action.refreshSchema')}
-                  size="xs"
-                  variant="ghost"
-                  className="h-5 w-5"
+                  variant="bare"
+                  className="h-5 w-5 inline-flex items-center justify-center"
                   tabIndex={-1}
-                >
-                  <RefreshCw size={10} />
-                </IconButton>
+                  icon={<RefreshCw size={10} />}
+                />
               </Tooltip>
             </span>
           </span>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { editor } from 'monaco-editor'
 import { Check, AlertCircle, Loader2 } from 'lucide-react'
-import { Button } from '@/primitives/forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@/primitives/typography/Text'
 import {
   getStatementContribution,
@@ -160,11 +160,12 @@ function GutterRow({
           <Button
             key={a.id}
             variant="ghost"
+            colorScheme="neutral"
             size="xs"
             onClick={() => a.handler(ctx)}
-            className="!h-6 !px-1.5 gap-1 text-text-secondary hover:text-text-primary"
+            leftIcon={a.icon ? <a.icon size={12} /> : undefined}
+            className="!h-6 !px-1.5"
           >
-            {a.icon ? <a.icon size={12} /> : null}
             {a.title}
           </Button>
         ))}

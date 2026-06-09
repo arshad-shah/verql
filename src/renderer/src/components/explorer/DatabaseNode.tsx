@@ -5,7 +5,7 @@ import { useSchemaStore } from '@/stores/schema'
 import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { SchemaNode } from './SchemaNode'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -129,13 +129,11 @@ export function DatabaseNode({
             <Tooltip content={t('explorer.tooltip.refresh')} side="top">
               <IconButton
                 label={t('explorer.action.refreshDatabase')}
-                size="xs"
-                variant="ghost"
-                className="h-5 w-5"
+                variant="bare"
+                className="h-5 w-5 inline-flex items-center justify-center"
                 onClick={handleRefresh}
-              >
-                <RefreshCw size={10} />
-              </IconButton>
+                icon={<RefreshCw size={10} />}
+              />
             </Tooltip>
           </span>
         </div>

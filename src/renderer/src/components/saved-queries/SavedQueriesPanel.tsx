@@ -5,7 +5,8 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, SearchInput } from '@/primitives'
+import { Stack, ScrollArea, Text, EmptyState, Box, Flex, Input, SearchInput } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Saved queries persist in the SQLite app-data store (main process). This module
@@ -118,20 +119,18 @@ export function SavedQueriesPanel() {
                   label={t('query.saved.openInNewTab')}
                   size="xs"
                   variant="ghost"
+                  colorScheme="success"
                   onClick={(e) => { e.stopPropagation(); handleOpenQuery(query) }}
-                  className="text-text-muted hover:text-success"
-                >
-                  <Play size={10} />
-                </IconButton>
+                  icon={<Play size={10} />}
+                />
                 <IconButton
                   label={t('query.saved.delete')}
                   size="xs"
                   variant="ghost"
+                  colorScheme="danger"
                   onClick={(e) => { e.stopPropagation(); handleDelete(query.id) }}
-                  className="text-text-muted hover:text-error"
-                >
-                  <Trash2 size={10} />
-                </IconButton>
+                  icon={<Trash2 size={10} />}
+                />
               </Flex>
             </Flex>
             <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">{query.sql}</Text>

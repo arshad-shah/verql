@@ -4,7 +4,8 @@ import { useTabsStore } from '@/stores/tabs'
 import { requestCloseTab } from '@/stores/tab-actions'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Flex, IconButton, Tooltip, cn } from '@/primitives'
+import { Flex, Tooltip } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { TabItem } from './TabItem'
 import { useTabScroll } from './useTabScroll'
 import { useTabDrag } from './useTabDrag'
@@ -67,14 +68,12 @@ export function TabBar() {
           label={t('shell.tabBar.scrollLeft')}
           size="xs"
           variant="ghost"
+          colorScheme="neutral"
           onClick={scrollLeft}
           tabIndex={-1}
-        className={cn(
-          'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
-        )}
-      >
-        <ChevronLeft size={14} />
-      </IconButton>)}
+          className="shrink-0 transition-opacity"
+          icon={<ChevronLeft size={14} />}
+        />)}
 
       {/* Scrollable tab trough */}
       <Flex
@@ -107,14 +106,12 @@ export function TabBar() {
       label={t('shell.tabBar.scrollRight')}
       size="xs"
       variant="ghost"
+      colorScheme="neutral"
       onClick={scrollRight}
       tabIndex={-1}
-        className={cn(
-          'shrink-0 text-text-tertiary hover:text-text-primary transition-opacity',
-        )}
-      >
-        <ChevronRight size={14} />
-      </IconButton>)}
+      className="shrink-0 transition-opacity"
+      icon={<ChevronRight size={14} />}
+    />)}
 
       {/* New tab button */}
       <Tooltip content={t('shell.tabBar.newTab')} side="bottom">
@@ -122,11 +119,11 @@ export function TabBar() {
           label={t('shell.tabBar.newTab')}
           size="xs"
           variant="ghost"
+          colorScheme="neutral"
           onClick={() => addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })}
-          className="shrink-0 text-text-tertiary hover:text-text-primary"
-        >
-          <Plus size={14} />
-        </IconButton>
+          className="shrink-0"
+          icon={<Plus size={14} />}
+        />
       </Tooltip>
     </Flex>
   )

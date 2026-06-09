@@ -1,4 +1,5 @@
-import { Modal, Input, Button } from '@/primitives'
+import { Modal, Input } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -35,10 +36,10 @@ export function SaveQueryDialog({ open, name, onNameChange, onClose, onConfirm }
           }}
         />
         <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onClose}>
             {t('query.save.cancel')}
           </Button>
-          <Button type="submit" variant="solid" size="sm" disabled={!name.trim()}>
+          <Button type="submit" size="sm" disabled={!name.trim()}>
             {t('query.save.save')}
           </Button>
         </div>

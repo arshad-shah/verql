@@ -1,5 +1,5 @@
 import { ExternalLink, Play, Download, Rows3 } from 'lucide-react'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -29,50 +29,42 @@ export function TableHoverActions({ canViewData, onViewData, onOpenInQueryTab, o
         <Tooltip content={t('explorer.tooltip.viewData')} side="top">
           <IconButton
             label={t('explorer.action.viewData')}
-            size="xs"
-            variant="ghost"
-            className="h-5 w-5"
+            variant="bare"
+            className="h-5 w-5 inline-flex items-center justify-center"
             onClick={onViewData}
-          >
-            <Rows3 size={10} />
-          </IconButton>
+            icon={<Rows3 size={10} />}
+          />
         </Tooltip>
       )}
       <Tooltip content={t('explorer.tooltip.openInNewTab')} side="top">
         <IconButton
           label={t('explorer.action.openInQueryTab')}
-          size="xs"
-          variant="ghost"
-          className="h-5 w-5"
+          variant="bare"
+          className="h-5 w-5 inline-flex items-center justify-center"
           onClick={onOpenInQueryTab}
-        >
-          <ExternalLink size={10} />
-        </IconButton>
+          icon={<ExternalLink size={10} />}
+        />
       </Tooltip>
       {onCopySampleQuery && (
         <Tooltip content={t('explorer.tooltip.copySampleQuery')} side="top">
           <IconButton
             label={t('explorer.action.copySampleQuery')}
-            size="xs"
-            variant="ghost"
-            className="h-5 w-5"
+            variant="bare"
+            className="h-5 w-5 inline-flex items-center justify-center"
             onClick={onCopySampleQuery}
-          >
-            <Play size={10} />
-          </IconButton>
+            icon={<Play size={10} />}
+          />
         </Tooltip>
       )}
       {onExportTable && (
         <Tooltip content={t('explorer.tooltip.exportTable', { object: objectNoun })} side="top">
           <IconButton
             label={t('explorer.action.exportTable', { object: objectNoun })}
-            size="xs"
-            variant="ghost"
-            className="h-5 w-5"
+            variant="bare"
+            className="h-5 w-5 inline-flex items-center justify-center"
             onClick={onExportTable}
-          >
-            <Download size={10} />
-          </IconButton>
+            icon={<Download size={10} />}
+          />
         </Tooltip>
       )}
     </span>

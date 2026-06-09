@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Minus, Square, Copy, X } from 'lucide-react'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { IconButton } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 
 /**
  * App-drawn minimise / maximise / close buttons for the custom title bar.
@@ -48,30 +48,25 @@ export function WindowControls() {
     void window.electronAPI?.invoke(IPC_CHANNELS.WINDOW_CLOSE)
   }
 
-  // Title-bar controls are edge-to-edge: full height, 48px wide, square. We use
-  // the IconButton primitive (ghost) and override geometry + the bespoke hover
-  // states (subtle for min/max, Windows red for close) via className — twMerge
-  // lets these win over the variant defaults.
-  const base = 'no-drag w-12 h-full rounded-none text-text-muted focus-visible:shadow-none'
+  // Title-bar controls are edge-to-edge: full height, 48px wide, square — dense
+  // title-bar chrome where the bespoke geometry + hover states (subtle for
+  // min/max, Windows red for close) must win, so we use Cynosure's `bare`
+  // variant and let these classes own the styling entirely.
+  const base = 'no-drag inline-flex items-center justify-center w-12 h-full rounded-none text-text-muted transition-colors focus-visible:shadow-none'
   const minMax = `${base} hover:bg-white/10 hover:text-text-primary focus-visible:bg-white/10 focus-visible:text-text-primary`
   const closeBtn = `${base} hover:bg-[#e81123] hover:text-white focus-visible:bg-[#e81123] focus-visible:text-white`
 
   return (
     <div className="no-drag flex items-stretch h-full">
-      <IconButton variant="ghost" onClick={minimize} className={minMax} label={t('shell.titleBar.minimize')}>
-        <Minus size={16} aria-hidden="true" />
-      </IconButton>
+      <IconButton variant="bare" onClick={minimize} className={minMax} label={t('shell.titleBar.minimize')} icon={<Minus size={16} aria-hidden="true" />} />
       <IconButton
-        variant="ghost"
+        variant="bare"
         onClick={toggleMaximize}
         className={minMax}
         label={maximized ? t('shell.titleBar.restore') : t('shell.titleBar.maximize')}
-      >
-        {maximized ? <Copy size={13} aria-hidden="true" /> : <Square size={13} aria-hidden="true" />}
-      </IconButton>
-      <IconButton variant="ghost" onClick={close} className={closeBtn} label={t('shell.titleBar.close')}>
-        <X size={16} aria-hidden="true" />
-      </IconButton>
+        icon={maximized ? <Copy size={13} aria-hidden="true" /> : <Square size={13} aria-hidden="true" />}
+      />
+      <IconButton variant="bare" onClick={close} className={closeBtn} label={t('shell.titleBar.close')} icon={<X size={16} aria-hidden="true" />} />
     </div>
   )
 }

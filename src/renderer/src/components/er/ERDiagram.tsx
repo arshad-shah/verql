@@ -16,7 +16,8 @@ import { useSelectionStore } from '@/stores/selection'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
-import { Flex, Text, Box, Button, Spinner } from '@/primitives'
+import { Flex, Text, Box, Spinner } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -129,18 +130,18 @@ export function ERDiagram({ connectionId, schema }: Props) {
         />
         <Flex gap="xs" className="absolute top-3 right-3 z-10">
           <Button
-            variant="outline"
+            variant={direction === 'LR' ? 'soft' : 'outline'}
+            colorScheme={direction === 'LR' ? 'accent' : 'neutral'}
             size="xs"
             onClick={() => handleRelayout('LR')}
-            className={`transition-colors ${direction === 'LR' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
             {t('shell.er.horizontal')}
           </Button>
           <Button
-            variant="outline"
+            variant={direction === 'TB' ? 'soft' : 'outline'}
+            colorScheme={direction === 'TB' ? 'accent' : 'neutral'}
             size="xs"
             onClick={() => handleRelayout('TB')}
-            className={`transition-colors ${direction === 'TB' ? 'border-accent text-accent bg-accent/10' : 'border-border text-text-muted hover:text-text-primary'}`}
           >
             {t('shell.er.vertical')}
           </Button>

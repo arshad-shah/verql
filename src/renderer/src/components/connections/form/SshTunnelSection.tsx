@@ -25,10 +25,12 @@ export function SshTunnelSection({ sshFields, expanded, onToggle, profile, authS
       <Button
         type="button"
         variant="ghost"
+        colorScheme="neutral"
+        fullWidth
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-4 py-3 rounded-none border-0 h-auto justify-start"
+        leftIcon={expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        className="px-4 py-3 rounded-none border-0 h-auto justify-start"
       >
-        {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         <Stack gap="xs" className="items-start text-left">
           <Text size="sm" weight="semibold" color="primary">{t('connections.form.sshTunnel')}</Text>
           {!expanded && <Text size="xs" color="muted">{t('connections.form.sshTunnelDescription')}</Text>}
