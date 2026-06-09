@@ -1,6 +1,6 @@
 import { JSX, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { Flex, Box, ScrollArea, Text, Divider, Input, IconButton, SearchInput } from '@/primitives'
+import { Flex, Box, ScrollArea, Text, Divider, Input, SearchInput } from '@/primitives'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 import { useToastStore } from '@/stores/toast'
