@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 import { Banner } from './Banner'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Feedback/Banner',
@@ -50,7 +50,7 @@ export const WithAction: Story = {
   args: {
     variant: 'info',
     children: 'A new version of verql is available.',
-    action: <Button variant="ghost" size="xs">Update now</Button>,
+    action: <Button variant="ghost" colorScheme="neutral" size="xs">Update now</Button>,
     style: { width: 480 },
   },
 }
@@ -59,7 +59,7 @@ export const WithActionAndDismiss: Story = {
   args: {
     variant: 'error',
     children: 'Connection lost. Reconnect to continue.',
-    action: <Button variant="ghost" size="xs">Reconnect</Button>,
+    action: <Button variant="ghost" colorScheme="neutral" size="xs">Reconnect</Button>,
     onDismiss: fn(),
     style: { width: 480 },
   },

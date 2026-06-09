@@ -5,7 +5,8 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
-import { Button, Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
+import { Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -118,22 +119,21 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
       {/* Connection selector */}
       <Button
         variant="outline"
+        colorScheme="neutral"
         size="xs"
         onClick={() => { setShowConnDropdown(!showConnDropdown); setShowDbDropdown(false); setShowSchemaDropdown(false) }}
-        className="flex items-center gap-1.5"
+        leftIcon={activeConn ? (
+          <Box className="w-2 h-2 rounded-full" style={{ backgroundColor: activeConn.color ?? '#7c6ff7' }} />
+        ) : (
+          <Database size={12} className="text-text-muted" />
+        )}
+        rightIcon={<ChevronDown size={10} className="text-text-muted" />}
       >
         {activeConn ? (
-          <>
-            <Box className="w-2 h-2 rounded-full" style={{ backgroundColor: activeConn.color ?? '#7c6ff7' }} />
-            <Text size="xs" color="primary" truncate className="max-w-28">{activeConn.name}</Text>
-          </>
+          <Text size="xs" color="primary" truncate className="max-w-28">{activeConn.name}</Text>
         ) : (
-          <>
-            <Database size={12} className="text-text-muted" />
-            <Text size="xs" color="muted">{t('query.connection.noConnection')}</Text>
-          </>
+          <Text size="xs" color="muted">{t('query.connection.noConnection')}</Text>
         )}
-        <ChevronDown size={10} className="text-text-muted" />
       </Button>
 
       {/* Database selector — only for multi-database connections */}
@@ -142,13 +142,13 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
           <Text size="xs" color="muted">/</Text>
           <Button
             variant="outline"
+            colorScheme="neutral"
             size="xs"
             onClick={() => { setShowDbDropdown(!showDbDropdown); setShowConnDropdown(false); setShowSchemaDropdown(false) }}
-            className="flex items-center gap-1"
+            leftIcon={<HardDrive size={11} className="text-text-muted" />}
+            rightIcon={<ChevronDown size={10} className="text-text-muted" />}
           >
-            <HardDrive size={11} className="text-text-muted" />
             <Text size="xs" color="secondary" truncate className="max-w-24">{database ?? t('query.connection.database')}</Text>
-            <ChevronDown size={10} className="text-text-muted" />
           </Button>
         </>
       )}
@@ -159,13 +159,13 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
           <Text size="xs" color="muted">/</Text>
           <Button
             variant="outline"
+            colorScheme="neutral"
             size="xs"
             onClick={() => { setShowSchemaDropdown(!showSchemaDropdown); setShowConnDropdown(false); setShowDbDropdown(false) }}
-            className="flex items-center gap-1"
+            leftIcon={<Layers size={11} className="text-text-muted" />}
+            rightIcon={<ChevronDown size={10} className="text-text-muted" />}
           >
-            <Layers size={11} className="text-text-muted" />
             <Text size="xs" color="secondary" truncate className="max-w-24">{schema ?? t('query.connection.schema')}</Text>
-            <ChevronDown size={10} className="text-text-muted" />
           </Button>
         </>
       )}
@@ -186,10 +186,12 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             <Button
               key={conn.id}
               variant="ghost"
+              colorScheme="neutral"
               size="xs"
+              fullWidth
               onClick={() => handleSelectConnection(conn.id)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                connectionId === conn.id ? 'text-accent' : 'text-text-secondary'
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-none h-auto ${
+                connectionId === conn.id ? 'text-accent' : ''
               }`}
             >
               <Box className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: conn.color ?? '#7c6ff7' }} />
@@ -207,13 +209,15 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
                 <Button
                   key={conn.id}
                   variant="ghost"
+                  colorScheme="neutral"
                   size="xs"
+                  fullWidth
                   onClick={async () => {
                     const result = await connect(conn.id)
                     if (result.success) handleSelectConnection(conn.id)
                     setShowConnDropdown(false)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-muted hover:bg-white/5 transition-colors rounded-none border-0 h-auto"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-none h-auto"
                 >
                   <Box className="w-2 h-2 rounded-full shrink-0 bg-text-muted" />
                   <Text size="xs" truncate>{conn.name}</Text>
@@ -235,10 +239,12 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             <Button
               key={db}
               variant="ghost"
+              colorScheme="neutral"
               size="xs"
+              fullWidth
               onClick={() => handleSelectDatabase(db)}
-              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                database === db ? 'text-accent' : 'text-text-secondary'
+              className={`flex items-center gap-2 text-left px-3 py-1.5 rounded-none h-auto ${
+                database === db ? 'text-accent' : ''
               }`}
             >
               <HardDrive size={11} className="shrink-0" />
@@ -258,10 +264,12 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             <Button
               key={s}
               variant="ghost"
+              colorScheme="neutral"
               size="xs"
+              fullWidth
               onClick={() => handleSelectSchema(s)}
-              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs hover:bg-white/5 transition-colors rounded-none border-0 h-auto ${
-                schema === s ? 'text-accent' : 'text-text-secondary'
+              className={`flex items-center gap-2 text-left px-3 py-1.5 rounded-none h-auto ${
+                schema === s ? 'text-accent' : ''
               }`}
             >
               <Layers size={11} className="shrink-0" />

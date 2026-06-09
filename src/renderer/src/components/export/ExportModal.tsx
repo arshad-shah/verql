@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
+import { Modal, Checkbox, Text, Flex, Stack, Box } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -42,7 +43,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
     <Modal open={true} onClose={onClose}>
       <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
         <Text size="sm" weight="semibold">{t('shell.exportModal.title', { tableName: tableName ?? '' })}</Text>
-        <Button variant="ghost" size="xs" onClick={onClose} aria-label={t('shell.exportModal.close')}><X size={14} /></Button>
+        <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.exportModal.close')}><X size={14} /></Button>
       </Flex>
 
       <Stack gap="md" className="p-4">
@@ -52,10 +53,11 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
             {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
               <Button
                 key={f}
-                variant={format === f ? 'outline' : 'ghost'}
+                variant={format === f ? 'soft' : 'ghost'}
+                colorScheme={format === f ? 'accent' : 'neutral'}
                 size="sm"
                 onClick={() => setFormat(f)}
-                className={`flex-1 ${format === f ? 'border-accent text-accent bg-accent/10' : ''}`}
+                className="flex-1"
               >
                 {f.toUpperCase()}
               </Button>
@@ -76,15 +78,14 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
       </Stack>
 
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
         <Button
-          variant="solid"
           size="sm"
           onClick={handleExport}
-          disabled={exporting || !tableName}
-          className="flex items-center gap-1.5"
+          loading={exporting}
+          disabled={!tableName}
+          leftIcon={<Download size={14} />}
         >
-          {exporting ? <Spinner size="xs" /> : <Download size={14} />}
           {t('shell.exportModal.export')}
         </Button>
       </Flex>

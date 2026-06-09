@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn, expect, userEvent } from 'storybook/test'
 import { EmptyState } from './EmptyState'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Database } from 'lucide-react'
 
 const onAction = fn()

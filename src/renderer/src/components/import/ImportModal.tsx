@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Modal, Button, Input, Text, Flex, Spinner, Stack, Box } from '@/primitives'
+import { Modal, Input, Text, Flex, Stack, Box } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -61,7 +62,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
     <Modal open={true} onClose={onClose}>
       <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
         <Text size="sm" weight="semibold">{t('shell.importModal.title')}</Text>
-        <Button variant="ghost" size="xs" onClick={onClose} aria-label={t('shell.importModal.close')}><X size={14} /></Button>
+        <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.importModal.close')}><X size={14} /></Button>
       </Flex>
 
       <Stack gap="md" className="p-4">
@@ -71,10 +72,11 @@ export function ImportModal({ connectionId, onClose }: Props) {
             {(['sql', 'csv'] as ImportType[]).map(item => (
               <Button
                 key={item}
-                variant={importType === item ? 'outline' : 'ghost'}
+                variant={importType === item ? 'soft' : 'ghost'}
+                colorScheme={importType === item ? 'accent' : 'neutral'}
                 size="sm"
                 onClick={() => setImportType(item)}
-                className={`flex-1 ${importType === item ? 'border-accent text-accent bg-accent/10' : ''}`}
+                className="flex-1"
               >
                 {item.toUpperCase()}
               </Button>
@@ -105,15 +107,14 @@ export function ImportModal({ connectionId, onClose }: Props) {
       </Stack>
 
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" size="sm" onClick={onClose}>{t('shell.importModal.cancel')}</Button>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.importModal.cancel')}</Button>
         <Button
-          variant="solid"
           size="sm"
           onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
-          disabled={importing || (importType === 'csv' && !tableName.trim())}
-          className="flex items-center gap-1.5"
+          loading={importing}
+          disabled={importType === 'csv' && !tableName.trim()}
+          leftIcon={<Upload size={14} />}
         >
-          {importing ? <Spinner size="xs" /> : <Upload size={14} />}
           {t('shell.importModal.import')}
         </Button>
       </Flex>

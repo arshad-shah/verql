@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, type KeyboardEvent } from 're
 import { ArrowUp, Square, ChevronDown } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Card } from '@/primitives/surfaces/Card'
 import { Text } from '@/primitives/typography/Text'
 import { SchemaAutocomplete } from './SchemaAutocomplete'
@@ -158,23 +158,21 @@ export function ChatInput() {
           {isStreaming ? (
             <IconButton
               label={t('aiui.input.stop')}
-              variant="solid"
+              colorScheme="danger"
               size="xs"
               onClick={abort}
-              className="bg-error-emphasis hover:bg-error"
-            >
-              <Square className="h-3.5 w-3.5" />
-            </IconButton>
+              icon={<Square className="h-3.5 w-3.5" />}
+            />
           ) : (
             <IconButton
               label={t('aiui.input.send')}
               variant={hasInput ? 'solid' : 'ghost'}
+              colorScheme={hasInput ? 'accent' : 'neutral'}
               size="xs"
               onClick={handleSend}
               disabled={!hasInput}
-            >
-              <ArrowUp className="h-3.5 w-3.5" />
-            </IconButton>
+              icon={<ArrowUp className="h-3.5 w-3.5" />}
+            />
           )}
         </div>
       </Card>

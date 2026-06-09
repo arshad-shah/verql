@@ -9,7 +9,8 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Input, ScrollArea, Text, KbdGroup, Box, Flex, Button } from '@/primitives'
+import { Input, ScrollArea, Text, KbdGroup, Box, Flex } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
@@ -238,11 +239,11 @@ export function CommandPalette({ open, onClose }: Props) {
           {filtered.map((cmd, i) => (
             <Button
               key={cmd.id}
-              variant="ghost"
+              variant={i === selectedIndex ? 'soft' : 'ghost'}
+              colorScheme={i === selectedIndex ? 'accent' : 'neutral'}
+              fullWidth
               onClick={() => { cmd.action(); onClose() }}
-              className={`w-full flex items-center justify-between px-4 py-2 text-left transition-colors rounded-none border-0 h-auto ${
-                i === selectedIndex ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-white/5'
-              }`}
+              className="flex items-center justify-between px-4 py-2 text-left rounded-none border-0 h-auto"
             >
               <Flex align="center" gap="sm">
                 {cmd.category && <Text size="xs" color="muted" className="text-[10px] uppercase">{cmd.category}</Text>}

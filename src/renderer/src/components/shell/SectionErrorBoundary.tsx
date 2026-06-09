@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Text, Button, Code } from '@/primitives'
+import { Flex, Stack, Text, Code } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 interface Props {
   /** Short name shown in the recovery UI (e.g. "Query Editor", "Sidebar"). */
@@ -69,8 +70,8 @@ export class SectionErrorBoundary extends Component<Props, State> {
               {this.state.error.message}
             </Code>
           )}
-          <Button size="sm" variant="outline" onClick={this.retry} className="inline-flex items-center gap-2">
-            <RotateCcw size={12} /> Retry
+          <Button size="sm" variant="outline" colorScheme="neutral" onClick={this.retry} leftIcon={<RotateCcw size={12} />}>
+            Retry
           </Button>
         </Stack>
       </Flex>

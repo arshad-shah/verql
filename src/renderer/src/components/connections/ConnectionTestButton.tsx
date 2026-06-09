@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ConnectionProfile } from '@shared/types'
-import { Stack, Button, Spinner, Alert } from '@/primitives'
+import { Stack, Alert } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -37,12 +38,11 @@ export function ConnectionTestButton({ profile }: Props) {
       <div>
         <Button
           variant="outline"
+          colorScheme="neutral"
           size="lg"
           onClick={test}
-          disabled={status === 'testing'}
-          className="flex items-center gap-1.5"
+          loading={status === 'testing'}
         >
-          {status === 'testing' ? <Spinner size="xs" /> : null}
           {t('connections.test.button')}
         </Button>
       </div>

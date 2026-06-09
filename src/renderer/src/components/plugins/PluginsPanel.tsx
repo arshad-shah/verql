@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Stack, ScrollArea, Flex, Text, EmptyState, IconButton, Box, Spinner, SearchInput, cn } from '@/primitives'
+import { Stack, ScrollArea, Flex, Text, EmptyState, Box, Spinner, SearchInput, cn } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { PluginIcon } from './PluginIcon'
 
@@ -69,20 +70,20 @@ export function PluginsPanel() {
           label={t('plugins.list.installFromFolder')}
           size="xs"
           variant="ghost"
+          colorScheme="neutral"
           onClick={openInstallPlugin}
-          className="text-text-muted hover:text-text-primary shrink-0"
-        >
-          <FolderOpen size={12} />
-        </IconButton>
+          className="shrink-0"
+          icon={<FolderOpen size={12} />}
+        />
         <IconButton
           label={t('plugins.list.refresh')}
           size="xs"
           variant="ghost"
+          colorScheme="neutral"
           onClick={loadPlugins}
-          className="text-text-muted hover:text-text-primary shrink-0"
-        >
-          <RefreshCw size={11} />
-        </IconButton>
+          className="shrink-0"
+          icon={<RefreshCw size={11} />}
+        />
       </Flex>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">

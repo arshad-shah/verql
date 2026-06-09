@@ -1,5 +1,6 @@
 import { MoreHorizontal } from 'lucide-react'
-import { Badge, Flex, IconButton, Text } from '@/primitives'
+import { Badge, Flex, Text } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { DropdownMenu } from '@/primitives/surfaces/DropdownMenu'
 import type { ConnectionProfile } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -150,9 +151,7 @@ export function ConnectionListItem({
       >
         <DropdownMenu
           trigger={
-            <IconButton label={t('connections.active.moreActions')} size="xs" variant="ghost">
-              <MoreHorizontal size={13} />
-            </IconButton>
+            <IconButton label={t('connections.active.moreActions')} size="xs" variant="ghost" colorScheme="neutral" icon={<MoreHorizontal size={13} />} />
           }
           items={menuItems}
         />

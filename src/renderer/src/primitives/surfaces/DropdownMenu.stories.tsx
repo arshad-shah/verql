@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn, expect, userEvent, screen } from 'storybook/test'
 import { ChevronDown } from 'lucide-react'
 import { DropdownMenu } from './DropdownMenu'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Surfaces/DropdownMenu',
@@ -20,7 +20,7 @@ const onDelete = fn()
 export const Default: Story = {
   render: () => (
     <DropdownMenu
-      trigger={<Button variant="outline">Actions <ChevronDown size={12} className="inline" /></Button>}
+      trigger={<Button variant="outline" colorScheme="neutral">Actions <ChevronDown size={12} className="inline" /></Button>}
       items={[
         { label: 'Edit table', onSelect: onEditTable },
         { label: 'Duplicate', onSelect: onDuplicate },
@@ -51,7 +51,7 @@ export const Sizes: Story = {
         <DropdownMenu
           key={size}
           size={size}
-          trigger={<Button variant="outline">size="{size}" <ChevronDown size={12} className="inline" /></Button>}
+          trigger={<Button variant="outline" colorScheme="neutral">size="{size}" <ChevronDown size={12} className="inline" /></Button>}
           items={[
             { label: 'Edit table', onSelect: fn() },
             { label: 'Duplicate', onSelect: fn() },
@@ -67,7 +67,7 @@ export const Sizes: Story = {
 export const States: Story = {
   render: () => (
     <DropdownMenu
-      trigger={<Button variant="outline">Options <ChevronDown size={12} className="inline" /></Button>}
+      trigger={<Button variant="outline" colorScheme="neutral">Options <ChevronDown size={12} className="inline" /></Button>}
       items={[
         { label: 'Rename', onSelect: onRename },
         { label: 'Move (unavailable)', onSelect: onMove, disabled: true },

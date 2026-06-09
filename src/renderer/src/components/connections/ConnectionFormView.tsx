@@ -6,9 +6,9 @@ import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import {
   ScrollArea, Container, Stack, Flex, Grid, Divider,
   Heading, Text,
-  FormField, Input, Select, ColorInput,
-  Button
+  FormField, Input, Select, ColorInput
 } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { Section } from './form/Section'
@@ -249,8 +249,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             <Flex direction="row" align="start" justify="between" gap="md">
               <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
               <Flex direction="row" gap="sm">
-                <Button type="button" variant="outline" size="lg" onClick={handleCancel}>{t('common.cancel')}</Button>
-                <Button type="submit" variant="solid" size="lg">
+                <Button type="button" variant="outline" colorScheme="neutral" size="lg" onClick={handleCancel}>{t('common.cancel')}</Button>
+                <Button type="submit" size="lg">
                   {editingId ? t('connections.form.saveChanges') : t('connections.form.addConnection')}
                 </Button>
               </Flex>

@@ -5,7 +5,8 @@ import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Text, Button, Badge, Box, ScrollArea, Tabs } from '@/primitives'
+import { Flex, Text, Badge, Box, ScrollArea, Tabs } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { STATE_CONFIG, DETAIL_TAB_IDS } from './plugin-detail/constants'
 import type { PluginInfo, PermissionState, ErrorRecord, SettingSchema } from './plugin-detail/types'
@@ -143,17 +144,17 @@ export function PluginDetailView({ pluginName }: Props) {
           </Box>
           <Flex direction="row" gap="sm" className="shrink-0">
             {isActive ? (
-              <Button variant="outline" size="sm" onClick={handleDeactivate} className="flex items-center gap-1.5">
-                <PowerOff size={14} /> {t('plugins.detail.disable')}
+              <Button variant="outline" colorScheme="neutral" size="sm" onClick={handleDeactivate} leftIcon={<PowerOff size={14} />}>
+                {t('plugins.detail.disable')}
               </Button>
             ) : (
-              <Button variant="solid" size="sm" onClick={handleActivate} className="flex items-center gap-1.5">
-                <Power size={14} /> {t('plugins.detail.enable')}
+              <Button size="sm" onClick={handleActivate} leftIcon={<Power size={14} />}>
+                {t('plugins.detail.enable')}
               </Button>
             )}
             {!plugin.bundled && (
-              <Button variant="outline" size="sm" onClick={() => setShowUninstallConfirm(true)} className="flex items-center gap-1.5 hover:text-error hover:border-error/30">
-                <Trash2 size={14} /> {t('plugins.detail.uninstall')}
+              <Button variant="outline" colorScheme="danger" size="sm" onClick={() => setShowUninstallConfirm(true)} leftIcon={<Trash2 size={14} />}>
+                {t('plugins.detail.uninstall')}
               </Button>
             )}
           </Flex>

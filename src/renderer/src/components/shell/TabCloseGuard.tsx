@@ -1,4 +1,5 @@
-import { Modal, Button, Text, Stack, Flex } from '@/primitives'
+import { Modal, Text, Stack, Flex } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { ConfirmDialog } from './ConfirmDialog'
 import { tabActions } from '@/stores/tab-actions'
 import { notifyError } from '@/lib/notify-error'
@@ -30,9 +31,9 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
           </Text>
         </Stack>
         <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
-          <Button variant="outline" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
+          <Button variant="outline" colorScheme="neutral" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
           <Button
-            variant="error"
+            colorScheme="danger"
             size="sm"
             onClick={async () => {
               const id = pendingCloseId
@@ -52,7 +53,6 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
             {t('shell.confirmTransaction.rollbackAndClose')}
           </Button>
           <Button
-            variant="solid"
             size="sm"
             onClick={async () => {
               const id = pendingCloseId

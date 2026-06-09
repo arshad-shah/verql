@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ResultsStatusBar } from './ResultsStatusBar'
-import { Button } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import type { QueryResult } from '@shared/types'
 
 // ResultsStatusBar is fully prop-driven: it summarises a QueryResult's row
@@ -91,7 +91,7 @@ export const WithPluginAction: Story = {
   args: {
     results: selectResult,
     actions: (
-      <Button variant="ghost" size="xs" className="h-auto py-0">
+      <Button variant="ghost" colorScheme="neutral" size="xs" className="h-auto py-0">
         Explain
       </Button>
     ),

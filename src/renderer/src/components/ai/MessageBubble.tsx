@@ -2,7 +2,7 @@ import { Sparkles, Copy, Check, RotateCcw, AlertTriangle, GitBranch } from 'luci
 import { useClipboard } from '@/hooks/useClipboard'
 import type { AIChatMessage } from '@shared/ai-types'
 import { Text } from '@/primitives/typography/Text'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Avatar } from '@/primitives/data-display/Avatar'
 import { useAIStore } from '@/stores/ai'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -21,12 +21,12 @@ function BranchButton({ messageId }: { messageId: string }) {
     <IconButton
       label={t('aiui.chat.branch')}
       variant="ghost"
+      colorScheme="neutral"
       size="xs"
       disabled={isStreaming}
       onClick={() => void branchConversation(messageId)}
-    >
-      <GitBranch className="h-3 w-3" />
-    </IconButton>
+      icon={<GitBranch className="h-3 w-3" />}
+    />
   )
 }
 
@@ -37,11 +37,11 @@ function CopyButton({ content }: { content: string }) {
     <IconButton
       label={copied ? t('aiui.chat.copied') : t('aiui.chat.copyMessage')}
       variant="ghost"
+      colorScheme="neutral"
       size="xs"
       onClick={() => copy(content)}
-    >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-    </IconButton>
+      icon={copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+    />
   )
 }
 
@@ -94,9 +94,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
         <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <CopyButton content={message.content} />
-          <IconButton label={t('aiui.chat.retry')} variant="ghost" size="xs" disabled={isStreaming} onClick={retryLast}>
-            <RotateCcw className="h-3 w-3" />
-          </IconButton>
+          <IconButton label={t('aiui.chat.retry')} variant="ghost" colorScheme="neutral" size="xs" disabled={isStreaming} onClick={retryLast} icon={<RotateCcw className="h-3 w-3" />} />
           {!isError && <BranchButton messageId={message.id} />}
         </div>
       </div>

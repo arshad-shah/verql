@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { SettingRow } from './SettingRow'
-import { Switch, Input, Button } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
+import { Switch, Input } from '@/primitives'
 
 // SettingRow lays out a labelled setting: SettingLabel on the left, an
 // arbitrary control on the right. It's prop-driven (label/description/children),
@@ -60,7 +61,7 @@ export const WithButton: Story = {
       label="Reset keybindings"
       description="Restore every keyboard shortcut to its default binding."
     >
-      <Button variant="outline" size="sm">
+      <Button variant="outline" colorScheme="neutral" size="sm">
         Reset
       </Button>
     </SettingRow>

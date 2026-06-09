@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Pencil, RotateCcw } from 'lucide-react'
 import { Stack, Text, Divider, Flex } from '@/primitives'
-import { SearchInput, Table, KbdGroup, Button, IconButton, Tooltip } from '@/primitives'
+import { SearchInput, Table, KbdGroup, Tooltip } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useSettingsStore } from '@/stores/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
 import { defaultSettings, type KeyBinding } from '@shared/settings'
@@ -154,10 +156,10 @@ export function KeybindingsSettings() {
                           label={t('settings.keybindings.rebindAria', { label: kb.label })}
                           size="xs"
                           variant="ghost"
+                          colorScheme="neutral"
                           onClick={() => setRecordingId(recordingId === kb.id ? null : kb.id)}
-                        >
-                          <Pencil size={12} />
-                        </IconButton>
+                          icon={<Pencil size={12} />}
+                        />
                       </Tooltip>
                       {isCustom(kb) && (
                         <Tooltip content={t('settings.keybindings.resetToDefault')} side="left">
@@ -165,10 +167,10 @@ export function KeybindingsSettings() {
                             label={t('settings.keybindings.resetAria', { label: kb.label })}
                             size="xs"
                             variant="ghost"
+                            colorScheme="neutral"
                             onClick={() => resetBinding(kb.id)}
-                          >
-                            <RotateCcw size={12} />
-                          </IconButton>
+                            icon={<RotateCcw size={12} />}
+                          />
                         </Tooltip>
                       )}
                     </Flex>
@@ -211,6 +213,7 @@ export function KeybindingsSettings() {
       <Flex justify="end">
         <Button
           variant="outline"
+          colorScheme="neutral"
           size="sm"
           onClick={() => void setSetting('keybindings', defaultSettings.keybindings)}
         >

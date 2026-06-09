@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Box, Button } from '@/primitives'
+import { Box } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORIES, type SettingsCategoryDef } from '@/lib/settings-categories'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
@@ -53,9 +54,11 @@ export function SettingsCategoryNav({ categories }: NavProps = {}) {
         <Button
           key={cat.id}
           variant="ghost"
+          colorScheme="neutral"
           size="md"
+          fullWidth
           onClick={() => setActive(cat.id)}
-          className={`w-full justify-start rounded-none px-4 ${
+          className={`justify-start rounded-none px-4 ${
             activeCategory === cat.id
               ? 'bg-hover border-l-2 border-l-accent text-text-primary'
               : 'border-l-2 border-l-transparent text-text-secondary'

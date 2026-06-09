@@ -1,4 +1,5 @@
-import { Stack, Divider, Flex, Button, Text } from '@/primitives'
+import { Stack, Divider, Flex, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { NumberInput, Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -124,7 +125,7 @@ export function EditorSettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('editor')}>{t('common.resetToDefaults')}</Button>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={() => resetCategory('editor')}>{t('common.resetToDefaults')}</Button>
       </Flex>
     </Stack>
   )

@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { Flex } from '../layout/Flex'
 import { Text } from '../typography/Text'
-import { IconButton } from '../forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 
 const alertVariants = cva(
   'rounded-lg border border-l-4 px-4 py-3 shadow-[var(--shadow-card)]',
@@ -68,13 +68,13 @@ export function Alert({ className, variant = 'default', title, icon, onClose, ch
         {onClose && (
           <IconButton
             label="Close alert"
+            icon={<X size={14} />}
             variant="ghost"
+            colorScheme="neutral"
             size="xs"
             onClick={onClose}
             className="shrink-0 -mr-1 -mt-0.5"
-          >
-            <X size={14} />
-          </IconButton>
+          />
         )}
       </Flex>
     </div>

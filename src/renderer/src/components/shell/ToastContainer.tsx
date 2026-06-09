@@ -1,6 +1,7 @@
 import { X, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
-import { Stack, Flex, Text, IconButton, Box, cn } from '@/primitives'
+import { Stack, Flex, Text, Box, cn } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 const icons = {
@@ -68,11 +69,11 @@ export function ToastContainer() {
               label={t('shell.toast.dismiss')}
               size="xs"
               variant="ghost"
+              colorScheme="neutral"
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 text-text-muted hover:text-text-primary p-0.5 h-auto w-auto"
-            >
-              <X size={14} />
-            </IconButton>
+              className="shrink-0"
+              icon={<X size={14} />}
+            />
           </Flex>
         )
       })}

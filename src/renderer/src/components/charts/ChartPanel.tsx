@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
-import { Flex, Box, Button, Text, Label, Select } from '@/primitives'
+import { Flex, Box, Text, Label, Select } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { MessageKey } from '@shared/i18n'
 
@@ -42,6 +43,7 @@ export function ChartPanel({ results }: Props) {
             <Button
               key={ct.value}
               variant={chartType === ct.value ? 'solid' : 'outline'}
+              colorScheme={chartType === ct.value ? 'accent' : 'neutral'}
               size="xs"
               onClick={() => setChartType(ct.value)}
             >

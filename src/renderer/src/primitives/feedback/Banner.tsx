@@ -4,7 +4,7 @@ import { AlertCircle, Info, AlertTriangle, CheckCircle, X } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { Flex } from '../layout/Flex'
 import { Text } from '../typography/Text'
-import { IconButton } from '../forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 
 const bannerVariants = cva(
   'w-full px-4 py-2 shadow-[var(--shadow-card)]',
@@ -63,13 +63,13 @@ export function Banner({ className, variant = 'default', icon, onDismiss, action
         {onDismiss && (
           <IconButton
             label="Dismiss banner"
+            icon={<X size={14} />}
             variant="ghost"
+            colorScheme="neutral"
             size="xs"
             onClick={onDismiss}
             className="shrink-0 -mr-1"
-          >
-            <X size={14} />
-          </IconButton>
+          />
         )}
       </Flex>
     </div>

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Tooltip } from './Tooltip'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Surfaces/Tooltip',
@@ -25,7 +25,7 @@ export const Default: Story = {
   args: {
     content: 'This is a tooltip',
     side: 'top',
-    children: <Button variant="outline">Hover me</Button>,
+    children: <Button variant="outline" colorScheme="neutral">Hover me</Button>,
   },
 }
 
@@ -35,7 +35,7 @@ export const Variants: Story = {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, padding: 40 }}>
       {(['top', 'bottom', 'left', 'right'] as const).map((side) => (
         <Tooltip key={side} content={`Tooltip on ${side}`} side={side}>
-          <Button variant="outline" style={{ width: '100%' }}>side="{side}"</Button>
+          <Button variant="outline" colorScheme="neutral" style={{ width: '100%' }}>side="{side}"</Button>
         </Tooltip>
       ))}
     </div>
@@ -48,7 +48,7 @@ export const Sizes: Story = {
     <div style={{ display: 'flex', gap: 24, padding: 40 }}>
       {(['sm', 'md', 'lg'] as const).map((size) => (
         <Tooltip key={size} content={`size="${size}"`} side="bottom" size={size}>
-          <Button variant="outline">size="{size}"</Button>
+          <Button variant="outline" colorScheme="neutral">size="{size}"</Button>
         </Tooltip>
       ))}
     </div>

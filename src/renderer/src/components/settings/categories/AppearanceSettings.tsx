@@ -1,5 +1,6 @@
 import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Button, Text, Box, Switch } from '@/primitives'
+import { Stack, Grid, Divider, Flex, Text, Box, Switch } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
@@ -206,7 +207,7 @@ export function AppearanceSettings() {
             size="sm"
           />
           {appearance.accentColor && (
-            <Button variant="ghost" size="sm" onClick={() => setSetting('appearance.accentColor', '')}>
+            <Button variant="ghost" colorScheme="neutral" size="sm" onClick={() => setSetting('appearance.accentColor', '')}>
               {t('settings.appearance.accentColor.useThemeDefault')}
             </Button>
           )}
@@ -252,7 +253,7 @@ export function AppearanceSettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('appearance')}>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={() => resetCategory('appearance')}>
           {t('common.resetToDefaults')}
         </Button>
       </Flex>

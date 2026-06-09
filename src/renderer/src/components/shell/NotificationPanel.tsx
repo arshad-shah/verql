@@ -3,7 +3,9 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { NotificationItem } from './NotificationItem'
 import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
-import { Box, Flex, Text, Button, IconButton, EmptyState } from '@/primitives'
+import { Box, Flex, Text, EmptyState } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { MessageKey } from '@shared/i18n'
 
@@ -104,21 +106,22 @@ export function NotificationPanel() {
           {unread > 0 && (
             <Button
               variant="ghost"
+              colorScheme="accent"
               size="xs"
               onClick={markAllRead}
-              className="text-[10px] text-accent hover:text-accent-hover"
+              className="text-[10px]"
             >
               {t('shell.notifications.markAllRead')}
             </Button>
           )}
           <IconButton
             variant="ghost"
+            colorScheme="neutral"
             size="xs"
             onClick={closePanel}
             label={t('shell.notifications.close')}
-          >
-            <X size={12} />
-          </IconButton>
+            icon={<X size={12} />}
+          />
         </Flex>
       </Flex>
 

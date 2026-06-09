@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
-import { Stack, Flex, Box, Grid, Text, Button, Spinner } from '@/primitives'
+import { Stack, Flex, Box, Grid, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginFieldInput } from './PluginFieldInput'
 import { fieldSpan, type PluginField, type AuthStatus } from './types'
@@ -51,7 +52,7 @@ export function FetchableFieldsWizard({
           {authStatus === 'authenticated' ? (
             <Flex direction="row" align="center" gap="md">
               <Text size="sm" color="success">{t('connections.wizard.authenticatedSuccess')}</Text>
-              <Button type="button" variant="ghost" size="sm" onClick={onAuthenticate}>
+              <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onAuthenticate}>
                 {t('connections.wizard.reAuthenticate')}
               </Button>
             </Flex>
@@ -63,13 +64,10 @@ export function FetchableFieldsWizard({
               <div>
                 <Button
                   type="button"
-                  variant="solid"
                   size="md"
                   onClick={onAuthenticate}
-                  disabled={authStatus === 'authenticating'}
-                  className="flex items-center gap-1.5"
+                  loading={authStatus === 'authenticating'}
                 >
-                  {authStatus === 'authenticating' ? <Spinner size="xs" /> : null}
                   {authStatus === 'authenticating' ? t('connections.wizard.authenticating') : t('connections.wizard.authenticate')}
                 </Button>
               </div>
@@ -131,7 +129,6 @@ export function FetchableFieldsWizard({
                   <div>
                     <Button
                       type="button"
-                      variant="solid"
                       size="sm"
                       onClick={() => onStepComplete(step)}
                     >

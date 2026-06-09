@@ -1,5 +1,5 @@
 import { Text } from '@/primitives/typography/Text'
-import { Button } from '@/primitives/forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { AIApprovalRequest } from '@shared/ai-types'
 
@@ -22,7 +22,6 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
       </Text>
       <div className="flex gap-1.5 shrink-0">
         <Button
-          variant="solid"
           size="xs"
           onClick={() => onRespond(approval.requestId, true)}
         >
@@ -30,6 +29,7 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
         </Button>
         <Button
           variant="ghost"
+          colorScheme="neutral"
           size="xs"
           onClick={() => onRespond(approval.requestId, false)}
         >

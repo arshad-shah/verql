@@ -1,7 +1,8 @@
 import { useState, type DragEvent } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
-import { Flex, Text, Tooltip, ContextMenu, cn, IconButton } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
+import { Flex, Text, Tooltip, ContextMenu, cn } from '@/primitives'
 import { getTabIcon } from './tab-icons'
 import { useTranslation } from '@/i18n/I18nProvider'
 import './tab-bar.css'
@@ -82,19 +83,20 @@ export function TabItem({
         </Tooltip>
 
         {/* Close / dirty indicator */}
+        {/* `bare`: tab chrome is denser than the smallest Cynosure size, so
+            the strip's own CSS keeps owning the 16px hit target here. */}
         <IconButton
-          size="tab-action"
+          variant="bare"
           label={isDirty ? t('shell.tabBar.closeTabUnsaved') : t('shell.tabBar.closeTab')}
-          variant="tab-action"
           className={cn(
+            'inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-hover',
             'ml-0.5 transition-opacity duration-(--transition-fast)',
             !isActive && !isDirty && 'opacity-0 group-hover:opacity-100',
           )}
           onClick={(e) => { e.stopPropagation(); onClose() }}
           onMouseEnter={() => setCloseHovered(true)}
           onMouseLeave={() => setCloseHovered(false)}
-        >
-          {isDirty && !closeHovered ? (
+          icon={isDirty && !closeHovered ? (
             <span
               className="block h-1.75 w-1.75 rounded-full bg-warning"
               aria-label={t('shell.tabBar.unsavedChanges')}
@@ -111,7 +113,7 @@ export function TabItem({
               )}
             />
           )}
-        </IconButton>
+        />
       </Flex>
     </ContextMenu>
   )

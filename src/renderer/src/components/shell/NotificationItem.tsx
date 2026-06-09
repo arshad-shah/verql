@@ -1,4 +1,5 @@
-import { Flex, Box, Text, Button } from '@/primitives'
+import { Flex, Box, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
 import type { Notification } from '@/stores/notifications'
@@ -21,10 +22,12 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
   return (
     <Button
       variant="ghost"
+      colorScheme="neutral"
       size="sm"
+      fullWidth
       onClick={() => onClick(id)}
       className={cn(
-        'w-full justify-start rounded-none px-3.5 py-1.5 h-auto border-b border-white/3',
+        'justify-start rounded-none px-3.5 py-1.5 h-auto border-b border-white/3',
         read && 'opacity-60'
       )}
     >

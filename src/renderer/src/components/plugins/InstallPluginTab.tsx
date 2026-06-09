@@ -2,7 +2,8 @@ import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Box, Text, Button, Spinner } from '@/primitives'
+import { Flex, Box, Text, Spinner } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 
 type InstallState = 'idle' | 'drag-over' | 'installing' | 'error'
@@ -134,6 +135,7 @@ export function InstallPluginTab() {
               </Flex>
               <Button
                 variant="outline"
+                colorScheme="neutral"
                 size="sm"
                 onClick={handleBrowse}
                 className="mt-2"

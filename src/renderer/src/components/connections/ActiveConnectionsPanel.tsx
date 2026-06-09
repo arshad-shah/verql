@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
-import { Box, Flex, IconButton, Stack, Text, Tooltip, EmptyState } from '@/primitives'
+import { Box, Flex, Stack, Text, Tooltip, EmptyState } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { notifyError } from '@/lib/notify-error'
@@ -88,10 +89,10 @@ export function ActiveConnectionsPanel() {
             label={t('connections.active.newConnection')}
             size="xs"
             variant="ghost"
+            colorScheme="neutral"
             onClick={() => openConnectionForm()}
-          >
-            <Plus size={12} />
-          </IconButton>
+            icon={<Plus size={12} />}
+          />
         </Tooltip>
       </Flex>
 

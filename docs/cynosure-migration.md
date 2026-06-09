@@ -62,7 +62,7 @@ covers the scheme sync.
 | Stage | Scope | Status |
 | --- | --- | --- |
 | 1 | Foundation: dependency, token bridge, `CynosureAppProvider` + scheme sync | ✅ done |
-| 2 | `Button` / `IconButton` → Cynosure `button` / `icon-button` | ⬜ |
+| 2 | `Button` / `IconButton` → Cynosure `button` / `icon-button` | ✅ done |
 | 3 | Feedback: `Spinner`, `Skeleton`, `Progress`, `Alert`, `Banner` | ⬜ |
 | 4 | Typography: `Text`, `Heading`, `Code`, `Kbd`/`KbdGroup` | ⬜ |
 | 5 | Forms: `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput`, `Checkbox`, `Radio`, `Switch`, `Select`, `Slider`, `TagsInput`, `Label`, `FormField`, pickers | ⬜ |

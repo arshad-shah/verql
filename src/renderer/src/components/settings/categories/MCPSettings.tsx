@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Button, Text, Input, CodeView, Switch, Alert } from '@/primitives'
+import { Stack, Divider, Flex, Text, Input, CodeView, Switch, Alert } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
@@ -89,7 +91,7 @@ export function MCPSettings() {
           ? t('settings.mcp.serverStatus.running', { port: status.port, clients: status.clients })
           : t('settings.mcp.serverStatus.stopped')
       }>
-        <Button variant={status.running ? 'outline' : 'solid'} size="sm" onClick={toggleServer} disabled={loading}>
+        <Button variant={status.running ? 'outline' : 'solid'} colorScheme={status.running ? 'neutral' : 'accent'} size="sm" onClick={toggleServer} disabled={loading}>
           {loading ? t('settings.mcp.working') : status.running ? t('settings.mcp.stopServer') : t('settings.mcp.startServer')}
         </Button>
       </SettingRow>
@@ -129,13 +131,13 @@ export function MCPSettings() {
       <SettingRow label={t('settings.mcp.authToken.label')} description={t('settings.mcp.authToken.description')}>
         <Flex direction="row" align="center" gap="sm">
           <Input type="password" value={token || t('settings.mcp.authToken.placeholder')} readOnly size="sm" className="w-56 font-mono" aria-label={t('settings.mcp.authToken.aria')} />
-          <Button variant="ghost" size="sm" onClick={regenerate} title={t('settings.mcp.authToken.regenerate')}><RefreshCw size={14} /></Button>
+          <IconButton variant="ghost" colorScheme="neutral" size="sm" onClick={regenerate} title={t('settings.mcp.authToken.regenerate')} label={t('settings.mcp.authToken.regenerate')} icon={<RefreshCw size={14} />} />
         </Flex>
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.claudeConfig.label')} description={t('settings.mcp.claudeConfig.description')}>
-        <Button variant="outline" size="sm" onClick={copyConfig}>
-          {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />} {t('settings.mcp.claudeConfig.copy')}
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={copyConfig} leftIcon={copied ? <Check size={14} /> : <Copy size={14} />}>
+          {t('settings.mcp.claudeConfig.copy')}
         </Button>
       </SettingRow>
       <CodeView code={configJson} language="json" />

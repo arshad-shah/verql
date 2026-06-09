@@ -1,6 +1,3 @@
-export { Button, IconButton } from './Button'
-export type { ButtonVariants, ButtonProps, IconButtonProps } from './Button'
-
 export { Input } from './Input'
 export type { InputProps } from './Input'
 

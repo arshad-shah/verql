@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { fn, expect, userEvent } from 'storybook/test'
 import { Modal } from './Modal'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Surfaces/Modal',
@@ -33,8 +33,8 @@ export const Default: Story = {
               Are you sure you want to proceed? This action cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button variant="error" onClick={handleClose}>Delete</Button>
+              <Button variant="ghost" colorScheme="neutral" onClick={handleClose}>Cancel</Button>
+              <Button colorScheme="danger" onClick={handleClose}>Delete</Button>
             </div>
           </div>
         </Modal>
@@ -68,7 +68,7 @@ export const Sizes: Story = {
               This modal uses the "{size}" size variant.
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="ghost" onClick={() => setSize(null)}>Close</Button>
+              <Button variant="ghost" colorScheme="neutral" onClick={() => setSize(null)}>Close</Button>
             </div>
           </div>
         </Modal>

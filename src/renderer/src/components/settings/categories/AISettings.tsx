@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Stack, Divider, Flex, Button, Text } from '@/primitives'
+import { Stack, Divider, Flex, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -59,7 +60,7 @@ function ApiKeyField({ provider, label, description, placeholder }: {
           {hasKey ? t('settings.ai.replace') : t('common.save')}
         </Button>
         {hasKey && (
-          <Button size="sm" variant="outline" onClick={clear}>{t('settings.ai.clear')}</Button>
+          <Button size="sm" variant="outline" colorScheme="neutral" onClick={clear}>{t('settings.ai.clear')}</Button>
         )}
       </Flex>
     </SettingRow>
@@ -108,7 +109,7 @@ export function AISettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('ai')}>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={() => resetCategory('ai')}>
           {t('common.resetToDefaults')}
         </Button>
       </Flex>

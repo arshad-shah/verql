@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   History, Plus, Trash2, Pencil, Check, X, Sparkles,
-  Minimize2, MoreHorizontal, ChevronDown, Loader2,
+  Minimize2, MoreHorizontal, ChevronDown,
 } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
+import { Flex, Text, Input, ScrollArea } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -85,9 +86,7 @@ export function ChatPanelHeader() {
           <ChevronDown size={12} className="text-text-tertiary shrink-0" />
         </button>
         <Tooltip content={t('aiui.header.newChat')} side="bottom">
-          <IconButton label={t('aiui.header.newChat')} size="xs" variant="ghost" onClick={() => { newConversation(); setHistoryOpen(false) }}>
-            <Plus size={14} />
-          </IconButton>
+          <IconButton label={t('aiui.header.newChat')} size="xs" variant="ghost" colorScheme="neutral" onClick={() => { newConversation(); setHistoryOpen(false) }} icon={<Plus size={14} />} />
         </Tooltip>
         <Tooltip
           content={canCompact ? t('aiui.header.compactHint') : t('aiui.header.compactDisabledHint')}
@@ -97,20 +96,21 @@ export function ChatPanelHeader() {
             label={t('aiui.header.compact')}
             size="xs"
             variant="ghost"
+            colorScheme="neutral"
             disabled={!canCompact}
+            loading={isCompacting}
             onClick={() => { void compactConversation() }}
-          >
-            {isCompacting ? <Loader2 size={13} className="animate-spin" /> : <Minimize2 size={13} />}
-          </IconButton>
+            icon={<Minimize2 size={13} />}
+          />
         </Tooltip>
         <IconButton
           label={t('aiui.header.more')}
           size="xs"
           variant="ghost"
+          colorScheme="neutral"
           onClick={() => { setMoreOpen((o) => !o); setHistoryOpen(false) }}
-        >
-          <MoreHorizontal size={14} />
-        </IconButton>
+          icon={<MoreHorizontal size={14} />}
+        />
       </Flex>
 
       {/* Row 2: model + context window bar (prominent) */}
@@ -168,23 +168,15 @@ export function ChatPanelHeader() {
                       }}
                       className="flex-1"
                     />
-                    <IconButton label={t('aiui.header.saveName')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); commitEdit() }}>
-                      <Check size={12} />
-                    </IconButton>
-                    <IconButton label={t('aiui.header.cancelRename')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(null) }}>
-                      <X size={12} />
-                    </IconButton>
+                    <IconButton label={t('aiui.header.saveName')} size="xs" variant="ghost" colorScheme="neutral" onClick={(e) => { e.stopPropagation(); commitEdit() }} icon={<Check size={12} />} />
+                    <IconButton label={t('aiui.header.cancelRename')} size="xs" variant="ghost" colorScheme="neutral" onClick={(e) => { e.stopPropagation(); setEditingId(null) }} icon={<X size={12} />} />
                   </>
                 ) : (
                   <>
                     <Text size="xs" truncate className="flex-1">{c.title}</Text>
                     <div className="hidden group-hover:flex items-center gap-0.5">
-                      <IconButton label={t('aiui.header.rename')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }}>
-                        <Pencil size={11} />
-                      </IconButton>
-                      <IconButton label={t('aiui.header.delete')} size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); void deleteConversation(c.id) }}>
-                        <Trash2 size={11} />
-                      </IconButton>
+                      <IconButton label={t('aiui.header.rename')} size="xs" variant="ghost" colorScheme="neutral" onClick={(e) => { e.stopPropagation(); setEditingId(c.id); setDraft(c.title) }} icon={<Pencil size={11} />} />
+                      <IconButton label={t('aiui.header.delete')} size="xs" variant="ghost" colorScheme="neutral" onClick={(e) => { e.stopPropagation(); void deleteConversation(c.id) }} icon={<Trash2 size={11} />} />
                     </div>
                   </>
                 )}

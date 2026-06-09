@@ -6,9 +6,10 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
-  Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, Tooltip,
+  Stack, ScrollArea, Text, EmptyState, Box, Flex, Input, Tooltip,
   SearchInput,
 } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 /** Compact relative time ("3m", "2h", "5d"); falls back to a date for old rows. */
@@ -106,20 +107,18 @@ export function QueryHistoryPanel() {
                   label={t('query.history.openInNewTab')}
                   size="xs"
                   variant="ghost"
+                  colorScheme="success"
                   onClick={(e) => { e.stopPropagation(); openHistoryEntry(entry) }}
-                  className="text-text-muted hover:text-success"
-                >
-                  <Play size={10} />
-                </IconButton>
+                  icon={<Play size={10} />}
+                />
                 <IconButton
                   label={t('query.history.remove')}
                   size="xs"
                   variant="ghost"
+                  colorScheme="danger"
                   onClick={(e) => { e.stopPropagation(); remove(entry.id) }}
-                  className="text-text-muted hover:text-error"
-                >
-                  <Trash2 size={10} />
-                </IconButton>
+                  icon={<Trash2 size={10} />}
+                />
               </Flex>
             </Flex>
             <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">

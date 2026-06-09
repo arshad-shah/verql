@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent } from 'storybook/test'
 import { Popover } from './Popover'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Surfaces/Popover',
@@ -15,7 +15,7 @@ export const Default: Story = {
   args: { trigger: null as any, content: null as any },
   render: () => (
     <Popover
-      trigger={<Button variant="outline">Open Popover</Button>}
+      trigger={<Button variant="outline" colorScheme="neutral">Open Popover</Button>}
       content={
         <div style={{ padding: 12, minWidth: 200, color: 'var(--color-text-primary)' }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Popover title</div>

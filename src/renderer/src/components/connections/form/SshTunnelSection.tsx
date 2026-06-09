@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Stack, Flex, Box, Grid, Text, Button } from '@/primitives'
+import { Stack, Flex, Box, Grid, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginFieldInput } from './PluginFieldInput'
 import { fieldSpan, type PluginField, type MiddlewareField, type AuthStatus } from './types'

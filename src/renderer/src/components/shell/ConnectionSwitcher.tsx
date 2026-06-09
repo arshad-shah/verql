@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
-import { Button, Input, Text, Box, Flex, ScrollArea } from '@/primitives'
+import { Input, Text, Box, Flex, ScrollArea } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -100,11 +101,12 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
     return (
       <Button
         key={c.id}
-        variant="ghost"
+        variant={isActive ? 'soft' : 'ghost'}
+        colorScheme={isActive ? 'accent' : 'neutral'}
+        fullWidth
         onClick={() => handleSelect(c.id)}
         className={cn(
-          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 h-auto text-left',
-          isActive ? 'bg-accent/10 border border-accent/20' : 'hover:bg-hover',
+          'flex items-center gap-2 rounded-md px-2 py-1.5 h-auto text-left',
           !isLive && 'opacity-50'
         )}
       >
@@ -184,13 +186,15 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
       <Box className="border-t border-border-default p-1.5">
         <Button
           variant="ghost"
+          colorScheme="accent"
+          fullWidth
           onClick={() => {
             onNewConnection()
             onClose()
           }}
-          className="flex w-full items-center justify-center gap-1 rounded-md py-1 text-[10px] text-accent hover:bg-hover h-auto"
+          leftIcon={<Plus size={10} />}
+          className="rounded-md py-1 text-[10px] h-auto"
         >
-          <Plus size={10} />
           {t('shell.connectionSwitcher.newConnection')}
         </Button>
       </Box>

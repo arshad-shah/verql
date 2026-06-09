@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { Sparkles, Loader2 } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
-import { Button } from '@/primitives/forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { useExplainStore } from '@/stores/explain'
 import { notifyError } from '@/lib/notify-error'
 import { parseAppError } from '@/lib/db-error'
@@ -45,14 +45,15 @@ export function ExplainPanel({ tabId, sql, results, explanation }: Props) {
   return (
     <Button
       variant="ghost"
+      colorScheme="neutral"
       size="xs"
-      className="!h-6 !px-2 gap-1"
+      className="!h-6 !px-2"
       onClick={run}
       disabled={loading}
-    >
-      {loading
+      leftIcon={loading
         ? <Loader2 size={10} className="animate-spin text-accent" />
         : <Sparkles size={10} className={explanation ? 'text-accent' : 'text-text-muted'} />}
+    >
       {t('aiui.explain.explain')}
     </Button>
   )

@@ -12,7 +12,8 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { Flex, Text, Button, EmptyState } from '@/primitives'
+import { Flex, Text, EmptyState } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
 import { useClipboard } from '@/hooks/useClipboard'
@@ -191,21 +192,23 @@ export function NotificationsSidebar() {
           {unread > 0 && (
             <Button
               variant="ghost"
+              colorScheme="accent"
               size="xs"
               onClick={markAllRead}
-              className="text-[10px] text-accent hover:text-accent-hover gap-1"
+              leftIcon={<CheckCheck size={10} />}
+              className="text-[10px]"
             >
-              <CheckCheck size={10} />
               {t('shell.notifications.markAllRead')}
             </Button>
           )}
           <Button
             variant="ghost"
+            colorScheme="danger"
             size="xs"
             onClick={clearAll}
-            className="text-[10px] text-text-muted hover:text-error gap-1"
+            leftIcon={<Trash2 size={10} />}
+            className="text-[10px]"
           >
-            <Trash2 size={10} />
             {t('shell.notifications.clear')}
           </Button>
         </Flex>

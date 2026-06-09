@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { Flex } from '../layout/Flex'
 import { Text } from '../typography/Text'
-import { IconButton } from '../forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 
 const toastVariants = cva(
   'px-3 py-2 rounded-lg border text-sm shadow-[var(--shadow-elevated)] toast-enter',
@@ -57,13 +57,13 @@ export function Toast({ message, onDismiss, variant = 'default', className }: To
         <Text size="sm" color={textColor} className="flex-1">{message}</Text>
         <IconButton
           label="Dismiss"
+          icon={<X size={14} />}
           variant="ghost"
+          colorScheme="neutral"
           size="xs"
           onClick={onDismiss}
           className="shrink-0 -mr-1"
-        >
-          <X size={14} />
-        </IconButton>
+        />
       </Flex>
     </div>
   )

@@ -1,4 +1,5 @@
-import { Stack, Divider, Flex, Button, Text, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Text, Switch } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -99,7 +100,7 @@ export function GeneralSettings() {
       <Divider />
 
       <Flex justify="end">
-        <Button variant="outline" size="sm" onClick={() => resetCategory('general')}>
+        <Button variant="outline" colorScheme="neutral" size="sm" onClick={() => resetCategory('general')}>
           {t('common.resetToDefaults')}
         </Button>
       </Flex>

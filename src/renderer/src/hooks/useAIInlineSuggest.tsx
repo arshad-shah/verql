@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { editor } from 'monaco-editor'
 import { Sparkles, Check, X, Loader2 } from 'lucide-react'
-import { IconButton } from '@/primitives/forms/Button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Kbd } from '@/primitives/typography/Kbd'
 import { useAIStore } from '@/stores/ai'
 import {
@@ -111,24 +111,24 @@ function Toolbar({ editor: ed }: { editor: editor.IStandaloneCodeEditor }) {
     >
       <IconButton
         label="Accept suggestion"
+        icon={<Check size={12} />}
         variant="ghost"
+        colorScheme="success"
         size="xs"
-        className="!h-6 !w-6 !text-success"
+        className="!h-6 !w-6"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.commit', null)}
-      >
-        <Check size={12} />
-      </IconButton>
+      />
       <Kbd size="sm">Tab</Kbd>
       <span className="mx-0.5 h-3 w-px bg-border-default" />
       <IconButton
         label="Reject suggestion"
+        icon={<X size={12} />}
         variant="ghost"
+        colorScheme="danger"
         size="xs"
-        className="!h-6 !w-6 !text-error"
+        className="!h-6 !w-6"
         onClick={() => ed.trigger('verql', 'editor.action.inlineSuggest.hide', null)}
-      >
-        <X size={12} />
-      </IconButton>
+      />
       <Kbd size="sm">Esc</Kbd>
       <style>{`
         @keyframes verql-ai-toolbar-in {

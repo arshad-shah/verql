@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
+import { Modal, Text, Badge, Divider, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -94,21 +96,19 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
         <Box padding="xl" className="relative flex-1">
           <IconButton
             variant="ghost"
+            colorScheme="neutral"
             size="xs"
             label={t('common.close')}
             onClick={onClose}
             className="absolute top-3 right-3"
-          >
-            <X size={15} />
-          </IconButton>
+            icon={<X size={15} />}
+          />
 
           {/* Offset below the modal's absolute close (×) so the copy button
               never overlaps it. */}
           <Flex align="center" justify="between" className="mt-5">
             <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
-            <IconButton variant="ghost" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild}>
-              {copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />}
-            </IconButton>
+            <IconButton variant="ghost" colorScheme="neutral" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild} icon={copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />} />
           </Flex>
           <Flex direction="column" gap="xs" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
             {rows.length === 0
@@ -124,11 +124,13 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
               <Button
                 key={label}
                 variant="ghost"
+                colorScheme="neutral"
                 size="sm"
+                fullWidth
                 onClick={() => openExternal(url)}
-                className="w-full justify-start gap-2 font-normal text-text-secondary"
+                leftIcon={<Icon size={15} className="shrink-0 text-text-tertiary" />}
+                className="justify-start font-normal"
               >
-                <Icon size={15} className="shrink-0 text-text-tertiary" />
                 <span className="truncate">{label}</span>
               </Button>
             ))}
@@ -140,7 +142,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
             <Link size="sm" onClick={() => openExternal(LICENSE_URL)} className="cursor-pointer">
               {t('about.viewLicense')}
             </Link>
-            <Button variant="outline" size="sm" onClick={onClose}>{t('common.close')}</Button>
+            <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('common.close')}</Button>
           </Flex>
         </Box>
       </Flex>

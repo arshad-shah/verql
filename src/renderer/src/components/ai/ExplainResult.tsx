@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { Sparkles, Copy, RefreshCcw, MessageSquarePlus, Square, AlertCircle } from 'lucide-react'
-import { Button } from '@/primitives/forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@/primitives/typography/Text'
 import { Flex } from '@/primitives/layout/Flex'
 import { MarkdownContent } from '@/components/ai/MarkdownContent'
@@ -74,14 +74,16 @@ function StopButton({ tabId, streamId }: { tabId: string; streamId: string | nul
   return (
     <Button
       variant="ghost"
+      colorScheme="neutral"
       size="xs"
-      className="!h-6 !px-1.5 gap-1 text-text-muted"
+      className="!h-6 !px-1.5"
       onClick={() => {
         if (streamId) void window.electronAPI.invoke(IPC_CHANNELS.AI_EXPLAIN_ABORT, streamId)
         useExplainStore.getState().failStream(tabId, coreT('aiui.explain.stopped'))
       }}
+      leftIcon={<Square size={10} />}
     >
-      <Square size={10} /> {t('aiui.explain.stop')}
+      {t('aiui.explain.stop')}
     </Button>
   )
 }
@@ -145,14 +147,14 @@ function ActionBar({ tabId, text }: { tabId: string; text: string }) {
 
   return (
     <Flex gap="xs" className="px-3 py-1 border-t border-border-default/40">
-      <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={() => navigator.clipboard.writeText(text)}>
-        <Copy size={10} /> {t('aiui.explain.copy')}
+      <Button variant="ghost" colorScheme="neutral" size="xs" className="!h-6 !px-1.5" leftIcon={<Copy size={10} />} onClick={() => navigator.clipboard.writeText(text)}>
+        {t('aiui.explain.copy')}
       </Button>
-      <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={regenerate}>
-        <RefreshCcw size={10} /> {t('aiui.explain.regenerate')}
+      <Button variant="ghost" colorScheme="neutral" size="xs" className="!h-6 !px-1.5" leftIcon={<RefreshCcw size={10} />} onClick={regenerate}>
+        {t('aiui.explain.regenerate')}
       </Button>
-      <Button variant="ghost" size="xs" className="!h-6 !px-1.5 gap-1" onClick={askInChat}>
-        <MessageSquarePlus size={10} /> {t('aiui.explain.askFollowUp')}
+      <Button variant="ghost" colorScheme="neutral" size="xs" className="!h-6 !px-1.5" leftIcon={<MessageSquarePlus size={10} />} onClick={askInChat}>
+        {t('aiui.explain.askFollowUp')}
       </Button>
     </Flex>
   )

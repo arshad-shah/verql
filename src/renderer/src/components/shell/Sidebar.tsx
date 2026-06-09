@@ -11,7 +11,8 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip, Tabs } from '@/primitives'
+import { Panel, Flex, Box, Text, ScrollArea, Tooltip, Tabs } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export function Sidebar() {
@@ -59,11 +60,11 @@ export function Sidebar() {
               label={t('shell.sidebar.importData')}
               size="xs"
               variant="ghost"
+              colorScheme="neutral"
               onClick={() => setShowImport(true)}
-              className="text-text-muted hover:text-accent"
-            >
-              <Upload size={12} />
-            </IconButton>
+              className="hover:text-accent"
+              icon={<Upload size={12} />}
+            />
           </Tooltip>
         )}
       </Flex>

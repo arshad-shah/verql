@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertCircle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Heading, Text, Button } from '@/primitives'
+import { Flex, Stack, Heading, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { t } from '@shared/i18n'
 
 interface Props {
@@ -34,12 +35,14 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message ?? t('shell.errorBoundary.fallbackMessage')}
             </Text>
             <Button
-              variant="outline"
+              variant="soft"
+              colorScheme="accent"
               size="sm"
               onClick={this.handleReset}
-              className="mt-2 inline-flex items-center gap-2 bg-accent/10 text-accent border-0 hover:bg-accent/20"
+              leftIcon={<RotateCcw size={14} />}
+              className="mt-2"
             >
-              <RotateCcw size={14} /> {t('shell.errorBoundary.tryAgain')}
+              {t('shell.errorBoundary.tryAgain')}
             </Button>
           </Stack>
         </Flex>

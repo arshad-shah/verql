@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Stack, Flex, Button, Text } from '@/primitives'
+import { Stack, Flex, Text } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
@@ -110,6 +111,7 @@ export function UpdatesSection() {
         <Flex gap="sm">
           <Button
             variant="outline"
+            colorScheme="neutral"
             size="sm"
             onClick={check}
             disabled={action.kind === 'checking' || action.kind === 'updating'}
@@ -117,7 +119,7 @@ export function UpdatesSection() {
             {action.kind === 'checking' ? t('settings.updates.checking') : t('settings.updates.checkForUpdates')}
           </Button>
           {status.available && action.kind !== 'updating' && action.kind !== 'done' && (
-            <Button variant="solid" size="sm" onClick={update}>
+            <Button size="sm" onClick={update}>
               {t('settings.updates.installUpdate')}
             </Button>
           )}
@@ -125,7 +127,7 @@ export function UpdatesSection() {
             <Text size="xs" color="muted">{action.phase}…</Text>
           )}
           {action.kind === 'done' && action.restartRequired && (
-            <Button variant="solid" size="sm" onClick={restart}>
+            <Button size="sm" onClick={restart}>
               {t('settings.updates.restartToApply')}
             </Button>
           )}

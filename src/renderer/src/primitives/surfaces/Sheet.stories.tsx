@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { expect, userEvent, fn } from 'storybook/test'
 import { Sheet } from './Sheet'
-import { Button } from '../forms/Button'
+import { Button } from '@arshad-shah/cynosure-react/button'
 
 const meta = {
   title: 'Primitives/Surfaces/Sheet',
@@ -30,7 +30,7 @@ export const Default: Story = {
             <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>
               Slide-in panel from the {side} edge.
             </div>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Close</Button>
+            <Button variant="ghost" colorScheme="neutral" onClick={() => setOpen(false)}>Close</Button>
           </div>
         </Sheet>
       </div>
@@ -67,7 +67,7 @@ export const Sizes: Story = {
             <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>
               This sheet uses the "{size}" width variant.
             </div>
-            <Button variant="ghost" onClick={() => setSize(null)}>Close</Button>
+            <Button variant="ghost" colorScheme="neutral" onClick={() => setSize(null)}>Close</Button>
           </div>
         </Sheet>
       </div>

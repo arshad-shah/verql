@@ -1,4 +1,4 @@
-import { Button } from '@/primitives'
+import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import type { ActionButtonWidget as ActionButtonWidgetType } from '@shared/plugin-ui-types'
 
@@ -21,6 +21,7 @@ export function ActionButtonWidgetRenderer({ widget, pluginId }: Props) {
   return (
     <Button
       variant={variant}
+      colorScheme={variant === 'solid' ? 'accent' : 'neutral'}
       size="xs"
       onClick={() => executeAction(pluginId, widget.command, {})}
     >
