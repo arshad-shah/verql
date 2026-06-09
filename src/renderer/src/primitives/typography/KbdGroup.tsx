@@ -14,8 +14,15 @@ import {
   Space,
   type LucideIcon,
 } from 'lucide-react'
-import { Kbd, type KbdProps } from './Kbd'
+import { Kbd, type KbdSize } from '@arshad-shah/cynosure-react/kbd'
 import { cn } from '../utils/cn'
+
+/**
+ * Keycap *sequence* with Verql-specific behaviour Cynosure's `Kbd` doesn't
+ * model: Electron accelerator parsing ("CmdOrCtrl+Shift+P"), platform-aware
+ * modifier resolution (mod → ⌘ on macOS, ctrl elsewhere), and a consistent
+ * lucide glyph set. The individual keycaps are Cynosure `Kbd`s.
+ */
 
 const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.platform)
 
@@ -79,11 +86,9 @@ function resolveToken(raw: string): string {
 }
 
 /** Icon size to render inside a Kbd of the given size. */
-function glyphSize(size: KbdProps['size']): number {
-  if (size === 'xs') return 9
+function glyphSize(size: KbdSize): number {
   if (size === 'sm') return 10
   if (size === 'lg') return 14
-  if (size === 'xl') return 16
   return 12
 }
 
@@ -94,7 +99,7 @@ function parseAccelerator(accelerator: string): string[] {
     .filter(Boolean)
 }
 
-function renderKeyContent(token: string, size: KbdProps['size']): React.ReactNode {
+function renderKeyContent(token: string, size: KbdSize): React.ReactNode {
   const glyph = GLYPHS[token]
   if (glyph) return glyph(glyphSize(size))
   // Letters, digits, F-keys, punctuation → keep the character form, uppercased.
@@ -108,8 +113,7 @@ export type KbdGroupProps = {
   keys?: string[]
   /** Electron-style accelerator string, e.g. "CmdOrCtrl+Shift+P". */
   accelerator?: string
-  size?: KbdProps['size']
-  variant?: KbdProps['variant']
+  size?: KbdSize
   /** `gap` (default) = bare spacing between chips. `plus` = render a muted "+" between them. */
   separator?: SeparatorKind | React.ReactNode
   className?: string
@@ -121,7 +125,6 @@ export function KbdGroup({
   keys,
   accelerator,
   size = 'md',
-  variant = 'solid',
   separator = 'gap',
   className,
   'aria-label': ariaLabel,
@@ -146,9 +149,7 @@ export function KbdGroup({
       {tokens.map((token, i) => (
         <Fragment key={`${token}-${i}`}>
           {i > 0 && sepNode}
-          <Kbd size={size} variant={variant}>
-            {renderKeyContent(token, size)}
-          </Kbd>
+          <Kbd size={size}>{renderKeyContent(token, size)}</Kbd>
         </Fragment>
       ))}
     </span>

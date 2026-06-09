@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import type { editor } from 'monaco-editor'
 import { Sparkles, Check, X, Loader2 } from 'lucide-react'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { Kbd } from '@/primitives/typography/Kbd'
+import { Kbd } from '@arshad-shah/cynosure-react/kbd'
 import { useAIStore } from '@/stores/ai'
 import {
   subscribeInlineAIState,
