@@ -64,7 +64,7 @@ covers the scheme sync.
 | 1 | Foundation: dependency, token bridge, `CynosureAppProvider` + scheme sync | ✅ done |
 | 2 | `Button` / `IconButton` → Cynosure `button` / `icon-button` | ✅ done |
 | 3 | Feedback: `Spinner`, `Skeleton`, `Progress`, `Alert`, `Banner` (Toast deferred to stage 10) | ✅ done |
-| 4 | Typography: `Text`, `Heading`, `Code`, `Kbd`/`KbdGroup` | ⬜ |
+| 4 | Typography: `Text`, `Heading`, `Code`, `Kbd`/`KbdGroup` (KbdGroup kept: accelerator/platform behaviour atop Cynosure `Kbd`) | ✅ done |
 | 5 | Forms: `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput`, `Checkbox`, `Radio`, `Switch`, `Select`, `Slider`, `TagsInput`, `Label`, `FormField`, pickers | ⬜ |
 | 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea`, `Container`, `AspectRatio` | ⬜ |
 | 7 | Surfaces/overlays: `Card`, `Modal`→`Dialog`, `Sheet`→`Drawer`, `Popover`, `Tooltip`, `DropdownMenu`, `ContextMenu`, `Accordion`, `Panel` | ⬜ |

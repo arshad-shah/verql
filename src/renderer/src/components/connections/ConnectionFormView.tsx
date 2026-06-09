@@ -3,11 +3,8 @@ import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
-import {
-  ScrollArea, Container, Stack, Flex, Grid, Divider,
-  Heading,
-  FormField, Input, Select, ColorInput
-} from '@/primitives'
+import { ScrollArea, Container, Stack, Flex, Grid, Divider, FormField, Input, Select, ColorInput } from '@/primitives'
+import { Heading } from '@arshad-shah/cynosure-react/heading'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'

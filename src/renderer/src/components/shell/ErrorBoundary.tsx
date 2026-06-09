@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertCircle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Heading } from '@/primitives'
+import { Flex, Stack } from '@/primitives'
+import { Heading } from '@arshad-shah/cynosure-react/heading'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { t } from '@shared/i18n'

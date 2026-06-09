@@ -1,5 +1,5 @@
 import { SettingLabel } from '@/components/settings/SettingLabel'
-import { Box, Flex, Text } from '@/primitives'
+import { Box, Flex } from '@/primitives'
 import type { ReactNode } from 'react'
 
 interface SettingRowProps {

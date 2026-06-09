@@ -1,5 +1,1 @@
-export { Text } from './Text'
-export { Heading } from './Heading'
-export { Code } from './Code'
-export { Kbd, type KbdProps } from './Kbd'
 export { KbdGroup, type KbdGroupProps } from './KbdGroup'

@@ -1,5 +1,6 @@
 import { XCircle } from 'lucide-react'
-import { Flex, Box, Card, Code, Stack, EmptyState } from '@/primitives'
+import { Flex, Box, Card, Stack, EmptyState } from '@/primitives'
+import { Code } from '@arshad-shah/cynosure-react/code'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { ErrorRecord } from './types'
@@ -33,7 +34,7 @@ export function ErrorsTab({ errors, expandedError, onToggleError }: {
               </Box>
             </Flex>
             {expandedError === i && err.stack && (
-              <Code block className="text-[11px] text-text-muted bg-bg-tertiary rounded p-3 mt-1 overflow-x-auto whitespace-pre-wrap">
+              <Code variant="block" size="sm" className="text-[11px] text-text-muted mt-1 overflow-x-auto whitespace-pre-wrap">
                 {err.stack}
               </Code>
             )}

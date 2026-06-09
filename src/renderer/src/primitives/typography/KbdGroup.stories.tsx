@@ -6,7 +6,6 @@ const meta: Meta<typeof KbdGroup> = {
   component: KbdGroup,
   argTypes: {
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
-    variant: { control: 'inline-radio', options: ['solid', 'outline', 'ghost'] },
     separator: { control: 'inline-radio', options: ['gap', 'plus'] },
     accelerator: { control: 'text' },
   },
@@ -22,7 +21,7 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 )
 
 export const Default: Story = {
-  args: { keys: ['mod', 'K'], size: 'md', variant: 'solid', separator: 'gap' },
+  args: { keys: ['mod', 'K'], size: 'md', separator: 'gap' },
 }
 
 export const FromAccelerator: Story = {
@@ -49,18 +48,6 @@ export const Sizes: Story = {
       {(['sm', 'md', 'lg'] as const).map((size) => (
         <Row key={size} label={size}>
           <KbdGroup keys={['mod', 'enter']} size={size} />
-        </Row>
-      ))}
-    </div>
-  ),
-}
-
-export const Variants: Story = {
-  render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {(['solid', 'outline', 'ghost'] as const).map((variant) => (
-        <Row key={variant} label={variant}>
-          <KbdGroup keys={['ctrl', 'alt', 'delete']} variant={variant} />
         </Row>
       ))}
     </div>

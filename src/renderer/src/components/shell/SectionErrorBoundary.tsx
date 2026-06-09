@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Code } from '@/primitives'
+import { Flex, Stack } from '@/primitives'
+import { Code } from '@arshad-shah/cynosure-react/code'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
@@ -67,7 +68,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
             The rest of the app is still working. Retry this section or switch to another tab.
           </Text>
           {this.state.error && (
-            <Code block className="text-[11px] max-h-32 overflow-auto text-left w-full whitespace-pre-wrap">
+            <Code variant="block" size="sm" className="text-[11px] max-h-32 overflow-auto text-left w-full whitespace-pre-wrap">
               {this.state.error.message}
             </Code>
           )}
