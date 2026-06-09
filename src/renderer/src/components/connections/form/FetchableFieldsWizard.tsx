@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
-import { Stack, Flex, Box, Grid, Text } from '@/primitives'
+import { Stack, Flex, Box, Grid } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginFieldInput } from './PluginFieldInput'
@@ -51,14 +52,14 @@ export function FetchableFieldsWizard({
         <Stack gap="sm" className="px-4 pb-4">
           {authStatus === 'authenticated' ? (
             <Flex direction="row" align="center" gap="md">
-              <Text size="sm" color="success">{t('connections.wizard.authenticatedSuccess')}</Text>
+              <Text size="sm" color="feedback.success.foreground">{t('connections.wizard.authenticatedSuccess')}</Text>
               <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onAuthenticate}>
                 {t('connections.wizard.reAuthenticate')}
               </Button>
             </Flex>
           ) : (
             <>
-              <Text size="sm" color="muted">
+              <Text size="sm" color="fg.subtle">
                 {t('connections.wizard.authIntro')}
               </Text>
               <div>
@@ -74,7 +75,7 @@ export function FetchableFieldsWizard({
             </>
           )}
           {authStatus === 'error' && (
-            <Text size="sm" color="error">{authError}</Text>
+            <Text size="sm" color="feedback.danger.foreground">{authError}</Text>
           )}
         </Stack>
       </Box>
@@ -106,7 +107,7 @@ export function FetchableFieldsWizard({
                 }`}>
                 {isCompleted ? <Check size={14} /> : stepIndex + 2}
               </div>
-              <Text size="sm" weight="semibold" color={isPending ? 'muted' : 'primary'}>
+              <Text size="sm" weight="semibold" color={isPending ? 'fg.subtle' : undefined}>
                 {t('connections.wizard.stepLabel', { n: stepIndex + 2, label: stepLabel })}
               </Text>
             </Flex>

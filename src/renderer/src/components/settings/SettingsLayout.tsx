@@ -1,6 +1,7 @@
 import { JSX, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { Flex, Box, ScrollArea, Text, Divider, Input, SearchInput } from '@/primitives'
+import { Flex, Box, ScrollArea, Divider, Input, SearchInput } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
 import { useToastStore } from '@/stores/toast'
@@ -104,7 +105,7 @@ export function SettingsLayout() {
         </Box>
         <ScrollArea direction="vertical" className="flex-1">
           <Box paddingY="sm">
-            <Text size="xs" color="muted" weight="bold" className="px-4 py-2 uppercase tracking-wider">
+            <Text size="xs" color="fg.subtle" weight="bold" className="px-4 py-2 uppercase tracking-wider">
               {query ? t('settings.layout.matches', { count: filteredCategories.length }) : t('settings.layout.categories')}
             </Text>
           </Box>
@@ -121,7 +122,7 @@ export function SettingsLayout() {
             {/* VS Code shows a "User / Workspace" breadcrumb here; we have a
                 single scope today, so we just confirm the auto-save behaviour
                 instead — keeps users from looking for a save button. */}
-            <Text size="xs" color="muted" className="italic">
+            <Text size="xs" color="fg.subtle" italic>
               {t('settings.layout.autoSaveHint')}
             </Text>
           </Flex>

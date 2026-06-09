@@ -5,9 +5,10 @@ import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
 import {
   ScrollArea, Container, Stack, Flex, Grid, Divider,
-  Heading, Text,
+  Heading,
   FormField, Input, Select, ColorInput
 } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -196,7 +197,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   {staticToggles.length > 0 && (
                     <>
                       <Divider />
-                      <Text size="xs" color="muted" weight="semibold" className="uppercase tracking-wider">
+                      <Text size="xs" color="fg.subtle" weight="semibold" className="uppercase tracking-wider">
                         {t('connections.form.options')}
                       </Text>
                       <Stack gap="xs">

@@ -1,5 +1,6 @@
-import { Stack, Divider, Flex, Text, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Switch } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -15,7 +16,7 @@ export function GeneralSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.general.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.general.blurb')}</Text>
 
       <SettingRow label={t('settings.general.queryTimeout.label')} description={t('settings.general.queryTimeout.description')}>
         <NumberInput

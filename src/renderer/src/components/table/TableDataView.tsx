@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Flex, Box, Text, EmptyState } from '@/primitives'
+import { Flex, Box, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { ResultsGrid } from '@/components/results/ResultsGrid'
@@ -53,8 +54,8 @@ export function TableDataView({ tab }: { tab: TableTab }) {
     <Flex direction="column" className="h-full min-h-0">
       <Flex align="center" justify="between" className="px-3 py-1.5 border-b border-border-default shrink-0">
         <Flex align="center" gap="sm" className="min-w-0">
-          <Text size="sm" weight="semibold" color="primary" className="truncate">{tab.tableName}</Text>
-          {state.result && <Text size="xs" color="muted">{t('table.rows', { value: state.result.rowCount, n: state.result.rowCount })}</Text>}
+          <Text size="sm" weight="semibold" truncate>{tab.tableName}</Text>
+          {state.result && <Text size="xs" color="fg.subtle">{t('table.rows', { value: state.result.rowCount, n: state.result.rowCount })}</Text>}
         </Flex>
         <IconButton variant="ghost" colorScheme="neutral" size="xs" label={t('common.refresh')} onClick={() => void load()} disabled={state.loading} icon={<RefreshCw size={13} className={state.loading ? 'animate-spin' : undefined} />} />
       </Flex>
@@ -63,7 +64,7 @@ export function TableDataView({ tab }: { tab: TableTab }) {
           <Flex align="center" justify="center" className="h-full"><Spinner /></Flex>
         ) : state.error ? (
           <Flex align="center" justify="center" className="h-full p-6">
-            <Text size="sm" color="error" className="font-mono whitespace-pre-wrap text-center">{state.error}</Text>
+            <Text size="sm" color="feedback.danger.foreground" align="center" className="font-mono whitespace-pre-wrap">{state.error}</Text>
           </Flex>
         ) : state.result && state.result.rows.length > 0 ? (
           <ResultsGrid results={state.result} tabId={tab.id} />

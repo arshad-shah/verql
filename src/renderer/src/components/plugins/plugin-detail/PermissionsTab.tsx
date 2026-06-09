@@ -1,4 +1,5 @@
-import { Stack, Flex, Text, Box, Card, Badge, Switch, EmptyState } from '@/primitives'
+import { Stack, Flex, Box, Card, Badge, Switch, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { PermissionState } from './types'
@@ -46,12 +47,12 @@ export function PermissionsTab({ permissions, onToggle }: {
               <Flex key={perm} direction="row" align="start" justify="between" gap="md">
                 <Box className="flex-1 min-w-0">
                   <Flex direction="row" align="center" gap="sm" className="flex-wrap">
-                    <Text size="sm" weight="medium" color="primary">{info?.title ?? perm}</Text>
+                    <Text size="sm" weight="medium">{info?.title ?? perm}</Text>
                     <Badge size="sm" variant={info?.enforced ? 'accent' : 'default'}>
                       {info?.enforced ? t('plugins.detail.permissions.enforced') : t('plugins.detail.permissions.advisory')}
                     </Badge>
                   </Flex>
-                  <Text size="xs" color="muted" as="p" className="mt-1 leading-relaxed">
+                  <Text size="xs" color="fg.subtle" as="p" className="mt-1 leading-relaxed">
                     {info?.description ?? t('plugins.detail.permissions.capabilityFallback', { perm })}
                     {info && !info.enforced && (
                       <>{t('plugins.detail.permissions.advisoryNote')}</>

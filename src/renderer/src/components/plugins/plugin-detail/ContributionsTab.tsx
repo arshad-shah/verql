@@ -1,4 +1,5 @@
-import { Flex, Text, Badge, Card, Stack, EmptyState } from '@/primitives'
+import { Flex, Badge, Card, Stack, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { CONTRIBUTION_BADGE_VARIANTS } from './constants'
 
@@ -17,7 +18,7 @@ export function ContributionsTab({ contributions }: { contributions: string[] })
           return (
             <Flex key={i} direction="row" align="center" gap="sm" className="py-1">
               <Badge size="sm" variant={variant} className="w-20 text-center justify-center shrink-0">{type}</Badge>
-              <Text size="sm" color="secondary">{name}</Text>
+              <Text size="sm" color="fg.muted">{name}</Text>
             </Flex>
           )
         })}

@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Pencil, RotateCcw } from 'lucide-react'
-import { Stack, Text, Divider, Flex } from '@/primitives'
+import { Stack, Divider, Flex } from '@/primitives'
 import { SearchInput, Table, KbdGroup, Tooltip } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useSettingsStore } from '@/stores/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
@@ -109,7 +110,7 @@ export function KeybindingsSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">
+      <Text size="xs" color="fg.subtle">
         {t('settings.keybindings.blurb')}
       </Text>
 
@@ -123,7 +124,7 @@ export function KeybindingsSettings() {
 
       {Object.entries(builtinGrouped).map(([category, bindings]) => (
         <div key={category}>
-          <Text size="xs" color="muted" className="uppercase tracking-wider font-semibold mb-2">
+          <Text size="xs" color="fg.subtle" weight="semibold" className="uppercase tracking-wider mb-2">
             {category}
           </Text>
           <Table>
@@ -142,7 +143,7 @@ export function KeybindingsSettings() {
                   </Table.Cell>
                   <Table.Cell>
                     {recordingId === kb.id ? (
-                      <Text size="sm" color="accent" className="italic">
+                      <Text size="sm" color="accent.solid" italic>
                         {t('settings.keybindings.pressShortcut')}
                       </Text>
                     ) : (
@@ -185,7 +186,7 @@ export function KeybindingsSettings() {
 
       {Object.entries(pluginGrouped).map(([category, bindings]) => (
         <div key={category}>
-          <Text size="xs" color="muted" className="uppercase tracking-wider font-semibold mb-2">
+          <Text size="xs" color="fg.subtle" weight="semibold" className="uppercase tracking-wider mb-2">
             {category}
           </Text>
           <Table>

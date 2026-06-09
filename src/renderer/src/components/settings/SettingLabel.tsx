@@ -1,5 +1,5 @@
 import { Flex } from "@/primitives/layout/Flex";
-import { Text } from "@/primitives/typography/Text";
+import { Text } from "@arshad-shah/cynosure-react/text";
 
 interface SettingLabelProps {
     label: string;
@@ -9,9 +9,9 @@ interface SettingLabelProps {
 export function SettingLabel({ label, description }: SettingLabelProps) {
     return (
         <Flex direction="column" className="flex-1 min-w-0 mr-4">
-            <Text size="sm" color="primary">{label}</Text>
+            <Text size="sm">{label}</Text>
             {description && (
-                <Text size="xs" color="muted" className="mt-0.5">{description}</Text>
+                <Text size="xs" color="fg.subtle" className="mt-0.5">{description}</Text>
             )}
         </Flex>
     );

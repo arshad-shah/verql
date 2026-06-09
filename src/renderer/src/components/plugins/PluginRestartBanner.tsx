@@ -1,6 +1,7 @@
 import { usePluginLifecycleStore } from '@/stores/plugin-lifecycle'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Text } from '@/primitives'
+import { Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
 /**

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Stack, ScrollArea, Flex, Text, EmptyState, Box, SearchInput, cn } from '@/primitives'
+import { Stack, ScrollArea, Flex, EmptyState, Box, SearchInput, cn } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -99,7 +100,7 @@ export function PluginsPanel() {
         {bundledPlugins.length > 0 && (
           <>
             <Box className="px-2 pt-2 pb-1">
-              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.builtIn')}</Text>
+              <Text size="xs" color="fg.subtle" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.builtIn')}</Text>
             </Box>
             {bundledPlugins.map(plugin => (
               <PluginRow
@@ -115,7 +116,7 @@ export function PluginsPanel() {
         {installedPlugins.length > 0 && (
           <>
             <Box className="px-2 pt-3 pb-1">
-              <Text size="xs" color="muted" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.installed')}</Text>
+              <Text size="xs" color="fg.subtle" weight="medium" className="text-[10px] uppercase tracking-wide">{t('plugins.list.installed')}</Text>
             </Box>
             {installedPlugins.map(plugin => (
               <PluginRow
@@ -129,7 +130,7 @@ export function PluginsPanel() {
         )}
 
         {filtered.length > 0 && (
-          <Text size="xs" color="muted" className="text-[10px] text-center py-3 block">
+          <Text size="xs" color="fg.subtle" align="center" className="text-[10px] py-3 block">
             {t('plugins.list.count', { count: plugins.length })}
           </Text>
         )}
@@ -156,7 +157,7 @@ function PluginRow({ plugin, isSelected, onClick }: { plugin: PluginInfo; isSele
       )}
     >
       <PluginIcon plugin={plugin} size={28} />
-      <Text size="xs" weight="medium" color="primary" truncate className="flex-1 min-w-0">
+      <Text size="xs" weight="medium" truncate className="flex-1 min-w-0">
         {plugin.displayName}
       </Text>
       <Box className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusColor}`} />

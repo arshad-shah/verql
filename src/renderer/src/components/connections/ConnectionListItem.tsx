@@ -1,5 +1,6 @@
 import { MoreHorizontal } from 'lucide-react'
-import { Badge, Flex, Text } from '@/primitives'
+import { Badge, Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { DropdownMenu } from '@/primitives/surfaces/DropdownMenu'
 import type { ConnectionProfile } from '@shared/types'
@@ -122,7 +123,7 @@ export function ConnectionListItem({
           <Badge variant={chip.tone} size="sm" className="font-mono text-[9px] leading-none px-1.5 py-0.5 shrink-0">
             {chip.label}
           </Badge>
-          <Text size="xs" weight={active ? 'medium' : 'normal'} truncate className="flex-1">
+          <Text size="xs" weight={active ? 'medium' : undefined} truncate className="flex-1">
             {connection.name}
           </Text>
           {connected && !active && (
@@ -137,7 +138,7 @@ export function ConnectionListItem({
           )}
         </Flex>
         {summary && (
-          <Text size="xs" color="muted" truncate className="text-[10px] font-mono">
+          <Text size="xs" color="fg.subtle" truncate className="text-[10px] font-mono">
             {summary}
           </Text>
         )}

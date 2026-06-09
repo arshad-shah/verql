@@ -37,17 +37,17 @@ export function ResultsStatusBar({ results, actions }: Props) {
       className="px-3 py-1 border-t border-border bg-bg-secondary text-xs shrink-0"
     >
       <Flex direction="row" align="center" gap="md" className="min-w-0">
-        <Text size="xs" color="success">
+        <Text size="xs" color="feedback.success.foreground">
           {t('query.results.rows', { count: results.rowCount })}
         </Text>
-        <Text size="xs" color="muted">·</Text>
-        <Text size="xs" color="secondary">{t('query.results.duration', { ms: results.duration })}</Text>
-        <Text size="xs" color="muted">·</Text>
-        <Text size="xs" color="muted">{t('query.results.cols', { count: results.fields.length })}</Text>
+        <Text size="xs" color="fg.subtle">·</Text>
+        <Text size="xs" color="fg.muted">{t('query.results.duration', { ms: results.duration })}</Text>
+        <Text size="xs" color="fg.subtle">·</Text>
+        <Text size="xs" color="fg.subtle">{t('query.results.cols', { count: results.fields.length })}</Text>
         {results.affectedRows > 0 && (
           <>
-            <Text size="xs" color="muted">·</Text>
-            <Text size="xs" color="warning">{t('query.results.affected', { count: results.affectedRows })}</Text>
+            <Text size="xs" color="fg.subtle">·</Text>
+            <Text size="xs" color="feedback.warning.foreground">{t('query.results.affected', { count: results.affectedRows })}</Text>
           </>
         )}
       </Flex>

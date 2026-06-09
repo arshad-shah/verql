@@ -1,6 +1,7 @@
 import { X, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
-import { Stack, Flex, Text, Box, cn } from '@/primitives'
+import { Stack, Flex, Box, cn } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -60,7 +61,7 @@ export function ToastContainer() {
             <Box className="flex-1 min-w-0">
               <Text size="sm" weight="medium" as="p">{toast.title}</Text>
               {toast.message && (
-                <Text size="xs" color="secondary" as="p" className="mt-0.5 whitespace-pre-wrap break-words">
+                <Text size="xs" color="fg.muted" as="p" className="mt-0.5 whitespace-pre-wrap break-words">
                   {toast.message}
                 </Text>
               )}

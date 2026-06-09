@@ -11,7 +11,8 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Box, Text, ScrollArea, Tooltip, Tabs } from '@/primitives'
+import { Panel, Flex, Box, ScrollArea, Tooltip, Tabs } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -51,7 +52,7 @@ export function Sidebar() {
         justify="between"
         className="px-3 py-2 border-b border-border"
       >
-        <Text size="xs" color="muted" className="uppercase tracking-wider">
+        <Text size="xs" color="fg.subtle" className="uppercase tracking-wider">
           {allTitles[activePanel] ?? t('shell.sidebar.explorer')}
         </Text>
         {isConnected && activePanel === ACTIVITY_PANEL.EXPLORER && (
@@ -85,7 +86,7 @@ export function Sidebar() {
         )}
         {activePanel === ACTIVITY_PANEL.CHARTS && (
           isConnected ? <ChartsDashboard /> : (
-            <Text size="xs" color="muted" as="p" className="px-3 py-8 text-center">
+            <Text size="xs" color="fg.subtle" as="p" className="px-3 py-8 text-center">
               {t('shell.sidebar.chartsEmpty')}
             </Text>
           )

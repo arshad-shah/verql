@@ -1,5 +1,6 @@
-import { Stack, Divider, Flex, Text } from '@/primitives'
+import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { NumberInput, Select, Switch } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -14,7 +15,7 @@ export function EditorSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.editor.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.editor.blurb')}</Text>
 
       <SettingRow label={t('settings.editor.fontSize.label')} description={t('settings.editor.fontSize.description')}>
         <NumberInput value={editor.fontSize} onChange={(v) => setSetting('editor.fontSize', v)} min={10} max={24} size="sm" className="w-20" />

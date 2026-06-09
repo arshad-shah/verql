@@ -3,7 +3,8 @@ import { useSelectionStore } from '@/stores/selection'
 import { useTabsStore } from '@/stores/tabs'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
-import { Box, Flex, Stack, Text, Divider } from '@/primitives'
+import { Box, Flex, Stack, Divider } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import type { QueryTab, FieldInfo } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -20,8 +21,8 @@ export function InspectorPanel() {
           return (
             <Box key={key} className="py-2 border-b border-border last:border-b-0">
               <Flex align="baseline" gap="sm">
-                <Text size="xs" className="font-mono font-semibold">{key}</Text>
-                {col?.dataType && <Text size="xs" color="muted">{col.dataType}</Text>}
+                <Text size="xs" weight="semibold" className="font-mono">{key}</Text>
+                {col?.dataType && <Text size="xs" color="fg.subtle">{col.dataType}</Text>}
               </Flex>
               <Text size="sm" className="font-mono break-words whitespace-pre-wrap">
                 {value === null
@@ -47,7 +48,7 @@ export function InspectorPanel() {
 
   return (
     <Flex align="center" justify="center" className="h-full p-4">
-      <Text color="muted" size="sm">{t('shell.inspector.nothingToInspect')}</Text>
+      <Text color="fg.subtle" size="sm">{t('shell.inspector.nothingToInspect')}</Text>
     </Flex>
   )
 }
@@ -124,7 +125,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
       )}
 
       {tab.results && tab.results.rows.length > 0 && (
-        <Text size="xs" color="muted" className="mt-1">
+        <Text size="xs" color="fg.subtle" className="mt-1">
           {t('shell.inspector.clickRowToInspect')}
         </Text>
       )}
@@ -138,9 +139,9 @@ function FieldList({ fields }: { fields: FieldInfo[] }) {
     <Stack direction="vertical" gap="none">
       {fields.map(f => (
         <Flex key={f.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
-          <Text size="xs" className="font-mono font-semibold truncate">{f.name}</Text>
-          <Text size="xs" color="muted" className="ml-auto">{f.dataType}</Text>
-          {f.nullable === false && <Text size="xs" color="accent">{t('shell.inspector.notNull')}</Text>}
+          <Text size="xs" weight="semibold" truncate className="font-mono">{f.name}</Text>
+          <Text size="xs" color="fg.subtle" className="ml-auto">{f.dataType}</Text>
+          {f.nullable === false && <Text size="xs" color="accent.solid">{t('shell.inspector.notNull')}</Text>}
         </Flex>
       ))}
     </Stack>
@@ -162,18 +163,18 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
 
   return (
     <Stack direction="vertical" gap="sm" className="p-3">
-      <Text size="sm" className="font-mono font-semibold">{table}</Text>
+      <Text size="sm" weight="semibold" className="font-mono">{table}</Text>
       <Box>
-        <Text size="xs" color="muted" className="mb-1">{t('shell.inspector.columnsLabel')}</Text>
+        <Text size="xs" color="fg.subtle" className="mb-1">{t('shell.inspector.columnsLabel')}</Text>
         {columns.length === 0 ? (
-          <Text size="xs" color="muted">{t('shell.inspector.loading')}</Text>
+          <Text size="xs" color="fg.subtle">{t('shell.inspector.loading')}</Text>
         ) : (
           columns.map(c => (
             <Flex key={c.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
-              <Text size="xs" className="font-mono font-semibold">{c.name}</Text>
-              <Text size="xs" color="muted">{c.dataType}</Text>
-              {c.isPrimaryKey && <Text size="xs" color="accent">{t('shell.inspector.primaryKey')}</Text>}
-              {c.isForeignKey && <Text size="xs" color="accent">{t('shell.inspector.foreignKey')}</Text>}
+              <Text size="xs" weight="semibold" className="font-mono">{c.name}</Text>
+              <Text size="xs" color="fg.subtle">{c.dataType}</Text>
+              {c.isPrimaryKey && <Text size="xs" color="accent.solid">{t('shell.inspector.primaryKey')}</Text>}
+              {c.isForeignKey && <Text size="xs" color="accent.solid">{t('shell.inspector.foreignKey')}</Text>}
             </Flex>
           ))
         )}
@@ -185,7 +186,7 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Box>
-      <Text size="xs" color="muted" className="mb-1 uppercase tracking-wider">{title}</Text>
+      <Text size="xs" color="fg.subtle" className="mb-1 uppercase tracking-wider">{title}</Text>
       <Stack direction="vertical" gap="none">{children}</Stack>
     </Box>
   )
@@ -194,8 +195,21 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Stat({ label, value, valueTone }: { label: string; value: string; valueTone?: 'accent' | 'muted' | 'error' }) {
   return (
     <Flex justify="between" align="baseline" className="py-0.5">
-      <Text size="xs" color="muted">{label}</Text>
-      <Text size="sm" className="font-mono truncate ml-2" color={valueTone}>{value}</Text>
+      <Text size="xs" color="fg.subtle">{label}</Text>
+      <Text
+        size="sm"
+        truncate
+        className="font-mono ml-2"
+        color={
+          valueTone === 'accent'
+            ? 'accent.solid'
+            : valueTone === 'muted'
+              ? 'fg.subtle'
+              : valueTone === 'error'
+                ? 'feedback.danger.foreground'
+                : undefined
+        }
+      >{value}</Text>
     </Flex>
   )
 }

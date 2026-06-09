@@ -2,7 +2,8 @@ import { useState, type DragEvent } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { Flex, Text, Tooltip, ContextMenu, cn } from '@/primitives'
+import { Flex, Tooltip, ContextMenu, cn } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { getTabIcon } from './tab-icons'
 import { useTranslation } from '@/i18n/I18nProvider'
 import './tab-bar.css'
@@ -74,7 +75,7 @@ export function TabItem({
         <Tooltip content={tab.title} side="bottom" delay={600}>
           <Text
             size="xs"
-            color={isActive ? 'primary' : 'secondary'}
+            color={isActive ? undefined : 'fg.muted'}
             truncate
             className={cn('max-w-32', isActive && 'font-medium')}
           >

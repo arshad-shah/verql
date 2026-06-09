@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Flex, Text } from '@/primitives'
+import { Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
 import { WidgetRenderer } from '../WidgetRenderer'
@@ -30,7 +31,7 @@ export function SectionWidgetRenderer({ widget, pluginId }: Props) {
             className={cn('text-text-muted transition-transform', !collapsed && 'rotate-90')}
           />
         )}
-        <Text size="xs" color="muted" className="uppercase tracking-wider">
+        <Text size="xs" color="fg.subtle" className="uppercase tracking-wider">
           {widget.label}
         </Text>
       </Flex>

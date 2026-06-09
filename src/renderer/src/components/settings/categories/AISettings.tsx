@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Stack, Divider, Flex, Text } from '@/primitives'
+import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Input } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -75,7 +76,7 @@ export function AISettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.ai.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.ai.blurb')}</Text>
 
       <ApiKeyField
         provider="openai"

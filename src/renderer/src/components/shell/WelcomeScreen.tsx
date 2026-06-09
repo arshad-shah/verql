@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from 'react'
-import { Flex, Text, KbdGroup } from '@/primitives'
+import { Flex, KbdGroup } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 
 interface ShortcutHint {
@@ -25,7 +26,7 @@ export function WelcomeScreen() {
         <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2">
           {shortcuts.map(({ keys, label }) => (
             <Fragment key={label}>
-              <Text size="base" color="muted" className="justify-self-end">{label}</Text>
+              <Text size="md" color="fg.subtle" className="justify-self-end">{label}</Text>
               <KbdGroup size="lg" keys={keys} className="justify-self-start" />
             </Fragment>
           ))}

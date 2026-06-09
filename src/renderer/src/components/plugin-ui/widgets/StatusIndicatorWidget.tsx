@@ -1,4 +1,5 @@
-import { Flex, Text } from '@/primitives'
+import { Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { cn } from '@/primitives/utils/cn'
 import type { StatusIndicatorWidget as StatusIndicatorWidgetType } from '@shared/plugin-ui-types'
 
@@ -19,7 +20,7 @@ export function StatusIndicatorWidgetRenderer({ widget }: Props) {
   return (
     <Flex align="center" gap="xs">
       <div className={cn('h-1.5 w-1.5 rounded-full', statusColors[widget.status ?? 'ok'])} />
-      <Text size="xs" color="secondary" className="text-[10px]">
+      <Text size="xs" color="fg.muted" className="text-[10px]">
         {widget.label}
       </Text>
     </Flex>

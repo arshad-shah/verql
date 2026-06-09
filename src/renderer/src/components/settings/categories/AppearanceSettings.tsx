@@ -1,6 +1,7 @@
 import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Text, Box, Switch } from '@/primitives'
+import { Stack, Grid, Divider, Flex, Box, Switch } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
@@ -99,7 +100,7 @@ function ThemeGrid({
                 <div className="h-0.5 w-2 rounded-sm" style={{ background: preview.accent }} />
                 <div className="h-0.5 w-4 rounded-sm" style={{ background: preview.sidebar }} />
               </Flex>
-              <Text size="xs" className="mt-2 text-center block" style={{ color: preview.text }}>
+              <Text size="xs" align="center" className="mt-2 block" style={{ color: preview.text }}>
                 {t.name} {currentTheme === t.id && <Check size={10} className="inline ml-0.5" />}
               </Text>
             </Box>
@@ -128,7 +129,7 @@ export function AppearanceSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.appearance.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.appearance.blurb')}</Text>
 
       <Box>
         <SettingLabel label={t('settings.appearance.colorMode.label')} description={t('settings.appearance.colorMode.description')} />
@@ -152,7 +153,7 @@ export function AppearanceSettings() {
           ))}
         </Flex>
         {mode === 'system' && (
-          <Text size="xs" color="muted" className="mt-2 block">
+          <Text size="xs" color="fg.subtle" className="mt-2 block">
             {t('settings.appearance.systemHint')}
           </Text>
         )}

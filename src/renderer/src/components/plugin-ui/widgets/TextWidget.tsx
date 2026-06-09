@@ -1,4 +1,4 @@
-import { Text } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import type { TextWidget as TextWidgetType } from '@shared/plugin-ui-types'
 
 interface Props {

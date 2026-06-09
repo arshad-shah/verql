@@ -1,4 +1,5 @@
-import { Text, Badge } from '@/primitives'
+import { Badge } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import appIconUrl from '@brand/icon-light.svg?url'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { platform as detectedPlatform } from '@/lib/platform'
@@ -41,7 +42,7 @@ export function TitleBar({ platform = detectedPlatform }: TitleBarProps = {}) {
       >
         <div className={`no-drag flex items-center gap-2 ${isMac ? 'pl-20' : 'pl-4'}`}>
           <img src={appIconUrl} width={24} height={24} alt="" aria-hidden="true" />
-          <Text size="sm" weight="semibold" color="primary" className="tracking-wide">
+          <Text size="sm" weight="semibold" className="tracking-wide">
             {t('shell.titleBar.appName')}
           </Text>
           {isDev && (

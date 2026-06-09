@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack, Text, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Box, Divider, Stack, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
@@ -68,7 +69,7 @@ export function PluginContributedSettings({ category }: Props) {
         <Box key={c.pluginName}>
           <Divider />
           <Box className="py-3">
-            <Text size="xs" color="muted" weight="bold" className="uppercase tracking-wider">
+            <Text size="xs" color="fg.subtle" weight="bold" className="uppercase tracking-wider">
               {t('settings.contributed.from', { plugin: c.pluginDisplayName })}
             </Text>
           </Box>

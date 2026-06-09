@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Stack, Flex, Text } from '@/primitives'
+import { Stack, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
@@ -124,7 +125,7 @@ export function UpdatesSection() {
             </Button>
           )}
           {action.kind === 'updating' && (
-            <Text size="xs" color="muted">{action.phase}…</Text>
+            <Text size="xs" color="fg.subtle">{action.phase}…</Text>
           )}
           {action.kind === 'done' && action.restartRequired && (
             <Button size="sm" onClick={restart}>
@@ -134,7 +135,7 @@ export function UpdatesSection() {
         </Flex>
       </SettingRow>
       {action.kind === 'error' && (
-        <Text size="xs" color="error">{action.message}</Text>
+        <Text size="xs" color="feedback.danger.foreground">{action.message}</Text>
       )}
     </Stack>
   )

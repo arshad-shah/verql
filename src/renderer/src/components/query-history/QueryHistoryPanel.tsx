@@ -6,9 +6,10 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
-  Stack, ScrollArea, Text, EmptyState, Box, Flex, Input, Tooltip,
+  Stack, ScrollArea, EmptyState, Box, Flex, Input, Tooltip,
   SearchInput,
 } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 

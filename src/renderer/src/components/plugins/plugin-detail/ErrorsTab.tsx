@@ -1,5 +1,6 @@
 import { XCircle } from 'lucide-react'
-import { Flex, Text, Box, Card, Code, Stack, EmptyState } from '@/primitives'
+import { Flex, Box, Card, Code, Stack, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { ErrorRecord } from './types'
 
@@ -27,8 +28,8 @@ export function ErrorsTab({ errors, expandedError, onToggleError }: {
             >
               <XCircle size={14} className="text-error mt-0.5 shrink-0" />
               <Box className="flex-1 min-w-0">
-                <Text size="xs" color="secondary" truncate className="block">{err.error}</Text>
-                <Text size="xs" color="muted" className="text-[10px]">{new Date(err.timestamp).toLocaleString()}</Text>
+                <Text size="xs" color="fg.muted" truncate className="block">{err.error}</Text>
+                <Text size="xs" color="fg.subtle" className="text-[10px]">{new Date(err.timestamp).toLocaleString()}</Text>
               </Box>
             </Flex>
             {expandedError === i && err.stack && (

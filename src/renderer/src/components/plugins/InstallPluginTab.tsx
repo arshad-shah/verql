@@ -2,7 +2,8 @@ import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Box, Text } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -100,7 +101,7 @@ export function InstallPluginTab() {
           {isInstalling ? (
             <>
               <Spinner size="md" />
-              <Text size="sm" color="muted">
+              <Text size="sm" color="fg.subtle">
                 {t('plugins.install.installing')}
               </Text>
             </>
@@ -127,10 +128,10 @@ export function InstallPluginTab() {
                 )}
               </Box>
               <Flex direction="column" align="center" gap="xs">
-                <Text size="sm" weight="semibold" color="primary">
+                <Text size="sm" weight="semibold">
                   {t('plugins.install.dropHere')}
                 </Text>
-                <Text size="xs" color="muted">
+                <Text size="xs" color="fg.subtle">
                   {t('plugins.install.dropHint')}
                 </Text>
               </Flex>

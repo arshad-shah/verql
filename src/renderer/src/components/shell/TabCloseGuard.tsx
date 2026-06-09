@@ -1,4 +1,5 @@
-import { Modal, Text, Stack, Flex } from '@/primitives'
+import { Modal, Stack, Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { ConfirmDialog } from './ConfirmDialog'
 import { tabActions } from '@/stores/tab-actions'
@@ -24,7 +25,7 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
       <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
         <Stack gap="md" className="p-4">
           <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
-          <Text size="sm" color="secondary">
+          <Text size="sm" color="fg.muted">
             {t('shell.confirmTransaction.message', {
               label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
             })}

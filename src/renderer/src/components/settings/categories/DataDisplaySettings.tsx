@@ -1,5 +1,6 @@
-import { Stack, Divider, Flex, Text } from '@/primitives'
+import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Input, Select, NumberInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -14,7 +15,7 @@ export function DataDisplaySettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.dataDisplay.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.dataDisplay.blurb')}</Text>
 
       <SettingRow label={t('settings.dataDisplay.nullDisplay.label')} description={t('settings.dataDisplay.nullDisplay.description')}>
         <Input value={display.nullDisplay} onChange={(e) => setSetting('dataDisplay.nullDisplay', e.target.value)} size="sm" className="w-24" />

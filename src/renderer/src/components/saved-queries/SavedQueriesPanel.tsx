@@ -5,8 +5,9 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Stack, ScrollArea, Text, EmptyState, Box, Flex, Input, SearchInput } from '@/primitives'
+import { Stack, ScrollArea, EmptyState, Box, Flex, Input, SearchInput } from '@/primitives'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Saved queries persist in the SQLite app-data store (main process). This module
@@ -113,7 +114,7 @@ export function SavedQueriesPanel() {
             onClick={() => handleOpenQuery(query)}
           >
             <Flex align="center" justify="between">
-              <Text size="xs" color="primary" truncate className="flex-1">{query.name}</Text>
+              <Text size="xs" truncate className="flex-1">{query.name}</Text>
               <Flex className="hidden group-hover:flex items-center gap-0.5">
                 <IconButton
                   label={t('query.saved.openInNewTab')}
@@ -133,7 +134,7 @@ export function SavedQueriesPanel() {
                 />
               </Flex>
             </Flex>
-            <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono block">{query.sql}</Text>
+            <Text size="xs" color="fg.subtle" truncate className="text-[10px] mt-0.5 font-mono block">{query.sql}</Text>
           </Box>
         ))}
       </ScrollArea>

@@ -5,7 +5,8 @@ import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Text, Badge, Box, ScrollArea, Tabs } from '@/primitives'
+import { Flex, Badge, Box, ScrollArea, Tabs } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { STATE_CONFIG, DETAIL_TAB_IDS } from './plugin-detail/constants'
@@ -119,7 +120,7 @@ export function PluginDetailView({ pluginName }: Props) {
   if (!plugin) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text color="muted">{t('plugins.detail.loading')}</Text>
+        <Text size="sm" color="fg.subtle">{t('plugins.detail.loading')}</Text>
       </Flex>
     )
   }
@@ -135,12 +136,12 @@ export function PluginDetailView({ pluginName }: Props) {
           <PluginIcon plugin={plugin} size={48} />
           <Box className="flex-1 min-w-0">
             <Flex direction="row" align="center" gap="sm" className="flex-wrap">
-              <Text size="lg" weight="semibold" color="primary">{plugin.displayName}</Text>
-              <Text size="xs" color="muted">{t('plugins.detail.version', { version: plugin.version })}</Text>
+              <Text size="lg" weight="semibold">{plugin.displayName}</Text>
+              <Text size="xs" color="fg.subtle">{t('plugins.detail.version', { version: plugin.version })}</Text>
               <Badge size="sm" variant={stateConfig.variant}>{t(stateConfig.labelKey)}</Badge>
               {plugin.bundled && <Badge size="sm">{t('plugins.detail.builtIn')}</Badge>}
             </Flex>
-            <Text size="sm" color="secondary" as="p" className="mt-1 leading-relaxed">{plugin.description}</Text>
+            <Text size="sm" color="fg.muted" as="p" className="mt-1 leading-relaxed">{plugin.description}</Text>
           </Box>
           <Flex direction="row" gap="sm" className="shrink-0">
             {isActive ? (

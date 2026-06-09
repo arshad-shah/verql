@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Stack, Flex, Box, Grid, Text } from '@/primitives'
+import { Stack, Flex, Box, Grid } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginFieldInput } from './PluginFieldInput'
@@ -32,8 +33,8 @@ export function SshTunnelSection({ sshFields, expanded, onToggle, profile, authS
         className="px-4 py-3 rounded-none border-0 h-auto justify-start"
       >
         <Stack gap="xs" className="items-start text-left">
-          <Text size="sm" weight="semibold" color="primary">{t('connections.form.sshTunnel')}</Text>
-          {!expanded && <Text size="xs" color="muted">{t('connections.form.sshTunnelDescription')}</Text>}
+          <Text size="sm" weight="semibold">{t('connections.form.sshTunnel')}</Text>
+          {!expanded && <Text size="xs" color="fg.subtle">{t('connections.form.sshTunnelDescription')}</Text>}
         </Stack>
       </Button>
       {expanded && (

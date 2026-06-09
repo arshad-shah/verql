@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
-import { Box, Flex, Stack, Text, Tooltip, EmptyState } from '@/primitives'
+import { Box, Flex, Stack, Tooltip, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
@@ -81,7 +82,7 @@ export function ActiveConnectionsPanel() {
     <>
     <Stack className="py-1">
       <Flex align="center" justify="between" className="px-3 py-1">
-        <Text size="xs" color="muted" className="text-[10px] uppercase tracking-wider">
+        <Text size="xs" color="fg.subtle" className="text-[10px] uppercase tracking-wider">
           {t('connections.active.count', { n: connections.length })}
         </Text>
         <Tooltip content={t('connections.active.newConnection')}>
@@ -98,7 +99,7 @@ export function ActiveConnectionsPanel() {
 
       {live.length > 0 && (
         <>
-          <Text size="xs" color="muted" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
+          <Text size="xs" color="fg.subtle" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
             {t('connections.active.live', { n: live.length })}
           </Text>
           {live.map(c => (
@@ -123,7 +124,7 @@ export function ActiveConnectionsPanel() {
 
       {saved.length > 0 && (
         <>
-          <Text size="xs" color="muted" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
+          <Text size="xs" color="fg.subtle" className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider">
             {t('connections.active.saved', { n: saved.length })}
           </Text>
           {saved.map(c => (
