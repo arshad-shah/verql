@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { File, Shield, X, ChevronDown, ClipboardPaste, Upload } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { DropdownMenu } from '../surfaces/DropdownMenu'
-import { Textarea } from './Textarea'
+import { Textarea } from '@arshad-shah/cynosure-react/textarea'
 import { IPC_CHANNELS } from '@shared/ipc'
 
 const browseRowVariants = cva(
@@ -101,8 +101,8 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
       setValue('')
     }
 
-    const handlePasteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setValue(e.target.value)
+    const handlePasteChange = (value: string) => {
+      setValue(value)
     }
 
     const handleDragOver = useCallback(
@@ -186,7 +186,9 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
               onChange={handlePasteChange}
               placeholder={placeholder}
               disabled={disabled}
-              className="border-0 rounded-none shadow-none focus:shadow-none min-h-[120px] font-mono text-xs resize-y"
+              variant="ghost"
+              resize="vertical"
+              className="min-h-[120px] font-mono text-xs"
             />
           </div>
         </div>

@@ -1,7 +1,8 @@
-import { useRef, useEffect, useState, type ChangeEvent } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
-import { SearchInput, Box } from '@/primitives'
+import { Box } from '@/primitives'
+import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { useDataNouns } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -24,17 +25,16 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
     setLocalValue('')
   }, [activeConnectionId, setFilterText])
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+  const handleChange = (value: string) => {
     setLocalValue(value)
     clearTimeout(timerRef.current)
+    if (value === '') {
+      // Built-in clear (and manual emptying) applies immediately and keeps focus.
+      setFilterText('')
+      inputRef.current?.focus()
+      return
+    }
     timerRef.current = setTimeout(() => setFilterText(value), 100)
-  }
-
-  const handleClear = () => {
-    setFilterText('')
-    setLocalValue('')
-    inputRef.current?.focus()
   }
 
   return (
@@ -46,7 +46,6 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
           placeholder={t('explorer.search.placeholder', { objects: nouns.object.many })}
           value={localValue}
           onChange={handleChange}
-          onClear={handleClear}
         />
         {filterText && resultCount !== undefined && (
           <span

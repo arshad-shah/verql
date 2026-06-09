@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
-import { Input, Box, Flex, ScrollArea } from '@/primitives'
+import { Box, Flex, ScrollArea } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
@@ -147,10 +148,11 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
           <Input
             ref={inputRef}
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={setFilter}
             placeholder={t('shell.connectionSwitcher.filterPlaceholder')}
             size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0 text-[10px]"
+            variant="ghost"
+            className="flex-1 text-[10px]"
           />
         </Flex>
       </Box>

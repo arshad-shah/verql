@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Modal, Input, Flex, Stack, Box } from '@/primitives'
+import { Modal, Flex, Stack, Box } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -94,7 +95,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
             <Text size="xs" color="fg.subtle" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
             <Input
               value={tableName}
-              onChange={e => setTableName(e.target.value)}
+              onChange={setTableName}
               placeholder={t('shell.importModal.targetTablePlaceholder')}
               size="sm"
             />

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Box, Divider, Stack, Select, Switch } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
+import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
@@ -108,11 +110,12 @@ function Control({
       )
     case 'password':
       return (
-        <PasswordInput
+        <Input
+          type="password"
           size="sm"
           className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
         />
       )
     case 'number':
@@ -121,9 +124,10 @@ function Control({
           size="sm"
           className="w-28"
           value={Number(value ?? schema.default ?? 0)}
-          min={schema.min}
-          max={schema.max}
+          minValue={schema.min}
+          maxValue={schema.max}
           step={schema.step ?? 1}
+          formatOptions={{ useGrouping: false }}
           onChange={(v) => onChange(v)}
         />
       )
@@ -143,7 +147,7 @@ function Control({
           size="sm"
           className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
         />
       )
   }

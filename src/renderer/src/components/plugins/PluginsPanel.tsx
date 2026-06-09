@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Stack, ScrollArea, Flex, EmptyState, Box, SearchInput, cn } from '@/primitives'
+import { Stack, ScrollArea, Flex, EmptyState, Box, cn } from '@/primitives'
+import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -61,11 +62,10 @@ export function PluginsPanel() {
     <Stack className="h-full">
       <Flex direction="row" align="center" gap="xs" className="px-2 py-1.5">
         <SearchInput
-          size="xs"
+          size="sm"
           placeholder={t('plugins.list.searchPlaceholder')}
           value={search}
-          onChange={e => setSearch(e.target.value)}
-          onClear={() => setSearch('')}
+          onChange={setSearch}
           className="flex-1"
         />
         <IconButton

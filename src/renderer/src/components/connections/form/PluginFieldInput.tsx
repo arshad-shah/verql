@@ -1,6 +1,6 @@
-import {
-  FormField, Input, NumberInput, PasswordInput, Select, FileContentInput, FilePathInput
-} from '@/primitives'
+import { FormField, Select, FileContentInput, FilePathInput } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
+import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { PluginField, AuthStatus } from './types'
 
@@ -44,7 +44,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <FormField label={field.label} className={className}>
         <Input
           value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           placeholder={authStatus === 'authenticated' ? t('connections.form.typeAValue') : t('connections.form.authenticateFirst')}
           disabled={authStatus !== 'authenticated'}
           size="lg"
@@ -69,9 +69,10 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
   if (field.type === 'password') {
     return (
       <FormField label={field.label} className={className}>
-        <PasswordInput
+        <Input
+          type="password"
           value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           size="lg"
         />
       </FormField>
@@ -83,6 +84,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <FormField label={field.label} className={className}>
         <NumberInput
           value={Number(value) || 0}
+          formatOptions={{ useGrouping: false }}
           onChange={(v) => onChange(v)}
           size="lg"
         />
@@ -124,7 +126,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <Input
         required={field.required}
         value={String(value)}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         size="lg"
       />
     </FormField>

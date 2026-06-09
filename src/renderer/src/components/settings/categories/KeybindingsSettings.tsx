@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Pencil, RotateCcw } from 'lucide-react'
 import { Stack, Divider, Flex } from '@/primitives'
-import { SearchInput, Table, KbdGroup, Tooltip } from '@/primitives'
+import { Table, KbdGroup, Tooltip } from '@/primitives'
+import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -116,8 +117,7 @@ export function KeybindingsSettings() {
 
       <SearchInput
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onClear={() => setSearch('')}
+        onChange={setSearch}
         placeholder={t('settings.keybindings.searchPlaceholder')}
         size="sm"
       />

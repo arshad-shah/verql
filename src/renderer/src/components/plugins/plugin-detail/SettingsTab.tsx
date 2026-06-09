@@ -1,4 +1,6 @@
-import { Card, Stack, EmptyState, Input, Switch, PasswordInput, NumberInput, Select } from '@/primitives'
+import { Card, Stack, EmptyState, Switch, Select } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
+import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { SettingRow } from '@/components/settings/SettingRow'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { SettingSchema } from './types'
@@ -19,11 +21,12 @@ function PluginSettingControl({ setting, value, onChange }: {
       )
     case 'password':
       return (
-        <PasswordInput
+        <Input
+          type="password"
           size="sm"
           className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
         />
       )
     case 'number':
@@ -32,9 +35,10 @@ function PluginSettingControl({ setting, value, onChange }: {
           size="sm"
           className="w-28"
           value={Number(value ?? setting.default ?? 0)}
-          min={setting.min}
-          max={setting.max}
+          minValue={setting.min}
+          maxValue={setting.max}
           step={setting.step ?? 1}
+          formatOptions={{ useGrouping: false }}
           onChange={(v) => onChange(v)}
         />
       )
@@ -54,7 +58,7 @@ function PluginSettingControl({ setting, value, onChange }: {
           size="sm"
           className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
         />
       )
   }

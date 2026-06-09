@@ -1,7 +1,9 @@
 import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Input, Select, NumberInput } from '@/primitives'
+import { Select } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
+import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
@@ -18,7 +20,7 @@ export function DataDisplaySettings() {
       <Text size="xs" color="fg.subtle">{t('settings.dataDisplay.blurb')}</Text>
 
       <SettingRow label={t('settings.dataDisplay.nullDisplay.label')} description={t('settings.dataDisplay.nullDisplay.description')}>
-        <Input value={display.nullDisplay} onChange={(e) => setSetting('dataDisplay.nullDisplay', e.target.value)} size="sm" className="w-24" />
+        <Input value={display.nullDisplay} onChange={(v) => setSetting('dataDisplay.nullDisplay', v)} size="sm" className="w-24" />
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.dateFormat.label')} description={t('settings.dataDisplay.dateFormat.description')}>
@@ -43,7 +45,7 @@ export function DataDisplaySettings() {
         >
           <Input
             value={display.customDateFormat}
-            onChange={(e) => setSetting('dataDisplay.customDateFormat', e.target.value)}
+            onChange={(v) => setSetting('dataDisplay.customDateFormat', v)}
             size="sm"
             className="w-48"
             aria-label={t('settings.dataDisplay.customDatePattern.label')}
@@ -82,11 +84,11 @@ export function DataDisplaySettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.maxColumnWidth.label')} description={t('settings.dataDisplay.maxColumnWidth.description')}>
-        <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" className="w-24" />
+        <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} minValue={100} maxValue={800} step={50} size="sm" className="w-24" />
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.truncateTextAt.label')} description={t('settings.dataDisplay.truncateTextAt.description')}>
-        <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} min={0} max={2000} step={50} size="sm" className="w-24" />
+        <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} minValue={0} maxValue={2000} step={50} size="sm" className="w-24" />
       </SettingRow>
 
       <PluginContributedSettings category="data-display" />

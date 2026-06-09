@@ -6,9 +6,9 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
-  Stack, ScrollArea, EmptyState, Box, Flex, Input, Tooltip,
-  SearchInput,
+  Stack, ScrollArea, EmptyState, Box, Flex, Tooltip,
 } from '@/primitives'
+import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -58,7 +58,7 @@ export function QueryHistoryPanel() {
   return (
     <Stack className="h-full">
       <Box className="px-2 py-1.5">
-        <SearchInput size="lg" onClear={() => setSearch('')} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('query.history.searchPlaceholder')} />
+        <SearchInput size="lg" value={search} onChange={setSearch} placeholder={t('query.history.searchPlaceholder')} />
       </Box>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">

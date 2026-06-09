@@ -4,7 +4,8 @@ import {
   Minimize2, MoreHorizontal, ChevronDown,
 } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { Flex, Input, ScrollArea } from '@/primitives'
+import { Flex, ScrollArea } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
@@ -159,8 +160,8 @@ export function ChatPanelHeader() {
                   <>
                     <Input
                       value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      size="xs"
+                      onChange={setDraft}
+                      size="sm"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => {

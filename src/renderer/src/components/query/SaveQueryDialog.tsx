@@ -1,4 +1,5 @@
-import { Modal, Input } from '@/primitives'
+import { Modal } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -29,7 +30,7 @@ export function SaveQueryDialog({ open, name, onNameChange, onClose, onConfirm }
         <Input
           autoFocus
           value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          onChange={onNameChange}
           placeholder={t('query.save.namePlaceholder')}
           onKeyDown={(e) => {
             if (e.key === 'Escape') onClose()

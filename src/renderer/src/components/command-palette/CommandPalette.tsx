@@ -9,7 +9,8 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Input, ScrollArea, KbdGroup, Box, Flex } from '@/primitives'
+import { ScrollArea, KbdGroup, Box, Flex } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
@@ -224,11 +225,12 @@ export function CommandPalette({ open, onClose }: Props) {
           <Input
             ref={inputRef}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={setQuery}
             onKeyDown={handleKeyDown}
             placeholder={t('command.searchPlaceholder')}
             size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
+            variant="ghost"
+            className="flex-1"
           />
         </Flex>
 

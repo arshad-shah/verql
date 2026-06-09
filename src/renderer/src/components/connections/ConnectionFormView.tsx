@@ -3,7 +3,8 @@ import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
-import { ScrollArea, Container, Stack, Flex, Grid, Divider, FormField, Input, Select, ColorInput } from '@/primitives'
+import { ScrollArea, Container, Stack, Flex, Grid, Divider, FormField, Select, ColorInput } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { Heading } from '@arshad-shah/cynosure-react/heading'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -149,7 +150,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                     <Input
                       required
                       value={String(profile.name ?? '')}
-                      onChange={(e) => update({ name: e.target.value })}
+                      onChange={(v) => update({ name: v })}
                       placeholder={t('connections.form.connectionNamePlaceholder')}
                       size="lg"
                     />

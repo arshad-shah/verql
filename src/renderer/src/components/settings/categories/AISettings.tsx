@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Input } from '@/primitives'
+import { Input } from '@arshad-shah/cynosure-react/input'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
@@ -49,7 +49,7 @@ function ApiKeyField({ provider, label, description, placeholder }: {
         <Input
           type="password"
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           size="sm"
           className="w-72"
           placeholder={hasKey ? t('settings.ai.apiKeySavedPlaceholder') : placeholder}
@@ -97,7 +97,7 @@ export function AISettings() {
       <SettingRow label={t('settings.ai.ollamaEndpoint.label')} description={t('settings.ai.ollamaEndpoint.description')}>
         <Input
           value={ai.ollamaEndpoint}
-          onChange={(e) => setSetting('ai.ollamaEndpoint', e.target.value)}
+          onChange={(v) => setSetting('ai.ollamaEndpoint', v)}
           size="sm"
           className="w-72"
           placeholder="http://localhost:11434"

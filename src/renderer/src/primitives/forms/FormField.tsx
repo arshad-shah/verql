@@ -1,5 +1,5 @@
 import React, { useId } from 'react'
-import { Label } from './Label'
+import { Label } from '@arshad-shah/cynosure-react/label'
 import { cn } from '../utils/cn'
 
 export interface FormFieldProps {

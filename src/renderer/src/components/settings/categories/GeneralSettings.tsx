@@ -1,7 +1,8 @@
 import { Stack, Divider, Flex, Switch } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { NumberInput, Select } from '@/primitives'
+import { Select } from '@/primitives'
+import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
@@ -22,8 +23,8 @@ export function GeneralSettings() {
         <NumberInput
           value={general.queryTimeout}
           onChange={(v) => setSetting('general.queryTimeout', v)}
-          min={5}
-          max={300}
+          minValue={5}
+          maxValue={300}
           size="sm"
           className="w-20"
         />
@@ -33,8 +34,8 @@ export function GeneralSettings() {
         <NumberInput
           value={general.maxHistoryItems}
           onChange={(v) => setSetting('general.maxHistoryItems', v)}
-          min={50}
-          max={1000}
+          minValue={50}
+          maxValue={1000}
           step={50}
           size="sm"
           className="w-20"
