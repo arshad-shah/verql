@@ -65,7 +65,8 @@ covers the scheme sync.
 | 2 | `Button` / `IconButton` → Cynosure `button` / `icon-button` | ✅ done |
 | 3 | Feedback: `Spinner`, `Skeleton`, `Progress`, `Alert`, `Banner` (Toast deferred to stage 10) | ✅ done |
 | 4 | Typography: `Text`, `Heading`, `Code`, `Kbd`/`KbdGroup` (KbdGroup kept: accelerator/platform behaviour atop Cynosure `Kbd`) | ✅ done |
-| 5 | Forms: `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput`, `Checkbox`, `Radio`, `Switch`, `Select`, `Slider`, `TagsInput`, `Label`, `FormField`, pickers | ⬜ |
+| 5a | Forms (text-input family): `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput` (→ `Input type=password`, built-in reveal), `Label` | ✅ done |
+| 5b | Forms (choice controls + pickers): `Checkbox`, `Radio`, `Switch`, `Select`, `Slider`, `TagsInput`, `FormField`, `DatePicker`, `ColorInput`/`ColorPicker`, `FileContentInput`/`FilePathInput` | ⬜ |
 | 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea`, `Container`, `AspectRatio` | ⬜ |
 | 7 | Surfaces/overlays: `Card`, `Modal`→`Dialog`, `Sheet`→`Drawer`, `Popover`, `Tooltip`, `DropdownMenu`, `ContextMenu`, `Accordion`, `Panel` | ⬜ |
 | 8 | Data display: `Badge`, `Tag`, `Avatar`, `EmptyState`, `Table`/`DataTable`, `List`, `TreeItem`→`Tree`, `KeyValue`, `CodeView`→`CodeBlock` | ⬜ |

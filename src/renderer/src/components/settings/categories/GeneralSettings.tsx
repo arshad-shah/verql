@@ -20,7 +20,7 @@ export function GeneralSettings() {
       <Text size="xs" color="fg.subtle">{t('settings.general.blurb')}</Text>
 
       <SettingRow label={t('settings.general.queryTimeout.label')} description={t('settings.general.queryTimeout.description')}>
-        <NumberInput
+        <NumberInput formatOptions={{ useGrouping: false }}
           value={general.queryTimeout}
           onChange={(v) => setSetting('general.queryTimeout', v)}
           minValue={5}
@@ -31,7 +31,7 @@ export function GeneralSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.general.maxHistoryItems.label')} description={t('settings.general.maxHistoryItems.description')}>
-        <NumberInput
+        <NumberInput formatOptions={{ useGrouping: false }}
           value={general.maxHistoryItems}
           onChange={(v) => setSetting('general.maxHistoryItems', v)}
           minValue={50}

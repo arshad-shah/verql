@@ -106,7 +106,7 @@ export function MCPSettings() {
       {error && <Alert status="danger"><AlertDescription>{error}</AlertDescription></Alert>}
 
       <SettingRow label={t('settings.mcp.port.label')} description={t('settings.mcp.port.description')}>
-        <NumberInput value={mcp.port} onChange={(v) => setSetting('mcp.port', v || 3100)} size="sm" className="w-28" minValue={1024} maxValue={65535} isDisabled={status.running} aria-label={t('settings.mcp.port.aria')} />
+        <NumberInput formatOptions={{ useGrouping: false }} value={mcp.port} onChange={(v) => setSetting('mcp.port', v || 3100)} size="sm" className="w-28" minValue={1024} maxValue={65535} isDisabled={status.running} aria-label={t('settings.mcp.port.aria')} />
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.autoPort.label')} description={t('settings.mcp.autoPort.description')}>
@@ -118,7 +118,7 @@ export function MCPSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.maxRows.label')} description={t('settings.mcp.maxRows.description')}>
-        <NumberInput value={mcp.maxRows} onChange={(v) => setSetting('mcp.maxRows', v || 500)} size="sm" className="w-28" minValue={1} maxValue={100000} aria-label={t('settings.mcp.maxRows.aria')} />
+        <NumberInput formatOptions={{ useGrouping: false }} value={mcp.maxRows} onChange={(v) => setSetting('mcp.maxRows', v || 500)} size="sm" className="w-28" minValue={1} maxValue={100000} aria-label={t('settings.mcp.maxRows.aria')} />
       </SettingRow>
 
       <Divider />
