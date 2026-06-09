@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle2, XCircle, ShieldQuestion, Loader2 } from 'lucide-react'
 import type { AIChatMessage } from '@shared/ai-types'
 import { useAIStore } from '@/stores/ai'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { appActions } from '@/lib/app-actions/registry'
 import { CodeBlock } from './CodeBlock'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -129,7 +129,7 @@ export function ToolCallCard({ message, result }: ToolCallCardProps) {
       {/* Result */}
       {parsed && (
         <div className="px-3 py-2">
-          <Text size="xs" color={parsed.success ? 'secondary' : 'error'}>
+          <Text size="xs" color={parsed.success ? 'fg.muted' : 'feedback.danger.foreground'}>
             {toolCall.name === 'perform_app_action' && parsed.success ? label : parsed.summary}
           </Text>
         </div>

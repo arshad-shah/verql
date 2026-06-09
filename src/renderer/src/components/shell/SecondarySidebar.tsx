@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Flex, Box, Text } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
@@ -78,7 +79,7 @@ export function SecondarySidebar() {
 
   return (
     <Flex align="center" justify="center" className="h-full bg-bg-secondary border-l border-border">
-      <Text color="muted" size="sm">{t('shell.secondaryPanel.noPanelSelected')}</Text>
+      <Text color="fg.subtle" size="sm">{t('shell.secondaryPanel.noPanelSelected')}</Text>
     </Flex>
   )
 }

@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react'
 import { Line, Bar, Pie, Scatter } from '@arshad-shah/swift-chart/react'
 import { addTheme } from '@arshad-shah/swift-chart'
 import type { ChartType } from './chart-detect'
-import { Flex, Text } from '@/primitives'
+import { Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -63,7 +64,7 @@ export function ChartView({ type, data, xKey, yKey }: Props) {
   if (type === 'none' || data.length === 0) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text size="sm" color="muted">{t('shell.charts.noChartAvailable')}</Text>
+        <Text size="sm" color="fg.subtle">{t('shell.charts.noChartAvailable')}</Text>
       </Flex>
     )
   }

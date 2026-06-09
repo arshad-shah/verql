@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Download } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
-import { Flex, Text } from '@/primitives'
+import { Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 

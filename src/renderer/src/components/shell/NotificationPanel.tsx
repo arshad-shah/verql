@@ -3,7 +3,8 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { NotificationItem } from './NotificationItem'
 import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
-import { Box, Flex, Text, EmptyState } from '@/primitives'
+import { Box, Flex, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -90,12 +91,12 @@ export function NotificationPanel() {
         className="px-3.5 py-2.5 border-b border-border-default"
       >
         <Flex align="center" gap="sm">
-          <Text size="xs" weight="semibold" color="primary">{t('shell.notifications.title')}</Text>
+          <Text size="xs" weight="semibold">{t('shell.notifications.title')}</Text>
           {unread > 0 && (
             <Text
               size="xs"
               weight="semibold"
-              color="error"
+              color="feedback.danger.foreground"
               className="rounded-full bg-error/15 px-1.5 py-px text-[9px]"
             >
               {t('shell.notifications.newCount', { count: unread })}

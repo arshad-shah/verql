@@ -12,7 +12,8 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { Flex, Text, EmptyState } from '@/primitives'
+import { Flex, EmptyState } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
@@ -98,8 +99,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
       <div className="min-w-0 flex-1">
         <Text
           size="xs"
-          weight={notification.read ? 'normal' : 'medium'}
-          color="primary"
+          weight={notification.read ? 'regular' : 'medium'}
           className="leading-tight"
         >
           {notification.title}
@@ -124,7 +124,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
             <>
               <Text
                 size="xs"
-                color="muted"
+                color="fg.subtle"
                 className="text-[10px] truncate max-w-[120px]"
               >
                 {notification.source.label}
@@ -132,7 +132,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
               <span className="text-text-disabled text-[10px]">·</span>
             </>
           )}
-          <Text size="xs" color="disabled" className="text-[10px] shrink-0">
+          <Text size="xs" color="fg.disabled" className="text-[10px] shrink-0">
             {formatRelativeTime(notification.timestamp)}
           </Text>
         </Flex>

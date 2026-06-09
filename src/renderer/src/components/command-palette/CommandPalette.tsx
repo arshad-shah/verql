@@ -9,7 +9,8 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Input, ScrollArea, Text, KbdGroup, Box, Flex } from '@/primitives'
+import { Input, ScrollArea, KbdGroup, Box, Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -234,7 +235,7 @@ export function CommandPalette({ open, onClose }: Props) {
         {/* Results */}
         <ScrollArea direction="vertical" className="max-h-72 py-1">
           {filtered.length === 0 && (
-            <Text size="xs" color="muted" as="p" className="px-4 py-3 text-center">{t('command.noMatch')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" align="center" className="px-4 py-3">{t('command.noMatch')}</Text>
           )}
           {filtered.map((cmd, i) => (
             <Button
@@ -246,7 +247,7 @@ export function CommandPalette({ open, onClose }: Props) {
               className="flex items-center justify-between px-4 py-2 text-left rounded-none border-0 h-auto"
             >
               <Flex align="center" gap="sm">
-                {cmd.category && <Text size="xs" color="muted" className="text-[10px] uppercase">{cmd.category}</Text>}
+                {cmd.category && <Text size="xs" color="fg.subtle" className="text-[10px] uppercase">{cmd.category}</Text>}
                 <Text size="xs">{cmd.title}</Text>
               </Flex>
               {cmd.keybinding && <KbdGroup accelerator={cmd.keybinding} size="sm" />}

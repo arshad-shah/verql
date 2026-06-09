@@ -5,8 +5,9 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
-import { Text, Divider, ScrollArea, Flex, Box } from '@/primitives'
+import { Divider, ScrollArea, Flex, Box } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -130,16 +131,16 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
         rightIcon={<ChevronDown size={10} className="text-text-muted" />}
       >
         {activeConn ? (
-          <Text size="xs" color="primary" truncate className="max-w-28">{activeConn.name}</Text>
+          <Text size="xs" truncate className="max-w-28">{activeConn.name}</Text>
         ) : (
-          <Text size="xs" color="muted">{t('query.connection.noConnection')}</Text>
+          <Text size="xs" color="fg.subtle">{t('query.connection.noConnection')}</Text>
         )}
       </Button>
 
       {/* Database selector — only for multi-database connections */}
       {activeConn && hasMultipleDatabases && (
         <>
-          <Text size="xs" color="muted">/</Text>
+          <Text size="xs" color="fg.subtle">/</Text>
           <Button
             variant="outline"
             colorScheme="neutral"
@@ -148,7 +149,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             leftIcon={<HardDrive size={11} className="text-text-muted" />}
             rightIcon={<ChevronDown size={10} className="text-text-muted" />}
           >
-            <Text size="xs" color="secondary" truncate className="max-w-24">{database ?? t('query.connection.database')}</Text>
+            <Text size="xs" color="fg.muted" truncate className="max-w-24">{database ?? t('query.connection.database')}</Text>
           </Button>
         </>
       )}
@@ -156,7 +157,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
       {/* Schema selector */}
       {activeConn && schemaList.length > 0 && (
         <>
-          <Text size="xs" color="muted">/</Text>
+          <Text size="xs" color="fg.subtle">/</Text>
           <Button
             variant="outline"
             colorScheme="neutral"
@@ -165,7 +166,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             leftIcon={<Layers size={11} className="text-text-muted" />}
             rightIcon={<ChevronDown size={10} className="text-text-muted" />}
           >
-            <Text size="xs" color="secondary" truncate className="max-w-24">{schema ?? t('query.connection.schema')}</Text>
+            <Text size="xs" color="fg.muted" truncate className="max-w-24">{schema ?? t('query.connection.schema')}</Text>
           </Button>
         </>
       )}
@@ -180,7 +181,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
         <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[260px] py-1 max-h-80">
           {/* Active connections */}
           {connectedList.length === 0 && (
-            <Text size="xs" color="muted" as="p" className="px-3 py-2">{t('query.connection.noActiveConnections')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noActiveConnections')}</Text>
           )}
           {connectedList.map(conn => (
             <Button
@@ -196,7 +197,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
             >
               <Box className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: conn.color ?? '#7c6ff7' }} />
               <Text size="xs" truncate>{conn.name}</Text>
-              <Text size="xs" color="muted" className="ml-auto">{conn.database}</Text>
+              <Text size="xs" color="fg.subtle" className="ml-auto">{conn.database}</Text>
             </Button>
           ))}
 
@@ -204,7 +205,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
           {connections.filter(c => !connectedIds.has(c.id)).length > 0 && (
             <>
               <Divider />
-              <Text size="xs" color="muted" as="p" className="px-3 py-0.5 text-[10px] uppercase tracking-wider">{t('query.connection.disconnected')}</Text>
+              <Text size="xs" color="fg.subtle" as="p" className="px-3 py-0.5 text-[10px] uppercase tracking-wider">{t('query.connection.disconnected')}</Text>
               {connections.filter(c => !connectedIds.has(c.id)).map(conn => (
                 <Button
                   key={conn.id}
@@ -221,7 +222,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
                 >
                   <Box className="w-2 h-2 rounded-full shrink-0 bg-text-muted" />
                   <Text size="xs" truncate>{conn.name}</Text>
-                  <Text size="xs" color="muted" className="ml-auto text-[10px]">{t('query.connection.clickToConnect')}</Text>
+                  <Text size="xs" color="fg.subtle" className="ml-auto text-[10px]">{t('query.connection.clickToConnect')}</Text>
                 </Button>
               ))}
             </>
@@ -233,7 +234,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
       {showDbDropdown && (
         <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[200px] py-1 max-h-60">
           {databaseList.length === 0 && (
-            <Text size="xs" color="muted" as="p" className="px-3 py-2">{t('query.connection.noDatabasesFound')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noDatabasesFound')}</Text>
           )}
           {databaseList.map(db => (
             <Button
@@ -258,7 +259,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
       {showSchemaDropdown && (
         <ScrollArea direction="vertical" className="absolute top-full right-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[180px] py-1 max-h-60">
           {schemaList.length === 0 && (
-            <Text size="xs" color="muted" as="p" className="px-3 py-2">{t('query.connection.noSchemasFound')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noSchemasFound')}</Text>
           )}
           {schemaList.map(s => (
             <Button

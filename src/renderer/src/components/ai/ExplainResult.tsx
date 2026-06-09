@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { Sparkles, Copy, RefreshCcw, MessageSquarePlus, Square, AlertCircle } from 'lucide-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Flex } from '@/primitives/layout/Flex'
 import { MarkdownContent } from '@/components/ai/MarkdownContent'
 import { useTabsStore } from '@/stores/tabs'
@@ -48,7 +48,7 @@ export function ExplainResult({ tabId, explanation }: { tabId: string; explanati
     <div className="border-t border-accent/30 bg-bg-secondary shrink-0">
       <Flex align="center" gap="sm" className="px-3 py-1.5 border-b border-border-default/40">
         <Sparkles size={12} className="text-accent" />
-        <Text size="xs" className="text-accent font-medium">{t('aiui.explain.explanation')}</Text>
+        <Text size="xs" weight="medium" color="accent.solid">{t('aiui.explain.explanation')}</Text>
         <Flex align="center" gap="xs" className="ml-auto">
           {per?.loading
             ? <StopButton tabId={tabId} streamId={per?.streamId} />
@@ -91,14 +91,14 @@ function StopButton({ tabId, streamId }: { tabId: string; streamId: string | nul
 function ModelDurationLabel({ model, durationMs }: { model: string | null | undefined; durationMs: number | null | undefined }) {
   if (!model && durationMs == null) return null
   const ms = durationMs != null ? (durationMs < 1000 ? `${durationMs}ms` : `${(durationMs / 1000).toFixed(1)}s`) : null
-  return <Text size="xs" color="muted">{[model, ms].filter(Boolean).join(' · ')}</Text>
+  return <Text size="xs" color="fg.subtle">{[model, ms].filter(Boolean).join(' · ')}</Text>
 }
 
 function ErrorRow({ message }: { message: string }) {
   return (
     <Flex align="center" gap="xs">
       <AlertCircle size={12} className="text-error" />
-      <Text size="xs" color="error">{message}</Text>
+      <Text size="xs" color="feedback.danger.foreground">{message}</Text>
     </Flex>
   )
 }

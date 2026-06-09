@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Box, Flex, Text, Badge } from '@/primitives'
+import { Box, Flex, Badge } from '@/primitives'
 import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { parseDbError } from '@/lib/db-error'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -40,10 +41,10 @@ export function QueryErrorView({ error, dbType }: Props) {
 
           {parsed.hint && (
             <Flex direction="column" gap="xs" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
-              <Text size="xs" weight="medium" className="text-text-secondary uppercase tracking-wide">
+              <Text size="xs" weight="medium" color="fg.muted" className="uppercase tracking-wide">
                 {t('query.error.hint')}
               </Text>
-              <Text size="xs" color="secondary" as="p" className="leading-relaxed">{parsed.hint}</Text>
+              <Text size="xs" color="fg.muted" as="p" className="leading-relaxed">{parsed.hint}</Text>
             </Flex>
           )}
 

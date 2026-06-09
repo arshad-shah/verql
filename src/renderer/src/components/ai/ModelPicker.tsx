@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { AIProviderInfo, AIModelInfo } from '@shared/ai-types'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Card } from '@/primitives/surfaces/Card'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -38,7 +38,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
                 onClick={() => onSelectProvider(provider)}
                 className="w-full text-left px-2 py-1 hover:bg-hover rounded transition-colors"
               >
-                <Text size="xs" color="muted" weight="medium" className="uppercase tracking-wider">
+                <Text size="xs" color="fg.subtle" weight="medium" className="uppercase tracking-wider">
                   {provider.name}
                 </Text>
               </button>
@@ -52,7 +52,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
                       : 'hover:bg-hover'
                   }`}
                 >
-                  <Text size="xs" color={model.id === activeModel ? 'accent' : 'primary'}>
+                  <Text size="xs" color={model.id === activeModel ? 'accent.solid' : undefined}>
                     {model.name}
                   </Text>
                 </button>
@@ -61,7 +61,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
           ))}
           {providers.length === 0 && (
             <div className="px-2 py-3">
-              <Text size="xs" color="muted">{t('aiui.chat.providersEmpty')}</Text>
+              <Text size="xs" color="fg.subtle">{t('aiui.chat.providersEmpty')}</Text>
             </div>
           )}
         </ScrollArea>

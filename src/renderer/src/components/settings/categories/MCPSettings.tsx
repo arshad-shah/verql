@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Text, Input, CodeView, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Input, CodeView, Switch } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -85,7 +86,7 @@ export function MCPSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.mcp.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.mcp.blurb')}</Text>
 
       <SettingRow label={t('settings.mcp.serverStatus.label')} description={
         status.running
@@ -98,7 +99,7 @@ export function MCPSettings() {
       </SettingRow>
 
       {status.running && status.autoSelectedPort && (
-        <Text size="xs" color="muted">{t('settings.mcp.autoSelectedPort', { requested: mcp.port, actual: status.port })}</Text>
+        <Text size="xs" color="fg.subtle">{t('settings.mcp.autoSelectedPort', { requested: mcp.port, actual: status.port })}</Text>
       )}
       {error && <Alert status="danger"><AlertDescription>{error}</AlertDescription></Alert>}
 
@@ -119,7 +120,7 @@ export function MCPSettings() {
       </SettingRow>
 
       <Divider />
-      <Text size="sm" color="muted">{t('settings.mcp.toolsHeading')}</Text>
+      <Text size="sm" color="fg.subtle">{t('settings.mcp.toolsHeading')}</Text>
       <Stack gap="xs">
         {tools.map(tool => (
           <SettingRow key={tool.id} label={tool.name} description={tool.description}>
@@ -144,15 +145,15 @@ export function MCPSettings() {
       <CodeView code={configJson} language="json" />
 
       <Divider />
-      <Text size="xs" color="muted">{t('settings.mcp.recentActivity')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.mcp.recentActivity')}</Text>
       <Stack gap="xs">
-        {activity.length === 0 && <Text size="xs" color="muted">{t('settings.mcp.noActivity')}</Text>}
+        {activity.length === 0 && <Text size="xs" color="fg.subtle">{t('settings.mcp.noActivity')}</Text>}
         {[...activity].reverse().map(a => (
           <Flex key={a.id} direction="row" align="center" gap="sm">
-            <Text as="span" size="xs" color={a.status === 'ok' ? 'success' : a.status === 'rejected' ? 'warning' : 'error'}>●</Text>
+            <Text as="span" size="xs" color={a.status === 'ok' ? 'feedback.success.foreground' : a.status === 'rejected' ? 'feedback.warning.foreground' : 'feedback.danger.foreground'}>●</Text>
             <Text size="xs" className="font-mono">{a.toolId}</Text>
-            <Text size="xs" color="muted" truncate>{a.paramsSummary}</Text>
-            <Text size="xs" color="muted">{a.durationMs}ms</Text>
+            <Text size="xs" color="fg.subtle" truncate>{a.paramsSummary}</Text>
+            <Text size="xs" color="fg.subtle">{a.durationMs}ms</Text>
           </Flex>
         ))}
       </Stack>

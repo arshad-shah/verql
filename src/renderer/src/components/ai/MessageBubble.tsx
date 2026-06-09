@@ -1,7 +1,7 @@
 import { Sparkles, Copy, Check, RotateCcw, AlertTriangle, GitBranch } from 'lucide-react'
 import { useClipboard } from '@/hooks/useClipboard'
 import type { AIChatMessage } from '@shared/ai-types'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Avatar } from '@/primitives/data-display/Avatar'
 import { useAIStore } from '@/stores/ai'
@@ -87,7 +87,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           }`}
         >
           {isError ? (
-            <Text size="sm" color="error" className="whitespace-pre-wrap">{message.content}</Text>
+            <Text size="sm" color="feedback.danger.foreground" className="whitespace-pre-wrap">{message.content}</Text>
           ) : (
             <MarkdownContent content={message.content} />
           )}

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { PlanNodeView } from './PlanNode'
 import type { PlanNode } from '@shared/types'
-import { Flex, Stack, Text } from '@/primitives'
+import { Flex, Stack } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -28,14 +29,14 @@ export function QueryPlanView({ plan }: Props) {
   if (plan.length === 0) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text size="sm" color="muted">{t('shell.queryPlan.empty')}</Text>
+        <Text size="sm" color="fg.subtle">{t('shell.queryPlan.empty')}</Text>
       </Flex>
     )
   }
 
   return (
     <Stack direction="vertical" className="h-full overflow-auto p-3">
-      <Text size="xs" color="muted" className="mb-3">
+      <Text size="xs" color="fg.subtle" className="mb-3">
         {t('shell.queryPlan.header', { cost: maxCost.toFixed(1) })}
       </Text>
       {plan.map((node, i) => (

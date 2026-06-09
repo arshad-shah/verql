@@ -2,7 +2,8 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Key, Link } from 'lucide-react'
 import type { TableNodeData } from './er-layout'
-import { Box, Flex, Text } from '@/primitives'
+import { Box, Flex } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 
 function TableNodeComponent({ data }: NodeProps) {
   const { tableName, columns, color } = data as TableNodeData
@@ -26,8 +27,8 @@ function TableNodeComponent({ data }: NodeProps) {
             ) : (
               <Box as="span" className="w-2.5 shrink-0" />
             )}
-            <Text size="xs" color="primary">{col.name}</Text>
-            <Text size="xs" color="muted" className="ml-auto">{col.dataType}</Text>
+            <Text size="xs">{col.name}</Text>
+            <Text size="xs" color="fg.subtle" className="ml-auto">{col.dataType}</Text>
           </Flex>
         ))}
       </Box>

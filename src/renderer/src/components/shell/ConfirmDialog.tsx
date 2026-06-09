@@ -1,4 +1,5 @@
-import { Modal, Text, Flex, Stack } from '@/primitives'
+import { Modal, Flex, Stack } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
 interface ConfirmDialogProps {
@@ -26,7 +27,7 @@ export function ConfirmDialog({
     <Modal open={open} onClose={onCancel} className="w-[400px] max-w-[90vw]">
       <Stack gap="md" className="p-4">
         <Text size="sm" weight="semibold">{title}</Text>
-        {message && <Text size="sm" color="secondary">{message}</Text>}
+        {message && <Text size="sm" color="fg.muted">{message}</Text>}
       </Stack>
       <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
         <Button variant="outline" colorScheme="neutral" size="sm" onClick={onCancel}>{cancelLabel}</Button>

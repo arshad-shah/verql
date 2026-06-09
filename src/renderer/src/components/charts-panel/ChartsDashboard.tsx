@@ -3,7 +3,8 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
-import { Stack, ScrollArea, Flex, Text, EmptyState, Box } from '@/primitives'
+import { Stack, ScrollArea, Flex, EmptyState, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export function ChartsDashboard() {
@@ -42,12 +43,12 @@ export function ChartsDashboard() {
           >
             <Flex direction="row" align="center" gap="sm">
               <BarChart3 size={12} className="text-accent shrink-0" />
-              <Text size="xs" color="primary" truncate className="flex-1">{tab.title}</Text>
-              <Text size="xs" color="muted" className="text-[10px] ml-auto">
+              <Text size="xs" truncate className="flex-1">{tab.title}</Text>
+              <Text size="xs" color="fg.subtle" className="text-[10px] ml-auto">
                 {t('shell.charts.rowsCount', { count: tab.results?.rowCount ?? 0 })}
               </Text>
             </Flex>
-            <Text size="xs" color="muted" truncate className="text-[10px] mt-0.5 font-mono pl-5 block">
+            <Text size="xs" color="fg.subtle" truncate className="text-[10px] mt-0.5 font-mono pl-5 block">
               {tab.sql.slice(0, 60)}{tab.sql.length > 60 ? '...' : ''}
             </Text>
           </Box>

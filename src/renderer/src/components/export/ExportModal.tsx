@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal, Checkbox, Text, Flex, Stack, Box } from '@/primitives'
+import { Modal, Checkbox, Flex, Stack, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -48,7 +49,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
 
       <Stack gap="md" className="p-4">
         <Box>
-          <Text size="xs" color="muted" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
+          <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
           <Flex direction="row" gap="sm">
             {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
               <Button
@@ -68,12 +69,12 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         {format === 'sql' && (
           <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
             <Checkbox checked={includeSchema} onChange={e => setIncludeSchema(e.target.checked)} />
-            <Text size="sm" color="secondary">{t('shell.exportModal.includeCreateTable')}</Text>
+            <Text size="sm" color="fg.muted">{t('shell.exportModal.includeCreateTable')}</Text>
           </Flex>
         )}
 
         {result && (
-          <Text size="xs" color={result.isError ? 'error' : 'success'} as="p">{result.text}</Text>
+          <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
         )}
       </Stack>
 

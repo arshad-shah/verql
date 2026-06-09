@@ -16,7 +16,8 @@ import { useSelectionStore } from '@/stores/selection'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
-import { Flex, Text, Box } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
@@ -92,7 +93,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
   if (nodes.length === 0) {
     return (
       <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-        <Text size="sm" color="muted">{t('shell.er.noTables', { schema })}</Text>
+        <Text size="sm" color="fg.subtle">{t('shell.er.noTables', { schema })}</Text>
       </Flex>
     )
   }

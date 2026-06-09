@@ -3,7 +3,8 @@ import {
   Database, Wrench, Plug, Bell, Globe, ScrollText, Trash2, Search, Download, Pause, Play,
   Cable, Puzzle, Layers, Gauge, ChevronRight, ChevronDown, AlertCircle, TriangleAlert,
 } from 'lucide-react'
-import { Flex, Box, Text, cn } from '@/primitives'
+import { Flex, Box, cn } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import type { ActivityEntry, ActivityKind, ActivityLevel } from '@shared/activity'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { MessageKey } from '@shared/i18n'
@@ -321,7 +322,7 @@ export function ActivityList({ entries, onClear }: ActivityListProps) {
       <Box className="flex-1 min-h-0 overflow-auto">
         {rendered.length === 0 ? (
           <Flex align="center" justify="center" className="h-full p-6">
-            <Text size="sm" color="muted">
+            <Text size="sm" color="fg.subtle">
               {entries.length === 0 ? t('shell.activity.empty') : t('shell.activity.noMatch')}
             </Text>
           </Flex>

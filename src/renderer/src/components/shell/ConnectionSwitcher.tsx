@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
-import { Input, Text, Box, Flex, ScrollArea } from '@/primitives'
+import { Input, Box, Flex, ScrollArea } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -118,10 +119,10 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         />
         <Box className="min-w-0 flex-1">
           <Flex align="center" gap="xs">
-            <Text as="span" weight="semibold" className={cn('text-[10px]', color)}>{abbr}</Text>
-            <Text as="span" truncate className="text-[10px] text-text-primary">{c.name}</Text>
+            <Text as="span" size="sm" weight="semibold" className={cn('text-[10px]', color)}>{abbr}</Text>
+            <Text as="span" size="sm" truncate className="text-[10px] text-text-primary">{c.name}</Text>
           </Flex>
-          <Text as="p" truncate className="text-[9px] text-text-tertiary">
+          <Text as="p" size="sm" truncate className="text-[9px] text-text-tertiary">
             {c.host ? `${c.host}${c.port ? `:${c.port}` : ''}` : c.database}
           </Text>
         </Box>
@@ -157,7 +158,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
       <ScrollArea direction="vertical">
         {activeConn && (
           <Box className="px-1.5 pt-1">
-            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+            <Text as="p" size="sm" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
               {t('shell.connectionSwitcher.active')}
             </Text>
             {renderConnection(activeConn, true)}
@@ -166,7 +167,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
 
         {connectedConns.length > 0 && (
           <Box className="px-1.5 pt-0.5">
-            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+            <Text as="p" size="sm" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
               {t('shell.connectionSwitcher.connected')}
             </Text>
             {connectedConns.map((c) => renderConnection(c, false))}
@@ -175,7 +176,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
 
         {savedConns.length > 0 && (
           <Box className="px-1.5 pt-0.5 border-t border-white/3">
-            <Text as="p" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
+            <Text as="p" size="sm" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">
               {t('shell.connectionSwitcher.saved')}
             </Text>
             {savedConns.map((c) => renderConnection(c, false))}

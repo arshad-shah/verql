@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
 import { Popover } from '@/primitives/surfaces/Popover'
 import { Switch } from '@/primitives/forms/Switch'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
@@ -114,7 +114,7 @@ export function AIStatusSegment() {
       <Row label={t('aiui.status.toolCalls')} value={String(stats.toolCallCount)} />
       <Row label={t('aiui.status.inlineCompletion')} valueNode={
         <div className="inline-flex items-center gap-2">
-          <Text size="xs" color="muted">
+          <Text size="xs" color="fg.subtle">
             {inlineEnabled ? (inlineState === 'thinking' ? t('aiui.status.inlineThinking') : t('aiui.status.inlineOn')) : t('aiui.status.inlineOff')}
           </Text>
           <Switch
@@ -143,8 +143,8 @@ export function AIStatusSegment() {
 function Row({ label, value, valueNode }: { label: string; value?: string; valueNode?: ReactNode }) {
   return (
     <div className="flex items-center justify-between px-1 py-0.5 text-[10.5px]">
-      <Text size="xs" color="muted">{label}</Text>
-      {valueNode ? valueNode : <Text size="xs" className="truncate max-w-[160px]">{value}</Text>}
+      <Text size="xs" color="fg.subtle">{label}</Text>
+      {valueNode ? valueNode : <Text size="xs" truncate className="max-w-[160px]">{value}</Text>}
     </div>
   )
 }

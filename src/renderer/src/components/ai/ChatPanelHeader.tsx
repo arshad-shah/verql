@@ -4,8 +4,9 @@ import {
   Minimize2, MoreHorizontal, ChevronDown,
 } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { Flex, Text, Input, ScrollArea } from '@/primitives'
+import { Flex, Input, ScrollArea } from '@/primitives'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -118,9 +119,9 @@ export function ChatPanelHeader() {
         <Flex align="center" justify="between" className="text-[11px]">
           <Flex align="center" gap="xs">
             <Sparkles size={11} className="text-accent" />
-            <Text size="xs" color="muted">{t('aiui.header.model')}</Text>
+            <Text size="xs" color="fg.subtle">{t('aiui.header.model')}</Text>
           </Flex>
-          <Text size="xs" weight="medium" className="truncate max-w-[180px]">
+          <Text size="xs" weight="medium" truncate className="max-w-[180px]">
             {models.find((m) => m.id === activeModel)?.name ?? activeModel ?? t('aiui.header.noModel')}
           </Text>
         </Flex>
@@ -131,7 +132,7 @@ export function ChatPanelHeader() {
               <div className={`h-full transition-[width] ${tone}`} style={{ width: `${pct}%` }} />
             </div>
             <Flex align="center" justify="between" className="text-[10px]">
-              <Text size="xs" color="muted">
+              <Text size="xs" color="fg.subtle">
                 {t('aiui.header.used', { used: formatCompactNumber(totalTokens), total: formatCompactNumber(contextWindow) })}
               </Text>
               <Text size="xs" weight="medium" className={remainingTone}>
@@ -140,7 +141,7 @@ export function ChatPanelHeader() {
             </Flex>
           </>
         ) : (
-          <Text size="xs" color="muted">{t('aiui.header.noContextWindow')}</Text>
+          <Text size="xs" color="fg.subtle">{t('aiui.header.noContextWindow')}</Text>
         )}
       </div>
 

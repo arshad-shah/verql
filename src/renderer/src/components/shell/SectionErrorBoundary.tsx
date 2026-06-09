@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Text, Code } from '@/primitives'
+import { Flex, Stack, Code } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
 interface Props {
@@ -62,7 +63,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
         <Stack gap="sm" align="center" className="max-w-md text-center">
           <AlertTriangle size={28} className="text-warning" />
           <Text size="sm" weight="medium">{this.props.label} crashed</Text>
-          <Text size="xs" color="muted">
+          <Text size="xs" color="fg.subtle">
             The rest of the app is still working. Retry this section or switch to another tab.
           </Text>
           {this.state.error && (

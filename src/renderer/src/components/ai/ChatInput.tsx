@@ -4,7 +4,7 @@ import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Card } from '@/primitives/surfaces/Card'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { SchemaAutocomplete } from './SchemaAutocomplete'
 import { ModelPicker } from './ModelPicker'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -152,7 +152,7 @@ export function ChatInput() {
             onClick={() => setShowModelPicker(!showModelPicker)}
             className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover transition-colors"
           >
-            <Text size="xs" color="accent">{activeModelName}</Text>
+            <Text size="xs" color="accent.solid">{activeModelName}</Text>
             <ChevronDown className="h-3 w-3 text-text-muted" />
           </button>
           {isStreaming ? (

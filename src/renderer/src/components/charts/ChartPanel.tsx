@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
-import { Flex, Box, Text, Label, Select } from '@/primitives'
+import { Flex, Box, Label, Select } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { MessageKey } from '@shared/i18n'
@@ -30,7 +31,7 @@ export function ChartPanel({ results }: Props) {
   if (results.fields.length < 2) {
     return (
       <Flex align="center" justify="center" className="h-full">
-        <Text size="sm" color="muted">{t('shell.chartPanel.needTwoColumns')}</Text>
+        <Text size="sm" color="fg.subtle">{t('shell.chartPanel.needTwoColumns')}</Text>
       </Flex>
     )
   }

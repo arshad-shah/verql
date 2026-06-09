@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Modal, Text, Badge, Divider, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
+import { Modal, Badge, Divider, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { VerqlMark } from '@/components/brand/VerqlMark'
@@ -83,12 +84,12 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           <Flex direction="column" gap="lg" justify="center" className="h-full p-7">
             <VerqlMark size={60} />
             <Stack gap="xs">
-              <Text size="xl" weight="bold" color="primary">Verql</Text>
+              <Text size="xl" weight="bold">Verql</Text>
               {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
             </Stack>
-            <Text size="sm" color="secondary" className="leading-relaxed">{t('about.tagline')}</Text>
+            <Text size="sm" color="fg.muted" className="leading-relaxed">{t('about.tagline')}</Text>
             <Box className="flex-1 max-sm:hidden" />
-            <Text size="xs" color="muted">{t('about.license')}</Text>
+            <Text size="xs" color="fg.subtle">{t('about.license')}</Text>
           </Flex>
         </GradientSurface>
 
@@ -107,18 +108,18 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           {/* Offset below the modal's absolute close (×) so the copy button
               never overlaps it. */}
           <Flex align="center" justify="between" className="mt-5">
-            <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
+            <Text size="xs" color="fg.subtle" className="uppercase tracking-wider">Build</Text>
             <IconButton variant="ghost" colorScheme="neutral" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild} icon={copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />} />
           </Flex>
           <Flex direction="column" gap="xs" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
             {rows.length === 0
-              ? <Text size="xs" color="muted">…</Text>
+              ? <Text size="xs" color="fg.subtle">…</Text>
               : rows.map(([k, v]) => <KeyValue key={k} label={k} value={v} monospace size="sm" />)}
           </Flex>
 
           <Divider className="my-4" />
 
-          <Text size="xs" color="muted" className="uppercase tracking-wider">{t('about.resources')}</Text>
+          <Text size="xs" color="fg.subtle" className="uppercase tracking-wider">{t('about.resources')}</Text>
           <Box className="mt-2 grid grid-cols-2 gap-x-2 gap-y-0.5">
             {links.map(({ label, icon: Icon, url }) => (
               <Button

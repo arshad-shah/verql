@@ -3,7 +3,7 @@ import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
 import { StreamingResponse } from './StreamingResponse'
@@ -36,7 +36,7 @@ function EmptyState() {
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-border-default">
           <Sparkles className="h-4 w-4" />
         </span>
-        <Text size="sm" color="secondary">{t('aiui.chat.emptyPrompt')}</Text>
+        <Text size="sm" color="fg.muted">{t('aiui.chat.emptyPrompt')}</Text>
       </div>
       <div className="flex flex-wrap justify-center gap-1.5 max-w-[300px]">
         {SUGGESTIONS.map(key => {

@@ -3,7 +3,7 @@ import { Database, Loader2 } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { EmptyState } from '@/primitives/data-display/EmptyState'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { SearchFilter } from './SearchFilter'
 import { DatabaseNode } from './DatabaseNode'
 import { SchemaNode } from './SchemaNode'
@@ -113,7 +113,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
           {isFlat && (
             <div className="py-1 flex-1 overflow-y-auto min-h-0">
               {filteredTables.length === 0 && filteredViews.length === 0 && (
-                <Text size="xs" color="muted" className="px-4 py-2">
+                <Text size="xs" color="fg.subtle" className="px-4 py-2">
                   {allTables.length === 0
                     ? t('explorer.loading.tables', { objects: nouns.object.many })
                     : filterText
@@ -125,7 +125,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                 <div>
                   <Text
                     size="xs"
-                    color="muted"
+                    color="fg.subtle"
                     weight="medium"
                     className="uppercase tracking-wider opacity-40 px-4 py-1"
                   >
@@ -148,7 +148,7 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
                 <div>
                   <Text
                     size="xs"
-                    color="muted"
+                    color="fg.subtle"
                     weight="medium"
                     className="uppercase tracking-wider opacity-40 px-4 py-1"
                   >

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import type { editor } from 'monaco-editor'
 import { Check, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import {
   getStatementContribution,
   type LensAction,
@@ -178,7 +178,7 @@ function StatusChip({ status }: { status: StatementStatus }) {
   const { t } = useTranslation()
   if (status.kind === 'running') {
     return (
-      <Text as="span" size="xs" color="muted" className="ml-2 inline-flex items-center gap-1">
+      <Text as="span" size="xs" color="fg.subtle" className="ml-2 inline-flex items-center gap-1">
         <Loader2 size={10} className="animate-spin" />
         {t('query.statement.running')}
       </Text>
@@ -186,7 +186,7 @@ function StatusChip({ status }: { status: StatementStatus }) {
   }
   if (status.kind === 'error') {
     return (
-      <Text as="span" size="xs" color="error" className="ml-2 inline-flex items-center gap-1">
+      <Text as="span" size="xs" color="feedback.danger.foreground" className="ml-2 inline-flex items-center gap-1">
         <AlertCircle size={10} />
         {t('query.statement.failed')}
         {status.durationMs != null ? ` · ${formatMs(status.durationMs)}` : null}
@@ -194,7 +194,7 @@ function StatusChip({ status }: { status: StatementStatus }) {
     )
   }
   return (
-    <Text as="span" size="xs" color="success" className="ml-2 inline-flex items-center gap-1">
+    <Text as="span" size="xs" color="feedback.success.foreground" className="ml-2 inline-flex items-center gap-1">
       <Check size={10} />
       {status.durationMs != null ? formatMs(status.durationMs) : t('query.statement.ok')}
       {status.rowCount != null

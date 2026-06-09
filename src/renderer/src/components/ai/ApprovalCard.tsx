@@ -1,4 +1,4 @@
-import { Text } from '@/primitives/typography/Text'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { AIApprovalRequest } from '@shared/ai-types'
@@ -17,7 +17,7 @@ export function ApprovalCardContent({ approval, onRespond }: ApprovalCardContent
         <path d="M8 6v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
       </svg>
-      <Text size="xs" color="secondary" className="flex-1">
+      <Text size="xs" color="fg.muted" className="flex-1">
         {t('aiui.approval.allowAction')}
       </Text>
       <div className="flex gap-1.5 shrink-0">

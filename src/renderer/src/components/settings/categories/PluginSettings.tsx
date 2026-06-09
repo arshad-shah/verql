@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Stack, Flex, Divider, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -122,7 +123,7 @@ export function PluginSettings() {
 
   return (
     <Stack gap="md">
-      <Text size="xs" color="muted">{t('settings.plugins.blurb')}</Text>
+      <Text size="xs" color="fg.subtle">{t('settings.plugins.blurb')}</Text>
 
       {plugins.map((plugin) => {
         const bundle = pluginSettings[plugin.name]
@@ -134,19 +135,19 @@ export function PluginSettings() {
               <div className="flex-1 min-w-0 mr-4">
                 <Flex direction="row" align="center" gap="sm">
                   <Text size="sm" weight="semibold">{plugin.displayName}</Text>
-                  <Text size="xs" color="muted">{t('settings.plugins.version', { version: plugin.version })}</Text>
+                  <Text size="xs" color="fg.subtle">{t('settings.plugins.version', { version: plugin.version })}</Text>
                   {plugin.bundled && (
-                    <Text size="xs" color="accent" className="bg-accent/10 px-1.5 py-0.5 rounded">{t('settings.plugins.bundled')}</Text>
+                    <Text size="xs" color="accent.solid" className="bg-accent/10 px-1.5 py-0.5 rounded">{t('settings.plugins.bundled')}</Text>
                   )}
                 </Flex>
-                <Text size="xs" color="secondary" className="mt-0.5">{plugin.description}</Text>
+                <Text size="xs" color="fg.muted" className="mt-0.5">{plugin.description}</Text>
                 {plugin.contributions.length > 0 && (
                   <Flex direction="row" wrap gap="xs" className="mt-1.5">
                     {plugin.contributions.map((c) => (
                       <Text
                         key={c}
                         size="xs"
-                        color="muted"
+                        color="fg.subtle"
                         className="bg-bg-tertiary border border-border-subtle px-1.5 py-0.5 rounded font-mono"
                       >
                         {c}
@@ -155,7 +156,7 @@ export function PluginSettings() {
                   </Flex>
                 )}
                 {plugin.status.error && (
-                  <Text size="xs" color="error" className="mt-1">{plugin.status.error}</Text>
+                  <Text size="xs" color="feedback.danger.foreground" className="mt-1">{plugin.status.error}</Text>
                 )}
               </div>
               <Switch

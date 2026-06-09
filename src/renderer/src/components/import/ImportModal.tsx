@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Modal, Input, Text, Flex, Stack, Box } from '@/primitives'
+import { Modal, Input, Flex, Stack, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -67,7 +68,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
 
       <Stack gap="md" className="p-4">
         <Box>
-          <Text size="xs" color="muted" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
+          <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
           <Flex direction="row" gap="sm">
             {(['sql', 'csv'] as ImportType[]).map(item => (
               <Button
@@ -85,24 +86,24 @@ export function ImportModal({ connectionId, onClose }: Props) {
         </Box>
 
         {importType === 'sql' && (
-          <Text size="xs" color="secondary" as="p">{t('shell.importModal.sqlHint')}</Text>
+          <Text size="xs" color="fg.muted" as="p">{t('shell.importModal.sqlHint')}</Text>
         )}
 
         {importType === 'csv' && (
           <Box>
-            <Text size="xs" color="muted" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
             <Input
               value={tableName}
               onChange={e => setTableName(e.target.value)}
               placeholder={t('shell.importModal.targetTablePlaceholder')}
               size="sm"
             />
-            <Text size="xs" color="muted" as="p" className="mt-1">{t('shell.importModal.csvHint')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="mt-1">{t('shell.importModal.csvHint')}</Text>
           </Box>
         )}
 
         {result && (
-          <Text size="xs" color={result.isError ? 'error' : 'success'} as="p">{result.text}</Text>
+          <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
         )}
       </Stack>
 

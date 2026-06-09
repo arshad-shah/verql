@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertCircle, RotateCcw } from 'lucide-react'
-import { Flex, Stack, Heading, Text } from '@/primitives'
+import { Flex, Stack, Heading } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { t } from '@shared/i18n'
 
@@ -31,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <Stack align="center" gap="sm" className="text-center max-w-md p-6">
             <AlertCircle size={48} className="text-error mx-auto mb-4" />
             <Heading level={4}>{t('shell.errorBoundary.title')}</Heading>
-            <Text size="sm" color="secondary">
+            <Text size="sm" color="fg.muted">
               {this.state.error?.message ?? t('shell.errorBoundary.fallbackMessage')}
             </Text>
             <Button

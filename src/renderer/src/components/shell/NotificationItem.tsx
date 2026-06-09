@@ -1,4 +1,5 @@
-import { Flex, Box, Text } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
@@ -40,8 +41,8 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
           )}
         />
         <Box className="min-w-0 flex-1 text-left">
-          <Text size="xs" color="primary" truncate>{message}</Text>
-          <Text size="xs" color="muted" className="mt-0.5 text-[9px]">
+          <Text size="xs" truncate>{message}</Text>
+          <Text size="xs" color="fg.subtle" className="mt-0.5 text-[9px]">
             {source && <span>{source.label} · </span>}
             {formatRelativeTime(timestamp)}
           </Text>

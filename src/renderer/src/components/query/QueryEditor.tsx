@@ -13,7 +13,8 @@ import { editorRegistry } from '@/stores/editor'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSettingsStore } from '@/stores/settings'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
-import { Flex, Text, useTheme } from '@/primitives'
+import { Flex, useTheme } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -124,7 +125,7 @@ export function QueryEditor({ tabId, value, onChange, onExecute, onSave, connect
         onMount={handleMount}
         loading={
           <Flex align="center" justify="center" className="h-full">
-            <Text size="sm" color="muted">{t('query.editor.loading')}</Text>
+            <Text size="sm" color="fg.subtle">{t('query.editor.loading')}</Text>
           </Flex>
         }
       />

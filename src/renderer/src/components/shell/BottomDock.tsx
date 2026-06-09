@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Flex, Box, Text } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore, BOTTOM_PANEL, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
@@ -90,7 +91,7 @@ export function BottomDock() {
       }
       return (
         <Flex align="center" justify="center" className="h-full">
-          <Text color="muted" size="sm">{t('shell.bottomDock.runToSeeResults')}</Text>
+          <Text color="fg.subtle" size="sm">{t('shell.bottomDock.runToSeeResults')}</Text>
         </Flex>
       )
     }
