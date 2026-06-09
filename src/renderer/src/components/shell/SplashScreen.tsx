@@ -1,4 +1,5 @@
-import { Flex, Stack, Text, Spinner } from '@/primitives'
+import { Flex, Stack, Text } from '@/primitives'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { VerqlHero } from '@/components/brand/VerqlHero'
 
 interface SplashScreenProps {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Flex, Box, Text, Spinner, EmptyState } from '@/primitives'
+import { Flex, Box, Text, EmptyState } from '@/primitives'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { ResultsGrid } from '@/components/results/ResultsGrid'
 import { IPC_CHANNELS } from '@shared/ipc'

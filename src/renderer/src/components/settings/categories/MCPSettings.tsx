@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Text, Input, CodeView, Switch, Alert } from '@/primitives'
+import { Stack, Divider, Flex, Text, Input, CodeView, Switch } from '@/primitives'
+import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useSettingsStore } from '@/stores/settings'
@@ -99,7 +100,7 @@ export function MCPSettings() {
       {status.running && status.autoSelectedPort && (
         <Text size="xs" color="muted">{t('settings.mcp.autoSelectedPort', { requested: mcp.port, actual: status.port })}</Text>
       )}
-      {error && <Alert variant={'error'}>{error}</Alert>}
+      {error && <Alert status="danger"><AlertDescription>{error}</AlertDescription></Alert>}
 
       <SettingRow label={t('settings.mcp.port.label')} description={t('settings.mcp.port.description')}>
         <Input type="number" value={mcp.port} onChange={(e) => setSetting('mcp.port', parseInt(e.target.value) || 3100)} size="sm" className="w-28" min={1024} max={65535} disabled={status.running} aria-label={t('settings.mcp.port.aria')} />

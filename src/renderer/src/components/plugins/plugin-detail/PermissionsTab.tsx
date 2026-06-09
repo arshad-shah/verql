@@ -1,4 +1,5 @@
-import { Stack, Flex, Text, Box, Card, Badge, Alert, Switch, EmptyState } from '@/primitives'
+import { Stack, Flex, Text, Box, Card, Badge, Switch, EmptyState } from '@/primitives'
+import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { PermissionState } from './types'
 
@@ -14,8 +15,8 @@ export function PermissionsTab({ permissions, onToggle }: {
   if (permissions.trusted) {
     return (
       <Stack gap="md">
-        <Alert variant="info">
-          {t('plugins.detail.permissions.trusted')}
+        <Alert status="info">
+          <AlertDescription>{t('plugins.detail.permissions.trusted')}</AlertDescription>
         </Alert>
       </Stack>
     )
@@ -33,8 +34,8 @@ export function PermissionsTab({ permissions, onToggle }: {
 
   return (
     <Stack gap="md">
-      <Alert variant="warning">
-        {t('plugins.detail.permissions.warning')}
+      <Alert status="warning">
+        <AlertDescription>{t('plugins.detail.permissions.warning')}</AlertDescription>
       </Alert>
       <Card padding="md">
         <Stack gap="md">

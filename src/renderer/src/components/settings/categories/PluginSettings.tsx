@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
-import { Spinner } from '@/primitives'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'

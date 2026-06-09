@@ -1,4 +1,5 @@
-import { Stack, Flex, Text, Box, Card, Alert } from '@/primitives'
+import { Stack, Flex, Text, Box, Card } from '@/primitives'
+import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { useTranslation } from '@/i18n/I18nProvider'
 import type { StateConfig } from './constants'
 import type { PluginInfo, ErrorRecord } from './types'
@@ -42,7 +43,7 @@ export function OverviewTab({ plugin, stateConfig, errors }: {
 
       {/* Error alert if present */}
       {plugin.status.error && (
-        <Alert variant="error">{plugin.status.error}</Alert>
+        <Alert status="danger"><AlertDescription>{plugin.status.error}</AlertDescription></Alert>
       )}
 
       {/* Details Card */}

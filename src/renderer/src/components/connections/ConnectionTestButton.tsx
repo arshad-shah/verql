@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ConnectionProfile } from '@shared/types'
-import { Stack, Alert } from '@/primitives'
+import { Stack } from '@/primitives'
+import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -47,10 +48,16 @@ export function ConnectionTestButton({ profile }: Props) {
         </Button>
       </div>
       {status === 'success' && (
-        <Alert variant="success" title={t('connections.test.successTitle')}>{message}</Alert>
+        <Alert status="success">
+          <AlertTitle>{t('connections.test.successTitle')}</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
       {status === 'error' && (
-        <Alert variant="error" title={t('connections.test.failedTitle')}>{message}</Alert>
+        <Alert status="danger">
+          <AlertTitle>{t('connections.test.failedTitle')}</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
     </Stack>
   )

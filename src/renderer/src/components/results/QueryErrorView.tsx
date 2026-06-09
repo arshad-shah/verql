@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Alert, Box, Flex, Text, Badge } from '@/primitives'
+import { Box, Flex, Text, Badge } from '@/primitives'
+import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { parseDbError } from '@/lib/db-error'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -31,7 +32,8 @@ export function QueryErrorView({ error, dbType }: Props) {
 
   return (
     <Box className="p-4 overflow-auto h-full">
-      <Alert variant="error" title={parsed.title} className="max-w-2xl">
+      <Alert status="danger" className="max-w-2xl">
+        <AlertTitle>{parsed.title}</AlertTitle>
         <Flex direction="column" gap="sm">
           {/* Friendly message — primary action signal. */}
           <Text size="sm" as="p" className="leading-relaxed">{parsed.message}</Text>

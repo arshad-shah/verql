@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Play, Square, FileSearch } from 'lucide-react'
-import { Flex, Spinner, Spacer } from '@/primitives'
+import { Flex, Spacer } from '@/primitives'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
@@ -33,7 +34,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
           colorScheme="danger"
           size="sm"
           onClick={onCancel}
-          leftIcon={<span className="flex items-center gap-1.5"><Spinner size="xs" /><Square size={12} /></span>}
+          leftIcon={<span className="flex items-center gap-1.5"><Spinner size="xs" colorScheme="currentColor" /><Square size={12} /></span>}
         >
           {t('query.toolbar.cancel')}
         </Button>

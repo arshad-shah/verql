@@ -1,4 +1,4 @@
-import { Spinner } from '@/primitives'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { cn } from '@/primitives/utils/cn'
 import { StatusBarSegment } from './StatusBarSegment'
 import { usePluginStatus } from './usePluginStatus'
