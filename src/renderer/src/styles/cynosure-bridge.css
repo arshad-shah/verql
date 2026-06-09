@@ -1,0 +1,97 @@
+/*
+ * Cynosure theme bridge.
+ *
+ * Cynosure components read `--cynosure-*` semantic tokens; Verql themes
+ * (baseline Nightshift, core-themes plugin, third-party theme plugins) define
+ * `--color-*` semantic tokens under `[data-theme="<id>"]`. This file aliases
+ * every semantic Cynosure token to its Verql counterpart, so the active Verql
+ * theme — any of them, including runtime-injected plugin themes — restyles
+ * Cynosure components automatically. No per-theme Cynosure work is ever
+ * needed; a new theme only has to define the Verql tokens it already defines.
+ *
+ * Scoping: the packaged token CSS ships a `[data-theme='dark']` override and
+ * Verql has a theme whose id is literally `dark`, so the bridge declares on
+ * `:root, :root[data-theme]` (specificity 0,2,0) and is imported *after*
+ * Cynosure's CSS to win every cascade tie.
+ *
+ * Covered groups (the full semantic colour surface of cynosure-tokens 3.x —
+ * enforced by tests/unit/cynosure-bridge.test.ts):
+ *   background, foreground, border, accent, feedback + font families.
+ * Spacing, radius, shadows, motion, and z-index keep Cynosure defaults on
+ * purpose — only colour varies across Verql themes.
+ */
+
+:root,
+:root[data-theme] {
+  /* ── Backgrounds ── */
+  --cynosure-color-background-canvas: var(--color-bg-primary);
+  --cynosure-color-background-surface: var(--color-bg-secondary);
+  --cynosure-color-background-subtle: var(--color-bg-secondary);
+  --cynosure-color-background-muted: var(--color-bg-tertiary);
+  --cynosure-color-background-raised: var(--color-bg-elevated);
+  --cynosure-color-background-inverse: var(--color-text-primary);
+  /* Verql's modal scrim has always been black at 50% (see Modal.tsx
+     `backdrop:bg-black/50`); keep that exact reading. */
+  --cynosure-color-background-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ── Foreground (text) ── */
+  --cynosure-color-foreground-default: var(--color-text-primary);
+  --cynosure-color-foreground-muted: var(--color-text-secondary);
+  --cynosure-color-foreground-subtle: var(--color-text-tertiary);
+  --cynosure-color-foreground-disabled: var(--color-text-disabled);
+  --cynosure-color-foreground-inverse: var(--color-text-inverse, #ffffff);
+  --cynosure-color-foreground-on-accent: var(--color-text-inverse, #ffffff);
+
+  /* ── Borders ── */
+  --cynosure-color-border-default: var(--color-border-default);
+  --cynosure-color-border-subtle: var(--color-border-subtle);
+  --cynosure-color-border-strong: var(--color-border-strong);
+  --cynosure-color-border-focus: var(--color-focus-ring);
+  --cynosure-color-border-disabled: var(--color-border-subtle);
+
+  /* ── Accent ── */
+  --cynosure-color-accent-solid: var(--color-accent-emphasis);
+  --cynosure-color-accent-solid-hover: var(--color-accent);
+  --cynosure-color-accent-solid-active: var(--color-accent-emphasis);
+  --cynosure-color-accent-soft: var(--color-accent-muted);
+  --cynosure-color-accent-soft-hover: color-mix(in oklab, var(--color-accent-muted), var(--color-accent) 12%);
+  --cynosure-color-accent-soft-active: color-mix(in oklab, var(--color-accent-muted), var(--color-accent) 20%);
+  --cynosure-color-accent-ring: var(--color-focus-ring);
+  --cynosure-color-accent-on-solid: var(--color-text-inverse, #ffffff);
+
+  /* ── Feedback: success ── */
+  --cynosure-color-feedback-success-solid: var(--color-success);
+  --cynosure-color-feedback-success-soft: color-mix(in oklab, var(--color-success) 14%, transparent);
+  --cynosure-color-feedback-success-foreground: var(--color-success);
+  --cynosure-color-feedback-success-border: color-mix(in oklab, var(--color-success) 38%, transparent);
+  --cynosure-color-feedback-success-on-solid: var(--color-text-inverse, #ffffff);
+
+  /* ── Feedback: danger ── */
+  --cynosure-color-feedback-danger-solid: var(--color-error-emphasis, var(--color-error));
+  --cynosure-color-feedback-danger-soft: color-mix(in oklab, var(--color-error) 14%, transparent);
+  --cynosure-color-feedback-danger-foreground: var(--color-error);
+  --cynosure-color-feedback-danger-border: color-mix(in oklab, var(--color-error) 38%, transparent);
+  --cynosure-color-feedback-danger-on-solid: var(--color-text-inverse, #ffffff);
+
+  /* ── Feedback: warning ── */
+  --cynosure-color-feedback-warning-solid: var(--color-warning);
+  --cynosure-color-feedback-warning-soft: color-mix(in oklab, var(--color-warning) 14%, transparent);
+  --cynosure-color-feedback-warning-foreground: var(--color-warning);
+  --cynosure-color-feedback-warning-border: color-mix(in oklab, var(--color-warning) 38%, transparent);
+  --cynosure-color-feedback-warning-on-solid: var(--color-text-inverse, #ffffff);
+
+  /* ── Feedback: info ── */
+  --cynosure-color-feedback-info-solid: var(--color-info);
+  --cynosure-color-feedback-info-soft: color-mix(in oklab, var(--color-info) 14%, transparent);
+  --cynosure-color-feedback-info-foreground: var(--color-info);
+  --cynosure-color-feedback-info-border: color-mix(in oklab, var(--color-info) 38%, transparent);
+  --cynosure-color-feedback-info-on-solid: var(--color-text-inverse, #ffffff);
+
+  /* ── Typography ── */
+  /* Match the app's existing stacks: the body sans stack from globals.css and
+     the user-configurable mono stack (Settings → Editor) that the app keeps
+     synced on `--app-font-mono`. We deliberately skip Cynosure's bundled
+     Geist/JetBrains fonts.css. */
+  --cynosure-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --cynosure-font-family-mono: var(--app-font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+}

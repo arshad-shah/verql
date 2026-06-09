@@ -10,6 +10,14 @@
  * themes are injected at runtime via the theme registry — see
  * [stores/themes.ts] — and override the baseline when present. */
 @import "../primitives/theme/baseline.css";
+/* Cynosure UI — component styles + design tokens, then the Verql→Cynosure
+ * token bridge. The bridge MUST come after Cynosure's CSS so its
+ * `--cynosure-*` aliases (mapped onto the active Verql theme's tokens) win
+ * every cascade tie against the packaged light/dark defaults. We deliberately
+ * skip Cynosure's fonts.css — Verql owns its font stacks. Coverage is
+ * enforced by tests/unit/cynosure-bridge.test.ts. */
+@import "@arshad-shah/cynosure-react/all.css";
+@import "./cynosure-bridge.css";
 
 :root {
   /* App-wide monospace stack. Synced at runtime from

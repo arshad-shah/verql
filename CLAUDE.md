@@ -129,9 +129,11 @@ The assistant is a bundled plugin (`src/main/plugins/bundled/ai/`). It registers
 
 ### Design System
 
-Primitives in `src/renderer/src/primitives/` organized by category: `forms/`, `layout/`, `surfaces/`, `data-display/`, `feedback/`, `navigation/`, `typography/`. All use CVA (class-variance-authority) for variant-based styling. Variant names follow the semantic tokens (Button's destructive variant is `error`, not `danger`; Banner has a `success` variant); most primitives expose a `size` variant. `Switch` is a hidden checkbox + visual track driven by `--color-switch-*` tokens; `surfaces/GradientSurface` paints a theme-derived gradient (`tone` × `intensity`).
+**Migrating to [`@arshad-shah/cynosure-react`](https://cynosure.arshadshah.com)** — see [`docs/cynosure-migration.md`](./docs/cynosure-migration.md) for the rules, the theming bridge, and stage-by-stage status. New/changed UI should use Cynosure components styled via their props API (authority: the package's `.d.ts` files), not new Verql primitives or Tailwind classes. Theming: `styles/cynosure-bridge.css` aliases every semantic `--cynosure-*` token to Verql's `--color-*` theme tokens (coverage enforced by `tests/unit/cynosure-bridge.test.ts`); `primitives/theme/cynosure.tsx` mounts Cynosure's providers and syncs the active theme's light/dark type to `data-cynosure-scheme`.
 
-Three-layer theming in `primitives/theme/tokens.css`: raw color scale → semantic tokens (remapped per theme) → component tokens. Themes: dark, light, midnight. Applied via `data-theme` attribute, managed by `ThemeProvider`.
+Legacy primitives (until their stage migrates them) live in `src/renderer/src/primitives/` organized by category: `forms/`, `layout/`, `surfaces/`, `data-display/`, `feedback/`, `navigation/`, `typography/`. All use CVA (class-variance-authority) for variant-based styling. Variant names follow the semantic tokens (Button's destructive variant is `error`, not `danger`; Banner has a `success` variant); most primitives expose a `size` variant. `Switch` is a hidden checkbox + visual track driven by `--color-switch-*` tokens; `surfaces/GradientSurface` paints a theme-derived gradient (`tone` × `intensity`).
+
+Three-layer theming in `primitives/theme/tokens.css`: raw color scale → semantic tokens (remapped per theme) → component tokens. Themes ship from the `core-themes` plugin plus the baseline Nightshift. Applied via `data-theme` attribute, managed by `ThemeProvider`.
 
 ### Key Libraries
 

@@ -19,6 +19,13 @@ export default defineConfig({
         environment: 'jsdom',
         include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx'],
         setupFiles: ['tests/setup.ts'],
+        // Cynosure ships real CSS imports next to its JS modules; inline the
+        // package so Vite transforms them instead of Node choking on `.css`.
+        server: {
+          deps: {
+            inline: [/@arshad-shah\/cynosure-react/]
+          }
+        },
         alias: {
           '@shared': resolve(__dirname, 'shared'),
           '@': resolve(__dirname, 'src/renderer/src')
