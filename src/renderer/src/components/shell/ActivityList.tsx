@@ -3,7 +3,9 @@ import {
   Database, Wrench, Plug, Bell, Globe, ScrollText, Trash2, Search, Download, Pause, Play,
   Cable, Puzzle, Layers, Gauge, ChevronRight, ChevronDown, AlertCircle, TriangleAlert,
 } from 'lucide-react'
-import { Flex, Box, cn } from '@/primitives'
+import { cn } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import type { ActivityEntry, ActivityKind, ActivityLevel } from '@shared/activity'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -85,7 +87,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
       )}
       onClick={expandable ? () => setOpen((o) => !o) : undefined}
     >
-      <Flex align="center" gap="sm" className="min-w-0">
+      <Flex align="center" gap="2" className="min-w-0">
         {expandable
           ? (open ? <ChevronDown size={11} className="shrink-0 text-text-muted" /> : <ChevronRight size={11} className="shrink-0 text-text-muted" />)
           : <span className="w-[11px] shrink-0" />}
@@ -196,10 +198,10 @@ export function ActivityList({ entries, onClear }: ActivityListProps) {
   return (
     <Flex direction="column" className="h-full min-h-0">
       <Box className="border-b border-border shrink-0">
-        <Flex align="center" gap="xs" className="px-2 pt-1.5 pb-1">
+        <Flex align="center" gap="1" className="px-2 pt-1.5 pb-1">
           <Flex
             align="center"
-            gap="xs"
+            gap="1"
             className="flex-1 min-w-0 rounded bg-bg-inset px-1.5 py-0.5"
           >
             <Search size={12} className="text-text-muted shrink-0" />
@@ -270,7 +272,7 @@ export function ActivityList({ entries, onClear }: ActivityListProps) {
             <Trash2 size={13} />
           </button>
         </Flex>
-        <Flex align="center" gap="xs" className="px-2 pb-1 flex-wrap">
+        <Flex align="center" gap="1" className="px-2 pb-1 flex-wrap">
           {ALL_KINDS.map((kind) => {
             const on = kinds.has(kind)
             const { icon: Icon, label } = KIND_META[kind]
@@ -291,7 +293,7 @@ export function ActivityList({ entries, onClear }: ActivityListProps) {
             )
           })}
         </Flex>
-        <Flex align="center" gap="xs" className="px-2 pb-1.5 flex-wrap">
+        <Flex align="center" gap="1" className="px-2 pb-1.5 flex-wrap">
           {LEVEL_META.map(({ level, label }) => {
             const on = levels.has(level)
             return (

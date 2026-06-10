@@ -1,5 +1,8 @@
 import { XCircle } from 'lucide-react'
-import { Flex, Box, Card, Stack, EmptyState } from '@/primitives'
+import { Card, EmptyState } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Code } from '@arshad-shah/cynosure-react/code'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -17,13 +20,13 @@ export function ErrorsTab({ errors, expandedError, onToggleError }: {
 
   return (
     <Card padding="md">
-      <Stack gap="xs">
+      <Stack gap="1">
         {errors.slice(-20).reverse().map((err, i) => (
           <Box key={i}>
             <Flex
               direction="row"
               align="start"
-              gap="sm"
+              gap="2"
               onClick={() => onToggleError(expandedError === i ? null : i)}
               className="py-1.5 cursor-pointer hover:bg-white/5 rounded px-2 -mx-2 transition-colors"
             >

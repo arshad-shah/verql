@@ -3,7 +3,8 @@ import { ResultsStatusBar } from './ResultsStatusBar'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { ExplainResult } from '@/components/ai/ExplainResult'
 import type { QueryResult } from '@shared/types'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 
 interface Props {
   results: QueryResult

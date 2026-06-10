@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import type { PlanNode as PlanNodeType } from '@shared/types'
-import { Box, Flex } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 
 interface Props {
@@ -26,7 +27,7 @@ export function PlanNodeView({ node, maxCost, depth = 0 }: Props) {
     <Box style={{ marginLeft: depth * 24 }}>
       <Flex
         align="center"
-        gap="sm"
+        gap="2"
         className="py-1.5 px-2 rounded-md hover:bg-white/5 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >

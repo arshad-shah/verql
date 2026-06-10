@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Stack, Divider, Flex } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Input } from '@arshad-shah/cynosure-react/input'
@@ -45,7 +47,7 @@ function ApiKeyField({ provider, label, description, placeholder }: {
 
   return (
     <SettingRow label={label} description={description}>
-      <Flex gap="xs" align="center">
+      <Flex gap="1" align="center">
         <Input
           type="password"
           value={draft}
@@ -75,7 +77,7 @@ export function AISettings() {
   const resetCategory = useSettingsStore((s) => s.resetCategory)
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.ai.blurb')}</Text>
 
       <ApiKeyField

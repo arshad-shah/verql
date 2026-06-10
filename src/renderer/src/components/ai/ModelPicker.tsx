@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { AIProviderInfo, AIModelInfo } from '@shared/ai-types'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Card } from '@/primitives/surfaces/Card'
-import { ScrollArea } from '@/primitives/layout/ScrollArea'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ModelPickerProps {
@@ -31,7 +31,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
   return (
     <div ref={ref} className="absolute bottom-full left-3 right-3 mb-1 z-50">
       <Card padding="sm" className="shadow-[var(--shadow-dropdown)]">
-        <ScrollArea direction="vertical" className="max-h-64">
+        <ScrollArea scrollbars="vertical" className="max-h-64">
           {providers.map(provider => (
             <div key={provider.id}>
               <button

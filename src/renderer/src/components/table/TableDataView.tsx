@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Flex, Box, EmptyState } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -53,7 +55,7 @@ export function TableDataView({ tab }: { tab: TableTab }) {
   return (
     <Flex direction="column" className="h-full min-h-0">
       <Flex align="center" justify="between" className="px-3 py-1.5 border-b border-border-default shrink-0">
-        <Flex align="center" gap="sm" className="min-w-0">
+        <Flex align="center" gap="2" className="min-w-0">
           <Text size="sm" weight="semibold" truncate>{tab.tableName}</Text>
           {state.result && <Text size="xs" color="fg.subtle">{t('table.rows', { value: state.result.rowCount, n: state.result.rowCount })}</Text>}
         </Flex>

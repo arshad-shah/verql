@@ -1,4 +1,4 @@
-import { Stack } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { PluginContributedSettings } from '../PluginContributedSettings'
@@ -6,7 +6,7 @@ import { PluginContributedSettings } from '../PluginContributedSettings'
 export function ConnectionSettings() {
   const { t } = useTranslation()
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">
         {t('settings.connections.blurb')}
       </Text>

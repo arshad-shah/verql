@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select } from '@arshad-shah/cynosure-react/select'
@@ -69,7 +71,7 @@ export function PluginContributedSettings({ category }: Props) {
   if (contributions.length === 0) return null
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       {contributions.map((c) => (
         <Box key={c.pluginName}>
           <Divider />

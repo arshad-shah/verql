@@ -11,7 +11,10 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Box, ScrollArea, Tooltip, Tabs } from '@/primitives'
+import { Panel, Tooltip, Tabs } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -69,7 +72,7 @@ export function Sidebar() {
           </Tooltip>
         )}
       </Flex>
-      <ScrollArea direction="vertical" className="flex-1">
+      <ScrollArea scrollbars="vertical" className="flex-1">
         {activePanel === ACTIVITY_PANEL.EXPLORER && (
           <ExplorerTree onExportTable={(name) => setExportTable(name)} />
         )}

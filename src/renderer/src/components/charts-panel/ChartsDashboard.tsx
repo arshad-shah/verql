@@ -3,7 +3,11 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
-import { Stack, ScrollArea, Flex, EmptyState, Box } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -19,7 +23,7 @@ export function ChartsDashboard() {
 
   return (
     <Stack className="h-full">
-      <ScrollArea direction="vertical" className="flex-1 px-1 py-1">
+      <ScrollArea scrollbars="vertical" className="flex-1 px-1 py-1">
         {queryTabsWithResults.length === 0 && (
           <EmptyState
             icon={<BarChart3 size={20} className="text-text-muted" />}
@@ -41,7 +45,7 @@ export function ChartsDashboard() {
               useUiStore.getState().setBottomDockActivePanel(BOTTOM_PANEL.CHART)
             }}
           >
-            <Flex direction="row" align="center" gap="sm">
+            <Flex direction="row" align="center" gap="2">
               <BarChart3 size={12} className="text-accent shrink-0" />
               <Text size="xs" truncate className="flex-1">{tab.title}</Text>
               <Text size="xs" color="fg.subtle" className="text-[10px] ml-auto">

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Play, Square, FileSearch } from 'lucide-react'
-import { Flex, Spacer } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Spacer } from '@arshad-shah/cynosure-react/spacer'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
@@ -27,7 +28,7 @@ export function QueryToolbar({ onExecute, onCancel, onExplain, isExecuting, conn
   }, [])
 
   return (
-    <Flex direction="row" align="center" gap="sm" className="flex-1">
+    <Flex direction="row" align="center" gap="2" className="flex-1">
       {isExecuting ? (
         <Button
           variant="soft"

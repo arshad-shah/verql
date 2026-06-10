@@ -5,7 +5,10 @@ import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
-import { Divider, ScrollArea, Flex, Box } from '@/primitives'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -116,7 +119,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
   }
 
   return (
-    <Flex align="center" gap="xs" className="relative">
+    <Flex align="center" gap="1" className="relative">
       {/* Connection selector */}
       <Button
         variant="outline"
@@ -178,7 +181,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
 
       {/* Connection dropdown */}
       {showConnDropdown && (
-        <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[260px] py-1 max-h-80">
+        <ScrollArea scrollbars="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[260px] py-1 max-h-80">
           {/* Active connections */}
           {connectedList.length === 0 && (
             <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noActiveConnections')}</Text>
@@ -232,7 +235,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
 
       {/* Database dropdown */}
       {showDbDropdown && (
-        <ScrollArea direction="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[200px] py-1 max-h-60">
+        <ScrollArea scrollbars="vertical" className="absolute top-full left-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[200px] py-1 max-h-60">
           {databaseList.length === 0 && (
             <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noDatabasesFound')}</Text>
           )}
@@ -257,7 +260,7 @@ export function ConnectionSelector({ tabId, connectionId, database, schema }: Pr
 
       {/* Schema dropdown */}
       {showSchemaDropdown && (
-        <ScrollArea direction="vertical" className="absolute top-full right-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[180px] py-1 max-h-60">
+        <ScrollArea scrollbars="vertical" className="absolute top-full right-0 mt-1 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl min-w-[180px] py-1 max-h-60">
           {schemaList.length === 0 && (
             <Text size="xs" color="fg.subtle" as="p" className="px-3 py-2">{t('query.connection.noSchemasFound')}</Text>
           )}

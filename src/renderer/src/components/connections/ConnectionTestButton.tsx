@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ConnectionProfile } from '@shared/types'
-import { Stack } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -35,7 +35,7 @@ export function ConnectionTestButton({ profile }: Props) {
   }
 
   return (
-    <Stack gap="sm">
+    <Stack gap="2">
       <div>
         <Button
           variant="outline"

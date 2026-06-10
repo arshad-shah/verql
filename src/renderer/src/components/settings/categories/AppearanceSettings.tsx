@@ -1,5 +1,9 @@
 import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Box } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Grid } from '@arshad-shah/cynosure-react/grid'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -46,7 +50,7 @@ function ThemeGrid({
   return (
     <Box>
       <SettingLabel label={title} description="" />
-      <Grid columns={4} gap="sm">
+      <Grid columns={4} gap="2">
         {list.map((t) => {
           const preview = t.preview ?? FALLBACK_PREVIEW
           const v = t.validation
@@ -88,18 +92,18 @@ function ThemeGrid({
                   <AlertTriangle size={9} />
                 </span>
               )}
-              <Flex gap="xs" className="mb-2 h-1.5">
+              <Flex gap="1" className="mb-2 h-1.5">
                 <div className="flex-1 rounded-sm" style={{ background: preview.sidebar }} />
                 <div
                   className="flex-2 rounded-sm"
                   style={{ background: preview.bg, border: `1px solid ${preview.sidebar}` }}
                 />
               </Flex>
-              <Flex gap="xs" className="mb-1.5">
+              <Flex gap="1" className="mb-1.5">
                 <div className="h-0.5 w-3 rounded-sm" style={{ background: preview.text }} />
                 <div className="h-0.5 w-5 rounded-sm" style={{ background: preview.sidebar }} />
               </Flex>
-              <Flex gap="xs">
+              <Flex gap="1">
                 <div className="h-0.5 w-2 rounded-sm" style={{ background: preview.accent }} />
                 <div className="h-0.5 w-4 rounded-sm" style={{ background: preview.sidebar }} />
               </Flex>
@@ -131,12 +135,12 @@ export function AppearanceSettings() {
   const lightThemes = themes.filter((t) => t.type === 'light')
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.appearance.blurb')}</Text>
 
       <Box>
         <SettingLabel label={t('settings.appearance.colorMode.label')} description={t('settings.appearance.colorMode.description')} />
-        <Flex gap="xs">
+        <Flex gap="1">
           {MODE_OPTIONS.map(({ id, Icon }) => (
             <Box
               key={id}
@@ -148,7 +152,7 @@ export function AppearanceSettings() {
                   : 'border-border-default bg-transparent text-text-secondary hover:border-border-strong'
               }`}
             >
-              <Flex align="center" justify="center" gap="xs">
+              <Flex align="center" justify="center" gap="1">
                 <Icon size={14} />
                 <Text size="sm">{t(`settings.appearance.mode.${id}`)}</Text>
               </Flex>
@@ -204,7 +208,7 @@ export function AppearanceSettings() {
             : t('settings.appearance.accentColor.descriptionDefault')
         }
       >
-        <Flex gap="sm" align="center">
+        <Flex gap="2" align="center">
           <ColorPicker
             label={null}
             value={appearance.accentColor || currentPreview.accent}

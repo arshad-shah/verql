@@ -12,7 +12,8 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { Flex, EmptyState } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
@@ -119,7 +120,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
           </div>
         )}
 
-        <Flex align="center" gap="xs" className="mt-1">
+        <Flex align="center" gap="1" className="mt-1">
           {notification.source && (
             <>
               <Text
@@ -139,7 +140,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
       </div>
 
       {/* Action buttons — copy for errors (always visible), dismiss on hover */}
-      <Flex direction="column" gap="xs" className="mt-0.5 shrink-0">
+      <Flex direction="column" gap="1" className="mt-0.5 shrink-0">
         {isError && (
           <button
             onClick={handleCopy}
@@ -186,7 +187,7 @@ export function NotificationsSidebar() {
         <Flex
           align="center"
           justify="end"
-          gap="xs"
+          gap="1"
           className="px-3 py-1.5 border-b border-border"
         >
           {unread > 0 && (

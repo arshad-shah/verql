@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Box } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORIES, type SettingsCategoryDef } from '@/lib/settings-categories'
@@ -49,7 +49,7 @@ export function SettingsCategoryNav({ categories }: NavProps = {}) {
   const visible = source.filter((c) => !c.ownedBy || activePlugins.has(c.ownedBy))
 
   return (
-    <Box paddingY="sm">
+    <Box paddingY="2">
       {visible.map((cat) => (
         <Button
           key={cat.id}

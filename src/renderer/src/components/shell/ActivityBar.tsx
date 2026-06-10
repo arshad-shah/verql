@@ -4,7 +4,9 @@ import { useUiStore, ACTIVITY_PANEL, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
-import { Stack, Spacer, Tooltip } from '@/primitives'
+import { Tooltip } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Spacer } from '@arshad-shah/cynosure-react/spacer'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -66,7 +68,7 @@ export function ActivityBar() {
   return (
     <Stack
       align="center"
-      gap="xs"
+      gap="1"
       className="w-12 bg-bg-primary border-r border-border shrink-0 pt-2"
     >
       {topItems.map(({ id, icon, labelKey }) => renderButton(id, icon, t(labelKey)))}

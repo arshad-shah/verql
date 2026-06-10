@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Stack, ScrollArea, Flex, EmptyState, Box, cn } from '@/primitives'
+import { EmptyState, cn } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
@@ -60,7 +64,7 @@ export function PluginsPanel() {
 
   return (
     <Stack className="h-full">
-      <Flex direction="row" align="center" gap="xs" className="px-2 py-1.5">
+      <Flex direction="row" align="center" gap="1" className="px-2 py-1.5">
         <SearchInput
           size="sm"
           placeholder={t('plugins.list.searchPlaceholder')}
@@ -88,7 +92,7 @@ export function PluginsPanel() {
         />
       </Flex>
 
-      <ScrollArea direction="vertical" className="flex-1 px-1">
+      <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
           <EmptyState
             icon={<Package size={24} className="text-text-muted" />}
@@ -147,7 +151,7 @@ function PluginRow({ plugin, isSelected, onClick }: { plugin: PluginInfo; isSele
     <Flex
       direction="row"
       align="center"
-      gap="sm"
+      gap="2"
       onClick={onClick}
       className={cn(
         'px-2 py-1.5 rounded-md cursor-pointer transition-colors',

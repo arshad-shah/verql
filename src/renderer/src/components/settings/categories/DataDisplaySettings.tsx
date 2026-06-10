@@ -1,4 +1,6 @@
-import { Stack, Divider, Flex } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Select } from '@arshad-shah/cynosure-react/select'
@@ -16,7 +18,7 @@ export function DataDisplaySettings() {
   const resetCategory = useSettingsStore((s) => s.resetCategory)
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.dataDisplay.blurb')}</Text>
 
       <SettingRow label={t('settings.dataDisplay.nullDisplay.label')} description={t('settings.dataDisplay.nullDisplay.description')}>

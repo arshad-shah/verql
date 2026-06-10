@@ -1,5 +1,6 @@
 import { SettingLabel } from '@/components/settings/SettingLabel'
-import { Box, Flex } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import type { ReactNode } from 'react'
 
 interface SettingRowProps {

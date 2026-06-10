@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Pencil, RotateCcw } from 'lucide-react'
-import { Stack, Divider, Flex } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Table, KbdGroup, Tooltip } from '@/primitives'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -110,7 +112,7 @@ export function KeybindingsSettings() {
       .map((k, i) => <KbdGroup key={i} accelerator={k} size="sm" />)
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">
         {t('settings.keybindings.blurb')}
       </Text>
@@ -151,7 +153,7 @@ export function KeybindingsSettings() {
                     )}
                   </Table.Cell>
                   <Table.Cell>
-                    <Flex gap="xs" justify="end">
+                    <Flex gap="1" justify="end">
                       <Tooltip content={t('settings.keybindings.rebind')} side="left">
                         <IconButton
                           label={t('settings.keybindings.rebindAria', { label: kb.label })}

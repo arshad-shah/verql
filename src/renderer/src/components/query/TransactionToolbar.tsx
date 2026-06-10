@@ -1,4 +1,5 @@
-import { Flex, Badge } from '@/primitives'
+import { Badge } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { Select } from '@arshad-shah/cynosure-react/select'
@@ -47,7 +48,7 @@ export function TransactionToolbar({
   }))
 
   return (
-    <Flex direction="row" align="center" gap="sm" className="flex-wrap">
+    <Flex direction="row" align="center" gap="2" className="flex-wrap">
       {/* Status badge */}
       <Badge variant={statusBadgeVariant} size="sm">
         {statusText}
@@ -98,7 +99,7 @@ export function TransactionToolbar({
 
       {/* Commit / Rollback */}
       {caps.manualTransactions && (
-        <Flex direction="row" align="center" gap="xs">
+        <Flex direction="row" align="center" gap="1">
           <Button
             variant="soft"
             colorScheme="success"

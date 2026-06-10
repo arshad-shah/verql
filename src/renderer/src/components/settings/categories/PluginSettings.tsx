@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Box } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select } from '@arshad-shah/cynosure-react/select'
@@ -127,7 +130,7 @@ export function PluginSettings() {
   }
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.plugins.blurb')}</Text>
 
       {plugins.map((plugin) => {

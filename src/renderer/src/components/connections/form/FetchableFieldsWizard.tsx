@@ -1,5 +1,8 @@
 import { Check } from 'lucide-react'
-import { Stack, Flex, Box, Grid } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Grid } from '@arshad-shah/cynosure-react/grid'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -32,13 +35,13 @@ export function FetchableFieldsWizard({
   const currentStep = steps.find(s => !completedSteps.has(s)) ?? (steps.length > 0 ? Math.max(...steps) + 1 : 0)
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       {/* Step 1: Authenticate */}
       <Box className={`border rounded-lg transition-colors ${authStatus === 'authenticated' ? 'border-success/20 bg-success/5' :
           authStatus === 'authenticating' ? 'border-accent/30' :
             'border-border-subtle'
         }`}>
-        <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
+        <Flex direction="row" align="center" gap="2" className="px-4 py-3">
           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${authStatus === 'authenticated' ? 'bg-bg-success text-text-on-solid' :
               authStatus === 'authenticating' ? 'bg-bg-accent text-text-on-solid' :
                 'bg-bg-tertiary text-text-muted'
@@ -49,9 +52,9 @@ export function FetchableFieldsWizard({
             {t('connections.wizard.stepAuthenticate')}
           </Text>
         </Flex>
-        <Stack gap="sm" className="px-4 pb-4">
+        <Stack gap="2" className="px-4 pb-4">
           {authStatus === 'authenticated' ? (
-            <Flex direction="row" align="center" gap="md">
+            <Flex direction="row" align="center" gap="3">
               <Text size="sm" color="feedback.success.foreground">{t('connections.wizard.authenticatedSuccess')}</Text>
               <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onAuthenticate}>
                 {t('connections.wizard.reAuthenticate')}

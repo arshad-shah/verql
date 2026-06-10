@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Download } from 'lucide-react'
 import type { QueryResult } from '@shared/types'
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -33,10 +33,10 @@ export function ResultsStatusBar({ results, actions }: Props) {
       direction="row"
       align="center"
       justify="between"
-      gap="md"
+      gap="3"
       className="px-3 py-1 border-t border-border bg-bg-secondary text-xs shrink-0"
     >
-      <Flex direction="row" align="center" gap="md" className="min-w-0">
+      <Flex direction="row" align="center" gap="3" className="min-w-0">
         <Text size="xs" color="feedback.success.foreground">
           {t('query.results.rows', { count: results.rowCount })}
         </Text>
@@ -51,7 +51,7 @@ export function ResultsStatusBar({ results, actions }: Props) {
           </>
         )}
       </Flex>
-      <Flex direction="row" align="center" gap="xs">
+      <Flex direction="row" align="center" gap="1">
         {actions}
         <Button
           variant="ghost"

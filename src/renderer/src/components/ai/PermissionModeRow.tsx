@@ -1,6 +1,6 @@
 import { Eye, Shield, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Flex } from '@/primitives/layout/Flex'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useAIStore } from '@/stores/ai'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -25,7 +25,7 @@ export function PermissionModeRow() {
   const setProfile = useAIStore((s) => s.setPermissionProfile)
 
   return (
-    <Flex align="center" gap="sm" className="px-3 py-1.5 border-b border-border-default/40 text-[10px]">
+    <Flex align="center" gap="2" className="px-3 py-1.5 border-b border-border-default/40 text-[10px]">
       <Shield size={11} className="text-text-tertiary" />
       <Text size="xs" color="fg.subtle">{t('aiui.permission.mode')}</Text>
       <div className="ml-auto inline-flex gap-0.5 bg-bg-primary border border-border-default rounded p-0.5">

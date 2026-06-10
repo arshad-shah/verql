@@ -5,7 +5,11 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Stack, ScrollArea, EmptyState, Box, Flex } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -98,7 +102,7 @@ export function SavedQueriesPanel() {
         <SearchInput size="lg" value={search} onChange={setSearch} placeholder={t('query.saved.searchPlaceholder')} />
       </Box>
 
-      <ScrollArea direction="vertical" className="flex-1 px-1">
+      <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
           <EmptyState
             icon={<Clock size={20} className="text-text-muted" />}

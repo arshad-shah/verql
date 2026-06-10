@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
-import { Box, Flex, ScrollArea } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -119,7 +121,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
           )}
         />
         <Box className="min-w-0 flex-1">
-          <Flex align="center" gap="xs">
+          <Flex align="center" gap="1">
             <Text as="span" size="sm" weight="semibold" className={cn('text-[10px]', color)}>{abbr}</Text>
             <Text as="span" size="sm" truncate className="text-[10px] text-text-primary">{c.name}</Text>
           </Flex>
@@ -143,7 +145,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
       )}
     >
       <Box className="p-2 border-b border-border-default">
-        <Flex align="center" gap="xs" className="rounded-[5px] border border-border-default bg-bg-tertiary px-2 py-1">
+        <Flex align="center" gap="1" className="rounded-[5px] border border-border-default bg-bg-tertiary px-2 py-1">
           <Search size={11} className="text-text-tertiary shrink-0" />
           <Input
             ref={inputRef}
@@ -157,7 +159,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
         </Flex>
       </Box>
 
-      <ScrollArea direction="vertical">
+      <ScrollArea scrollbars="vertical">
         {activeConn && (
           <Box className="px-1.5 pt-1">
             <Text as="p" size="sm" weight="semibold" className="px-1.5 py-1 text-[8px] uppercase tracking-wider text-text-tertiary">

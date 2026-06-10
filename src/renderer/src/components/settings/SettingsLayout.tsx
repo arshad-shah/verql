@@ -1,6 +1,9 @@
 import { JSX, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { Flex, Box, ScrollArea, Divider } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore } from '@/stores/ui'
@@ -104,8 +107,8 @@ export function SettingsLayout() {
         <Box className="px-3 pt-3 pb-2 border-b border-border-default">
           <SearchInput size={"lg"} value={query} onChange={setQuery} placeholder={t('settings.layout.searchPlaceholder')} className="mt-2" />
         </Box>
-        <ScrollArea direction="vertical" className="flex-1">
-          <Box paddingY="sm">
+        <ScrollArea scrollbars="vertical" className="flex-1">
+          <Box paddingY="2">
             <Text size="xs" color="fg.subtle" weight="bold" className="px-4 py-2 uppercase tracking-wider">
               {query ? t('settings.layout.matches', { count: filteredCategories.length }) : t('settings.layout.categories')}
             </Text>
@@ -118,7 +121,7 @@ export function SettingsLayout() {
       {/* Right pane: header + auto-save hint + category body. */}
       <Flex direction="column" className="flex-1 overflow-hidden">
         <Box className="px-6 py-3 border-b border-border-default">
-          <Flex align="center" justify="between" gap="md">
+          <Flex align="center" justify="between" gap="3">
             <Text size="sm" weight="medium">{currentLabel}</Text>
             {/* VS Code shows a "User / Workspace" breadcrumb here; we have a
                 single scope today, so we just confirm the auto-save behaviour
@@ -128,7 +131,7 @@ export function SettingsLayout() {
             </Text>
           </Flex>
         </Box>
-        <ScrollArea direction="vertical" className="flex-1">
+        <ScrollArea scrollbars="vertical" className="flex-1">
           {/* Fluid up to ~1280px, then centred so a 4K display doesn't put the
               label on one coast and the control on the other. Padding scales
               with breakpoint so the body breathes when the user widens the

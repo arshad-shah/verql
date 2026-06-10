@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'

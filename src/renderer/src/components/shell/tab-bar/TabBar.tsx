@@ -4,7 +4,8 @@ import { useTabsStore } from '@/stores/tabs'
 import { requestCloseTab } from '@/stores/tab-actions'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { Flex, Tooltip } from '@/primitives'
+import { Tooltip } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { TabItem } from './TabItem'
 import { useTabScroll } from './useTabScroll'
@@ -59,7 +60,7 @@ export function TabBar() {
   return (
     <Flex
       align="end"
-      gap="xs"
+      gap="1"
       className="h-10 shrink-0 bg-tab-bar-bg px-2 pt-1.5"
     >
       {/* Scroll left arrow */}

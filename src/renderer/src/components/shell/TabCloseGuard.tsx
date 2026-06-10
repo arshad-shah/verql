@@ -1,4 +1,6 @@
-import { Modal, Stack, Flex } from '@/primitives'
+import { Modal } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -23,7 +25,7 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
     // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
     return (
       <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
-        <Stack gap="md" className="p-4">
+        <Stack gap="3" className="p-4">
           <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
           <Text size="sm" color="fg.muted">
             {t('shell.confirmTransaction.message', {
@@ -31,7 +33,7 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
             })}
           </Text>
         </Stack>
-        <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+        <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
           <Button variant="outline" colorScheme="neutral" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
           <Button
             colorScheme="danger"

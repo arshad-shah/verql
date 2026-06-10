@@ -1,6 +1,9 @@
 import { X, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
-import { Stack, Flex, Box, cn } from '@/primitives'
+import { cn } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -36,14 +39,14 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <Stack gap="sm" className="fixed bottom-10 right-4 z-50 max-w-sm">
+    <Stack gap="2" className="fixed bottom-10 right-4 z-50 max-w-sm">
       {toasts.map((toast) => {
         const Icon = toast.persistent ? persistentIcons[toast.type] : icons[toast.type]
         return (
           <Flex
             key={toast.id}
             align="start"
-            gap="sm"
+            gap="2"
             className={cn(
               'px-3 py-2.5 rounded-lg border backdrop-blur-sm shadow-lg toast-enter',
               styles[toast.type]

@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from 'react'
-import { Flex, KbdGroup } from '@/primitives'
+import { KbdGroup } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { VerqlMark } from '@/components/brand/VerqlMark'
 
@@ -19,7 +20,7 @@ export function WelcomeScreen() {
 
   return (
     <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full select-none">
-      <Flex direction="column" align="center" gap="xl" className="text-center">
+      <Flex direction="column" align="center" gap="6" className="text-center">
         {/* Watermark — large, dim glyph in the page foreground color so it
             tints with the active theme but reads as decorative chrome. */}
         <VerqlMark size={240} className="opacity-25" />

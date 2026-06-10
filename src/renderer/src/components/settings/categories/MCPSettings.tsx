@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, CodeView } from '@/primitives'
+import { CodeView } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Input } from '@arshad-shah/cynosure-react/input'
@@ -89,7 +92,7 @@ export function MCPSettings() {
   }
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.mcp.blurb')}</Text>
 
       <SettingRow label={t('settings.mcp.serverStatus.label')} description={
@@ -125,7 +128,7 @@ export function MCPSettings() {
 
       <Divider />
       <Text size="sm" color="fg.subtle">{t('settings.mcp.toolsHeading')}</Text>
-      <Stack gap="xs">
+      <Stack gap="1">
         {tools.map(tool => (
           <SettingRow key={tool.id} label={tool.name} description={tool.description}>
             <Switch checked={tool.enabled} onCheckedChange={(checked) => setToolEnabled(tool.id, checked)} ><VisuallyHidden>{t('settings.mcp.enableTool', { tool: tool.name })}</VisuallyHidden></Switch>
@@ -135,7 +138,7 @@ export function MCPSettings() {
 
       <Divider />
       <SettingRow label={t('settings.mcp.authToken.label')} description={t('settings.mcp.authToken.description')}>
-        <Flex direction="row" align="center" gap="sm">
+        <Flex direction="row" align="center" gap="2">
           <Input type="password" value={token || t('settings.mcp.authToken.placeholder')} readOnly size="sm" className="w-56 font-mono" aria-label={t('settings.mcp.authToken.aria')} />
           <IconButton variant="ghost" colorScheme="neutral" size="sm" onClick={regenerate} title={t('settings.mcp.authToken.regenerate')} label={t('settings.mcp.authToken.regenerate')} icon={<RefreshCw size={14} />} />
         </Flex>
@@ -150,10 +153,10 @@ export function MCPSettings() {
 
       <Divider />
       <Text size="xs" color="fg.subtle">{t('settings.mcp.recentActivity')}</Text>
-      <Stack gap="xs">
+      <Stack gap="1">
         {activity.length === 0 && <Text size="xs" color="fg.subtle">{t('settings.mcp.noActivity')}</Text>}
         {[...activity].reverse().map(a => (
-          <Flex key={a.id} direction="row" align="center" gap="sm">
+          <Flex key={a.id} direction="row" align="center" gap="2">
             <Text as="span" size="xs" color={a.status === 'ok' ? 'feedback.success.foreground' : a.status === 'rejected' ? 'feedback.warning.foreground' : 'feedback.danger.foreground'}>●</Text>
             <Text size="xs" className="font-mono">{a.toolId}</Text>
             <Text size="xs" color="fg.subtle" truncate>{a.paramsSummary}</Text>

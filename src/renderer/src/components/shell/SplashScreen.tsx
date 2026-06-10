@@ -1,4 +1,5 @@
-import { Flex, Stack } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { VerqlHero } from '@/components/brand/VerqlHero'
@@ -22,7 +23,7 @@ export function SplashScreen({ status = 'Starting Verql…' }: SplashScreenProps
       role="status"
       aria-live="polite"
     >
-      <Stack gap="lg" align="center">
+      <Stack gap="4" align="center">
         <VerqlHero size={120} className="text-accent" />
         <Spinner size="lg" label={status} />
         <Text size="md" color="fg.subtle">{status}</Text>

@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Label } from '@arshad-shah/cynosure-react/label'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -40,8 +41,8 @@ export function ChartPanel({ results }: Props) {
 
   return (
     <Flex direction="column" className="h-full">
-      <Flex align="center" gap="md" className="px-3 py-2 border-b border-border bg-bg-secondary shrink-0">
-        <Flex gap="xs">
+      <Flex align="center" gap="3" className="px-3 py-2 border-b border-border bg-bg-secondary shrink-0">
+        <Flex gap="1">
           {CHART_TYPES.map(ct => (
             <Button
               key={ct.value}
@@ -54,7 +55,7 @@ export function ChartPanel({ results }: Props) {
             </Button>
           ))}
         </Flex>
-        <Flex align="center" gap="sm" className="text-xs ml-auto">
+        <Flex align="center" gap="2" className="text-xs ml-auto">
           <Label>{t('shell.chartPanel.xAxisLabel')}</Label>
           <Select
             value={xKey}
@@ -73,7 +74,7 @@ export function ChartPanel({ results }: Props) {
           />
         </Flex>
       </Flex>
-      <Box padding="lg" className="flex-1">
+      <Box padding="4" className="flex-1">
         <ChartView type={chartType} data={results.rows} xKey={xKey} yKey={yKey} />
       </Box>
     </Flex>

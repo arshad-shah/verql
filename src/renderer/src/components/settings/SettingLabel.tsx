@@ -1,4 +1,4 @@
-import { Flex } from "@/primitives/layout/Flex";
+import { Flex } from "@arshad-shah/cynosure-react/flex";
 import { Text } from "@arshad-shah/cynosure-react/text";
 
 interface SettingLabelProps {

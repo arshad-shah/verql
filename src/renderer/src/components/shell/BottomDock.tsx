@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore, BOTTOM_PANEL, type BottomPanelId } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'

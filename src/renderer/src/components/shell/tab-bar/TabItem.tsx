@@ -2,7 +2,8 @@ import { useState, type DragEvent } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { Flex, Tooltip, ContextMenu, cn } from '@/primitives'
+import { Tooltip, ContextMenu, cn } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { getTabIcon } from './tab-icons'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -43,7 +44,7 @@ export function TabItem({
     <ContextMenu items={contextMenuItems}>
       <Flex
         align="center"
-        gap="xs"
+        gap="1"
         data-tab-id={tab.id}
         draggable
         onDragStart={onDragStart}

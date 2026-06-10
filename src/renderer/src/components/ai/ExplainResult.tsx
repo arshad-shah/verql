@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { Sparkles, Copy, RefreshCcw, MessageSquarePlus, Square, AlertCircle } from 'lucide-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Flex } from '@/primitives/layout/Flex'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { MarkdownContent } from '@/components/ai/MarkdownContent'
 import { useTabsStore } from '@/stores/tabs'
 import { useExplainStore } from '@/stores/explain'
@@ -46,10 +46,10 @@ export function ExplainResult({ tabId, explanation }: { tabId: string; explanati
 
   return (
     <div className="border-t border-accent/30 bg-bg-secondary shrink-0">
-      <Flex align="center" gap="sm" className="px-3 py-1.5 border-b border-border-default/40">
+      <Flex align="center" gap="2" className="px-3 py-1.5 border-b border-border-default/40">
         <Sparkles size={12} className="text-accent" />
         <Text size="xs" weight="medium" color="accent.solid">{t('aiui.explain.explanation')}</Text>
-        <Flex align="center" gap="xs" className="ml-auto">
+        <Flex align="center" gap="1" className="ml-auto">
           {per?.loading
             ? <StopButton tabId={tabId} streamId={per?.streamId} />
             : <ModelDurationLabel model={per?.model} durationMs={per?.durationMs} />}
@@ -96,7 +96,7 @@ function ModelDurationLabel({ model, durationMs }: { model: string | null | unde
 
 function ErrorRow({ message }: { message: string }) {
   return (
-    <Flex align="center" gap="xs">
+    <Flex align="center" gap="1">
       <AlertCircle size={12} className="text-error" />
       <Text size="xs" color="feedback.danger.foreground">{message}</Text>
     </Flex>
@@ -146,7 +146,7 @@ function ActionBar({ tabId, text }: { tabId: string; text: string }) {
   }, [tabId])
 
   return (
-    <Flex gap="xs" className="px-3 py-1 border-t border-border-default/40">
+    <Flex gap="1" className="px-3 py-1 border-t border-border-default/40">
       <Button variant="ghost" colorScheme="neutral" size="xs" className="!h-6 !px-1.5" leftIcon={<Copy size={10} />} onClick={() => navigator.clipboard.writeText(text)}>
         {t('aiui.explain.copy')}
       </Button>

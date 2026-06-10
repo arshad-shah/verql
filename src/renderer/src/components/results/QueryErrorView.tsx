@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Box, Flex, Badge } from '@/primitives'
+import { Badge } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { parseDbError } from '@/lib/db-error'
@@ -35,12 +37,12 @@ export function QueryErrorView({ error, dbType }: Props) {
     <Box className="p-4 overflow-auto h-full">
       <Alert status="danger" className="max-w-2xl">
         <AlertTitle>{parsed.title}</AlertTitle>
-        <Flex direction="column" gap="sm">
+        <Flex direction="column" gap="2">
           {/* Friendly message — primary action signal. */}
           <Text size="sm" as="p" className="leading-relaxed">{parsed.message}</Text>
 
           {parsed.hint && (
-            <Flex direction="column" gap="xs" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
+            <Flex direction="column" gap="1" align="start" className="rounded-md bg-bg-tertiary/40 px-3 py-2">
               <Text size="xs" weight="medium" color="fg.muted" className="uppercase tracking-wide">
                 {t('query.error.hint')}
               </Text>
@@ -49,7 +51,7 @@ export function QueryErrorView({ error, dbType }: Props) {
           )}
 
           {/* Footer: stable code chip (analytics + bug reports) + raw disclosure. */}
-          <Flex align="center" justify="between" gap="sm" className="pt-1">
+          <Flex align="center" justify="between" gap="2" className="pt-1">
             {!isUnknown && (
               <Badge variant="default" size="sm" className="font-mono text-[10px] uppercase">
                 {parsed.code}

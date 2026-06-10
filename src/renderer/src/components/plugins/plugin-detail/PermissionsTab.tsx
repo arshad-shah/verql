@@ -1,4 +1,7 @@
-import { Stack, Flex, Box, Card, Badge, EmptyState } from '@/primitives'
+import { Card, Badge, EmptyState } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -17,7 +20,7 @@ export function PermissionsTab({ permissions, onToggle }: {
 
   if (permissions.trusted) {
     return (
-      <Stack gap="md">
+      <Stack gap="3">
         <Alert status="info">
           <AlertDescription>{t('plugins.detail.permissions.trusted')}</AlertDescription>
         </Alert>
@@ -36,19 +39,19 @@ export function PermissionsTab({ permissions, onToggle }: {
   }
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Alert status="warning">
         <AlertDescription>{t('plugins.detail.permissions.warning')}</AlertDescription>
       </Alert>
       <Card padding="md">
-        <Stack gap="md">
+        <Stack gap="3">
           {permissions.declared.map((perm) => {
             const info = permissions.info[perm]
             const granted = permissions.granted.includes(perm)
             return (
-              <Flex key={perm} direction="row" align="start" justify="between" gap="md">
+              <Flex key={perm} direction="row" align="start" justify="between" gap="3">
                 <Box className="flex-1 min-w-0">
-                  <Flex direction="row" align="center" gap="sm" className="flex-wrap">
+                  <Flex direction="row" align="center" gap="2" className="flex-wrap">
                     <Text size="sm" weight="medium">{info?.title ?? perm}</Text>
                     <Badge size="sm" variant={info?.enforced ? 'accent' : 'default'}>
                       {info?.enforced ? t('plugins.detail.permissions.enforced') : t('plugins.detail.permissions.advisory')}

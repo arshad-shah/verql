@@ -1,4 +1,6 @@
-import { Stack, Divider, Flex } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -18,7 +20,7 @@ export function GeneralSettings() {
   const { t } = useTranslation()
 
   return (
-    <Stack gap="md">
+    <Stack gap="3">
       <Text size="xs" color="fg.subtle">{t('settings.general.blurb')}</Text>
 
       <SettingRow label={t('settings.general.queryTimeout.label')} description={t('settings.general.queryTimeout.description')}>

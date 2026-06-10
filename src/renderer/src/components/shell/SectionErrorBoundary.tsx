@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { Flex, Stack } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Code } from '@arshad-shah/cynosure-react/code'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -61,7 +62,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
 
     return (
       <Flex align="center" justify="center" className="h-full w-full p-6">
-        <Stack gap="sm" align="center" className="max-w-md text-center">
+        <Stack gap="2" align="center" className="max-w-md text-center">
           <AlertTriangle size={28} className="text-warning" />
           <Text size="sm" weight="medium">{this.props.label} crashed</Text>
           <Text size="xs" color="fg.subtle">

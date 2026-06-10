@@ -5,9 +5,11 @@ import { useQueryHistoryStore } from '@/stores/query-history'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import {
-  Stack, ScrollArea, EmptyState, Box, Flex, Tooltip,
-} from '@/primitives'
+import { EmptyState, Tooltip } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -61,7 +63,7 @@ export function QueryHistoryPanel() {
         <SearchInput size="lg" value={search} onChange={setSearch} placeholder={t('query.history.searchPlaceholder')} />
       </Box>
 
-      <ScrollArea direction="vertical" className="flex-1 px-1">
+      <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
           <EmptyState
             icon={<History size={20} className="text-text-muted" />}
@@ -77,8 +79,8 @@ export function QueryHistoryPanel() {
             className="group px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer transition-colors"
             onClick={() => openHistoryEntry(entry)}
           >
-            <Flex align="center" justify="between" gap="xs">
-              <Flex align="center" gap="xs" className="min-w-0 flex-1">
+            <Flex align="center" justify="between" gap="1">
+              <Flex align="center" gap="1" className="min-w-0 flex-1">
                 {entry.status === 'ok' ? (
                   <CheckCircle2 size={11} className="text-success shrink-0" />
                 ) : (

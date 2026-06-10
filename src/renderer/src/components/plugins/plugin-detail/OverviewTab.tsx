@@ -1,4 +1,6 @@
-import { Stack, Flex, Box, Card } from '@/primitives'
+import { Card } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -22,12 +24,12 @@ export function OverviewTab({ plugin, stateConfig, errors }: {
   const { t } = useTranslation()
   const StateIcon = stateConfig.icon
   return (
-    <Stack gap="lg">
+    <Stack gap="4">
       {/* Stat Cards */}
-      <Flex direction="row" gap="md">
+      <Flex direction="row" gap="3">
         <Card padding="md" className="flex-1">
           <Text size="xs" color="fg.subtle" weight="medium" className="text-[10px] uppercase tracking-wide mb-2 block">{t('plugins.detail.overview.statusLabel')}</Text>
-          <Flex direction="row" align="center" gap="xs">
+          <Flex direction="row" align="center" gap="1">
             <StateIcon size={16} />
             <Text size="sm" weight="medium">{t(stateConfig.labelKey)}</Text>
           </Flex>
@@ -50,7 +52,7 @@ export function OverviewTab({ plugin, stateConfig, errors }: {
       {/* Details Card */}
       <Card padding="md">
         <Text size="xs" color="fg.subtle" weight="medium" className="text-[10px] uppercase tracking-wide mb-3 block">{t('plugins.detail.overview.detailsLabel')}</Text>
-        <Stack gap="sm">
+        <Stack gap="2">
           <DetailRow label={t('plugins.detail.overview.identifier')} value={plugin.name} mono />
           <DetailRow label={t('plugins.detail.overview.version')} value={plugin.version} />
           <DetailRow label={t('plugins.detail.overview.source')} value={plugin.bundled ? t('plugins.detail.overview.sourceBuiltIn') : t('plugins.detail.overview.sourceUserInstalled')} />

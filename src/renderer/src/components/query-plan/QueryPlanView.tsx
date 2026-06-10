@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { PlanNodeView } from './PlanNode'
 import type { PlanNode } from '@shared/types'
-import { Flex, Stack } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -35,7 +36,7 @@ export function QueryPlanView({ plan }: Props) {
   }
 
   return (
-    <Stack direction="vertical" className="h-full overflow-auto p-3">
+    <Stack className="h-full overflow-auto p-3">
       <Text size="xs" color="fg.subtle" className="mb-3">
         {t('shell.queryPlan.header', { cost: maxCost.toFixed(1) })}
       </Text>

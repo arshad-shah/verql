@@ -2,7 +2,7 @@ import { useRef, useEffect, useMemo } from 'react'
 import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
-import { ScrollArea } from '@/primitives/layout/ScrollArea'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { MessageBubble } from './MessageBubble'
 import { ToolCallCard } from './ToolCallCard'
@@ -81,7 +81,7 @@ export function MessageThread() {
   }, [messages])
 
   return (
-    <ScrollArea direction="vertical" className="flex-1 p-3">
+    <ScrollArea scrollbars="vertical" className="flex-1 p-3">
       {messages.length === 0 && !isAwaiting && !streamingContent && <EmptyState />}
       {messages.map(msg => {
         // Skip standalone tool-result messages — they're shown inside ToolCallCard

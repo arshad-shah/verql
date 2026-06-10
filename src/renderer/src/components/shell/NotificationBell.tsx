@@ -1,7 +1,8 @@
 import { Bell } from 'lucide-react'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
-import { Box, BadgeIndicator, Tooltip } from '@/primitives'
+import { BadgeIndicator, Tooltip } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
 

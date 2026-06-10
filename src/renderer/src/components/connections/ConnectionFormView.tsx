@@ -3,7 +3,12 @@ import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
-import { ScrollArea, Container, Stack, Flex, Grid, Divider } from '@/primitives'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Container } from '@arshad-shah/cynosure-react/container'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Grid } from '@arshad-shah/cynosure-react/grid'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { ColorPicker } from '@arshad-shah/cynosure-react/color-picker'
 import { FormField, FormLabel, FormControl } from '@arshad-shah/cynosure-react/form'
 import { Select } from '@arshad-shah/cynosure-react/select'
@@ -128,18 +133,18 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
   const handleCancel = () => closeTab(tabId)
 
   return (
-    <ScrollArea direction="vertical" className="h-full bg-bg-primary">
+    <ScrollArea scrollbars="vertical" className="h-full bg-bg-primary">
       <Container size="md" className="py-8">
         <form onSubmit={handleSubmit}>
-          <Stack gap="lg">
+          <Stack gap="4">
             {/* Header */}
-            <Stack gap="xs">
+            <Stack gap="1">
               <Heading level={2}>{editingId ? t('connections.form.editTitle') : t('connections.form.newTitle')}</Heading>
             </Stack>
 
             {/* General — identity */}
             <Section title={t('connections.form.general')} description={t('connections.form.generalDescription')}>
-              <Stack gap="md">
+              <Stack gap="3">
                 <FormField>
                   <FormLabel>{t('connections.form.databaseType')}</FormLabel>
                   <FormControl>
@@ -152,7 +157,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                   />
                   </FormControl>
                 </FormField>
-                <Grid columns={2} gap="md">
+                <Grid columns={2} gap="3">
                   <FormField>
                     <FormLabel>{t('connections.form.connectionName')}</FormLabel>
                     <FormControl>
@@ -190,9 +195,9 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             {/* Connection — driver fields */}
             {activePluginDriver && staticFields.length > 0 && (
               <Section title={t('connections.form.connection')} description={t('connections.form.connectionDescription')}>
-                <Stack gap="md">
+                <Stack gap="3">
                   {staticInputs.length > 0 && (
-                    <Grid columns={2} gap="md">
+                    <Grid columns={2} gap="3">
                       {staticInputs.map(f => (
                         <PluginFieldInput
                           key={f.key}
@@ -212,7 +217,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       <Text size="xs" color="fg.subtle" weight="semibold" className="uppercase tracking-wider">
                         {t('connections.form.options')}
                       </Text>
-                      <Stack gap="xs">
+                      <Stack gap="1">
                         {staticToggles.map(f => (
                           <ToggleRow
                             key={f.key}
@@ -259,9 +264,9 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             <Divider />
 
             {/* Footer actions */}
-            <Flex direction="row" align="start" justify="between" gap="md">
+            <Flex direction="row" align="start" justify="between" gap="3">
               <ConnectionTestButton profile={profile as unknown as ConnectionProfile} />
-              <Flex direction="row" gap="sm">
+              <Flex direction="row" gap="2">
                 <Button type="button" variant="outline" colorScheme="neutral" size="lg" onClick={handleCancel}>{t('common.cancel')}</Button>
                 <Button type="submit" size="lg">
                   {editingId ? t('connections.form.saveChanges') : t('connections.form.addConnection')}

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
-import { Flex, cn } from '@/primitives'
+import { cn } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export interface BottomTab {

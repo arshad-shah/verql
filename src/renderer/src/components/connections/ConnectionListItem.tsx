@@ -1,5 +1,6 @@
 import { MoreHorizontal } from 'lucide-react'
-import { Badge, Flex } from '@/primitives'
+import { Badge } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { DropdownMenu } from '@/primitives/surfaces/DropdownMenu'
@@ -95,7 +96,7 @@ export function ConnectionListItem({
   return (
     <Flex
       align="center"
-      gap="sm"
+      gap="2"
       className={`group px-3 py-1.5 cursor-pointer transition-colors border-l-2 ${
         active
           ? 'bg-accent/10 border-l-accent'
@@ -119,7 +120,7 @@ export function ConnectionListItem({
       />
 
       <Flex direction="column" className="flex-1 min-w-0">
-        <Flex align="center" gap="xs">
+        <Flex align="center" gap="1">
           <Badge variant={chip.tone} size="sm" className="font-mono text-[9px] leading-none px-1.5 py-0.5 shrink-0">
             {chip.label}
           </Badge>

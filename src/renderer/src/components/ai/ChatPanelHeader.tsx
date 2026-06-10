@@ -4,7 +4,8 @@ import {
   Minimize2, MoreHorizontal, ChevronDown,
 } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { Flex, ScrollArea } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -73,7 +74,7 @@ export function ChatPanelHeader() {
   return (
     <div ref={ref} className="relative border-b border-border-default bg-bg-secondary">
       {/* Row 1: title + actions */}
-      <Flex align="center" gap="xs" className="px-3 pt-2 pb-1.5">
+      <Flex align="center" gap="1" className="px-3 pt-2 pb-1.5">
         <button
           type="button"
           onClick={() => { setHistoryOpen((o) => !o); setMoreOpen(false) }}
@@ -118,7 +119,7 @@ export function ChatPanelHeader() {
       {/* Row 2: model + context window bar (prominent) */}
       <div className="px-3 pb-2 space-y-1">
         <Flex align="center" justify="between" className="text-[11px]">
-          <Flex align="center" gap="xs">
+          <Flex align="center" gap="1">
             <Sparkles size={11} className="text-accent" />
             <Text size="xs" color="fg.subtle">{t('aiui.header.model')}</Text>
           </Flex>
@@ -149,7 +150,7 @@ export function ChatPanelHeader() {
       {/* History dropdown */}
       {historyOpen && (
         <div className="absolute left-2 right-2 top-full z-50 mt-1 rounded-lg border border-border-default bg-bg-elevated shadow-dropdown overflow-hidden">
-          <ScrollArea direction="vertical" className="max-h-64 py-1">
+          <ScrollArea scrollbars="vertical" className="max-h-64 py-1">
             {sorted.map((c) => (
               <div
                 key={c.id}

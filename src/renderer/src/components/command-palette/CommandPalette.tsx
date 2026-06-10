@@ -9,7 +9,10 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { ScrollArea, KbdGroup, Box, Flex } from '@/primitives'
+import { KbdGroup } from '@/primitives'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -220,7 +223,7 @@ export function CommandPalette({ open, onClose }: Props) {
       <Box className="fixed inset-0 bg-black/30 z-50" onClick={onClose} />
       <Box className="fixed top-[15%] left-1/2 -translate-x-1/2 z-50 w-[520px] bg-bg-secondary border border-border rounded-xl shadow-2xl overflow-hidden">
         {/* Search input */}
-        <Flex align="center" gap="sm" className="px-4 py-3 border-b border-border">
+        <Flex align="center" gap="2" className="px-4 py-3 border-b border-border">
           <Search size={16} className="text-text-muted shrink-0" />
           <Input
             ref={inputRef}
@@ -235,7 +238,7 @@ export function CommandPalette({ open, onClose }: Props) {
         </Flex>
 
         {/* Results */}
-        <ScrollArea direction="vertical" className="max-h-72 py-1">
+        <ScrollArea scrollbars="vertical" className="max-h-72 py-1">
           {filtered.length === 0 && (
             <Text size="xs" color="fg.subtle" as="p" align="center" className="px-4 py-3">{t('command.noMatch')}</Text>
           )}
@@ -248,7 +251,7 @@ export function CommandPalette({ open, onClose }: Props) {
               onClick={() => { cmd.action(); onClose() }}
               className="flex items-center justify-between px-4 py-2 text-left rounded-none border-0 h-auto"
             >
-              <Flex align="center" gap="sm">
+              <Flex align="center" gap="2">
                 {cmd.category && <Text size="xs" color="fg.subtle" className="text-[10px] uppercase">{cmd.category}</Text>}
                 <Text size="xs">{cmd.title}</Text>
               </Flex>

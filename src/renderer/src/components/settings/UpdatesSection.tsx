@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Stack, Flex } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IPC_CHANNELS, IPC_EVENTS, type IpcEventMap } from '@shared/ipc'
@@ -104,12 +105,12 @@ export function UpdatesSection() {
     : status.currentVersion
 
   return (
-    <Stack gap="sm">
+    <Stack gap="2">
       <SettingRow
         label={t('settings.updates.label')}
         description={t('settings.updates.description', { manager: status.displayName, version: versionLabel })}
       >
-        <Flex gap="sm">
+        <Flex gap="2">
           <Button
             variant="outline"
             colorScheme="neutral"

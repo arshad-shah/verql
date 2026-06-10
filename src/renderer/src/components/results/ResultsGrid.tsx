@@ -5,7 +5,7 @@ import type { QueryResult } from '@shared/types'
 import { useSelectionStore } from '@/stores/selection'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
-import { Box } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import type { DataDisplaySettings } from '@shared/settings'
 import { formatBoolean, formatWithPattern, truncateText } from '@/lib/format-cell'
 

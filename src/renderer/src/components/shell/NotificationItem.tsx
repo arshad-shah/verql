@@ -1,4 +1,5 @@
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { cn } from '@/primitives/utils/cn'
@@ -32,7 +33,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
         read && 'opacity-60'
       )}
     >
-      <Flex direction="row" align="start" gap="sm" className="w-full">
+      <Flex direction="row" align="start" gap="2" className="w-full">
         <Box
           className={cn(
             'mt-1.25 h-1.5 w-1.5 shrink-0 rounded-full',

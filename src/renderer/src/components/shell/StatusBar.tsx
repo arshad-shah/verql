@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { useConnectionsStore } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'

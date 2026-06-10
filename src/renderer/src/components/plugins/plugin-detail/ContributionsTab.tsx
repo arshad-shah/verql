@@ -1,4 +1,6 @@
-import { Flex, Badge, Card, Stack, EmptyState } from '@/primitives'
+import { Badge, Card, EmptyState } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { CONTRIBUTION_BADGE_VARIANTS } from './constants'
@@ -11,12 +13,12 @@ export function ContributionsTab({ contributions }: { contributions: string[] })
 
   return (
     <Card padding="md">
-      <Stack gap="xs">
+      <Stack gap="1">
         {contributions.map((c, i) => {
           const [type, name] = c.includes(':') ? c.split(':') : ['feature', c]
           const variant = CONTRIBUTION_BADGE_VARIANTS[type] ?? 'default'
           return (
-            <Flex key={i} direction="row" align="center" gap="sm" className="py-1">
+            <Flex key={i} direction="row" align="center" gap="2" className="py-1">
               <Badge size="sm" variant={variant} className="w-20 text-center justify-center shrink-0">{type}</Badge>
               <Text size="sm" color="fg.muted">{name}</Text>
             </Flex>

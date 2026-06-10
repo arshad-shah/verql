@@ -13,7 +13,9 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import type { QueryTab } from '@shared/types'
-import { Flex, Divider, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
+import { Box } from '@arshad-shah/cynosure-react/box'
 
 interface Props {
   tab: QueryTab
@@ -71,7 +73,7 @@ export function QueryPanel({ tab }: Props) {
     <Flex direction="column" className="h-full">
       {/* Connection + schema selector + toolbar */}
       <Flex direction="column" className="border-b border-border bg-bg-secondary shrink-0">
-        <Flex direction="row" align="center" gap="sm" className="px-3 py-1.5">
+        <Flex direction="row" align="center" gap="2" className="px-3 py-1.5">
           <ConnectionSelector tabId={tab.id} connectionId={tab.connectionId} database={tab.database} schema={tab.schema} />
           <Divider orientation="vertical" className="h-4" />
           <QueryToolbar
@@ -87,7 +89,7 @@ export function QueryPanel({ tab }: Props) {
             TransactionToolbar self-hides when caps.autoCommit and caps.manualTransactions
             are both absent, but we skip the wrapper row entirely to avoid an empty strip. */}
         {caps?.session && (
-          <Flex direction="row" align="center" gap="sm" className="px-3 pb-1.5 flex-wrap">
+          <Flex direction="row" align="center" gap="2" className="px-3 pb-1.5 flex-wrap">
             <TransactionToolbar
               caps={caps.session}
               txn={tab.txn ?? { autoCommit: true, status: 'none', readOnly: false }}

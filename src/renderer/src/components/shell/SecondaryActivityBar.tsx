@@ -4,7 +4,9 @@
 // inside ActiveConnectionsPanel, so the iconography reads as one family.
 import { ListTree, Plug, Activity } from 'lucide-react'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
-import { Stack, Spacer, Tooltip } from '@/primitives'
+import { Tooltip } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Spacer } from '@arshad-shah/cynosure-react/spacer'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
@@ -36,7 +38,7 @@ export function SecondaryActivityBar() {
   return (
     <Stack
       align="center"
-      gap="xs"
+      gap="1"
       className="w-12 bg-bg-primary border-l border-border shrink-0 pt-2"
     >
       {renderButton(SECONDARY_PANEL.CONNECTIONS, Plug, t('shell.secondaryActivityBar.connections'))}
