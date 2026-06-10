@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, type ChangeEvent } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { SearchInput, Box } from '@/primitives'
@@ -24,17 +24,10 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
     setLocalValue('')
   }, [activeConnectionId, setFilterText])
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+  const handleChange = (value: string) => {
     setLocalValue(value)
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => setFilterText(value), 100)
-  }
-
-  const handleClear = () => {
-    setFilterText('')
-    setLocalValue('')
-    inputRef.current?.focus()
   }
 
   return (
@@ -46,7 +39,6 @@ export function SearchFilter({ resultCount }: SearchFilterProps) {
           placeholder={t('explorer.search.placeholder', { objects: nouns.object.many })}
           value={localValue}
           onChange={handleChange}
-          onClear={handleClear}
         />
         {filterText && resultCount !== undefined && (
           <span

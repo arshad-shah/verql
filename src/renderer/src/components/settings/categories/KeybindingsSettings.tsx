@@ -114,8 +114,7 @@ export function KeybindingsSettings() {
 
       <SearchInput
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onClear={() => setSearch('')}
+        onChange={setSearch}
         placeholder={t('settings.keybindings.searchPlaceholder')}
         size="sm"
       />

@@ -8,16 +8,13 @@ const meta: Meta<typeof SearchInput> = {
   component: SearchInput,
   argTypes: {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
-    loading: { control: 'boolean' },
     disabled: { control: 'boolean' },
-    shortcut: { control: 'text' },
   },
 }
 export default meta
 type Story = StoryObj<typeof SearchInput>
 
 const onChangeMock = fn()
-const onClearMock = fn()
 
 export const Default: Story = {
   render: function Render() {
@@ -26,26 +23,30 @@ export const Default: Story = {
       <div className="w-72">
         <SearchInput
           value={value}
-          onChange={(e) => { setValue(e.target.value); onChangeMock(e) }}
-          onClear={() => { setValue(''); onClearMock() }}
+          onChange={(v) => {
+            setValue(v)
+            onChangeMock(v)
+          }}
           placeholder="Search tables..."
-          shortcut="⌘K"
         />
       </div>
     )
   },
   play: async ({ canvas }) => {
-    const input = canvas.getByRole('textbox')
+    const input = canvas.getByRole('searchbox')
     await userEvent.type(input, 'users')
-    await expect(onChangeMock).toHaveBeenCalled()
+    await expect(onChangeMock).toHaveBeenCalledWith('users')
+    // Built-in clear button resets the value through onChange('').
+    const clear = canvas.getByRole('button', { name: /clear/i })
+    await userEvent.click(clear)
+    await expect(onChangeMock).toHaveBeenLastCalledWith('')
   },
 }
 
 export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-3 w-72">
-      <SearchInput placeholder="Default" shortcut="⌘K" />
-      <SearchInput placeholder="Loading..." loading />
+      <SearchInput placeholder="Default" />
       <SearchInput placeholder="Disabled" disabled />
     </div>
   ),

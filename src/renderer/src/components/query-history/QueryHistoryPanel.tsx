@@ -56,7 +56,7 @@ export function QueryHistoryPanel() {
   return (
     <Stack className="h-full">
       <Box className="px-2 py-1.5">
-        <SearchInput size="lg" onClear={() => setSearch('')} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('query.history.searchPlaceholder')} />
+        <SearchInput size="lg" value={search} onChange={setSearch} placeholder={t('query.history.searchPlaceholder')} />
       </Box>
 
       <ScrollArea direction="vertical" className="flex-1 px-1">

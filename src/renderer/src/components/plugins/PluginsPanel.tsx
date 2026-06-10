@@ -61,8 +61,7 @@ export function PluginsPanel() {
           size="xs"
           placeholder={t('plugins.list.searchPlaceholder')}
           value={search}
-          onChange={e => setSearch(e.target.value)}
-          onClear={() => setSearch('')}
+          onChange={setSearch}
           className="flex-1"
         />
         <IconButton

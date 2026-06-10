@@ -100,7 +100,7 @@ export function SettingsLayout() {
       {/* Left rail: search + category nav. */}
       <Flex direction="column" className="w-60 border-r border-border-default shrink-0 bg-bg-secondary">
         <Box className="px-3 pt-3 pb-2 border-b border-border-default">
-          <SearchInput size={"lg"} onClear={() => setQuery("")} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('settings.layout.searchPlaceholder')} className="mt-2" />
+          <SearchInput size={"lg"} value={query} onChange={setQuery} placeholder={t('settings.layout.searchPlaceholder')} className="mt-2" />
         </Box>
         <ScrollArea direction="vertical" className="flex-1">
           <Box paddingY="sm">
