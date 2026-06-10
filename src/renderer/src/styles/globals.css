@@ -10,6 +10,14 @@
  * themes are injected at runtime via the theme registry — see
  * [stores/themes.ts] — and override the baseline when present. */
 @import "../primitives/theme/baseline.css";
+/* Cynosure component styles, then the bridge that aliases every `--cynosure-*`
+ * semantic token onto the active Verql theme's `--color-*` tokens. The bridge
+ * MUST come after Cynosure's CSS so its `:root, :root[data-theme]` aliases win
+ * the cascade — coverage enforced by tests/unit/cynosure-bridge.test.ts.
+ * Tailwind (imported above) and Cynosure coexist: components migrate one at a
+ * time, and Tailwind is removed only once nothing uses it. */
+@import "@arshad-shah/cynosure-react/all.css";
+@import "./cynosure-bridge.css";
 
 :root {
   /* App-wide monospace stack. Synced at runtime from

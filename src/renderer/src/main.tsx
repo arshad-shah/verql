@@ -2,6 +2,7 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from './components/shell/ErrorBoundary'
 import { ThemeProvider } from './primitives/theme/ThemeProvider'
+import { CynosureAppProvider } from './primitives/theme/cynosure'
 import { I18nProvider } from './i18n/I18nProvider'
 import { SplashScreen } from './components/shell/SplashScreen'
 import { App } from './App'
@@ -74,16 +75,20 @@ function AppLoader() {
   if (!loaded) {
     return (
       <ThemeProvider>
-        <SplashScreen />
+        <CynosureAppProvider>
+          <SplashScreen />
+        </CynosureAppProvider>
       </ThemeProvider>
     )
   }
 
   return (
     <ThemeProvider>
-      <I18nProvider>
-        <App />
-      </I18nProvider>
+      <CynosureAppProvider>
+        <I18nProvider>
+          <App />
+        </I18nProvider>
+      </CynosureAppProvider>
     </ThemeProvider>
   )
 }
