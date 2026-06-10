@@ -1,4 +1,4 @@
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import type { PluginInfo } from './PluginsPanel'
 
 export const ICON_GRADIENTS = [

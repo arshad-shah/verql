@@ -1,6 +1,6 @@
 import { usePluginLifecycleStore } from '@/stores/plugin-lifecycle'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
@@ -42,11 +42,11 @@ export function PluginRestartBanner() {
         maxWidth: 460
       }}
     >
-      <Flex direction="column" gap="xs">
+      <Flex direction="column" gap="1">
         <Text size="sm">
           {t('plugins.restart.messagePrefix')} <strong>{pending.name}</strong> {t('plugins.restart.messageSuffix', { verb })}
         </Text>
-        <Flex gap="xs" justify="end">
+        <Flex gap="1" justify="end">
           <Button size="sm" variant="ghost" colorScheme="neutral" onClick={dismiss}>{t('plugins.restart.later')}</Button>
           <Button size="sm" onClick={restart}>{t('plugins.restart.restart')}</Button>
         </Flex>

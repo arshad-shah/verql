@@ -2,7 +2,8 @@ import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -89,7 +90,7 @@ export function InstallPluginTab() {
         <Flex
           direction="column"
           align="center"
-          gap="md"
+          gap="3"
           className="rounded-xl py-12 px-8 transition-colors duration-150"
           style={{
             border: `2px dashed ${isOver ? 'var(--color-accent)' : 'var(--color-border-default)'}`,
@@ -127,7 +128,7 @@ export function InstallPluginTab() {
                   />
                 )}
               </Box>
-              <Flex direction="column" align="center" gap="xs">
+              <Flex direction="column" align="center" gap="1">
                 <Text size="sm" weight="semibold">
                   {t('plugins.install.dropHere')}
                 </Text>

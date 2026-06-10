@@ -5,7 +5,10 @@ import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Flex, Badge, Box, ScrollArea, Tabs } from '@/primitives'
+import { Badge, Tabs } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -132,10 +135,10 @@ export function PluginDetailView({ pluginName }: Props) {
     <Flex direction="column" className="h-full bg-bg-primary">
       {/* Compact Header */}
       <Box className="px-6 py-5 border-b border-border-default shrink-0">
-        <Flex direction="row" align="center" gap="md">
+        <Flex direction="row" align="center" gap="3">
           <PluginIcon plugin={plugin} size={48} />
           <Box className="flex-1 min-w-0">
-            <Flex direction="row" align="center" gap="sm" className="flex-wrap">
+            <Flex direction="row" align="center" gap="2" className="flex-wrap">
               <Text size="lg" weight="semibold">{plugin.displayName}</Text>
               <Text size="xs" color="fg.subtle">{t('plugins.detail.version', { version: plugin.version })}</Text>
               <Badge size="sm" variant={stateConfig.variant}>{t(stateConfig.labelKey)}</Badge>
@@ -143,7 +146,7 @@ export function PluginDetailView({ pluginName }: Props) {
             </Flex>
             <Text size="sm" color="fg.muted" as="p" className="mt-1 leading-relaxed">{plugin.description}</Text>
           </Box>
-          <Flex direction="row" gap="sm" className="shrink-0">
+          <Flex direction="row" gap="2" className="shrink-0">
             {isActive ? (
               <Button variant="outline" colorScheme="neutral" size="sm" onClick={handleDeactivate} leftIcon={<PowerOff size={14} />}>
                 {t('plugins.detail.disable')}
@@ -171,7 +174,7 @@ export function PluginDetailView({ pluginName }: Props) {
       />
 
       {/* Tab Content */}
-      <ScrollArea direction="vertical" className="flex-1">
+      <ScrollArea scrollbars="vertical" className="flex-1">
         <Box className="px-6 py-5">
           {activeTab === 'overview' && (
             <OverviewTab plugin={plugin} stateConfig={stateConfig} errors={errors} />

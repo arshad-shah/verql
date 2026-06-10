@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
@@ -21,7 +21,7 @@ export function SectionWidgetRenderer({ widget, pluginId }: Props) {
     <div className="space-y-1">
       <Flex
         align="center"
-        gap="xs"
+        gap="1"
         className={cn('px-2 py-1', collapsible && 'cursor-pointer')}
         onClick={() => collapsible && setCollapsed(!collapsed)}
       >
