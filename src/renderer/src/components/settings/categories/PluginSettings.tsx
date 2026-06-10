@@ -45,13 +45,13 @@ function SettingControl({ schema, value, onChange }: { schema: PluginSettingSche
         </Switch>
       )
     case 'password':
-      return <PasswordInput size="sm" className="w-64" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+      return <PasswordInput size="sm" value={String(value ?? '')} onChange={(v) => onChange(v)} />
     case 'number':
       return <NumberInput size="sm" value={Number(value ?? schema.default ?? 0)} min={schema.min} max={schema.max} step={schema.step ?? 1} onChange={(v) => onChange(v)} />
     case 'select':
       return <Select size="sm" className="w-48" value={String(value ?? schema.default ?? '')} options={schema.options ?? []} onChange={(v) => onChange(v)} />
     default:
-      return <Input size="sm" className="w-64" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+      return <Input size="sm" value={String(value ?? '')} onChange={(v) => onChange(v)} />
   }
 }
 

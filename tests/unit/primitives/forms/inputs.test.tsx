@@ -17,39 +17,38 @@ describe('Input', () => {
     expect(container.querySelector('input')).toBeInTheDocument()
   })
 
-  it('applies md size by default', () => {
-    const { container } = render(<Input />)
-    expect(container.firstChild).toHaveClass('h-9')
+  // Input now wraps Cynosure's component, which owns its styling. The
+  // wrapper's contract is the size fold (xs/sm→sm, md→md, lg/xl→lg) and the
+  // error→invalid mapping, asserted via the Cynosure size-bearing element and
+  // semantic attributes rather than the removed Tailwind classes.
+  const sizeClass = (size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl') =>
+    render(<Input size={size} />).container.querySelector('span')?.className
+
+  it('defaults to the sm size', () => {
+    expect(sizeClass(undefined)).toBe(sizeClass('sm'))
   })
 
-  it('applies xs size', () => {
-    const { container } = render(<Input size="xs" />)
-    expect(container.firstChild).toHaveClass('h-7')
+  it('folds xs onto the same Cynosure size as sm', () => {
+    expect(sizeClass('xs')).toBe(sizeClass('sm'))
   })
 
-  it('applies sm size', () => {
-    const { container } = render(<Input size="sm" />)
-    expect(container.firstChild).toHaveClass('h-8')
+  it('folds xl onto the same Cynosure size as lg', () => {
+    expect(sizeClass('xl')).toBe(sizeClass('lg'))
   })
 
-  it('applies lg size', () => {
-    const { container } = render(<Input size="lg" />)
-    expect(container.firstChild).toHaveClass('h-10')
+  it('maps md to a size distinct from sm and lg', () => {
+    expect(sizeClass('md')).not.toBe(sizeClass('sm'))
+    expect(sizeClass('md')).not.toBe(sizeClass('lg'))
   })
 
-  it('applies xl size', () => {
-    const { container } = render(<Input size="xl" />)
-    expect(container.firstChild).toHaveClass('h-12')
-  })
-
-  it('applies error border when error is true', () => {
+  it('marks the input invalid when error is true', () => {
     const { container } = render(<Input error />)
-    expect(container.firstChild).toHaveClass('border-error')
+    expect(container.querySelector('input')).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('applies default border when no error', () => {
+  it('is not invalid by default', () => {
     const { container } = render(<Input />)
-    expect(container.firstChild).toHaveClass('border-border-default')
+    expect(container.querySelector('input')).not.toHaveAttribute('aria-invalid', 'true')
   })
 
   it('is disabled when disabled prop is set', () => {

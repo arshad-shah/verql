@@ -1,44 +1,53 @@
-import React, { forwardRef } from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '../utils/cn'
+import { forwardRef, type InputHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
+import { Input as CynInput } from '@arshad-shah/cynosure-react/input'
 
-const inputVariants = cva(
-  'w-full border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary placeholder:text-text-muted shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus:outline-none focus:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)] disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      size: {
-        xs: 'h-7 px-2 text-xs rounded',
-        sm: 'h-8 px-2.5 text-xs rounded',
-        md: 'h-9 px-3 text-sm rounded-md',
-        lg: 'h-10 px-4 text-sm rounded-md',
-        xl: 'h-12 px-5 text-base rounded-lg',
-      },
-      error: {
-        true: 'border-error focus:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
-        false: 'border-border-default hover:border-border-strong',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-      error: false,
-    },
-  }
-)
+type InputType = 'text' | 'email' | 'password' | 'tel' | 'url' | 'search' | 'number'
+type InputVariant = 'outline' | 'filled' | 'ghost' | 'flat'
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
-    VariantProps<typeof inputVariants> {}
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'value' | 'defaultValue' | 'onChange' | 'type'> {
+  /** @default "sm" */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  /** Renders the invalid state. Mapped to Cynosure's `invalid`. */
+  error?: boolean
+  type?: InputType
+  /** @default "outline" — `ghost` removes the surface for inline/embedded fields. */
+  variant?: InputVariant
+  value?: string | number
+  defaultValue?: string | number
+  /** Value-based change handler — receives the next string, not the event. */
+  onChange?: (value: string) => void
+  leadingSlot?: ReactNode | ReactNode[]
+  trailingSlot?: ReactNode | ReactNode[]
+  clearable?: boolean
+  className?: string
+  style?: CSSProperties
+}
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, size, error, ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        className={cn(inputVariants({ size, error }), className)}
-        {...props}
-      />
-    )
-  }
-)
+/** Cynosure's Input exposes only sm/md/lg; fold the wider in-house scale in. */
+const SIZE_MAP = { xs: 'sm', sm: 'sm', md: 'md', lg: 'lg', xl: 'lg' } as const
+
+/**
+ * Single-line text field — a props-based wrapper over Cynosure's `Input`
+ * (no Tailwind). Keeps the in-house `error` and `xs`/`xl` ergonomics by mapping
+ * `error` → `invalid` and folding the sizes onto Cynosure's `sm`/`lg`, and
+ * coerces a numeric `value`/`defaultValue` to a string. `onChange` is
+ * value-based — it receives the next string rather than a change event.
+ */
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { size = 'sm', error, value, defaultValue, ...rest },
+  ref
+) {
+  return (
+    <CynInput
+      ref={ref}
+      size={SIZE_MAP[size]}
+      invalid={error}
+      value={value != null ? String(value) : undefined}
+      defaultValue={defaultValue != null ? String(defaultValue) : undefined}
+      {...rest}
+    />
+  )
+})
 
 Input.displayName = 'Input'

@@ -9,7 +9,6 @@ const meta: Meta<typeof PasswordInput> = {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] },
     error: { control: 'boolean' },
     disabled: { control: 'boolean' },
-    showStrength: { control: 'boolean' },
   },
   args: {
     onChange: fn(),
@@ -29,10 +28,6 @@ export const Default: Story = {
     await userEvent.click(toggleButton)
     await expect(canvas.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
   },
-}
-
-export const WithStrengthMeter: Story = {
-  args: { defaultValue: 'MyP@ss123', showStrength: true, size: 'md' },
 }
 
 export const States: Story = {

@@ -231,14 +231,11 @@ describe('EmptyState', () => {
     expect(screen.getByRole('button', { name: 'Create new' })).toBeInTheDocument()
   })
 
-  it('applies layout classes', () => {
-    const { container } = render(<EmptyState title="Empty" />)
-    expect(container.firstChild).toHaveClass('flex')
-    expect(container.firstChild).toHaveClass('flex-col')
-    expect(container.firstChild).toHaveClass('items-center')
-    expect(container.firstChild).toHaveClass('justify-center')
-    expect(container.firstChild).toHaveClass('py-12')
-    expect(container.firstChild).toHaveClass('text-center')
+  // Layout is now owned by Cynosure's EmptyState (no Tailwind). The wrapper's
+  // contract is forwarding a custom className onto the root element.
+  it('forwards a custom className to the root', () => {
+    const { container } = render(<EmptyState title="Empty" className="custom-empty" />)
+    expect(container.querySelector('.custom-empty')).toBeInTheDocument()
   })
 })
 

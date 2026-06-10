@@ -112,9 +112,8 @@ function Control({
       return (
         <PasswordInput
           size="sm"
-          className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(v) => onChange(v)}
         />
       )
     case 'number':
@@ -142,9 +141,8 @@ function Control({
       return (
         <Input
           size="sm"
-          className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(v) => onChange(v)}
         />
       )
   }

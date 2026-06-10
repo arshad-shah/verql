@@ -28,7 +28,7 @@ export function SaveQueryDialog({ open, name, onNameChange, onClose, onConfirm }
         <Input
           autoFocus
           value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          onChange={onNameChange}
           placeholder={t('query.save.namePlaceholder')}
           onKeyDown={(e) => {
             if (e.key === 'Escape') onClose()

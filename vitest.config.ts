@@ -19,6 +19,14 @@ export default defineConfig({
         environment: 'jsdom',
         include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx'],
         setupFiles: ['tests/setup.ts'],
+        // Cynosure subpath entries (`@arshad-shah/cynosure-react/*`) import their
+        // own `.css`. Inline the package so Vite — not Node's ESM loader, which
+        // chokes on the unknown `.css` extension — resolves those imports.
+        server: {
+          deps: {
+            inline: [/@arshad-shah\/cynosure-react/]
+          }
+        },
         alias: {
           '@shared': resolve(__dirname, 'shared'),
           '@': resolve(__dirname, 'src/renderer/src')

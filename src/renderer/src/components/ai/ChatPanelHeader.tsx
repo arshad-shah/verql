@@ -158,7 +158,7 @@ export function ChatPanelHeader() {
                   <>
                     <Input
                       value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
+                      onChange={setDraft}
                       size="xs"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}

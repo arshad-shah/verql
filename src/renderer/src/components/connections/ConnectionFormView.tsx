@@ -151,9 +151,8 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                     <Input
                       required
                       value={String(profile.name ?? '')}
-                      onChange={(e) => update({ name: e.target.value })}
+                      onChange={(v) => update({ name: v })}
                       placeholder={t('connections.form.connectionNamePlaceholder')}
-                      size="lg"
                     />
                   </FormField>
                   <FormField label={t('connections.form.color')}>

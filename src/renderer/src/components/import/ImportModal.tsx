@@ -91,7 +91,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
             <Text size="xs" color="muted" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
             <Input
               value={tableName}
-              onChange={e => setTableName(e.target.value)}
+              onChange={setTableName}
               placeholder={t('shell.importModal.targetTablePlaceholder')}
               size="sm"
             />

@@ -144,10 +144,11 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
           <Input
             ref={inputRef}
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={setFilter}
             placeholder={t('shell.connectionSwitcher.filterPlaceholder')}
             size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0 text-[10px]"
+            variant="ghost"
+            className="flex-1"
           />
         </Flex>
       </Box>

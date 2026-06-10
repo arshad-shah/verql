@@ -24,9 +24,8 @@ function PluginSettingControl({ setting, value, onChange }: {
       return (
         <PasswordInput
           size="sm"
-          className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(v) => onChange(v)}
         />
       )
     case 'number':
@@ -54,9 +53,8 @@ function PluginSettingControl({ setting, value, onChange }: {
       return (
         <Input
           size="sm"
-          className="w-64"
           value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(v) => onChange(v)}
         />
       )
   }

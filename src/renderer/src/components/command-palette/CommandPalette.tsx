@@ -222,11 +222,12 @@ export function CommandPalette({ open, onClose }: Props) {
           <Input
             ref={inputRef}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={setQuery}
             onKeyDown={handleKeyDown}
             placeholder={t('command.searchPlaceholder')}
             size="sm"
-            className="flex-1 bg-transparent border-0 focus:ring-0 px-0"
+            variant="ghost"
+            className="flex-1"
           />
         </Flex>
 

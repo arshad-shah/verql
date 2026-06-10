@@ -102,7 +102,7 @@ export function MCPSettings() {
       {error && <Alert variant={'error'}>{error}</Alert>}
 
       <SettingRow label={t('settings.mcp.port.label')} description={t('settings.mcp.port.description')}>
-        <Input type="number" value={mcp.port} onChange={(e) => setSetting('mcp.port', parseInt(e.target.value) || 3100)} size="sm" className="w-28" min={1024} max={65535} disabled={status.running} aria-label={t('settings.mcp.port.aria')} />
+        <Input type="number" value={mcp.port} onChange={(v) => setSetting('mcp.port', parseInt(v) || 3100)} size="sm" min={1024} max={65535} disabled={status.running} aria-label={t('settings.mcp.port.aria')} />
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.autoPort.label')} description={t('settings.mcp.autoPort.description')}>
@@ -118,7 +118,7 @@ export function MCPSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.maxRows.label')} description={t('settings.mcp.maxRows.description')}>
-        <Input type="number" value={mcp.maxRows} onChange={(e) => setSetting('mcp.maxRows', parseInt(e.target.value) || 500)} size="sm" className="w-28" min={1} max={100000} aria-label={t('settings.mcp.maxRows.aria')} />
+        <Input type="number" value={mcp.maxRows} onChange={(v) => setSetting('mcp.maxRows', parseInt(v) || 500)} size="sm" min={1} max={100000} aria-label={t('settings.mcp.maxRows.aria')} />
       </SettingRow>
 
       <Divider />
@@ -136,7 +136,7 @@ export function MCPSettings() {
       <Divider />
       <SettingRow label={t('settings.mcp.authToken.label')} description={t('settings.mcp.authToken.description')}>
         <Flex direction="row" align="center" gap="sm">
-          <Input type="password" value={token || t('settings.mcp.authToken.placeholder')} readOnly size="sm" className="w-56 font-mono" aria-label={t('settings.mcp.authToken.aria')} />
+          <Input type="password" value={token || t('settings.mcp.authToken.placeholder')} readOnly size="sm" className="font-mono" aria-label={t('settings.mcp.authToken.aria')} />
           <Button variant="ghost" size="sm" onClick={regenerate} title={t('settings.mcp.authToken.regenerate')}><RefreshCw size={14} /></Button>
         </Flex>
       </SettingRow>

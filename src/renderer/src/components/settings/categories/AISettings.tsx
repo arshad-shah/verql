@@ -47,9 +47,8 @@ function ApiKeyField({ provider, label, description, placeholder }: {
         <Input
           type="password"
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           size="sm"
-          className="w-72"
           placeholder={hasKey ? t('settings.ai.apiKeySavedPlaceholder') : placeholder}
           autoComplete="off"
           spellCheck={false}
@@ -95,9 +94,8 @@ export function AISettings() {
       <SettingRow label={t('settings.ai.ollamaEndpoint.label')} description={t('settings.ai.ollamaEndpoint.description')}>
         <Input
           value={ai.ollamaEndpoint}
-          onChange={(e) => setSetting('ai.ollamaEndpoint', e.target.value)}
+          onChange={(v) => setSetting('ai.ollamaEndpoint', v)}
           size="sm"
-          className="w-72"
           placeholder="http://localhost:11434"
           aria-label={t('settings.ai.ollamaEndpoint.aria')}
         />

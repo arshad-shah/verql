@@ -16,7 +16,7 @@ export function DataDisplaySettings() {
       <Text size="xs" color="muted">{t('settings.dataDisplay.blurb')}</Text>
 
       <SettingRow label={t('settings.dataDisplay.nullDisplay.label')} description={t('settings.dataDisplay.nullDisplay.description')}>
-        <Input value={display.nullDisplay} onChange={(e) => setSetting('dataDisplay.nullDisplay', e.target.value)} size="sm" className="w-24" />
+        <Input value={display.nullDisplay} onChange={(v) => setSetting('dataDisplay.nullDisplay', v)} size="sm" />
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.dateFormat.label')} description={t('settings.dataDisplay.dateFormat.description')}>
@@ -41,9 +41,8 @@ export function DataDisplaySettings() {
         >
           <Input
             value={display.customDateFormat}
-            onChange={(e) => setSetting('dataDisplay.customDateFormat', e.target.value)}
+            onChange={(v) => setSetting('dataDisplay.customDateFormat', v)}
             size="sm"
-            className="w-48"
             aria-label={t('settings.dataDisplay.customDatePattern.label')}
           />
         </SettingRow>
