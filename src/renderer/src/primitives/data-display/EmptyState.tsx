@@ -1,42 +1,38 @@
 import React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '../utils/cn'
+import {
+  EmptyState as CynEmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+  EmptyStateActions,
+} from '@arshad-shah/cynosure-react/empty-state'
 
-const emptyStateVariants = cva(
-  'flex flex-col items-center justify-center text-center',
-  {
-    variants: {
-      size: {
-        sm: 'py-6',
-        md: 'py-12',
-        lg: 'py-16',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-    },
-  }
-)
-
-export interface EmptyStateProps extends VariantProps<typeof emptyStateVariants> {
+export interface EmptyStateProps {
   title: string
   description?: string
   icon?: React.ReactNode
   action?: React.ReactNode
+  /** Vertical and typographic scale. @default "md" */
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
-export function EmptyState({ title, description, icon, action, size, className }: EmptyStateProps) {
+/**
+ * Placeholder for empty regions (first-run, empty search, filtered-to-zero).
+ *
+ * A thin props-based wrapper over Cynosure's slotted `EmptyState` so the
+ * existing `title`/`description`/`icon`/`action` call sites keep working while
+ * the component is styled by Cynosure (no Tailwind). `variant="subtle"` keeps
+ * the borderless look — it blends with the surrounding container rather than
+ * drawing Cynosure's default bordered card.
+ */
+export function EmptyState({ title, description, icon, action, size = 'md', className }: EmptyStateProps) {
   return (
-    <div
-      className={cn(emptyStateVariants({ size }), className)}
-    >
-      {icon && <div className="mb-4">{icon}</div>}
-      <p className="text-base font-semibold text-text-primary">{title}</p>
-      {description && (
-        <p className="text-sm text-text-secondary mt-1">{description}</p>
-      )}
-      {action && <div className="mt-4">{action}</div>}
-    </div>
+    <CynEmptyState size={size} variant="subtle" className={className}>
+      {icon && <EmptyStateIcon>{icon}</EmptyStateIcon>}
+      <EmptyStateTitle>{title}</EmptyStateTitle>
+      {description && <EmptyStateDescription>{description}</EmptyStateDescription>}
+      {action && <EmptyStateActions>{action}</EmptyStateActions>}
+    </CynEmptyState>
   )
 }

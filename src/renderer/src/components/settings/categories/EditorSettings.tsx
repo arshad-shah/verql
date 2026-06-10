@@ -18,7 +18,7 @@ export function EditorSettings() {
       <Text size="xs" color="muted">{t('settings.editor.blurb')}</Text>
 
       <SettingRow label={t('settings.editor.fontSize.label')} description={t('settings.editor.fontSize.description')}>
-        <NumberInput value={editor.fontSize} onChange={(v) => setSetting('editor.fontSize', v)} min={10} max={24} size="sm" className="w-20" />
+        <NumberInput value={editor.fontSize} onChange={(v) => setSetting('editor.fontSize', v)} min={10} max={24} size="sm" />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.fontFamily.label')} description={t('settings.editor.fontFamily.description')}>

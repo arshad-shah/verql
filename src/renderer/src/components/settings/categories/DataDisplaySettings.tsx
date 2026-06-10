@@ -80,11 +80,11 @@ export function DataDisplaySettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.maxColumnWidth.label')} description={t('settings.dataDisplay.maxColumnWidth.description')}>
-        <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" className="w-24" />
+        <NumberInput value={display.maxColumnWidth} onChange={(v) => setSetting('dataDisplay.maxColumnWidth', v)} min={100} max={800} step={50} size="sm" />
       </SettingRow>
 
       <SettingRow label={t('settings.dataDisplay.truncateTextAt.label')} description={t('settings.dataDisplay.truncateTextAt.description')}>
-        <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} min={0} max={2000} step={50} size="sm" className="w-24" />
+        <NumberInput value={display.truncateTextAt} onChange={(v) => setSetting('dataDisplay.truncateTextAt', v)} min={0} max={2000} step={50} size="sm" />
       </SettingRow>
 
       <PluginContributedSettings category="data-display" />

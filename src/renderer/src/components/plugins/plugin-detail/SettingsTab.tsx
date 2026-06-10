@@ -33,7 +33,6 @@ function PluginSettingControl({ setting, value, onChange }: {
       return (
         <NumberInput
           size="sm"
-          className="w-28"
           value={Number(value ?? setting.default ?? 0)}
           min={setting.min}
           max={setting.max}

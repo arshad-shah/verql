@@ -25,7 +25,6 @@ export function GeneralSettings() {
           min={5}
           max={300}
           size="sm"
-          className="w-20"
         />
       </SettingRow>
 
@@ -37,7 +36,6 @@ export function GeneralSettings() {
           max={1000}
           step={50}
           size="sm"
-          className="w-20"
         />
       </SettingRow>
 

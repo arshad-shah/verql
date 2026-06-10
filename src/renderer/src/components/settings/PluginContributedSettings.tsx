@@ -121,7 +121,6 @@ function Control({
       return (
         <NumberInput
           size="sm"
-          className="w-28"
           value={Number(value ?? schema.default ?? 0)}
           min={schema.min}
           max={schema.max}
