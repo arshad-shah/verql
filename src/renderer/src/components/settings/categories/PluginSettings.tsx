@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Stack, Flex, Divider, Text, Box, Input, NumberInput, PasswordInput, Select } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Spinner } from '@/primitives'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -37,7 +39,11 @@ interface PluginSettingsBundle {
 function SettingControl({ schema, value, onChange }: { schema: PluginSettingSchema; value: unknown; onChange: (v: unknown) => void }) {
   switch (schema.type) {
     case 'boolean':
-      return <Switch label={schema.title} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
+      return (
+        <Switch size="lg" checked={Boolean(value)} onCheckedChange={(checked) => onChange(checked)}>
+          <VisuallyHidden>{schema.title}</VisuallyHidden>
+        </Switch>
+      )
     case 'password':
       return <PasswordInput size="sm" className="w-64" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
     case 'number':
@@ -158,11 +164,12 @@ export function PluginSettings() {
                   <Text size="xs" color="error" className="mt-1">{plugin.status.error}</Text>
                 )}
               </div>
-              <Switch
-                label={t('settings.plugins.toggleAria', { plugin: plugin.displayName })}
+              <Switch size="lg"
                 checked={isActive}
-                onChange={(e) => handleToggle(plugin.name, e.target.checked)}
-              />
+                onCheckedChange={(checked) => handleToggle(plugin.name, checked)}
+              >
+                <VisuallyHidden>{t('settings.plugins.toggleAria', { plugin: plugin.displayName })}</VisuallyHidden>
+              </Switch>
             </Flex>
             {isActive && ownSettings.length > 0 && (
               <Box className="ml-0 pl-4 border-l border-border/40 mb-3">

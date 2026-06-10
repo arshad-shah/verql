@@ -1,4 +1,6 @@
-import { Stack, Divider, Flex, Button, Text, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select, ColorInput } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
@@ -82,35 +84,39 @@ export function AppearanceSettings() {
       <Divider />
 
       <SettingRow label={t('settings.appearance.showStatusBar.label')} description={t('settings.appearance.showStatusBar.description')}>
-        <Switch
-          label={t('settings.appearance.showStatusBar.label')}
+        <Switch size="lg"
           checked={appearance.showStatusBar}
-          onChange={(e) => setSetting('appearance.showStatusBar', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('appearance.showStatusBar', checked)}
+        >
+          <VisuallyHidden>{t('settings.appearance.showStatusBar.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showSecondarySidebar.label')} description={t('settings.appearance.showSecondarySidebar.description')}>
-        <Switch
-          label={t('settings.appearance.showSecondarySidebar.label')}
+        <Switch size="lg"
           checked={appearance.showSecondarySidebar}
-          onChange={(e) => setSetting('appearance.showSecondarySidebar', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('appearance.showSecondarySidebar', checked)}
+        >
+          <VisuallyHidden>{t('settings.appearance.showSecondarySidebar.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showBottomDock.label')} description={t('settings.appearance.showBottomDock.description')}>
-        <Switch
-          label={t('settings.appearance.showBottomDock.label')}
+        <Switch size="lg"
           checked={appearance.showBottomDock}
-          onChange={(e) => setSetting('appearance.showBottomDock', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('appearance.showBottomDock', checked)}
+        >
+          <VisuallyHidden>{t('settings.appearance.showBottomDock.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.animations.label')} description={t('settings.appearance.animations.description')}>
-        <Switch
-          label={t('settings.appearance.animations.label')}
+        <Switch size="lg"
           checked={appearance.animations}
-          onChange={(e) => setSetting('appearance.animations', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('appearance.animations', checked)}
+        >
+          <VisuallyHidden>{t('settings.appearance.animations.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <PluginContributedSettings category="appearance" />

@@ -4,7 +4,6 @@ import React, { createRef } from 'react'
 import { Select } from '../../../../src/renderer/src/primitives/forms/Select'
 import { Checkbox } from '../../../../src/renderer/src/primitives/forms/Checkbox'
 import { Radio } from '../../../../src/renderer/src/primitives/forms/Radio'
-import { Switch } from '../../../../src/renderer/src/primitives/forms/Switch'
 import { Slider } from '../../../../src/renderer/src/primitives/forms/Slider'
 
 const testOptions = [
@@ -124,41 +123,6 @@ describe('Radio', () => {
     render(<Radio ref={ref} />)
     expect(ref.current).not.toBeNull()
     expect(ref.current?.type).toBe('radio')
-  })
-})
-
-describe('Switch', () => {
-  it('renders with switch role', () => {
-    render(<Switch label="Enable feature" />)
-    expect(screen.getByRole('switch')).toBeInTheDocument()
-  })
-
-  it('sets aria-label from label prop', () => {
-    render(<Switch label="Dark mode" />)
-    expect(screen.getByRole('switch', { name: 'Dark mode' })).toBeInTheDocument()
-  })
-
-  it('can be toggled', () => {
-    render(<Switch label="Toggle" />)
-    const switchEl = screen.getByRole('switch')
-    expect(switchEl).not.toBeChecked()
-    fireEvent.click(switchEl)
-    expect(switchEl).toBeChecked()
-  })
-
-  it('applies sizing classes', () => {
-    // The visual track is a <span> (the input is sr-only); md size = h-5 w-9.
-    const { container } = render(<Switch label="Toggle" />)
-    const track = container.querySelector('span')
-    expect(track).toHaveClass('h-5')
-    expect(track).toHaveClass('w-9')
-  })
-
-  it('forwards ref', () => {
-    const ref = createRef<HTMLInputElement>()
-    render(<Switch label="Toggle" ref={ref} />)
-    expect(ref.current).not.toBeNull()
-    expect(ref.current?.type).toBe('checkbox')
   })
 })
 

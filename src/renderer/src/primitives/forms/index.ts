@@ -22,9 +22,6 @@ export type { CheckboxProps } from './Checkbox'
 export { Radio } from './Radio'
 export type { RadioProps } from './Radio'
 
-export { Switch } from './Switch'
-export type { SwitchProps } from './Switch'
-
 export { Slider } from './Slider'
 export type { SliderProps } from './Slider'
 

@@ -1,7 +1,8 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
 import { Popover } from '@/primitives/surfaces/Popover'
-import { Switch } from '@/primitives/forms/Switch'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Text } from '@/primitives/typography/Text'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'
@@ -117,15 +118,16 @@ export function AIStatusSegment() {
           <Text size="xs" color="muted">
             {inlineEnabled ? (inlineState === 'thinking' ? t('aiui.status.inlineThinking') : t('aiui.status.inlineOn')) : t('aiui.status.inlineOff')}
           </Text>
-          <Switch
-            label={t('aiui.status.toggleInlineCompletion')}
+          <Switch size="lg"
             checked={inlineEnabled}
-            onChange={(e) => {
-              const next = e.currentTarget.checked
+            onCheckedChange={(checked) => {
+              const next = checked
               setInlineCompletionEnabled(next)
               setInlineEnabled(next)
             }}
-          />
+          >
+            <VisuallyHidden>{t('aiui.status.toggleInlineCompletion')}</VisuallyHidden>
+          </Switch>
         </div>
       } />
 

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, Button, Text, Input, CodeView, Switch, Alert } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text, Input, CodeView, Alert } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
@@ -104,11 +106,15 @@ export function MCPSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.autoPort.label')} description={t('settings.mcp.autoPort.description')}>
-        <Switch checked={mcp.autoPort} onChange={(e) => setSetting('mcp.autoPort', e.target.checked)} disabled={status.running} label={t('settings.mcp.autoPort.label')} />
+        <Switch size="lg" checked={mcp.autoPort} onCheckedChange={(checked) => setSetting('mcp.autoPort', checked)} disabled={status.running}>
+          <VisuallyHidden>{t('settings.mcp.autoPort.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.readOnly.label')} description={t('settings.mcp.readOnly.description')}>
-        <Switch checked={mcp.readOnly} onChange={(e) => setReadOnly(e.target.checked)} label={t('settings.mcp.readOnly.label')} />
+        <Switch size="lg" checked={mcp.readOnly} onCheckedChange={(checked) => setReadOnly(checked)}>
+          <VisuallyHidden>{t('settings.mcp.readOnly.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.maxRows.label')} description={t('settings.mcp.maxRows.description')}>
@@ -120,7 +126,9 @@ export function MCPSettings() {
       <Stack gap="xs">
         {tools.map(tool => (
           <SettingRow key={tool.id} label={tool.name} description={tool.description}>
-            <Switch checked={tool.enabled} onChange={(e) => setToolEnabled(tool.id, e.target.checked)} label={t('settings.mcp.enableTool', { tool: tool.name })} />
+            <Switch size="lg" checked={tool.enabled} onCheckedChange={(checked) => setToolEnabled(tool.id, checked)}>
+              <VisuallyHidden>{t('settings.mcp.enableTool', { tool: tool.name })}</VisuallyHidden>
+            </Switch>
           </SettingRow>
         ))}
       </Stack>

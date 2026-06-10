@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack, Text, Input, NumberInput, PasswordInput, Select, Switch } from '@/primitives'
+import { Box, Divider, Stack, Text, Input, NumberInput, PasswordInput, Select } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from './SettingRow'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
@@ -99,11 +101,12 @@ function Control({
   switch (schema.type) {
     case 'boolean':
       return (
-        <Switch
-          label={schema.title}
+        <Switch size="lg"
           checked={Boolean(value)}
-          onChange={(e) => onChange(e.target.checked)}
-        />
+          onCheckedChange={(checked) => onChange(checked)}
+        >
+          <VisuallyHidden>{schema.title}</VisuallyHidden>
+        </Switch>
       )
     case 'password':
       return (

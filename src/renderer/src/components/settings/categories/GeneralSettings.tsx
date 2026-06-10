@@ -1,4 +1,6 @@
-import { Stack, Divider, Flex, Button, Text, Switch } from '@/primitives'
+import { Stack, Divider, Flex, Button, Text } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { NumberInput, Select } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -61,33 +63,36 @@ export function GeneralSettings() {
         label={t('settings.general.confirmDestructive.label')}
         description={t('settings.general.confirmDestructive.description')}
       >
-        <Switch
-          label={t('settings.general.confirmDestructive.label')}
+        <Switch size="lg"
           checked={general.confirmDestructiveQueries}
-          onChange={(e) => setSetting('general.confirmDestructiveQueries', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('general.confirmDestructiveQueries', checked)}
+        >
+          <VisuallyHidden>{t('settings.general.confirmDestructive.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow
         label={t('settings.general.confirmUnsavedClose.label')}
         description={t('settings.general.confirmUnsavedClose.description')}
       >
-        <Switch
-          label={t('settings.general.confirmUnsavedClose.label')}
+        <Switch size="lg"
           checked={general.confirmOnUnsavedClose}
-          onChange={(e) => setSetting('general.confirmOnUnsavedClose', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('general.confirmOnUnsavedClose', checked)}
+        >
+          <VisuallyHidden>{t('settings.general.confirmUnsavedClose.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow
         label={t('settings.general.restoreTabs.label')}
         description={t('settings.general.restoreTabs.description')}
       >
-        <Switch
-          label={t('settings.general.restoreTabs.label')}
+        <Switch size="lg"
           checked={general.restoreTabsOnStartup}
-          onChange={(e) => setSetting('general.restoreTabsOnStartup', e.target.checked)}
-        />
+          onCheckedChange={(checked) => setSetting('general.restoreTabsOnStartup', checked)}
+        >
+          <VisuallyHidden>{t('settings.general.restoreTabs.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <PluginContributedSettings category="general" />
