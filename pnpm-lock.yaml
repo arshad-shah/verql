@@ -33,8 +33,8 @@ importers:
   .:
     dependencies:
       '@arshad-shah/cynosure-react':
-        specifier: ^3.4.0
-        version: 3.4.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^3.5.0
+        version: 3.5.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@arshad-shah/swift-chart':
         specifier: ^1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -259,14 +259,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@arshad-shah/cynosure-core@3.3.0':
-    resolution: {integrity: sha512-wEj/DXTKBbVQpojPqJ1qdAiMfpUn4ueKZGScKpCkTf0u6sGdtey/GHgVI7x2X+S9qAzfP2+YralSLTsmdgeRcw==}
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-
-  '@arshad-shah/cynosure-react@3.4.0':
-    resolution: {integrity: sha512-Dp1V2HDb7PSPyj6dDyqZcPyJkmuqDggKRzbpQGMg4Yb+jV35AooBWIoZyHtsjucXNhOB9WUdtuNmjmhltYhkPA==}
+  '@arshad-shah/cynosure-react@3.5.0':
+    resolution: {integrity: sha512-jnUpI2wgTYuVpUJ0GdjQVnp8v/gekHdIubdYvT9TybuoKNdpIl4qhZ6tpswiEPiznWi3NHeaBTlkWa3VRxt+8A==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -5644,15 +5638,8 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@arshad-shah/cynosure-core@3.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@arshad-shah/cynosure-react@3.5.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@arshad-shah/cynosure-tokens': 3.3.0
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-
-  '@arshad-shah/cynosure-react@3.4.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@arshad-shah/cynosure-core': 3.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@arshad-shah/cynosure-tokens': 3.3.0
       '@arshad-shah/swift-chart': 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@fontsource-variable/geist': 5.2.8

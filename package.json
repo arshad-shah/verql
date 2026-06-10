@@ -31,7 +31,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@arshad-shah/cynosure-react": "^3.4.0",
+    "@arshad-shah/cynosure-react": "^3.5.0",
     "@arshad-shah/swift-chart": "^1.3.0",
     "@dagrejs/dagre": "3.0.0",
     "@floating-ui/react": "0.27.19",
