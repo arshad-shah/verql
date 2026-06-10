@@ -4,7 +4,7 @@ import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { ColorInput } from '@/primitives'
+import { ColorPicker } from '@arshad-shah/cynosure-react/color-picker'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
@@ -205,9 +205,10 @@ export function AppearanceSettings() {
         }
       >
         <Flex gap="sm" align="center">
-          <ColorInput
+          <ColorPicker
+            label={null}
             value={appearance.accentColor || currentPreview.accent}
-            onChange={(v) => setSetting('appearance.accentColor', v)}
+            onChange={(c) => setSetting('appearance.accentColor', c.toString('hex'))}
             size="sm"
           />
           {appearance.accentColor && (

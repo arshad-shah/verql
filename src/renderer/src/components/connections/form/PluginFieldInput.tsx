@@ -1,4 +1,5 @@
-import { FormField, FileContentInput, FilePathInput } from '@/primitives'
+import { FileContentInput, FilePathInput } from '@/primitives'
+import { FormField, FormLabel, FormControl } from '@arshad-shah/cynosure-react/form'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Combobox } from '@arshad-shah/cynosure-react/combobox'
 import { Input } from '@arshad-shah/cynosure-react/input'
@@ -29,7 +30,9 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
 
     if (isAuthenticated && options.length > 0) {
       return (
-        <FormField label={field.label} className={className}>
+        <FormField className={className}>
+          <FormLabel>{field.label}</FormLabel>
+          <FormControl>
           <Combobox
             size="lg"
             placeholder={t('connections.form.searchPlaceholder', { label: field.label.toLowerCase() })}
@@ -37,12 +40,15 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
             onValueChange={(v) => { if (v !== null) onChange(v) }}
             items={options.map(o => ({ value: o, label: o }))}
           />
+          </FormControl>
         </FormField>
       )
     }
 
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <Input
           value={String(value)}
           onChange={onChange}
@@ -50,45 +56,55 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
           disabled={authStatus !== 'authenticated'}
           size="lg"
         />
+        </FormControl>
       </FormField>
     )
   }
 
   if (!field.fetchable && field.type === 'select' && field.options) {
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <Select
           size="lg"
           value={String(value)}
           onValueChange={(v) => onChange(v)}
           items={field.options}
         />
+        </FormControl>
       </FormField>
     )
   }
 
   if (field.type === 'password') {
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <Input
           type="password"
           value={String(value)}
           onChange={onChange}
           size="lg"
         />
+        </FormControl>
       </FormField>
     )
   }
 
   if (field.type === 'number') {
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <NumberInput
           value={Number(value) || 0}
           formatOptions={{ useGrouping: false }}
           onChange={(v) => onChange(v)}
           size="lg"
         />
+        </FormControl>
       </FormField>
     )
   }
@@ -98,38 +114,47 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
   // `file` field reads and stores the file's *contents* (e.g. an inline SSH key).
   if (field.type === 'file-path') {
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <FilePathInput
           value={String(value)}
           onChange={(filePath) => onChange(filePath)}
           accept={field.accept}
           size="lg"
         />
+        </FormControl>
       </FormField>
     )
   }
 
   if (field.type === 'file') {
     return (
-      <FormField label={field.label} className={className}>
+      <FormField className={className}>
+        <FormLabel>{field.label}</FormLabel>
+        <FormControl>
         <FileContentInput
           value={String(value)}
           onChange={(content) => onChange(content)}
           accept={field.accept ?? '.pem,.key'}
           size="lg"
         />
+        </FormControl>
       </FormField>
     )
   }
 
   return (
-    <FormField label={field.label} className={className}>
+    <FormField className={className}>
+      <FormLabel>{field.label}</FormLabel>
+      <FormControl>
       <Input
         required={field.required}
         value={String(value)}
         onChange={onChange}
         size="lg"
       />
+      </FormControl>
     </FormField>
   )
 }

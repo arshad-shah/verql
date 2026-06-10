@@ -3,7 +3,9 @@ import { ConnectionTestButton } from './ConnectionTestButton'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import type { ConnectionProfile, DatabaseType } from '@shared/types'
-import { ScrollArea, Container, Stack, Flex, Grid, Divider, FormField, ColorInput } from '@/primitives'
+import { ScrollArea, Container, Stack, Flex, Grid, Divider } from '@/primitives'
+import { ColorPicker } from '@arshad-shah/cynosure-react/color-picker'
+import { FormField, FormLabel, FormControl } from '@arshad-shah/cynosure-react/form'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { Heading } from '@arshad-shah/cynosure-react/heading'
@@ -138,7 +140,9 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
             {/* General — identity */}
             <Section title={t('connections.form.general')} description={t('connections.form.generalDescription')}>
               <Stack gap="md">
-                <FormField label={t('connections.form.databaseType')}>
+                <FormField>
+                  <FormLabel>{t('connections.form.databaseType')}</FormLabel>
+                  <FormControl>
                   <Select
                     size="lg"
                     aria-label={t('connections.form.databaseType')}
@@ -146,9 +150,12 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                     onValueChange={(v) => handleTypeChange(v as DatabaseType)}
                     items={allTypes}
                   />
+                  </FormControl>
                 </FormField>
                 <Grid columns={2} gap="md">
-                  <FormField label={t('connections.form.connectionName')}>
+                  <FormField>
+                    <FormLabel>{t('connections.form.connectionName')}</FormLabel>
+                    <FormControl>
                     <Input
                       required
                       value={String(profile.name ?? '')}
@@ -156,14 +163,19 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                       placeholder={t('connections.form.connectionNamePlaceholder')}
                       size="lg"
                     />
+                    </FormControl>
                   </FormField>
-                  <FormField label={t('connections.form.color')}>
-                    <ColorInput
+                  <FormField>
+                    <FormLabel>{t('connections.form.color')}</FormLabel>
+                    <FormControl>
+                    <ColorPicker
+                      label={null}
                       value={String(profile.color ?? '#7c6ff7')}
-                      onChange={(v) => update({ color: v })}
-                      presets={COLOR_PRESETS}
+                      onChange={(c) => update({ color: c.toString('hex') })}
+                      swatches={COLOR_PRESETS}
                       size="lg"
                     />
+                    </FormControl>
                   </FormField>
                 </Grid>
                 <Divider />
