@@ -1,7 +1,7 @@
 import { create } from 'zustand'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import type { ConnectionProfile } from '@shared/types'
 import { useNotificationsStore } from './notifications'
-import { useToastStore } from './toast'
 import { useSchemaStore } from './schema'
 import { useTabsStore } from './tabs'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -70,13 +70,11 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
   connect: async (id) => {
     const conn = get().connections.find(c => c.id === id)
     const name = conn?.name ?? id
-    const toast = useToastStore.getState()
-    const toastId = toast.addToast({
-      id: `connect-${id}`,
-      type: 'info',
-      title: t('connections.connecting', { name }),
-      message: t('connections.establishing'),
-      persistent: true,
+    const toastId = `connect-${id}`
+    toast.loading(t('connections.connecting', { name }), {
+      id: toastId,
+      description: t('connections.establishing'),
+      duration: Infinity,
     })
 
     const result = await window.electronAPI.invoke(IPC_CHANNELS.DB_CONNECT, id)
@@ -86,12 +84,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
       if (conn?.type) {
         useDriverCapabilitiesStore.getState().fetchConnection(id, conn.type).catch(() => {})
       }
-      toast.updateToast(toastId, {
-        type: 'success',
-        title: t('connections.connected', { name }),
-        message: undefined,
-        persistent: false,
-      })
+      toast.success(t('connections.connected', { name }), { id: toastId, description: undefined, duration: 4000 })
       useNotificationsStore.getState().addNotification({
         type: 'success',
         title: t('connections.connectionEstablished'),
@@ -99,11 +92,10 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
         source: { type: 'connection', id, label: name },
       })
     } else {
-      toast.updateToast(toastId, {
-        type: 'error',
-        title: t('connections.connectionFailed'),
-        message: result.error ?? t('connections.unknownError'),
-        persistent: false,
+      toast.error(t('connections.connectionFailed'), {
+        id: toastId,
+        description: result.error ?? t('connections.unknownError'),
+        duration: 4000,
       })
       useNotificationsStore.getState().addNotification({
         type: 'error',
@@ -117,12 +109,7 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
   disconnect: async (id) => {
     const conn = get().connections.find(c => c.id === id)
     const name = conn?.name ?? id
-    const toast = useToastStore.getState()
-    toast.addToast({
-      id: `disconnect-${id}`,
-      type: 'info',
-      title: t('connections.disconnectedFrom', { name }),
-    })
+    toast.info(t('connections.disconnectedFrom', { name }), { id: `disconnect-${id}` })
     await window.electronAPI.invoke(IPC_CHANNELS.DB_DISCONNECT, id)
     get().removeConnected(id)
     useDriverCapabilitiesStore.getState().clearConnection(id)

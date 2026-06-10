@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronRight, ChevronDown, Database, RefreshCw } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import {
   ContextMenu,
@@ -40,7 +40,6 @@ export function DatabaseNode({
   const fetchSchemas = useSchemaStore((s) => s.fetchSchemas)
   const clearCache = useSchemaStore((s) => s.clearCache)
 
-  const addToast = useToastStore((s) => s.addToast)
   const { copy } = useClipboard()
 
   const [switchError, setSwitchError] = useState(false)
@@ -64,7 +63,7 @@ export function DatabaseNode({
       } catch {
         if (!cancelled) {
           setSwitchError(true)
-          addToast({ type: 'error', title: t('explorer.toast.cannotAccessDatabase', { name: databaseName }) })
+          toast.error(t('explorer.toast.cannotAccessDatabase', { name: databaseName }))
         }
       }
     })()
@@ -82,9 +81,9 @@ export function DatabaseNode({
       await switchDatabase(connectionId, databaseName)
       clearCache(connectionId)
       await fetchSchemas(connectionId, databaseName)
-      addToast({ type: 'success', title: t('explorer.toast.refreshedDatabase', { name: databaseName }) })
+      toast.success(t('explorer.toast.refreshedDatabase', { name: databaseName }))
     } catch {
-      addToast({ type: 'error', title: t('explorer.toast.cannotAccess', { name: databaseName }) })
+      toast.error(t('explorer.toast.cannotAccess', { name: databaseName }))
     }
   }
 

@@ -8,7 +8,7 @@ import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { useUiStore } from '@/stores/ui'
 import { SETTINGS_CATEGORY, type SettingsCategoryId } from '@/lib/settings-categories'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useTabsStore } from '@/stores/tabs'
 import { tabActions } from '@/stores/tab-actions'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -90,11 +90,7 @@ export function SettingsLayout() {
       // (no confirm prompt on close).
       isDirty: () => false,
       onSave: () => {
-        useToastStore.getState().addToast({
-          type: 'info',
-          title: t('settings.layout.autoSaveToastTitle'),
-          message: t('settings.layout.autoSaveToastMessage'),
-        })
+        toast.info(t('settings.layout.autoSaveToastTitle'), { description: t('settings.layout.autoSaveToastMessage') })
       },
     })
     return () => tabActions.unregister(activeTabId)

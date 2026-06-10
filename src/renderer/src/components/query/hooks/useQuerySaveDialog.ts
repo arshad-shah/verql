@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { saveQuery } from '@/components/saved-queries/SavedQueriesPanel'
 import { useTabsStore } from '@/stores/tabs'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import type { QueryTab, DatabaseType } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -33,13 +33,13 @@ export function useQuerySaveDialog(tab: QueryTab, dbType: DatabaseType | undefin
     if (!current || current.type !== 'query') return
     const sql = current.sql.trim()
     if (!sql) {
-      useToastStore.getState().addToast({ type: 'info', title: t('query.save.nothingToSaveTitle'), message: t('query.save.nothingToSaveMessage') })
+      toast.info(t('query.save.nothingToSaveTitle'), { description: t('query.save.nothingToSaveMessage') })
       return
     }
     if (current.savedQueryId) {
       saveQuery({ id: current.savedQueryId, name: current.title, sql, connectionType: dbType })
       markTabSaved(current.id)
-      useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedTitle'), message: current.title })
+      toast.success(t('query.save.savedTitle'), { description: current.title })
       return
     }
     // First-time save: open the in-app prompt (window.prompt is unsupported in
@@ -58,7 +58,7 @@ export function useQuerySaveDialog(tab: QueryTab, dbType: DatabaseType | undefin
     }
     const id = saveQuery({ name, sql, connectionType: dbType })
     markTabSaved(tab.id, { title: name, savedQueryId: id })
-    useToastStore.getState().addToast({ type: 'success', title: t('query.save.savedQueryTitle'), message: name })
+    toast.success(t('query.save.savedQueryTitle'), { description: name })
     setSaveDialogOpen(false)
   }, [saveDialogName, dbType, markTabSaved, tab.id, t])
 

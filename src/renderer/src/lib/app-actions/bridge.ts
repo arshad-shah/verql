@@ -1,7 +1,7 @@
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { errorMessage } from '@shared/errors'
 import { appActions } from './registry'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 
 let initialized = false
 
@@ -44,11 +44,7 @@ export function initAppActionBridge(): void {
     } catch (err) {
       const message = errorMessage(err)
       report(false, message)
-      useToastStore.getState().addToast({
-        type: 'error',
-        title: `Couldn't ${action.title.toLowerCase()}`,
-        message
-      })
+      toast.error(`Couldn't ${action.title.toLowerCase()}`, { description: message })
     }
   })
 }

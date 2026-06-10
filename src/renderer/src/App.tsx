@@ -5,7 +5,8 @@ import { Sidebar } from '@/components/shell/Sidebar'
 import { TitleBar } from '@/components/shell/TitleBar'
 import { StatusBar } from '@/components/shell/StatusBar'
 import { TabBar } from '@/components/shell/tab-bar'
-import { ToastContainer } from '@/components/shell/ToastContainer'
+import { Toaster } from '@arshad-shah/cynosure-react/toast'
+import '@/lib/toast-ipc'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { AboutModal } from '@/components/shell/AboutModal'
 import { ActiveTabView } from '@/components/shell/ActiveTabView'
@@ -210,7 +211,7 @@ export function App() {
           <StatusBar />
         </SectionErrorBoundary>
       )}
-      <ToastContainer />
+      <Toaster position="bottom-right" />
       <SectionErrorBoundary label={t('shell.sectionLabels.commandPalette')}>
         <CommandPalette open={paletteOpen} onClose={() => useUiStore.getState().setCommandPaletteOpen(false)} />
       </SectionErrorBoundary>

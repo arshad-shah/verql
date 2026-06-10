@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   Info,
   CheckCircle,
-  X,
   Copy,
   Check,
 } from 'lucide-react'
@@ -21,6 +20,8 @@ import {
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
+import { Notification as CynosureNotification } from '@arshad-shah/cynosure-react/notification'
 import { cn } from '@/primitives/utils/cn'
 import { formatRelativeTime } from '@/lib/format-time'
 import { useClipboard } from '@/hooks/useClipboard'
@@ -64,118 +65,53 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const { copied, copy } = useClipboard()
   const isError = notification.type === 'error'
 
-  const handleCopy = (e: MouseEvent) => {
-    e.stopPropagation()
-    copy(buildCopyPayload(notification), { resetDelay: 1500 })
-  }
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => !notification.read && markRead(notification.id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          !notification.read && markRead(notification.id)
-        }
-      }}
-      className={cn(
-        'group relative flex gap-2.5 px-3 py-2.5 cursor-default transition-colors',
-        'hover:bg-white/[0.03]',
-        !notification.read && 'bg-white/[0.02]'
-      )}
-    >
-      {/* Unread indicator bar */}
-      {!notification.read && (
-        <div className="absolute left-0 top-2.5 bottom-2.5 w-0.5 rounded-r bg-accent" />
-      )}
-
-      {/* Type icon */}
-      <div
-        className={cn(
-          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded',
-          typeBgColors[notification.type]
-        )}
-      >
-        <Icon size={12} className={typeColors[notification.type]} />
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <Text
-          size="xs"
-          weight={notification.read ? 'regular' : 'medium'}
-          className="leading-tight"
-        >
-          {notification.title}
-        </Text>
-
-        {notification.message && (
-          <div
+    <CynosureNotification
+      icon={
+        <span className={cn('flex h-5 w-5 items-center justify-center rounded', typeBgColors[notification.type])}>
+          <Icon size={12} className={typeColors[notification.type]} />
+        </span>
+      }
+      title={notification.title}
+      description={
+        notification.message ? (
+          <span
             className={cn(
-              'mt-0.5 leading-snug break-words text-text-muted text-xs',
-              isError
-                ? 'font-mono whitespace-pre-wrap select-text cursor-text'
-                : 'line-clamp-2'
+              'break-words',
+              isError && 'font-mono whitespace-pre-wrap select-text cursor-text',
             )}
             onClick={isError ? (e) => e.stopPropagation() : undefined}
           >
             {notification.message}
-          </div>
-        )}
-
-        <Flex align="center" gap="1" className="mt-1">
-          {notification.source && (
-            <>
-              <Text
-                size="xs"
-                color="fg.subtle"
-                className="text-[10px] truncate max-w-[120px]"
-              >
-                {notification.source.label}
-              </Text>
-              <span className="text-text-disabled text-[10px]">·</span>
-            </>
-          )}
-          <Text size="xs" color="fg.disabled" className="text-[10px] shrink-0">
-            {formatRelativeTime(notification.timestamp)}
-          </Text>
-        </Flex>
-      </div>
-
-      {/* Action buttons — copy for errors (always visible), dismiss on hover */}
-      <Flex direction="column" gap="1" className="mt-0.5 shrink-0">
-        {isError && (
-          <button
-            onClick={handleCopy}
-            className={cn(
-              'flex h-5 w-5 items-center justify-center rounded',
-              'text-text-disabled hover:text-text-primary hover:bg-white/5',
-              'transition-colors'
-            )}
-            aria-label={copied ? t('shell.notifications.copied') : t('shell.notifications.copyErrorDetails')}
-            title={copied ? t('shell.notifications.copied') : t('shell.notifications.copyErrorDetails')}
-          >
-            {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
-          </button>
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            removeNotification(notification.id)
-          }}
-          className={cn(
-            'flex h-5 w-5 items-center justify-center rounded',
-            'text-text-disabled hover:text-text-primary hover:bg-white/5',
-            isError ? 'transition-colors' : 'opacity-0 group-hover:opacity-100 transition-opacity'
-          )}
-          aria-label={t('shell.notifications.dismiss')}
-        >
-          <X size={12} />
-        </button>
-      </Flex>
-    </div>
+          </span>
+        ) : undefined
+      }
+      timestamp={
+        <>
+          {notification.source && <>{notification.source.label} · </>}
+          {formatRelativeTime(notification.timestamp)}
+        </>
+      }
+      unread={!notification.read}
+      onRead={() => markRead(notification.id)}
+      onDismiss={() => removeNotification(notification.id)}
+      dismissLabel={t('shell.notifications.dismiss')}
+      actions={
+        isError ? (
+          <IconButton
+            variant="ghost"
+            colorScheme="neutral"
+            size="xs"
+            label={copied ? t('shell.notifications.copied') : t('shell.notifications.copyErrorDetails')}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation()
+              copy(buildCopyPayload(notification), { resetDelay: 1500 })
+            }}
+            icon={copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+          />
+        ) : undefined
+      }
+    />
   )
 }
 

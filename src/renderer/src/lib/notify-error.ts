@@ -10,7 +10,7 @@
  * persist in the bell tray. Most errors deserve both — the toast so the user
  * notices, the bell so they can come back to it after running another query.
  */
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useNotificationsStore, type NotificationSource } from '@/stores/notifications'
 import { parseAppError } from './db-error'
 
@@ -46,10 +46,6 @@ export function notifyError(rawError: unknown, opts: NotifyOptions = {}): void {
     })
   }
   if (!opts.silent) {
-    useToastStore.getState().addToast({
-      type: 'error',
-      title,
-      message: parsed.message,
-    })
+    toast.error(title, { description: parsed.message })
   }
 }

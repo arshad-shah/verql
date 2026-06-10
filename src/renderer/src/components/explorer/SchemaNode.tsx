@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, FolderOpen, RefreshCw, GitFork, Layers, Func
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useTabsStore } from '@/stores/tabs'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns, titleCase } from '@/hooks/useDataNouns'
 import {
@@ -52,7 +52,6 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   const clearCache = useSchemaStore((s) => s.clearCache)
 
   const openErDiagram = useTabsStore((s) => s.openErDiagram)
-  const addToast = useToastStore((s) => s.addToast)
   const { copy } = useClipboard()
   const nouns = useDataNouns(connectionId)
 
@@ -87,9 +86,9 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
     try {
       clearCache(connectionId)
       await loadAll()
-      addToast({ type: 'success', title: t('explorer.toast.schemaRefreshed') })
+      toast.success(t('explorer.toast.schemaRefreshed'))
     } catch {
-      addToast({ type: 'error', title: t('explorer.toast.schemaRefreshFailed') })
+      toast.error(t('explorer.toast.schemaRefreshFailed'))
     }
   }
 

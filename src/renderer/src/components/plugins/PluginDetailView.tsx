@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Power, PowerOff, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shell/ConfirmDialog'
 import { PluginIcon } from './PluginIcon'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { Tabs, TabsList, TabsTrigger } from '@arshad-shah/cynosure-react/tabs'
@@ -35,7 +35,6 @@ export function PluginDetailView({ pluginName }: Props) {
   const [settingsSchema, setSettingsSchema] = useState<SettingSchema[]>([])
   const [settingsValues, setSettingsValues] = useState<Record<string, unknown>>({})
   const [permissions, setPermissions] = useState<PermissionState | null>(null)
-  const addToast = useToastStore(s => s.addToast)
 
   const loadPlugin = async () => {
     const list: PluginInfo[] = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_LIST)
@@ -74,17 +73,13 @@ export function PluginDetailView({ pluginName }: Props) {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_SET_PERMISSIONS, pluginName, next)
     setPermissions({ ...permissions, granted: result.granted })
     if (isActive) {
-      addToast({
-        type: 'info',
-        title: t('plugins.detail.toast.reEnableTitle'),
-        message: t('plugins.detail.toast.reEnableMessage'),
-      })
+      toast.info(t('plugins.detail.toast.reEnableTitle'), { description: t('plugins.detail.toast.reEnableMessage') })
     }
   }
 
   const handleActivate = async () => {
     const result = await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_ACTIVATE, pluginName)
-    if (!result.success) addToast({ type: 'error', title: t('plugins.detail.toast.activateFailed'), message: result.error })
+    if (!result.success) toast.error(t('plugins.detail.toast.activateFailed'), { description: result.error })
     // Force immediate UI refresh
     const uiStore = usePluginUIStore.getState()
     uiStore.invalidateAll()

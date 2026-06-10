@@ -31,11 +31,11 @@ describe('NotificationItem', () => {
     expect(screen.getByText(/User Query/)).toBeInTheDocument()
   })
 
-  it('applies dimmed style when read', () => {
+  it('drops the unread marker when read (Cynosure data-unread)', () => {
     const { container } = render(
       <NotificationItem notification={makeNotification({ read: true })} onClick={() => {}} />
     )
-    expect(container.firstChild).toHaveClass('opacity-60')
+    expect(container.firstChild).not.toHaveAttribute('data-unread')
   })
 
   it('does not apply dimmed style when unread', () => {
@@ -45,10 +45,10 @@ describe('NotificationItem', () => {
     expect(container.firstChild).not.toHaveClass('opacity-60')
   })
 
-  it('calls onClick when clicked', () => {
+  it('reports the read action when an unread item is clicked', () => {
     const handler = vi.fn()
-    render(<NotificationItem notification={makeNotification()} onClick={handler} />)
-    fireEvent.click(screen.getByText(/Query failed/).closest('button')!)
+    render(<NotificationItem notification={makeNotification({ read: false })} onClick={handler} />)
+    fireEvent.click(screen.getByText(/Query failed/))
     expect(handler).toHaveBeenCalledWith('n1')
   })
 })

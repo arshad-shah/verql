@@ -1,6 +1,6 @@
 import { useState, useCallback, type DragEvent } from 'react'
 import { Package, Upload } from 'lucide-react'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -15,7 +15,6 @@ export function InstallPluginTab() {
   const { t } = useTranslation()
   const [state, setState] = useState<InstallState>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const addToast = useToastStore((s) => s.addToast)
 
   const installFromPath = useCallback(async (filePath: string) => {
     setState('installing')
@@ -25,7 +24,7 @@ export function InstallPluginTab() {
         ? await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_ZIP, filePath)
         : await window.electronAPI.invoke(IPC_CHANNELS.PLUGINS_INSTALL_FROM_PATH, filePath)
       if (result.success) {
-        addToast({ type: 'success', title: t('plugins.install.installedToast'), message: result.name ?? undefined })
+        toast.success(t('plugins.install.installedToast'), { description: result.name ?? undefined })
       } else {
         setErrorMessage(result.error ?? t('plugins.install.failed'))
         setState('error')
@@ -37,7 +36,7 @@ export function InstallPluginTab() {
       return
     }
     setState('idle')
-  }, [addToast, t])
+  }, [t])
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault()

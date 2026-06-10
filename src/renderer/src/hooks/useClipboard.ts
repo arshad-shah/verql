@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { MessageKey, TranslationVars } from '@shared/i18n'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export interface CopyOptions {
@@ -18,7 +18,6 @@ export interface CopyOptions {
 export function useClipboard(): { copied: boolean; copy: (text: string, options?: CopyOptions) => void } {
   const [copied, setCopied] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const addToast = useToastStore((s) => s.addToast)
   const { t } = useTranslation()
 
   const copy = useCallback((text: string, options?: CopyOptions) => {
@@ -27,13 +26,13 @@ export function useClipboard(): { copied: boolean; copy: (text: string, options?
         const tt = options?.toast
         if (!tt) return
         const title = typeof tt === 'string' ? t(tt) : t(tt.key, tt.vars)
-        addToast({ type: 'success', title })
+        toast.success(title)
       })
       .catch(() => { /* clipboard blocked — silent */ })
     setCopied(true)
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => setCopied(false), options?.resetDelay ?? 1200)
-  }, [addToast, t])
+  }, [t])
 
   return { copied, copy }
 }

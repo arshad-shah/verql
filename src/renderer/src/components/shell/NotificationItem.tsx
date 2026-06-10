@@ -1,8 +1,4 @@
-import { Flex } from '@arshad-shah/cynosure-react/flex'
-import { Box } from '@arshad-shah/cynosure-react/box'
-import { Text } from '@arshad-shah/cynosure-react/text'
-import { Button } from '@arshad-shah/cynosure-react/button'
-import { cn } from '@/primitives/utils/cn'
+import { Notification as CynosureNotification } from '@arshad-shah/cynosure-react/notification'
 import { formatRelativeTime } from '@/lib/format-time'
 import type { Notification } from '@/stores/notifications'
 
@@ -18,37 +14,19 @@ interface NotificationItemProps {
   onClick: (id: string) => void
 }
 
+/** Compact entry in the notification dropdown — a Cynosure Notification with
+ *  the type signalled through a coloured dot in the icon slot. */
 export function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const { id, type, message, source, timestamp, read } = notification
 
   return (
-    <Button
-      variant="ghost"
-      colorScheme="neutral"
-      size="sm"
-      fullWidth
-      onClick={() => onClick(id)}
-      className={cn(
-        'justify-start rounded-none px-3.5 py-1.5 h-auto border-b border-white/3',
-        read && 'opacity-60'
-      )}
-    >
-      <Flex direction="row" align="start" gap="2" className="w-full">
-        <Box
-          className={cn(
-            'mt-1.25 h-1.5 w-1.5 shrink-0 rounded-full',
-            dotColorMap[type],
-            read && 'opacity-40'
-          )}
-        />
-        <Box className="min-w-0 flex-1 text-left">
-          <Text size="xs" truncate>{message}</Text>
-          <Text size="xs" color="fg.subtle" className="mt-0.5 text-[9px]">
-            {source && <span>{source.label} · </span>}
-            {formatRelativeTime(timestamp)}
-          </Text>
-        </Box>
-      </Flex>
-    </Button>
+    <CynosureNotification
+      icon={<span className={`block h-1.5 w-1.5 rounded-full ${dotColorMap[type]}`} aria-hidden="true" />}
+      title={message}
+      description={source?.label}
+      timestamp={formatRelativeTime(timestamp)}
+      unread={!read}
+      onRead={() => onClick(id)}
+    />
   )
 }

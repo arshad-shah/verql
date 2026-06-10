@@ -4,7 +4,7 @@ import {
   ArrowUpRight, Settings, Plus, PanelLeft, SquarePlus, Network, AlertTriangle, type LucideIcon
 } from 'lucide-react'
 import { appActions } from '@/lib/app-actions/registry'
-import { useToastStore } from '@/stores/toast'
+import { toast } from '@arshad-shah/cynosure-react/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Per-action icons (lucide only — no emoji). Unknown ids fall back to a generic
@@ -55,11 +55,7 @@ export function ActionChip({ actionId, params, children }: Props) {
     try {
       await appActions.run(actionId, params)
     } catch (err) {
-      useToastStore.getState().addToast({
-        type: 'error',
-        title: t('aiui.actionChip.actionFailed'),
-        message: errorMessage(err)
-      })
+      toast.error(t('aiui.actionChip.actionFailed'), { description: errorMessage(err) })
     } finally {
       setBusy(false)
     }
