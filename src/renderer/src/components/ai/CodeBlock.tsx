@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { CodeView } from '@/primitives'
+import { CodeBlock as CynosureCodeBlock } from '@arshad-shah/cynosure-react/code-block'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -32,18 +32,27 @@ export function CodeBlock({ code, language, showInsert = true }: CodeBlockProps)
   }, [code, tabs, activeTabId, connectionId, updateTabSql, addQueryTab])
 
   return (
-    <CodeView
-      code={code}
-      language={language}
-      actions={showInsert ? (
-        <button
-          type="button"
-          onClick={insertIntoEditor}
-          className="px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-hover)]"
-        >
-          {t('aiui.chat.insert')}
-        </button>
-      ) : undefined}
-    />
+    <CynosureCodeBlock
+      language={language ?? 'text'}
+      copyable
+      // The header's filename slot doubles as the action rail: keep the
+      // language label and add the Insert affordance beside it.
+      filename={
+        <span className="flex items-center gap-2">
+          {language}
+          {showInsert && (
+            <button
+              type="button"
+              onClick={insertIntoEditor}
+              className="px-1.5 py-0.5 rounded text-[10px] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-hover)]"
+            >
+              {t('aiui.chat.insert')}
+            </button>
+          )}
+        </span>
+      }
+    >
+      {code}
+    </CynosureCodeBlock>
   )
 }

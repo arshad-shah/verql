@@ -1,5 +1,5 @@
+import { CodeBlock } from '@arshad-shah/cynosure-react/code-block'
 import { useState, useEffect, useCallback } from 'react'
-import { CodeView } from '@/primitives'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -149,7 +149,7 @@ export function MCPSettings() {
           {t('settings.mcp.claudeConfig.copy')}
         </Button>
       </SettingRow>
-      <CodeView code={configJson} language="json" />
+      <CodeBlock language="json" copyable>{configJson}</CodeBlock>
 
       <Divider />
       <Text size="xs" color="fg.subtle">{t('settings.mcp.recentActivity')}</Text>

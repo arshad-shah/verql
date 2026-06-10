@@ -1,7 +1,7 @@
 import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Avatar } from '@/primitives/data-display/Avatar'
+import { Avatar } from '@arshad-shah/cynosure-react/avatar'
 import { MarkdownContent } from './MarkdownContent'
 import { useTranslation } from '@/i18n/I18nProvider'
 

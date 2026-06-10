@@ -1,6 +1,6 @@
+import { CodeBlock } from '@arshad-shah/cynosure-react/code-block'
 import { useAIStore } from '@/stores/ai'
 import { AlertTriangle } from 'lucide-react'
-import { CodeView } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export function MCPApprovalDialog() {
@@ -26,7 +26,7 @@ export function MCPApprovalDialog() {
             })}
           </p>
           <div className="max-h-48 overflow-y-auto">
-            <CodeView code={req.sql} language="sql" />
+            <CodeBlock language="sql" copyable>{req.sql}</CodeBlock>
           </div>
         </div>
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">

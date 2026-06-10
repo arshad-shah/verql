@@ -95,3 +95,18 @@
   --cynosure-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --cynosure-font-family-mono: var(--app-font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
 }
+
+/* ── CodeBlock highlight flip ──
+   Cynosure keys its dual-theme shiki CSS on [data-theme='light'|'dark'],
+   which never matches Verql theme ids (nightshift, lab, dracula, …). Key the
+   same flip off the scheme attribute CynosureSchemeSync maintains. Uses
+   shiki's stable --shiki-light/--shiki-dark custom properties (the same vars
+   Cynosure's own rules read), not Cynosure's hashed class names. */
+[data-cynosure-scheme='light'] pre.shiki,
+[data-cynosure-scheme='light'] pre.shiki span {
+  color: var(--shiki-light, inherit);
+}
+[data-cynosure-scheme='dark'] pre.shiki,
+[data-cynosure-scheme='dark'] pre.shiki span {
+  color: var(--shiki-dark, inherit);
+}
