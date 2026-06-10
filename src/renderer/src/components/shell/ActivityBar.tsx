@@ -4,7 +4,8 @@ import { useUiStore, ACTIVITY_PANEL, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
-import { Stack, Spacer } from '@/primitives'
+import { Spacer } from '@/primitives'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
@@ -66,8 +67,12 @@ export function ActivityBar() {
   return (
     <Stack
       align="center"
-      gap="xs"
-      className="w-12 bg-bg-primary border-r border-border shrink-0 pt-2"
+      gap="1"
+      width="12"
+      background="bg.canvas"
+      flexShrink="0"
+      paddingTop="2"
+      style={{ borderRight: '1px solid var(--color-border-default)' }}
     >
       {topItems.map(({ id, icon, labelKey }) => renderButton(id, icon, t(labelKey)))}
       {activityBarContributions
