@@ -141,7 +141,7 @@ export function PluginSettings() {
           <div key={plugin.name}>
             <Flex direction="row" align="start" justify="between" className="py-2">
               <div className="flex-1 min-w-0 mr-4">
-                <Flex direction="row" align="center" gap="sm">
+                <Flex direction="row" align="center" gap="2">
                   <Text size="sm" weight="semibold">{plugin.displayName}</Text>
                   <Text size="xs" color="fg.subtle">{t('settings.plugins.version', { version: plugin.version })}</Text>
                   {plugin.bundled && (
@@ -150,7 +150,7 @@ export function PluginSettings() {
                 </Flex>
                 <Text size="xs" color="fg.muted" className="mt-0.5">{plugin.description}</Text>
                 {plugin.contributions.length > 0 && (
-                  <Flex direction="row" wrap gap="xs" className="mt-1.5">
+                  <Flex direction="row" wrap="wrap" gap="1" className="mt-1.5">
                     {plugin.contributions.map((c) => (
                       <Text
                         key={c}

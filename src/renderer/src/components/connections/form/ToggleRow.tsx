@@ -1,4 +1,4 @@
-import { Flex } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Text } from '@arshad-shah/cynosure-react/text'

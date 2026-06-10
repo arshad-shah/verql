@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Box } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 
 /** A titled card that groups related connection-form fields together. */

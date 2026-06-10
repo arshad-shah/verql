@@ -103,7 +103,7 @@ export function FetchableFieldsWizard({
                   'border-border-subtle opacity-60'
               }`}
           >
-            <Flex direction="row" align="center" gap="sm" className="px-4 py-3">
+            <Flex direction="row" align="center" gap="2" className="px-4 py-3">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${isCompleted ? 'bg-bg-success text-text-on-solid' :
                   isActive ? 'bg-bg-accent text-text-on-solid' :
                     'bg-bg-tertiary text-text-muted'
@@ -115,8 +115,8 @@ export function FetchableFieldsWizard({
               </Text>
             </Flex>
             {(isActive || isCompleted) && (
-              <Stack gap="md" className="px-4 pb-4">
-                <Grid columns={2} gap="md">
+              <Stack gap="3" className="px-4 pb-4">
+                <Grid columns={2} gap="3">
                   {stepFields.map(f => (
                     <PluginFieldInput
                       key={f.key}
