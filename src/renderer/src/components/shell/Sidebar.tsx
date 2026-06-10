@@ -11,7 +11,8 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tooltip, Tabs } from '@/primitives'
+import { Panel, Flex, Box, Text, ScrollArea, IconButton, Tabs } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 export function Sidebar() {

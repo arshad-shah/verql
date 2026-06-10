@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
-import { Box, Flex, IconButton, Stack, Text, Tooltip, EmptyState } from '@/primitives'
+import { Box, Flex, IconButton, Stack, Text, EmptyState } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { useConnectionsStore } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { notifyError } from '@/lib/notify-error'

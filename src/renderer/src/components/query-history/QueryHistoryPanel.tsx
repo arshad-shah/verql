@@ -6,7 +6,7 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
-  Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, Tooltip,
+  Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input,
   SearchInput,
 } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
-import { Tooltip } from '@/primitives/surfaces/Tooltip'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
 

@@ -6,7 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
 import { IconButton } from '@/primitives/forms/Button'
-import { Tooltip } from '@/primitives/surfaces/Tooltip'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { SchemaNode } from './SchemaNode'
 import { useTranslation } from '@/i18n/I18nProvider'
 

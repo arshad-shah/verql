@@ -1,9 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 import { Popover } from '../../../../src/renderer/src/primitives/surfaces/Popover'
-import { Tooltip } from '../../../../src/renderer/src/primitives/surfaces/Tooltip'
 import { DropdownMenu } from '../../../../src/renderer/src/primitives/surfaces/DropdownMenu'
 import { ContextMenu } from '../../../../src/renderer/src/primitives/surfaces/ContextMenu'
 
@@ -22,36 +21,6 @@ describe('Popover', () => {
     expect(screen.queryByText('pop content')).not.toBeInTheDocument()
     await userEvent.click(screen.getByText('Open'))
     expect(screen.getByText('pop content')).toBeInTheDocument()
-  })
-})
-
-describe('Tooltip', () => {
-  it('renders children', () => {
-    render(
-      <Tooltip content="tooltip text">
-        <button>hover me</button>
-      </Tooltip>
-    )
-    expect(screen.getByText('hover me')).toBeInTheDocument()
-  })
-
-  it('renders tooltip content element in DOM', async () => {
-    vi.useFakeTimers()
-    render(
-      <Tooltip content="my tooltip" delay={0}>
-        <span>target</span>
-      </Tooltip>
-    )
-
-    await act(async () => {
-      fireEvent.mouseEnter(screen.getByText('target').parentElement!)
-    })
-    await act(async () => {
-      vi.advanceTimersByTime(1)
-    })
-
-    expect(screen.getByRole('tooltip')).toBeInTheDocument()
-    vi.useRealTimers()
   })
 })
 

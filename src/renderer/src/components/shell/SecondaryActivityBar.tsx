@@ -4,7 +4,8 @@
 // inside ActiveConnectionsPanel, so the iconography reads as one family.
 import { ListTree, Plug, Activity } from 'lucide-react'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
-import { Stack, Spacer, Tooltip, IconButton, cn } from '@/primitives'
+import { Stack, Spacer, IconButton, cn } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
 import { useTranslation } from '@/i18n/I18nProvider'
