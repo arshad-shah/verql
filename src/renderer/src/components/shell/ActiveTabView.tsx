@@ -1,4 +1,4 @@
-import { Box } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { SectionErrorBoundary } from './SectionErrorBoundary'
 import { WelcomeScreen } from './WelcomeScreen'
 import { QueryPanel } from '@/components/query/QueryPanel'

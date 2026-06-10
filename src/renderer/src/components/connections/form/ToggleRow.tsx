@@ -10,7 +10,7 @@ export function ToggleRow({ label, checked, onChange }: {
   onChange: (checked: boolean) => void
 }) {
   return (
-    <Flex direction="row" align="center" justify="between" gap="md" className="min-h-8">
+    <Flex direction="row" align="center" justify="between" gap="3" className="min-h-8">
       <Text size="sm" color="fg.muted">{label}</Text>
       <Switch checked={checked} onCheckedChange={onChange} ><VisuallyHidden>{label}</VisuallyHidden></Switch>
     </Flex>

@@ -85,9 +85,9 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
       <Flex className="max-sm:flex-col">
         {/* Brand hero */}
         <GradientSurface className="w-[230px] shrink-0 max-sm:w-full border-r border-border-default max-sm:border-r-0 max-sm:border-b">
-          <Flex direction="column" gap="lg" justify="center" className="h-full p-7">
+          <Flex direction="column" gap="4" justify="center" className="h-full p-7">
             <VerqlMark size={60} />
-            <Stack gap="xs">
+            <Stack gap="1">
               <Text size="xl" weight="bold">Verql</Text>
               {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
             </Stack>
@@ -98,7 +98,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
         </GradientSurface>
 
         {/* Build + resources */}
-        <Box padding="xl" className="relative flex-1">
+        <Box padding="6" className="relative flex-1">
           <IconButton
             variant="ghost"
             colorScheme="neutral"
@@ -115,7 +115,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
             <Text size="xs" color="fg.subtle" className="uppercase tracking-wider">Build</Text>
             <IconButton variant="ghost" colorScheme="neutral" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild} icon={copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />} />
           </Flex>
-          <Flex direction="column" gap="xs" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
+          <Flex direction="column" gap="1" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
             {rows.length === 0
               ? <Text size="xs" color="fg.subtle">…</Text>
               : rows.map(([k, v]) => <KeyValue key={k} label={k} value={v} monospace size="sm" />)}
