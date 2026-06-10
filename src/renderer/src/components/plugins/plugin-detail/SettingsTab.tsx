@@ -1,4 +1,5 @@
-import { Card, Stack, EmptyState, Switch, Select } from '@/primitives'
+import { Card, Stack, EmptyState, Switch } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { SettingRow } from '@/components/settings/SettingRow'
@@ -48,8 +49,8 @@ function PluginSettingControl({ setting, value, onChange }: {
           size="sm"
           className="w-48"
           value={String(value ?? setting.default ?? '')}
-          options={setting.options ?? []}
-          onChange={(v) => onChange(v)}
+          items={setting.options ?? []}
+          onValueChange={(v) => onChange(v)}
         />
       )
     default:

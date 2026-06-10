@@ -1,7 +1,8 @@
 import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Select, Switch } from '@/primitives'
+import { Select } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -71,54 +72,54 @@ export function EditorSettings() {
       <Divider />
 
       <SettingRow label={t('settings.editor.wordWrap.label')} description={t('settings.editor.wordWrap.description')}>
-        <Switch label={t('settings.editor.wordWrap.label')} checked={editor.wordWrap} onChange={(e) => setSetting('editor.wordWrap', e.target.checked)} />
+        <Switch aria-label={t('settings.editor.wordWrap.label')} checked={editor.wordWrap} onCheckedChange={(checked) => setSetting('editor.wordWrap', checked)} />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.minimap.label')} description={t('settings.editor.minimap.description')}>
-        <Switch label={t('settings.editor.minimap.label')} checked={editor.minimap} onChange={(e) => setSetting('editor.minimap', e.target.checked)} />
+        <Switch aria-label={t('settings.editor.minimap.label')} checked={editor.minimap} onCheckedChange={(checked) => setSetting('editor.minimap', checked)} />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.lineNumbers.label')} description={t('settings.editor.lineNumbers.description')}>
-        <Switch label={t('settings.editor.lineNumbers.label')} checked={editor.lineNumbers} onChange={(e) => setSetting('editor.lineNumbers', e.target.checked)} />
+        <Switch aria-label={t('settings.editor.lineNumbers.label')} checked={editor.lineNumbers} onCheckedChange={(checked) => setSetting('editor.lineNumbers', checked)} />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.bracketMatching.label')} description={t('settings.editor.bracketMatching.description')}>
-        <Switch label={t('settings.editor.bracketMatching.label')} checked={editor.bracketMatching} onChange={(e) => setSetting('editor.bracketMatching', e.target.checked)} />
+        <Switch aria-label={t('settings.editor.bracketMatching.label')} checked={editor.bracketMatching} onCheckedChange={(checked) => setSetting('editor.bracketMatching', checked)} />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.ligatures.label')} description={t('settings.editor.ligatures.description')}>
-        <Switch label={t('settings.editor.ligatures.label')} checked={editor.ligatures} onChange={(e) => setSetting('editor.ligatures', e.target.checked)} />
+        <Switch aria-label={t('settings.editor.ligatures.label')} checked={editor.ligatures} onCheckedChange={(checked) => setSetting('editor.ligatures', checked)} />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.highlightActiveLine.label')} description={t('settings.editor.highlightActiveLine.description')}>
         <Switch
-          label={t('settings.editor.highlightActiveLine.label')}
+          aria-label={t('settings.editor.highlightActiveLine.label')}
           checked={editor.highlightActiveLine}
-          onChange={(e) => setSetting('editor.highlightActiveLine', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('editor.highlightActiveLine', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.autoClosingBrackets.label')} description={t('settings.editor.autoClosingBrackets.description')}>
         <Switch
-          label={t('settings.editor.autoClosingBrackets.label')}
+          aria-label={t('settings.editor.autoClosingBrackets.label')}
           checked={editor.autoClosingBrackets}
-          onChange={(e) => setSetting('editor.autoClosingBrackets', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('editor.autoClosingBrackets', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.smoothCursor.label')} description={t('settings.editor.smoothCursor.description')}>
         <Switch
-          label={t('settings.editor.smoothCursor.label')}
+          aria-label={t('settings.editor.smoothCursor.label')}
           checked={editor.smoothCursor}
-          onChange={(e) => setSetting('editor.smoothCursor', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('editor.smoothCursor', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.editor.scrollPastEnd.label')} description={t('settings.editor.scrollPastEnd.description')}>
         <Switch
-          label={t('settings.editor.scrollPastEnd.label')}
+          aria-label={t('settings.editor.scrollPastEnd.label')}
           checked={editor.scrollPastEnd}
-          onChange={(e) => setSetting('editor.scrollPastEnd', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('editor.scrollPastEnd', checked)}
         />
       </SettingRow>
 

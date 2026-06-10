@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack, Select, Switch } from '@/primitives'
+import { Box, Divider, Stack, Switch } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -137,8 +138,8 @@ function Control({
           size="sm"
           className="w-48"
           value={String(value ?? schema.default ?? '')}
-          options={schema.options ?? []}
-          onChange={(v) => onChange(v)}
+          items={schema.options ?? []}
+          onValueChange={(v) => onChange(v)}
         />
       )
     default:

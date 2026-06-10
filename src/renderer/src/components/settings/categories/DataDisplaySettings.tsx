@@ -1,7 +1,7 @@
 import { Stack, Divider, Flex } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Select } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useSettingsStore } from '@/stores/settings'
@@ -26,11 +26,11 @@ export function DataDisplaySettings() {
       <SettingRow label={t('settings.dataDisplay.dateFormat.label')} description={t('settings.dataDisplay.dateFormat.description')}>
         <Select
           value={display.dateFormat}
-          onChange={(val) => setSetting('dataDisplay.dateFormat', val)}
+          onValueChange={(val) => setSetting('dataDisplay.dateFormat', val)}
           size="sm"
           className="w-28"
           aria-label={t('settings.dataDisplay.dateFormat.label')}
-          options={[
+          items={[
             { value: 'iso', label: t('settings.dataDisplay.dateFormat.iso') },
             { value: 'locale', label: t('settings.dataDisplay.dateFormat.locale') },
             { value: 'custom', label: t('settings.dataDisplay.dateFormat.custom') },
@@ -56,11 +56,11 @@ export function DataDisplaySettings() {
       <SettingRow label={t('settings.dataDisplay.booleanDisplay.label')} description={t('settings.dataDisplay.booleanDisplay.description')}>
         <Select
           value={display.booleanDisplay}
-          onChange={(val) => setSetting('dataDisplay.booleanDisplay', val)}
+          onValueChange={(val) => setSetting('dataDisplay.booleanDisplay', val)}
           size="sm"
           className="w-32"
           aria-label={t('settings.dataDisplay.booleanDisplay.label')}
-          options={[
+          items={[
             { value: 'true_false', label: t('settings.dataDisplay.booleanDisplay.trueFalse') },
             { value: 'one_zero', label: t('settings.dataDisplay.booleanDisplay.oneZero') },
             { value: 'yes_no', label: t('settings.dataDisplay.booleanDisplay.yesNo') },
@@ -72,11 +72,11 @@ export function DataDisplaySettings() {
       <SettingRow label={t('settings.dataDisplay.numberFormat.label')} description={t('settings.dataDisplay.numberFormat.description')}>
         <Select
           value={display.numberFormat}
-          onChange={(val) => setSetting('dataDisplay.numberFormat', val)}
+          onValueChange={(val) => setSetting('dataDisplay.numberFormat', val)}
           size="sm"
           className="w-28"
           aria-label={t('settings.dataDisplay.numberFormat.label')}
-          options={[
+          items={[
             { value: 'raw', label: t('settings.dataDisplay.numberFormat.raw') },
             { value: 'locale', label: t('settings.dataDisplay.numberFormat.locale') },
           ]}

@@ -1,6 +1,6 @@
 import { Flex, Badge, Select } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
-import { Switch } from '@/primitives/forms/Switch'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
 import type { DriverCapabilities } from '@/stores/driver-capabilities'
 import type { QueryTabTxnState } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -55,9 +55,9 @@ export function TransactionToolbar({
       {caps.autoCommit && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            label={t('query.txn.autoCommit')}
+            aria-label={t('query.txn.autoCommit')}
             checked={txn.autoCommit}
-            onChange={(e) => onToggleAutoCommit(e.target.checked)}
+            onCheckedChange={onToggleAutoCommit}
           />
           <span className="text-xs text-text-secondary">{t('query.txn.autoCommit')}</span>
         </label>
@@ -83,9 +83,9 @@ export function TransactionToolbar({
       {caps.readOnly && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            label={t('query.txn.readOnly')}
+            aria-label={t('query.txn.readOnly')}
             checked={txn.readOnly}
-            onChange={(e) => onReadOnlyChange?.(e.target.checked)}
+            onCheckedChange={(checked) => onReadOnlyChange?.(checked)}
             disabled={isActive}
           />
           <span className="text-xs text-text-secondary">{t('query.txn.readOnly')}</span>

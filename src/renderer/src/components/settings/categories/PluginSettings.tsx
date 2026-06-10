@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Box, Select, Switch } from '@/primitives'
+import { Stack, Flex, Divider, Box, Switch } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -46,7 +47,7 @@ function SettingControl({ schema, value, onChange }: { schema: PluginSettingSche
     case 'number':
       return <NumberInput size="sm" className="w-28" value={Number(value ?? schema.default ?? 0)} minValue={schema.min} maxValue={schema.max} step={schema.step ?? 1} formatOptions={{ useGrouping: false }} onChange={(v) => onChange(v)} />
     case 'select':
-      return <Select size="sm" className="w-48" value={String(value ?? schema.default ?? '')} options={schema.options ?? []} onChange={(v) => onChange(v)} />
+      return <Select size="sm" className="w-48" value={String(value ?? schema.default ?? '')} items={schema.options ?? []} onValueChange={(v) => onChange(v)} />
     default:
       return <Input size="sm" className="w-64" value={String(value ?? '')} onChange={onChange} />
   }

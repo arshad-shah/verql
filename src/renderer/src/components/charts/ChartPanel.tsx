@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { ChartView } from './ChartView'
 import { detectChartType, suggestAxes, type ChartType } from './chart-detect'
 import type { QueryResult } from '@shared/types'
-import { Flex, Box, Select } from '@/primitives'
+import { Flex, Box } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { Label } from '@arshad-shah/cynosure-react/label'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -57,17 +58,17 @@ export function ChartPanel({ results }: Props) {
           <Label>{t('shell.chartPanel.xAxisLabel')}</Label>
           <Select
             value={xKey}
-            onChange={setXKey}
-            size="xs"
-            options={results.fields.map(f => ({ value: f.name, label: f.name }))}
+            onValueChange={setXKey}
+            size="sm"
+            items={results.fields.map(f => ({ value: f.name, label: f.name }))}
             aria-label={t('shell.chartPanel.xAxis')}
           />
           <Label>{t('shell.chartPanel.yAxisLabel')}</Label>
           <Select
             value={yKey}
-            onChange={setYKey}
-            size="xs"
-            options={results.fields.map(f => ({ value: f.name, label: f.name }))}
+            onValueChange={setYKey}
+            size="sm"
+            items={results.fields.map(f => ({ value: f.name, label: f.name }))}
             aria-label={t('shell.chartPanel.yAxis')}
           />
         </Flex>

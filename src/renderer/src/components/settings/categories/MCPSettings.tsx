@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Divider, Flex, CodeView, Switch } from '@/primitives'
+import { Stack, Divider, Flex, CodeView } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -110,11 +111,11 @@ export function MCPSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.autoPort.label')} description={t('settings.mcp.autoPort.description')}>
-        <Switch checked={mcp.autoPort} onChange={(e) => setSetting('mcp.autoPort', e.target.checked)} disabled={status.running} label={t('settings.mcp.autoPort.label')} />
+        <Switch checked={mcp.autoPort} onCheckedChange={(checked) => setSetting('mcp.autoPort', checked)} disabled={status.running} aria-label={t('settings.mcp.autoPort.label')} />
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.readOnly.label')} description={t('settings.mcp.readOnly.description')}>
-        <Switch checked={mcp.readOnly} onChange={(e) => setReadOnly(e.target.checked)} label={t('settings.mcp.readOnly.label')} />
+        <Switch checked={mcp.readOnly} onCheckedChange={(checked) => setReadOnly(checked)} aria-label={t('settings.mcp.readOnly.label')} />
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.maxRows.label')} description={t('settings.mcp.maxRows.description')}>
@@ -126,7 +127,7 @@ export function MCPSettings() {
       <Stack gap="xs">
         {tools.map(tool => (
           <SettingRow key={tool.id} label={tool.name} description={tool.description}>
-            <Switch checked={tool.enabled} onChange={(e) => setToolEnabled(tool.id, e.target.checked)} label={t('settings.mcp.enableTool', { tool: tool.name })} />
+            <Switch checked={tool.enabled} onCheckedChange={(checked) => setToolEnabled(tool.id, checked)} aria-label={t('settings.mcp.enableTool', { tool: tool.name })} />
           </SettingRow>
         ))}
       </Stack>

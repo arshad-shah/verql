@@ -1,5 +1,6 @@
 import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
-import { Stack, Grid, Divider, Flex, Box, Switch } from '@/primitives'
+import { Stack, Grid, Divider, Flex, Box } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Select, ColorInput } from '@/primitives'
@@ -219,33 +220,33 @@ export function AppearanceSettings() {
 
       <SettingRow label={t('settings.appearance.showStatusBar.label')} description={t('settings.appearance.showStatusBar.description')}>
         <Switch
-          label={t('settings.appearance.showStatusBar.label')}
+          aria-label={t('settings.appearance.showStatusBar.label')}
           checked={appearance.showStatusBar}
-          onChange={(e) => setSetting('appearance.showStatusBar', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('appearance.showStatusBar', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showSecondarySidebar.label')} description={t('settings.appearance.showSecondarySidebar.description')}>
         <Switch
-          label={t('settings.appearance.showSecondarySidebar.label')}
+          aria-label={t('settings.appearance.showSecondarySidebar.label')}
           checked={appearance.showSecondarySidebar}
-          onChange={(e) => setSetting('appearance.showSecondarySidebar', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('appearance.showSecondarySidebar', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showBottomDock.label')} description={t('settings.appearance.showBottomDock.description')}>
         <Switch
-          label={t('settings.appearance.showBottomDock.label')}
+          aria-label={t('settings.appearance.showBottomDock.label')}
           checked={appearance.showBottomDock}
-          onChange={(e) => setSetting('appearance.showBottomDock', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('appearance.showBottomDock', checked)}
         />
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.animations.label')} description={t('settings.appearance.animations.description')}>
         <Switch
-          label={t('settings.appearance.animations.label')}
+          aria-label={t('settings.appearance.animations.label')}
           checked={appearance.animations}
-          onChange={(e) => setSetting('appearance.animations', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('appearance.animations', checked)}
         />
       </SettingRow>
 

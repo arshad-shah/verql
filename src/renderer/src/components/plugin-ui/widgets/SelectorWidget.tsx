@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Select } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
+import { Combobox } from '@arshad-shah/cynosure-react/combobox'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useConnectionsStore } from '@/stores/connections'
 import type { SelectorWidget as SelectorWidgetType } from '@shared/plugin-ui-types'
@@ -39,15 +40,23 @@ export function SelectorWidgetRenderer({ widget, pluginId }: Props) {
 
   if (widget.visible === false) return null
 
-  return (
+  return widget.searchable ? (
+    <Combobox
+      aria-label={widget.label}
+      value={value}
+      onValueChange={(v) => { if (v !== null) handleChange(v) }}
+      items={options}
+      size="sm"
+      disabled={loading}
+    />
+  ) : (
     <Select
       aria-label={widget.label}
       value={value}
-      onChange={handleChange}
-      options={options}
-      size="xs"
+      onValueChange={handleChange}
+      items={options}
+      size="sm"
       disabled={loading}
-      searchable={widget.searchable}
     />
   )
 }

@@ -1,4 +1,6 @@
-import { FormField, Select, FileContentInput, FilePathInput } from '@/primitives'
+import { FormField, FileContentInput, FilePathInput } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
+import { Combobox } from '@arshad-shah/cynosure-react/combobox'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -28,13 +30,12 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
     if (isAuthenticated && options.length > 0) {
       return (
         <FormField label={field.label} className={className}>
-          <Select
+          <Combobox
             size="lg"
-            searchable
-            searchPlaceholder={t('connections.form.searchPlaceholder', { label: field.label.toLowerCase() })}
+            placeholder={t('connections.form.searchPlaceholder', { label: field.label.toLowerCase() })}
             value={String(value)}
-            onChange={(v) => onChange(v)}
-            options={options.map(o => ({ value: o, label: o }))}
+            onValueChange={(v) => { if (v !== null) onChange(v) }}
+            items={options.map(o => ({ value: o, label: o }))}
           />
         </FormField>
       )
@@ -59,8 +60,8 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
         <Select
           size="lg"
           value={String(value)}
-          onChange={(v) => onChange(v)}
-          options={field.options}
+          onValueChange={(v) => onChange(v)}
+          items={field.options}
         />
       </FormField>
     )

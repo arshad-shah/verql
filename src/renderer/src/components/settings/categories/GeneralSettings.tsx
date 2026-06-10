@@ -1,4 +1,5 @@
-import { Stack, Divider, Flex, Switch } from '@/primitives'
+import { Stack, Divider, Flex } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Select } from '@/primitives'
@@ -65,9 +66,9 @@ export function GeneralSettings() {
         description={t('settings.general.confirmDestructive.description')}
       >
         <Switch
-          label={t('settings.general.confirmDestructive.label')}
+          aria-label={t('settings.general.confirmDestructive.label')}
           checked={general.confirmDestructiveQueries}
-          onChange={(e) => setSetting('general.confirmDestructiveQueries', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('general.confirmDestructiveQueries', checked)}
         />
       </SettingRow>
 
@@ -76,9 +77,9 @@ export function GeneralSettings() {
         description={t('settings.general.confirmUnsavedClose.description')}
       >
         <Switch
-          label={t('settings.general.confirmUnsavedClose.label')}
+          aria-label={t('settings.general.confirmUnsavedClose.label')}
           checked={general.confirmOnUnsavedClose}
-          onChange={(e) => setSetting('general.confirmOnUnsavedClose', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('general.confirmOnUnsavedClose', checked)}
         />
       </SettingRow>
 
@@ -87,9 +88,9 @@ export function GeneralSettings() {
         description={t('settings.general.restoreTabs.description')}
       >
         <Switch
-          label={t('settings.general.restoreTabs.label')}
+          aria-label={t('settings.general.restoreTabs.label')}
           checked={general.restoreTabsOnStartup}
-          onChange={(e) => setSetting('general.restoreTabsOnStartup', e.target.checked)}
+          onCheckedChange={(checked) => setSetting('general.restoreTabsOnStartup', checked)}
         />
       </SettingRow>
 

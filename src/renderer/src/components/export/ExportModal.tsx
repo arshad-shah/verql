@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal, Checkbox, Flex, Stack, Box } from '@/primitives'
+import { Modal, Flex, Stack, Box } from '@/primitives'
+import { Checkbox } from '@arshad-shah/cynosure-react/checkbox'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -68,7 +69,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
 
         {format === 'sql' && (
           <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
-            <Checkbox checked={includeSchema} onChange={e => setIncludeSchema(e.target.checked)} />
+            <Checkbox checked={includeSchema} onCheckedChange={(c) => setIncludeSchema(c === true)} />
             <Text size="sm" color="fg.muted">{t('shell.exportModal.includeCreateTable')}</Text>
           </Flex>
         )}
