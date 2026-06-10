@@ -1,4 +1,7 @@
-import { Flex, Stack, Text, Spinner } from '@/primitives'
+import { Center } from '@arshad-shah/cynosure-react/center'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Text } from '@arshad-shah/cynosure-react/text'
+import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { VerqlHero } from '@/components/brand/VerqlHero'
 
 interface SplashScreenProps {
@@ -10,21 +13,30 @@ interface SplashScreenProps {
  * Full-window boot splash. Rendered before settings hydrate so the user sees a
  * branded loading state instead of a blank pane. Stays mounted until the first
  * post-hydration render of <App>.
+ *
+ * Built on Cynosure layout primitives styled by props — colours flow through
+ * the `--cynosure-*` bridge (styles/cynosure-bridge.css) so the active Verql
+ * theme recolours it without any Tailwind.
  */
 export function SplashScreen({ status = 'Starting Verql…' }: SplashScreenProps) {
   return (
-    <Flex
-      align="center"
-      justify="center"
-      className="h-screen w-screen bg-bg-primary text-text-primary select-none"
+    <Center
+      minHeight="screen"
+      // @ts-expect-error -- `100vw` is a valid CSS width but Cynosure's SizeValue type omits vw units
+      width="100vw"
+      background="bg.canvas"
+      color="fg.default"
       role="status"
       aria-live="polite"
+      style={{ userSelect: 'none' }}
     >
-      <Stack gap="lg" align="center">
-        <VerqlHero size={120} className="text-accent" />
-        <Spinner size="lg" label={status} />
-        <Text size="base" color="muted">{status}</Text>
+      <Stack gap="4" align="center">
+        <VerqlHero size={120} />
+        <Spinner size="lg" colorScheme="accent" label={status} />
+        <Text size="md" color="fg.muted">
+          {status}
+        </Text>
       </Stack>
-    </Flex>
+    </Center>
   )
 }
