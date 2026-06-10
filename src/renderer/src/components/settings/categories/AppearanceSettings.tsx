@@ -1,9 +1,11 @@
 import { Check, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react'
 import { Stack, Grid, Divider, Flex, Box } from '@/primitives'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Select, ColorInput } from '@/primitives'
+import { ColorInput } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { useSettingsStore } from '@/stores/settings'
 import { useTheme } from '@/primitives'
 import { useThemesStore } from '@/stores/themes'
@@ -170,8 +172,8 @@ export function AppearanceSettings() {
       <SettingRow label={t('settings.appearance.uiDensity.label')} description={t('settings.appearance.uiDensity.description')}>
         <Select
           value={appearance.uiDensity}
-          onChange={(v) => setSetting('appearance.uiDensity', v)}
-          options={[
+          onValueChange={(v) => setSetting('appearance.uiDensity', v)}
+          items={[
             { value: 'compact', label: t('settings.appearance.uiDensity.compact') },
             { value: 'comfortable', label: t('settings.appearance.uiDensity.comfortable') },
             { value: 'spacious', label: t('settings.appearance.uiDensity.spacious') },
@@ -184,8 +186,8 @@ export function AppearanceSettings() {
       <SettingRow label={t('settings.appearance.sidebarPosition.label')} description={t('settings.appearance.sidebarPosition.description')}>
         <Select
           value={appearance.sidebarPosition}
-          onChange={(v) => setSetting('appearance.sidebarPosition', v)}
-          options={[
+          onValueChange={(v) => setSetting('appearance.sidebarPosition', v)}
+          items={[
             { value: 'left', label: t('settings.appearance.sidebarPosition.left') },
             { value: 'right', label: t('settings.appearance.sidebarPosition.right') },
           ]}
@@ -220,34 +222,38 @@ export function AppearanceSettings() {
 
       <SettingRow label={t('settings.appearance.showStatusBar.label')} description={t('settings.appearance.showStatusBar.description')}>
         <Switch
-          aria-label={t('settings.appearance.showStatusBar.label')}
           checked={appearance.showStatusBar}
           onCheckedChange={(checked) => setSetting('appearance.showStatusBar', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.appearance.showStatusBar.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showSecondarySidebar.label')} description={t('settings.appearance.showSecondarySidebar.description')}>
         <Switch
-          aria-label={t('settings.appearance.showSecondarySidebar.label')}
           checked={appearance.showSecondarySidebar}
           onCheckedChange={(checked) => setSetting('appearance.showSecondarySidebar', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.appearance.showSecondarySidebar.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.showBottomDock.label')} description={t('settings.appearance.showBottomDock.description')}>
         <Switch
-          aria-label={t('settings.appearance.showBottomDock.label')}
           checked={appearance.showBottomDock}
           onCheckedChange={(checked) => setSetting('appearance.showBottomDock', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.appearance.showBottomDock.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.appearance.animations.label')} description={t('settings.appearance.animations.description')}>
         <Switch
-          aria-label={t('settings.appearance.animations.label')}
           checked={appearance.animations}
           onCheckedChange={(checked) => setSetting('appearance.animations', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.appearance.animations.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <PluginContributedSettings category="appearance" />

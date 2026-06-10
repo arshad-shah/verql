@@ -1,6 +1,8 @@
-import { Flex, Badge, Select } from '@/primitives'
+import { Flex, Badge } from '@/primitives'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { Select } from '@arshad-shah/cynosure-react/select'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import type { DriverCapabilities } from '@/stores/driver-capabilities'
 import type { QueryTabTxnState } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -55,10 +57,11 @@ export function TransactionToolbar({
       {caps.autoCommit && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            aria-label={t('query.txn.autoCommit')}
             checked={txn.autoCommit}
             onCheckedChange={onToggleAutoCommit}
-          />
+          >
+            <VisuallyHidden>{t('query.txn.autoCommit')}</VisuallyHidden>
+          </Switch>
           <span className="text-xs text-text-secondary">{t('query.txn.autoCommit')}</span>
         </label>
       )}
@@ -70,9 +73,9 @@ export function TransactionToolbar({
         <Select
           aria-label={t('query.txn.isolationLevel')}
           value={txn.isolationLevel ?? ''}
-          onChange={(value) => onIsolationChange?.(value)}
-          options={isolationOptions}
-          size="xs"
+          onValueChange={(value) => onIsolationChange?.(value)}
+          items={isolationOptions}
+          size="sm"
           className="w-44"
           disabled={isActive}
         />
@@ -83,11 +86,12 @@ export function TransactionToolbar({
       {caps.readOnly && (
         <label className="flex items-center gap-1.5 cursor-pointer select-none">
           <Switch
-            aria-label={t('query.txn.readOnly')}
             checked={txn.readOnly}
             onCheckedChange={(checked) => onReadOnlyChange?.(checked)}
             disabled={isActive}
-          />
+          >
+            <VisuallyHidden>{t('query.txn.readOnly')}</VisuallyHidden>
+          </Switch>
           <span className="text-xs text-text-secondary">{t('query.txn.readOnly')}</span>
         </label>
       )}

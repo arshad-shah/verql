@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Divider, Stack, Switch } from '@/primitives'
+import { Box, Divider, Stack } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
@@ -103,11 +105,9 @@ function Control({
   switch (schema.type) {
     case 'boolean':
       return (
-        <Switch
-          label={schema.title}
-          checked={Boolean(value)}
-          onChange={(e) => onChange(e.target.checked)}
-        />
+        <Switch checked={Boolean(value)} onCheckedChange={onChange}>
+          <VisuallyHidden>{schema.title}</VisuallyHidden>
+        </Switch>
       )
     case 'password':
       return (

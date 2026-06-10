@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Stack, Divider, Flex, CodeView } from '@/primitives'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -111,11 +112,11 @@ export function MCPSettings() {
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.autoPort.label')} description={t('settings.mcp.autoPort.description')}>
-        <Switch checked={mcp.autoPort} onCheckedChange={(checked) => setSetting('mcp.autoPort', checked)} disabled={status.running} aria-label={t('settings.mcp.autoPort.label')} />
+        <Switch checked={mcp.autoPort} onCheckedChange={(checked) => setSetting('mcp.autoPort', checked)} disabled={status.running} ><VisuallyHidden>{t('settings.mcp.autoPort.label')}</VisuallyHidden></Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.readOnly.label')} description={t('settings.mcp.readOnly.description')}>
-        <Switch checked={mcp.readOnly} onCheckedChange={(checked) => setReadOnly(checked)} aria-label={t('settings.mcp.readOnly.label')} />
+        <Switch checked={mcp.readOnly} onCheckedChange={(checked) => setReadOnly(checked)} ><VisuallyHidden>{t('settings.mcp.readOnly.label')}</VisuallyHidden></Switch>
       </SettingRow>
 
       <SettingRow label={t('settings.mcp.maxRows.label')} description={t('settings.mcp.maxRows.description')}>
@@ -127,7 +128,7 @@ export function MCPSettings() {
       <Stack gap="xs">
         {tools.map(tool => (
           <SettingRow key={tool.id} label={tool.name} description={tool.description}>
-            <Switch checked={tool.enabled} onCheckedChange={(checked) => setToolEnabled(tool.id, checked)} aria-label={t('settings.mcp.enableTool', { tool: tool.name })} />
+            <Switch checked={tool.enabled} onCheckedChange={(checked) => setToolEnabled(tool.id, checked)} ><VisuallyHidden>{t('settings.mcp.enableTool', { tool: tool.name })}</VisuallyHidden></Switch>
           </SettingRow>
         ))}
       </Stack>

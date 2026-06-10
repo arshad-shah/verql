@@ -74,7 +74,7 @@ describe('ConnectionFormView', () => {
   it('renders database type select', async () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
     await waitFor(() => {
-      const select = screen.getByRole('combobox', { name: 'Database Type' })
+      const select = screen.getByRole('button', { name: /database type/i })
       expect(select).toBeTruthy()
     })
   })
@@ -116,9 +116,9 @@ describe('ConnectionFormView', () => {
     render(<ConnectionFormView tabId="conn-form-new" />)
     // Wait for plugin drivers to load
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Database Type' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: /database type/i })).toBeTruthy()
     })
-    const trigger = screen.getByRole('combobox', { name: 'Database Type' })
+    const trigger = screen.getByRole('button', { name: /database type/i })
     await userEvent.click(trigger)
     const sqliteOption = await screen.findByRole('option', { name: 'SQLite' })
     await userEvent.click(sqliteOption)

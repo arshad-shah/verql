@@ -1,8 +1,9 @@
 import { Stack, Divider, Flex } from '@/primitives'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Select } from '@/primitives'
+import { Select } from '@arshad-shah/cynosure-react/select'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
 import { useSettingsStore } from '@/stores/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -46,11 +47,11 @@ export function GeneralSettings() {
       <SettingRow label={t('settings.general.defaultPageSize.label')} description={t('settings.general.defaultPageSize.description')}>
         <Select
           value={String(general.defaultPageSize)}
-          onChange={(val) => setSetting('general.defaultPageSize', parseInt(val))}
+          onValueChange={(val) => setSetting('general.defaultPageSize', parseInt(val))}
           size="sm"
           className="w-24"
           aria-label={t('settings.general.defaultPageSize.label')}
-          options={[
+          items={[
             { value: '50', label: '50' },
             { value: '100', label: '100' },
             { value: '500', label: '500' },
@@ -66,10 +67,11 @@ export function GeneralSettings() {
         description={t('settings.general.confirmDestructive.description')}
       >
         <Switch
-          aria-label={t('settings.general.confirmDestructive.label')}
           checked={general.confirmDestructiveQueries}
           onCheckedChange={(checked) => setSetting('general.confirmDestructiveQueries', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.general.confirmDestructive.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow
@@ -77,10 +79,11 @@ export function GeneralSettings() {
         description={t('settings.general.confirmUnsavedClose.description')}
       >
         <Switch
-          aria-label={t('settings.general.confirmUnsavedClose.label')}
           checked={general.confirmOnUnsavedClose}
           onCheckedChange={(checked) => setSetting('general.confirmOnUnsavedClose', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.general.confirmUnsavedClose.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <SettingRow
@@ -88,10 +91,11 @@ export function GeneralSettings() {
         description={t('settings.general.restoreTabs.description')}
       >
         <Switch
-          aria-label={t('settings.general.restoreTabs.label')}
           checked={general.restoreTabsOnStartup}
           onCheckedChange={(checked) => setSetting('general.restoreTabsOnStartup', checked)}
-        />
+        >
+          <VisuallyHidden>{t('settings.general.restoreTabs.label')}</VisuallyHidden>
+        </Switch>
       </SettingRow>
 
       <PluginContributedSettings category="general" />

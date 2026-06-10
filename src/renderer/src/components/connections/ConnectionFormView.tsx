@@ -141,6 +141,7 @@ export function ConnectionFormView({ tabId, editingId }: Props) {
                 <FormField label={t('connections.form.databaseType')}>
                   <Select
                     size="lg"
+                    aria-label={t('connections.form.databaseType')}
                     value={String(profile.type)}
                     onValueChange={(v) => handleTypeChange(v as DatabaseType)}
                     items={allTypes}

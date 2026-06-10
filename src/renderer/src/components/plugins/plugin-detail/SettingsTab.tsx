@@ -1,4 +1,6 @@
-import { Card, Stack, EmptyState, Switch } from '@/primitives'
+import { Card, Stack, EmptyState } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
@@ -14,11 +16,9 @@ function PluginSettingControl({ setting, value, onChange }: {
   switch (setting.type) {
     case 'boolean':
       return (
-        <Switch
-          label={setting.title}
-          checked={Boolean(value)}
-          onChange={(e) => onChange(e.target.checked)}
-        />
+        <Switch checked={Boolean(value)} onCheckedChange={onChange}>
+          <VisuallyHidden>{setting.title}</VisuallyHidden>
+        </Switch>
       )
     case 'password':
       return (

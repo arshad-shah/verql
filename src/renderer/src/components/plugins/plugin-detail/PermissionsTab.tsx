@@ -1,5 +1,6 @@
 import { Stack, Flex, Box, Card, Badge, EmptyState } from '@/primitives'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Alert, AlertDescription } from '@arshad-shah/cynosure-react/alert'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -62,10 +63,11 @@ export function PermissionsTab({ permissions, onToggle }: {
                 </Box>
                 <Box className="shrink-0">
                   <Switch
-                    aria-label={info?.title ?? perm}
                     checked={granted}
                     onCheckedChange={(checked) => onToggle(perm, checked)}
-                  />
+                  >
+                    <VisuallyHidden>{info?.title ?? perm}</VisuallyHidden>
+                  </Switch>
                 </Box>
               </Flex>
             )

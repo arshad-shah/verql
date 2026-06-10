@@ -46,15 +46,23 @@ covers the scheme sync.
    possible.
 2. **Layout = Cynosure layout primitives** (`Box`, `Stack`, `Inline`, `Flex`,
    `Grid`, `Center`, `Spacer`, …) — no hand-rolled `<div>` scaffolding.
-3. **Check Cynosure first.** Before keeping/porting any bespoke component,
-   check the Cynosure inventory (`components.config.mjs` in the cynosure repo);
-   it covers number inputs, search inputs, data tables, notifications, code
-   blocks, theme toggles, and more.
-4. **Per stage:** migrate a coherent slice; delete the replaced Verql
+3. **Check Cynosure first — at the FEATURE level, not just the component
+   level.** Before keeping/porting any bespoke component or adding any
+   slot/action, check the Cynosure inventory (`components.config.mjs` in the
+   cynosure repo) *and* the component's built-in behaviours — e.g.
+   `Input type="password"` ships its own reveal toggle and `clearable` ships
+   a clear button, so Verql's PasswordInput and SearchInput `onClear` were
+   deleted, not ported. Don't add an action a Cynosure component already has.
+4. **No wrappers around Cynosure components.** Call sites use Cynosure
+   directly. The only Verql components that may *compose* Cynosure parts are
+   ones carrying real app behaviour Cynosure doesn't model (e.g. `KbdGroup`'s
+   Electron-accelerator parsing, `FilePathInput`'s native dialog) — never a
+   styling or API-shim layer.
+5. **Per stage:** migrate a coherent slice; delete the replaced Verql
    primitive + its stories; update every call site (clean break); keep
    `pnpm exec vitest run --project unit` green; add a changeset; update the
    status table below.
-5. **TDD:** when behaviour moves (not just markup), pin it with a unit test
+6. **TDD:** when behaviour moves (not just markup), pin it with a unit test
    before swapping the implementation.
 
 ## Status
@@ -66,7 +74,8 @@ covers the scheme sync.
 | 3 | Feedback: `Spinner`, `Skeleton`, `Progress`, `Alert`, `Banner` (Toast deferred to stage 10) | ✅ done |
 | 4 | Typography: `Text`, `Heading`, `Code`, `Kbd`/`KbdGroup` (KbdGroup kept: accelerator/platform behaviour atop Cynosure `Kbd`) | ✅ done |
 | 5a | Forms (text-input family): `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput` (→ `Input type=password`, built-in reveal), `Label` | ✅ done |
-| 5b | Forms (choice controls + pickers): `Checkbox`, `Radio`, `Switch`, `Select`, `Slider`, `TagsInput`, `FormField`, `DatePicker`, `ColorInput`/`ColorPicker`, `FileContentInput`/`FilePathInput` | ⬜ |
+| 5b | Forms (choice controls): `Checkbox`, `Switch`, `Select` (+`Combobox` for searchable); unused `Radio`/`Slider`/`TagsInput`/`DatePicker` deleted | ✅ done |
+| 5c | Forms (composites): `FormField` → Cynosure form composition, `ColorInput`/`ColorPicker` → Cynosure `color-picker`, `FileContentInput`/`FilePathInput` internals | ⬜ |
 | 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea`, `Container`, `AspectRatio` | ⬜ |
 | 7 | Surfaces/overlays: `Card`, `Modal`→`Dialog`, `Sheet`→`Drawer`, `Popover`, `Tooltip`, `DropdownMenu`, `ContextMenu`, `Accordion`, `Panel` | ⬜ |
 | 8 | Data display: `Badge`, `Tag`, `Avatar`, `EmptyState`, `Table`/`DataTable`, `List`, `TreeItem`→`Tree`, `KeyValue`, `CodeView`→`CodeBlock` | ⬜ |

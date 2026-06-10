@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Stack, Flex, Divider, Box, Switch } from '@/primitives'
+import { Stack, Flex, Divider, Box } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Select } from '@arshad-shah/cynosure-react/select'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { NumberInput } from '@arshad-shah/cynosure-react/number-input'
@@ -41,7 +43,7 @@ interface PluginSettingsBundle {
 function SettingControl({ schema, value, onChange }: { schema: PluginSettingSchema; value: unknown; onChange: (v: unknown) => void }) {
   switch (schema.type) {
     case 'boolean':
-      return <Switch label={schema.title} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
+      return <Switch checked={Boolean(value)} onCheckedChange={onChange}><VisuallyHidden>{schema.title}</VisuallyHidden></Switch>
     case 'password':
       return <Input type="password" size="sm" className="w-64" value={String(value ?? '')} onChange={onChange} />
     case 'number':
@@ -162,11 +164,9 @@ export function PluginSettings() {
                   <Text size="xs" color="feedback.danger.foreground" className="mt-1">{plugin.status.error}</Text>
                 )}
               </div>
-              <Switch
-                label={t('settings.plugins.toggleAria', { plugin: plugin.displayName })}
-                checked={isActive}
-                onChange={(e) => handleToggle(plugin.name, e.target.checked)}
-              />
+              <Switch checked={isActive} onCheckedChange={(checked) => handleToggle(plugin.name, checked)}>
+                <VisuallyHidden>{t('settings.plugins.toggleAria', { plugin: plugin.displayName })}</VisuallyHidden>
+              </Switch>
             </Flex>
             {isActive && ownSettings.length > 0 && (
               <Box className="ml-0 pl-4 border-l border-border/40 mb-3">
