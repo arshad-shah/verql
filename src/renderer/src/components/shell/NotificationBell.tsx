@@ -1,7 +1,8 @@
 import { Bell } from 'lucide-react'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
-import { BadgeIndicator, Tooltip } from '@/primitives'
+import { BadgeIndicator } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -14,8 +15,8 @@ export function NotificationBell() {
 
   return (
     <Box>
-      <Tooltip content={t('shell.notifications.bell')} side="left">
-        <BadgeIndicator variant="number" count={unread} side="top-left">
+      <BadgeIndicator variant="number" count={unread} side="top-left">
+        <Tooltip content={t('shell.notifications.bell')} side="left">
           <IconButton
             onClick={() => setSecondaryActivePanel(SECONDARY_PANEL.NOTIFICATIONS)}
             variant={isActive ? 'soft' : 'ghost'}
@@ -25,8 +26,8 @@ export function NotificationBell() {
             className="rounded-lg"
             icon={<Bell size={20} />}
           />
-        </BadgeIndicator>
-      </Tooltip>
+        </Tooltip>
+      </BadgeIndicator>
     </Box>
   )
 }

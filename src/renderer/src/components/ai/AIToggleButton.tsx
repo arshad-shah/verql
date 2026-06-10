@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react'
-import { Tooltip } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { useAIStore } from '@/stores/ai'
 import { useUiStore } from '@/stores/ui'

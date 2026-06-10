@@ -9,7 +9,7 @@ import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Text } from '@arshad-shah/cynosure-react/text'
-import { Tooltip } from '@/primitives/surfaces/Tooltip'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { formatCompactNumber } from '@/lib/format'
 import { useTranslation } from '@/i18n/I18nProvider'
 

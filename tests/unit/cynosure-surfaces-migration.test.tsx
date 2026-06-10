@@ -55,10 +55,10 @@ describe('Cynosure Dialog (migration contract)', () => {
 })
 
 describe('Cynosure Tooltip (migration contract)', () => {
-  it('accepts content/side/delayDuration and keeps the child as trigger', () => {
+  it('accepts content/side/delayMs and keeps the child as trigger', () => {
     render(
       <TooltipProvider>
-        <Tooltip content="Close tab" side="bottom" delayDuration={600}>
+        <Tooltip content="Close tab" side="bottom" delayMs={600}>
           <button>×</button>
         </Tooltip>
       </TooltipProvider>,

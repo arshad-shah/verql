@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Download, X } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal } from '@/primitives'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@arshad-shah/cynosure-react/dialog'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -45,13 +45,13 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
   }
 
   return (
-    <Modal open={true} onClose={onClose}>
-      <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
-        <Text size="sm" weight="semibold">{t('shell.exportModal.title', { tableName: tableName ?? '' })}</Text>
-        <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.exportModal.close')}><X size={14} /></Button>
-      </Flex>
+    <Dialog open={true} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent closeLabel={t('shell.exportModal.close')}>
+        <DialogHeader>
+          <DialogTitle>{t('shell.exportModal.title', { tableName: tableName ?? '' })}</DialogTitle>
+        </DialogHeader>
 
-      <Stack gap="3" className="p-4">
+        <Stack gap="3">
         <Box>
           <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
           <Flex direction="row" gap="2">
@@ -80,20 +80,21 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         {result && (
           <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
         )}
-      </Stack>
+        </Stack>
 
-      <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
-        <Button
-          size="sm"
-          onClick={handleExport}
-          loading={exporting}
-          disabled={!tableName}
-          leftIcon={<Download size={14} />}
-        >
-          {t('shell.exportModal.export')}
-        </Button>
-      </Flex>
-    </Modal>
+        <DialogFooter>
+          <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
+          <Button
+            size="sm"
+            onClick={handleExport}
+            loading={exporting}
+            disabled={!tableName}
+            leftIcon={<Download size={14} />}
+          >
+            {t('shell.exportModal.export')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
-import { Tooltip, EmptyState } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
