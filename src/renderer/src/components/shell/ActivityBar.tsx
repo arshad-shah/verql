@@ -4,7 +4,8 @@ import { useUiStore, ACTIVITY_PANEL, type ActivityPanel } from '@/stores/ui'
 import { useTabsStore } from '@/stores/tabs'
 import { SETTINGS_CATEGORY } from '@/lib/settings-categories'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
-import { Stack, Spacer, IconButton, cn } from '@/primitives'
+import { Stack, Spacer } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { IPC_CHANNELS } from '@shared/ipc'
@@ -53,17 +54,11 @@ export function ActivityBar() {
         <IconButton
           label={label}
           size="lg"
-          variant="ghost"
+          variant={isActive ? 'soft' : 'ghost'}
+          colorScheme={isActive ? 'accent' : 'neutral'}
           onClick={() => setActivePanel(id)}
-          className={cn(
-            'rounded-lg transition-colors',
-            isActive
-              ? 'bg-accent/10 text-accent hover:bg-accent/10'
-              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-          )}
-        >
-          <Icon size={20} />
-        </IconButton>
+          icon={<Icon size={20} />}
+        />
       </Tooltip>
     )
   }
@@ -91,28 +86,21 @@ export function ActivityBar() {
             label={t('shell.activityBar.mcpServer')}
             size="lg"
             variant="ghost"
+            colorScheme="success"
             onClick={() => openSettings(SETTINGS_CATEGORY.MCP)}
-            className="rounded-lg transition-colors text-green-400 hover:text-green-300 hover:bg-white/5"
-          >
-            <Radio size={18} />
-          </IconButton>
+            icon={<Radio size={18} />}
+          />
         </Tooltip>
       )}
       <Tooltip content={t('shell.activityBar.settings')} side="right">
         <IconButton
           label={t('shell.activityBar.settings')}
           size="lg"
-          variant="ghost"
+          variant={activeTabType === 'settings' ? 'soft' : 'ghost'}
+          colorScheme={activeTabType === 'settings' ? 'accent' : 'neutral'}
           onClick={() => openSettings()}
-          className={cn(
-            'rounded-lg transition-colors',
-            activeTabType === 'settings'
-              ? 'bg-accent/10 text-accent hover:bg-accent/10'
-              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-          )}
-        >
-          <Settings size={20} />
-        </IconButton>
+          icon={<Settings size={20} />}
+        />
       </Tooltip>
     </Stack>
   )

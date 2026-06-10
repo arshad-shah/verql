@@ -4,7 +4,8 @@
 // inside ActiveConnectionsPanel, so the iconography reads as one family.
 import { ListTree, Plug, Activity } from 'lucide-react'
 import { useUiStore, SECONDARY_PANEL } from '@/stores/ui'
-import { Stack, Spacer, IconButton, cn } from '@/primitives'
+import { Stack, Spacer } from '@/primitives'
+import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
 import { NotificationBell } from './NotificationBell'
@@ -23,17 +24,11 @@ export function SecondaryActivityBar() {
         <IconButton
           label={label}
           size="lg"
-          variant="ghost"
+          variant={isActive ? 'soft' : 'ghost'}
+          colorScheme={isActive ? 'accent' : 'neutral'}
           onClick={() => setActive(id)}
-          className={cn(
-            'rounded-lg transition-colors',
-            isActive
-              ? 'bg-accent/10 text-accent hover:bg-accent/10'
-              : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-          )}
-        >
-          <Icon size={20} />
-        </IconButton>
+          icon={<Icon size={20} />}
+        />
       </Tooltip>
     )
   }
