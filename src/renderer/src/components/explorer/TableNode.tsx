@@ -2,7 +2,12 @@ import { useEffect } from 'react'
 import { ChevronRight, ChevronDown, Table2 } from 'lucide-react'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
-import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
 import { TableHoverActions } from './TableHoverActions'
@@ -66,6 +71,16 @@ export function TableNode({
 
   const paddingLeft = 8 + depth * 16
 
+  const menuContent = (
+    <ContextMenuContent>
+      {menuItems.map((item) => (
+        <ContextMenuItem key={item.label} onSelect={item.onSelect}>
+          {item.label}
+        </ContextMenuItem>
+      ))}
+    </ContextMenuContent>
+  )
+
   // ── Shared header content ──────────────────────────────────────────────────
 
   const chevron = isExpanded ? (
@@ -88,7 +103,8 @@ export function TableNode({
 
   if (!isExpanded) {
     return (
-      <ContextMenu items={menuItems}>
+      <ContextMenu>
+        <ContextMenuTrigger>
         <button
           className="group w-full flex items-center gap-1.5 rounded text-left transition-colors duration-[var(--transition-fast)]"
           style={{ paddingLeft, paddingRight: 4, paddingTop: 2, paddingBottom: 2 }}
@@ -115,6 +131,8 @@ export function TableNode({
             onCopySampleQuery={copySampleQuery}
           />
         </button>
+        </ContextMenuTrigger>
+        {menuContent}
       </ContextMenu>
     )
   }
@@ -122,7 +140,8 @@ export function TableNode({
   // ── Expanded view (contained card) ─────────────────────────────────────────
 
   return (
-    <ContextMenu items={menuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <div
         className="mb-1 rounded-lg overflow-hidden"
         style={{
@@ -217,6 +236,8 @@ export function TableNode({
           )}
         </div>
       </div>
+      </ContextMenuTrigger>
+      {menuContent}
     </ContextMenu>
   )
 }

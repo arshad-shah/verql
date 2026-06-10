@@ -1,7 +1,4 @@
-import { Modal } from '@/primitives'
-import { Stack } from '@arshad-shah/cynosure-react/stack'
-import { Flex } from '@arshad-shah/cynosure-react/flex'
-import { Text } from '@arshad-shah/cynosure-react/text'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@arshad-shah/cynosure-react/dialog'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { ConfirmDialog } from './ConfirmDialog'
 import { tabActions } from '@/stores/tab-actions'
@@ -22,60 +19,62 @@ export function TabCloseGuard({ pendingCloseId, clearPendingClose, closeTab }: P
 
   if (pendingCloseId !== null && tabActions.hasOpenTransaction(pendingCloseId)) {
     // Transaction close-guard: user must Commit or Rollback before the tab closes.
-    // Uses the same Modal/Button/Text/Stack/Flex primitives as ConfirmDialog.
+    // Uses the same Dialog composition as ConfirmDialog.
     return (
-      <Modal open onClose={clearPendingClose} className="w-[400px] max-w-[90vw]">
-        <Stack gap="3" className="p-4">
-          <Text size="sm" weight="semibold">{t('shell.confirmTransaction.title')}</Text>
-          <Text size="sm" color="fg.muted">
-            {t('shell.confirmTransaction.message', {
-              label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
-            })}
-          </Text>
-        </Stack>
-        <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
-          <Button variant="outline" colorScheme="neutral" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
-          <Button
-            colorScheme="danger"
-            size="sm"
-            onClick={async () => {
-              const id = pendingCloseId
-              if (!id) return
-              try {
-                await tabActions.rollbackTransaction(id)
-                clearPendingClose()
-                closeTab(id)
-              } catch (err) {
-                notifyError(err, {
-                  source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
-                })
-                // leave dialog open so the user can retry or cancel
-              }
-            }}
-          >
-            {t('shell.confirmTransaction.rollbackAndClose')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={async () => {
-              const id = pendingCloseId
-              if (!id) return
-              try {
-                await tabActions.commitTransaction(id)
-                clearPendingClose()
-                closeTab(id)
-              } catch (err) {
-                notifyError(err, {
-                  source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
-                })
-                // leave dialog open so the user can retry or cancel
-              }
-            }}
-          >
-            {t('shell.confirmTransaction.commitAndClose')}
-          </Button>
-        </Flex>
-      </Modal>
+      <Dialog open onOpenChange={(o) => { if (!o) clearPendingClose() }}>
+        <DialogContent size="sm" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t('shell.confirmTransaction.title')}</DialogTitle>
+            <DialogDescription>
+              {t('shell.confirmTransaction.message', {
+                label: tabActions.get(pendingCloseId)?.label ?? t('shell.confirmTransaction.thisTab'),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" colorScheme="neutral" size="sm" onClick={clearPendingClose}>{t('common.cancel')}</Button>
+            <Button
+              colorScheme="danger"
+              size="sm"
+              onClick={async () => {
+                const id = pendingCloseId
+                if (!id) return
+                try {
+                  await tabActions.rollbackTransaction(id)
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
+                }
+              }}
+            >
+              {t('shell.confirmTransaction.rollbackAndClose')}
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                const id = pendingCloseId
+                if (!id) return
+                try {
+                  await tabActions.commitTransaction(id)
+                  clearPendingClose()
+                  closeTab(id)
+                } catch (err) {
+                  notifyError(err, {
+                    source: { type: 'tab', id, label: tabActions.get(id)?.label ?? id },
+                  })
+                  // leave dialog open so the user can retry or cancel
+                }
+              }}
+            >
+              {t('shell.confirmTransaction.commitAndClose')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     )
   }
 

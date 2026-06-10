@@ -1,4 +1,4 @@
-import { Modal } from '@/primitives'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@arshad-shah/cynosure-react/dialog'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -16,35 +16,35 @@ interface Props {
 export function SaveQueryDialog({ open, name, onNameChange, onClose, onConfirm }: Props) {
   const { t } = useTranslation()
   return (
-    <Modal open={open} onClose={onClose}>
-      <form
-        onSubmit={(e) => { e.preventDefault(); onConfirm() }}
-        className="p-4 flex flex-col gap-3"
-      >
-        <div className="flex flex-col gap-1">
-          <div className="text-sm font-medium">{t('query.save.title')}</div>
-          <div className="text-xs text-text-tertiary">
-            {t('query.save.description')}
-          </div>
-        </div>
-        <Input
-          autoFocus
-          value={name}
-          onChange={onNameChange}
-          placeholder={t('query.save.namePlaceholder')}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') onClose()
-          }}
-        />
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onClose}>
-            {t('query.save.cancel')}
-          </Button>
-          <Button type="submit" size="sm" disabled={!name.trim()}>
-            {t('query.save.save')}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent showCloseButton={false}>
+        <form
+          onSubmit={(e) => { e.preventDefault(); onConfirm() }}
+          className="flex flex-col gap-3"
+        >
+          <DialogHeader>
+            <DialogTitle>{t('query.save.title')}</DialogTitle>
+            <DialogDescription>{t('query.save.description')}</DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            value={name}
+            onChange={onNameChange}
+            placeholder={t('query.save.namePlaceholder')}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') onClose()
+            }}
+          />
+          <DialogFooter>
+            <Button type="button" variant="ghost" colorScheme="neutral" size="sm" onClick={onClose}>
+              {t('query.save.cancel')}
+            </Button>
+            <Button type="submit" size="sm" disabled={!name.trim()}>
+              {t('query.save.save')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

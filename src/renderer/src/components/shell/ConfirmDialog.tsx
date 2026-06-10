@@ -1,7 +1,4 @@
-import { Modal } from '@/primitives'
-import { Flex } from '@arshad-shah/cynosure-react/flex'
-import { Stack } from '@arshad-shah/cynosure-react/stack'
-import { Text } from '@arshad-shah/cynosure-react/text'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@arshad-shah/cynosure-react/dialog'
 import { Button } from '@arshad-shah/cynosure-react/button'
 
 interface ConfirmDialogProps {
@@ -26,21 +23,23 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={onCancel} className="w-[400px] max-w-[90vw]">
-      <Stack gap="3" className="p-4">
-        <Text size="sm" weight="semibold">{title}</Text>
-        {message && <Text size="sm" color="fg.muted">{message}</Text>}
-      </Stack>
-      <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" colorScheme="neutral" size="sm" onClick={onCancel}>{cancelLabel}</Button>
-        <Button
-          colorScheme={variant === 'danger' ? 'danger' : 'accent'}
-          size="sm"
-          onClick={onConfirm}
-        >
-          {confirmLabel}
-        </Button>
-      </Flex>
-    </Modal>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel() }}>
+      <DialogContent size="sm" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {message && <DialogDescription>{message}</DialogDescription>}
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" colorScheme="neutral" size="sm" onClick={onCancel}>{cancelLabel}</Button>
+          <Button
+            colorScheme={variant === 'danger' ? 'danger' : 'accent'}
+            size="sm"
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

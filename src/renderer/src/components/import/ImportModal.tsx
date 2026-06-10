@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Upload, X } from 'lucide-react'
-import { Modal } from '@/primitives'
+import { Upload } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@arshad-shah/cynosure-react/dialog'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -64,65 +64,66 @@ export function ImportModal({ connectionId, onClose }: Props) {
   }
 
   return (
-    <Modal open={true} onClose={onClose}>
-      <Flex direction="row" align="center" justify="between" className="px-4 py-3 border-b border-border">
-        <Text size="sm" weight="semibold">{t('shell.importModal.title')}</Text>
-        <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.importModal.close')}><X size={14} /></Button>
-      </Flex>
+    <Dialog open={true} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent closeLabel={t('shell.importModal.close')}>
+        <DialogHeader>
+          <DialogTitle>{t('shell.importModal.title')}</DialogTitle>
+        </DialogHeader>
 
-      <Stack gap="3" className="p-4">
-        <Box>
-          <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
-          <Flex direction="row" gap="2">
-            {(['sql', 'csv'] as ImportType[]).map(item => (
-              <Button
-                key={item}
-                variant={importType === item ? 'soft' : 'ghost'}
-                colorScheme={importType === item ? 'accent' : 'neutral'}
-                size="sm"
-                onClick={() => setImportType(item)}
-                className="flex-1"
-              >
-                {item.toUpperCase()}
-              </Button>
-            ))}
-          </Flex>
-        </Box>
-
-        {importType === 'sql' && (
-          <Text size="xs" color="fg.muted" as="p">{t('shell.importModal.sqlHint')}</Text>
-        )}
-
-        {importType === 'csv' && (
+        <Stack gap="3">
           <Box>
-            <Text size="xs" color="fg.subtle" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
-            <Input
-              value={tableName}
-              onChange={setTableName}
-              placeholder={t('shell.importModal.targetTablePlaceholder')}
-              size="sm"
-            />
-            <Text size="xs" color="fg.subtle" as="p" className="mt-1">{t('shell.importModal.csvHint')}</Text>
+            <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
+            <Flex direction="row" gap="2">
+              {(['sql', 'csv'] as ImportType[]).map(item => (
+                <Button
+                  key={item}
+                  variant={importType === item ? 'soft' : 'ghost'}
+                  colorScheme={importType === item ? 'accent' : 'neutral'}
+                  size="sm"
+                  onClick={() => setImportType(item)}
+                  className="flex-1"
+                >
+                  {item.toUpperCase()}
+                </Button>
+              ))}
+            </Flex>
           </Box>
-        )}
 
-        {result && (
-          <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
-        )}
-      </Stack>
+          {importType === 'sql' && (
+            <Text size="xs" color="fg.muted" as="p">{t('shell.importModal.sqlHint')}</Text>
+          )}
 
-      <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
-        <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.importModal.cancel')}</Button>
-        <Button
-          size="sm"
-          onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
-          loading={importing}
-          disabled={importType === 'csv' && !tableName.trim()}
-          leftIcon={<Upload size={14} />}
-        >
-          {t('shell.importModal.import')}
-        </Button>
-      </Flex>
-    </Modal>
+          {importType === 'csv' && (
+            <Box>
+              <Text size="xs" color="fg.subtle" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
+              <Input
+                value={tableName}
+                onChange={setTableName}
+                placeholder={t('shell.importModal.targetTablePlaceholder')}
+                size="sm"
+              />
+              <Text size="xs" color="fg.subtle" as="p" className="mt-1">{t('shell.importModal.csvHint')}</Text>
+            </Box>
+          )}
+
+          {result && (
+            <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
+          )}
+        </Stack>
+
+        <DialogFooter>
+          <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.importModal.cancel')}</Button>
+          <Button
+            size="sm"
+            onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
+            loading={importing}
+            disabled={importType === 'csv' && !tableName.trim()}
+            leftIcon={<Upload size={14} />}
+          >
+            {t('shell.importModal.import')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

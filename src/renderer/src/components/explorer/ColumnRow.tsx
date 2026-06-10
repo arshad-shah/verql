@@ -1,6 +1,11 @@
 import type { CSSProperties } from 'react'
 import { Key, Link, Hash } from 'lucide-react'
-import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns } from '@/hooks/useDataNouns'
 import type { SchemaColumn } from '@shared/types'
@@ -117,7 +122,8 @@ export function ColumnRow({ column, tableName, connectionId }: ColumnRowProps) {
   ]
 
   return (
-    <ContextMenu items={menuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <div
         className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs min-w-0 cursor-default group"
         style={{ '--hover-bg': 'var(--color-hover)' } as CSSProperties}
@@ -144,6 +150,14 @@ export function ColumnRow({ column, tableName, connectionId }: ColumnRowProps) {
 
         <ConstraintBadge column={column} />
       </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {menuItems.map((item) => (
+          <ContextMenuItem key={item.label} onSelect={item.onSelect}>
+            {item.label}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuContent>
     </ContextMenu>
   )
 }

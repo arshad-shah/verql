@@ -6,7 +6,12 @@ import { useTabsStore } from '@/stores/tabs'
 import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns, titleCase } from '@/hooks/useDataNouns'
-import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { TableNode } from './TableNode'
@@ -131,7 +136,8 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
   )
 
   return (
-    <ContextMenu items={menuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <div>
         {/* Header row */}
         <button
@@ -322,6 +328,14 @@ export function SchemaNode({ schemaName, connectionId, databaseName, depth, onEx
           </div>
         )}
       </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {menuItems.map((item) => (
+          <ContextMenuItem key={item.label} onSelect={item.onSelect}>
+            {item.label}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuContent>
     </ContextMenu>
   )
 }

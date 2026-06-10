@@ -6,7 +6,12 @@ import { useConnectionsStore } from '@/stores/connections'
 import { useClipboard } from '@/hooks/useClipboard'
 import { useDataNouns } from '@/hooks/useDataNouns'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { ColumnRow } from './ColumnRow'
 import { HighlightedText } from './HighlightedText'
@@ -79,9 +84,20 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
 
   const paddingLeft = 8 + depth * 16
 
+  const menuContent = (
+    <ContextMenuContent>
+      {menuItems.map((item) => (
+        <ContextMenuItem key={item.label} onSelect={item.onSelect}>
+          {item.label}
+        </ContextMenuItem>
+      ))}
+    </ContextMenuContent>
+  )
+
   if (!isExpanded) {
     return (
-      <ContextMenu items={menuItems}>
+      <ContextMenu>
+        <ContextMenuTrigger>
         <div
           className="group flex items-center gap-1 h-7 rounded cursor-pointer select-none min-w-0 pr-1"
           style={{ paddingLeft }}
@@ -117,13 +133,16 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
             />
           </span>
         </div>
+        </ContextMenuTrigger>
+        {menuContent}
       </ContextMenu>
     )
   }
 
   // Expanded: contained card
   return (
-    <ContextMenu items={menuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <div
         className="rounded my-0.5 overflow-hidden"
         style={{
@@ -174,6 +193,8 @@ export function ViewNode({ viewName, connectionId, schema, depth, highlightQuery
           )}
         </div>
       </div>
+      </ContextMenuTrigger>
+      {menuContent}
     </ContextMenu>
   )
 }

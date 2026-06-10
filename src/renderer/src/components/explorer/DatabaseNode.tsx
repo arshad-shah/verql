@@ -4,7 +4,12 @@ import { useUiStore } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
 import { useToastStore } from '@/stores/toast'
 import { useClipboard } from '@/hooks/useClipboard'
-import { ContextMenu } from '@/primitives/surfaces/ContextMenu'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { SchemaNode } from './SchemaNode'
@@ -101,7 +106,8 @@ export function DatabaseNode({
   )
 
   return (
-    <ContextMenu items={menuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <div>
         <div
           className="group flex items-center gap-1.5 h-7 rounded cursor-pointer select-none min-w-0 pr-1"
@@ -169,6 +175,14 @@ export function DatabaseNode({
           </div>
         )}
       </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {menuItems.map((item) => (
+          <ContextMenuItem key={item.label} onSelect={item.onSelect}>
+            {item.label}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuContent>
     </ContextMenu>
   )
 }

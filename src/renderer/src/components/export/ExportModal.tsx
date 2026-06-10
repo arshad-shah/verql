@@ -52,34 +52,34 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         </DialogHeader>
 
         <Stack gap="3">
-        <Box>
-          <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
-          <Flex direction="row" gap="2">
-            {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
-              <Button
-                key={f}
-                variant={format === f ? 'soft' : 'ghost'}
-                colorScheme={format === f ? 'accent' : 'neutral'}
-                size="sm"
-                onClick={() => setFormat(f)}
-                className="flex-1"
-              >
-                {f.toUpperCase()}
-              </Button>
-            ))}
-          </Flex>
-        </Box>
+          <Box>
+            <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
+            <Flex direction="row" gap="2">
+              {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
+                <Button
+                  key={f}
+                  variant={format === f ? 'soft' : 'ghost'}
+                  colorScheme={format === f ? 'accent' : 'neutral'}
+                  size="sm"
+                  onClick={() => setFormat(f)}
+                  className="flex-1"
+                >
+                  {f.toUpperCase()}
+                </Button>
+              ))}
+            </Flex>
+          </Box>
 
-        {format === 'sql' && (
-          <Flex direction="row" align="center" gap="2" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
-            <Checkbox checked={includeSchema} onCheckedChange={(c) => setIncludeSchema(c === true)} />
-            <Text size="sm" color="fg.muted">{t('shell.exportModal.includeCreateTable')}</Text>
-          </Flex>
-        )}
+          {format === 'sql' && (
+            <Flex direction="row" align="center" gap="2" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
+              <Checkbox checked={includeSchema} onCheckedChange={(c) => setIncludeSchema(c === true)} />
+              <Text size="sm" color="fg.muted">{t('shell.exportModal.includeCreateTable')}</Text>
+            </Flex>
+          )}
 
-        {result && (
-          <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
-        )}
+          {result && (
+            <Text size="xs" color={result.isError ? 'feedback.danger.foreground' : 'feedback.success.foreground'} as="p">{result.text}</Text>
+          )}
         </Stack>
 
         <DialogFooter>
