@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
-import { Box } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { useDataNouns } from '@/hooks/useDataNouns'
 import { useTranslation } from '@/i18n/I18nProvider'

@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
-import { Modal, Flex, Stack, Box } from '@/primitives'
+import { Modal } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Checkbox } from '@arshad-shah/cynosure-react/checkbox'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -48,10 +51,10 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.exportModal.close')}><X size={14} /></Button>
       </Flex>
 
-      <Stack gap="md" className="p-4">
+      <Stack gap="3" className="p-4">
         <Box>
           <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
-          <Flex direction="row" gap="sm">
+          <Flex direction="row" gap="2">
             {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
               <Button
                 key={f}
@@ -68,7 +71,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         </Box>
 
         {format === 'sql' && (
-          <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
+          <Flex direction="row" align="center" gap="2" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
             <Checkbox checked={includeSchema} onCheckedChange={(c) => setIncludeSchema(c === true)} />
             <Text size="sm" color="fg.muted">{t('shell.exportModal.includeCreateTable')}</Text>
           </Flex>
@@ -79,7 +82,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         )}
       </Stack>
 
-      <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+      <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
         <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.exportModal.cancel')}</Button>
         <Button
           size="sm"

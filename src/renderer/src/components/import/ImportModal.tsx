@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Modal, Flex, Stack, Box } from '@/primitives'
+import { Modal } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Input } from '@arshad-shah/cynosure-react/input'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -67,10 +70,10 @@ export function ImportModal({ connectionId, onClose }: Props) {
         <Button variant="ghost" colorScheme="neutral" size="xs" onClick={onClose} aria-label={t('shell.importModal.close')}><X size={14} /></Button>
       </Flex>
 
-      <Stack gap="md" className="p-4">
+      <Stack gap="3" className="p-4">
         <Box>
           <Text size="xs" color="fg.subtle" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
-          <Flex direction="row" gap="sm">
+          <Flex direction="row" gap="2">
             {(['sql', 'csv'] as ImportType[]).map(item => (
               <Button
                 key={item}
@@ -108,7 +111,7 @@ export function ImportModal({ connectionId, onClose }: Props) {
         )}
       </Stack>
 
-      <Flex direction="row" justify="end" gap="sm" className="px-4 py-3 border-t border-border">
+      <Flex direction="row" justify="end" gap="2" className="px-4 py-3 border-t border-border">
         <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('shell.importModal.cancel')}</Button>
         <Button
           size="sm"

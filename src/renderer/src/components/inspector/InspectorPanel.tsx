@@ -3,7 +3,10 @@ import { useSelectionStore } from '@/stores/selection'
 import { useTabsStore } from '@/stores/tabs'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
-import { Box, Flex, Stack, Divider } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Stack } from '@arshad-shah/cynosure-react/stack'
+import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import type { QueryTab, FieldInfo } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -15,12 +18,12 @@ export function InspectorPanel() {
 
   if (selection?.kind === 'row') {
     return (
-      <Stack direction="vertical" gap="none" className="p-3">
+      <Stack gap="0" className="p-3">
         {Object.entries(selection.row).map(([key, value]) => {
           const col = selection.columns.find(c => c.name === key)
           return (
             <Box key={key} className="py-2 border-b border-border last:border-b-0">
-              <Flex align="baseline" gap="sm">
+              <Flex align="baseline" gap="2">
                 <Text size="xs" weight="semibold" className="font-mono">{key}</Text>
                 {col?.dataType && <Text size="xs" color="fg.subtle">{col.dataType}</Text>}
               </Flex>
@@ -68,7 +71,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
         : { label: t('shell.inspector.statusIdle'), tone: 'muted' }
 
   return (
-    <Stack direction="vertical" gap="sm" className="p-3">
+    <Stack gap="2" className="p-3">
       <Section title={t('shell.inspector.sectionStatus')}>
         <Stat label={t('shell.inspector.state')} value={status.label} valueTone={status.tone} />
         {tab.results && (
@@ -136,9 +139,9 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
 function FieldList({ fields }: { fields: FieldInfo[] }) {
   const { t } = useTranslation()
   return (
-    <Stack direction="vertical" gap="none">
+    <Stack gap="0">
       {fields.map(f => (
-        <Flex key={f.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
+        <Flex key={f.name} align="baseline" gap="2" className="py-1 border-b border-border last:border-b-0">
           <Text size="xs" weight="semibold" truncate className="font-mono">{f.name}</Text>
           <Text size="xs" color="fg.subtle" className="ml-auto">{f.dataType}</Text>
           {f.nullable === false && <Text size="xs" color="accent.solid">{t('shell.inspector.notNull')}</Text>}
@@ -162,7 +165,7 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
   }, [connectionId, table, schemaName, columns.length, fetchColumns])
 
   return (
-    <Stack direction="vertical" gap="sm" className="p-3">
+    <Stack gap="2" className="p-3">
       <Text size="sm" weight="semibold" className="font-mono">{table}</Text>
       <Box>
         <Text size="xs" color="fg.subtle" className="mb-1">{t('shell.inspector.columnsLabel')}</Text>
@@ -170,7 +173,7 @@ function TableSummary({ connectionId, schema, table }: { connectionId: string; s
           <Text size="xs" color="fg.subtle">{t('shell.inspector.loading')}</Text>
         ) : (
           columns.map(c => (
-            <Flex key={c.name} align="baseline" gap="sm" className="py-1 border-b border-border last:border-b-0">
+            <Flex key={c.name} align="baseline" gap="2" className="py-1 border-b border-border last:border-b-0">
               <Text size="xs" weight="semibold" className="font-mono">{c.name}</Text>
               <Text size="xs" color="fg.subtle">{c.dataType}</Text>
               {c.isPrimaryKey && <Text size="xs" color="accent.solid">{t('shell.inspector.primaryKey')}</Text>}
@@ -187,7 +190,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Box>
       <Text size="xs" color="fg.subtle" className="mb-1 uppercase tracking-wider">{title}</Text>
-      <Stack direction="vertical" gap="none">{children}</Stack>
+      <Stack gap="0">{children}</Stack>
     </Box>
   )
 }

@@ -16,7 +16,8 @@ import { useSelectionStore } from '@/stores/selection'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
 import { Loader2 } from 'lucide-react'
-import { Flex, Box } from '@/primitives'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Spinner } from '@arshad-shah/cynosure-react/spinner'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -130,7 +131,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
           maskColor="rgba(0,0,0,0.7)"
           className="!bg-bg-secondary !border-border"
         />
-        <Flex gap="xs" className="absolute top-3 right-3 z-10">
+        <Flex gap="1" className="absolute top-3 right-3 z-10">
           <Button
             variant={direction === 'LR' ? 'soft' : 'outline'}
             colorScheme={direction === 'LR' ? 'accent' : 'neutral'}

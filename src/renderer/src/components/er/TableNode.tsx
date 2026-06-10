@@ -2,7 +2,8 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Key, Link } from 'lucide-react'
 import type { TableNodeData } from './er-layout'
-import { Box, Flex } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
+import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 
 function TableNodeComponent({ data }: NodeProps) {
@@ -19,7 +20,7 @@ function TableNodeComponent({ data }: NodeProps) {
 
       <Box className="divide-y divide-border">
         {columns.map((col) => (
-          <Flex key={col.name} align="center" gap="xs" className="px-2.5 py-1 text-[11px]">
+          <Flex key={col.name} align="center" gap="1" className="px-2.5 py-1 text-[11px]">
             {col.isPrimaryKey ? (
               <Key size={10} className="text-warning shrink-0" />
             ) : col.isForeignKey ? (
