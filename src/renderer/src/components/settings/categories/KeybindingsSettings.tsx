@@ -3,7 +3,8 @@ import { Pencil, RotateCcw } from 'lucide-react'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
-import { Table, KbdGroup } from '@/primitives'
+import { KbdGroup } from '@/primitives'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@arshad-shah/cynosure-react/table'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { SearchInput } from '@arshad-shah/cynosure-react/search-input'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -131,20 +132,20 @@ export function KeybindingsSettings() {
             {category}
           </Text>
           <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.Head>{t('settings.keybindings.columnAction')}</Table.Head>
-                <Table.Head>{t('settings.keybindings.columnShortcut')}</Table.Head>
-                <Table.Head className="w-20 text-right">{t('settings.keybindings.columnEdit')}</Table.Head>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('settings.keybindings.columnAction')}</TableHead>
+                <TableHead>{t('settings.keybindings.columnShortcut')}</TableHead>
+                <TableHead className="w-20 text-right">{t('settings.keybindings.columnEdit')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {bindings.map((kb) => (
-                <Table.Row key={kb.id}>
-                  <Table.Cell>
+                <TableRow key={kb.id}>
+                  <TableCell>
                     <Text size="sm">{kb.label}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
+                  </TableCell>
+                  <TableCell>
                     {recordingId === kb.id ? (
                       <Text size="sm" color="accent.solid" italic>
                         {t('settings.keybindings.pressShortcut')}
@@ -152,8 +153,8 @@ export function KeybindingsSettings() {
                     ) : (
                       renderKeys(kb.keys)
                     )}
-                  </Table.Cell>
-                  <Table.Cell>
+                  </TableCell>
+                  <TableCell>
                     <Flex gap="1" justify="end">
                       <Tooltip content={t('settings.keybindings.rebind')} side="left">
                         <IconButton
@@ -178,10 +179,10 @@ export function KeybindingsSettings() {
                         </Tooltip>
                       )}
                     </Flex>
-                  </Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                </TableRow>
               ))}
-            </Table.Body>
+            </TableBody>
           </Table>
           <Divider className="my-2" />
         </div>
@@ -193,22 +194,22 @@ export function KeybindingsSettings() {
             {category}
           </Text>
           <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.Head>{t('settings.keybindings.columnAction')}</Table.Head>
-                <Table.Head>{t('settings.keybindings.columnShortcut')}</Table.Head>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('settings.keybindings.columnAction')}</TableHead>
+                <TableHead>{t('settings.keybindings.columnShortcut')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {bindings.map((b) => (
-                <Table.Row key={b.id}>
-                  <Table.Cell>
+                <TableRow key={b.id}>
+                  <TableCell>
                     <Text size="sm">{b.label}</Text>
-                  </Table.Cell>
-                  <Table.Cell>{renderKeys(b.keys)}</Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                  <TableCell>{renderKeys(b.keys)}</TableCell>
+                </TableRow>
               ))}
-            </Table.Body>
+            </TableBody>
           </Table>
           <Divider className="my-2" />
         </div>

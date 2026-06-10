@@ -1,4 +1,9 @@
-import { Badge, EmptyState } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
+import {
+  EmptyState,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -16,7 +21,12 @@ export function PermissionsTab({ permissions, onToggle }: {
 }) {
   const { t } = useTranslation()
   if (!permissions) {
-    return <EmptyState title={t('plugins.detail.permissions.loadingTitle')} description={t('plugins.detail.permissions.loadingDescription')} className="py-12" />
+    return (
+      <EmptyState variant="subtle" className="py-12">
+        <EmptyStateTitle>{t('plugins.detail.permissions.loadingTitle')}</EmptyStateTitle>
+        <EmptyStateDescription>{t('plugins.detail.permissions.loadingDescription')}</EmptyStateDescription>
+      </EmptyState>
+    )
   }
 
   if (permissions.trusted) {
@@ -31,11 +41,10 @@ export function PermissionsTab({ permissions, onToggle }: {
 
   if (permissions.declared.length === 0) {
     return (
-      <EmptyState
-        title={t('plugins.detail.permissions.noneTitle')}
-        description={t('plugins.detail.permissions.noneDescription')}
-        className="py-12"
-      />
+      <EmptyState variant="subtle" className="py-12">
+        <EmptyStateTitle>{t('plugins.detail.permissions.noneTitle')}</EmptyStateTitle>
+        <EmptyStateDescription>{t('plugins.detail.permissions.noneDescription')}</EmptyStateDescription>
+      </EmptyState>
     )
   }
 
@@ -55,7 +64,7 @@ export function PermissionsTab({ permissions, onToggle }: {
                 <Box className="flex-1 min-w-0">
                   <Flex direction="row" align="center" gap="2" className="flex-wrap">
                     <Text size="sm" weight="medium">{info?.title ?? perm}</Text>
-                    <Badge size="sm" variant={info?.enforced ? 'accent' : 'default'}>
+                    <Badge size="sm" shape="pill" colorScheme={info?.enforced ? 'accent' : 'neutral'}>
                       {info?.enforced ? t('plugins.detail.permissions.enforced') : t('plugins.detail.permissions.advisory')}
                     </Badge>
                   </Flex>

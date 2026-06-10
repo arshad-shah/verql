@@ -1,4 +1,4 @@
-import { Badge } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Button } from '@arshad-shah/cynosure-react/button'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
@@ -35,7 +35,7 @@ export function TransactionToolbar({
   const rollbackLabel = caps.rollbackKind === 'discard' ? t('query.txn.discard') : t('query.txn.rollback')
   const isActive = txn.status === 'active'
 
-  const statusBadgeVariant = isActive ? 'warning' : 'default'
+  const statusBadgeColorScheme = isActive ? 'warning' : 'neutral'
   const statusText = isActive
     ? t('query.txn.statusActive', { label: txnLabel })
     : txn.autoCommit
@@ -50,7 +50,7 @@ export function TransactionToolbar({
   return (
     <Flex direction="row" align="center" gap="2" className="flex-wrap">
       {/* Status badge */}
-      <Badge variant={statusBadgeVariant} size="sm">
+      <Badge colorScheme={statusBadgeColorScheme} size="sm" shape="pill">
         {statusText}
       </Badge>
 

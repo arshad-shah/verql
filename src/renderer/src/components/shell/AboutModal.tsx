@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Badge, KeyValue, Link, GradientSurface } from '@/primitives'
+import { Link, GradientSurface } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Dialog, DialogContent } from '@arshad-shah/cynosure-react/dialog'
 import { Divider } from '@arshad-shah/cynosure-react/divider'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -100,7 +101,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
               <VerqlMark size={60} />
               <Stack gap="1">
                 <Text size="xl" weight="bold">Verql</Text>
-                {info && <Box><Badge variant="accent" size="sm">v{info.version}</Badge></Box>}
+                {info && <Box><Badge colorScheme="accent" size="sm" shape="pill">v{info.version}</Badge></Box>}
               </Stack>
               <Text size="sm" color="fg.muted" className="leading-relaxed">{t('about.tagline')}</Text>
               <Box className="flex-1 max-sm:hidden" />
@@ -129,7 +130,12 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
             <Flex direction="column" gap="1" className="mt-1 rounded-lg border border-border-default bg-bg-inset px-3 py-2.5">
               {rows.length === 0
                 ? <Text size="xs" color="fg.subtle">…</Text>
-                : rows.map(([k, v]) => <KeyValue key={k} label={k} value={v} monospace size="sm" />)}
+                : rows.map(([k, v]) => (
+                    <Flex key={k} align="center" justify="between" gap="2">
+                      <Text size="xs" color="fg.muted">{k}</Text>
+                      <Text size="xs" className="font-mono" truncate>{v}</Text>
+                    </Flex>
+                  ))}
             </Flex>
 
             <Divider className="my-4" />

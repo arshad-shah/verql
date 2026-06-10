@@ -78,7 +78,7 @@ covers the scheme sync.
 | 5c | Forms (composites): `FormField` → Cynosure form composition, `ColorInput`/`ColorPicker` → Cynosure `color-picker` (popover variant); `FileContentInput`/`FilePathInput` kept (native dialog behaviour) | ✅ done |
 | 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea` (`direction`→`scrollbars`), `Container`; unused `AspectRatio` deleted; gap/padding tokens xs/sm/md/lg/xl → 1/2/3/4/6 | ✅ done |
 | 7 | Surfaces/overlays: `Card` (+`CardBody`), `Modal`→`Dialog` composition, `Popover`, `Tooltip` (`delay`→`delayMs`), `DropdownMenu`/`ContextMenu` items→composition; unused `Sheet`/`Accordion` deleted; `Panel` folded into Sidebar; `GradientSurface` kept (brand) | ✅ done |
-| 8 | Data display: `Badge`, `Tag`, `Avatar`, `EmptyState`, `Table`/`DataTable`, `List`, `TreeItem`→`Tree`, `KeyValue`, `CodeView`→`CodeBlock` | ⬜ |
+| 8 | Data display: `Badge`, `Avatar`, `EmptyState` (composition), `Table` (named parts), `BadgeIndicator`→`Indicator`, `CodeView`→`CodeBlock` (+scheme-keyed shiki flip in the bridge); `KeyValue` folded into AboutModal; unused `Tag`/`List`/`TreeItem`/`Skeleton` deleted | ✅ done |
 | 9 | Navigation: `Tabs`, `Breadcrumb`, `Link`, `Pagination`; utilities (`ResizeHandle`→`Resizable`, `VisuallyHidden`, `Portal`) | ⬜ |
 | 10 | Notifications/toasts → Cynosure `Notification`/`Toast`; theme toggle UI → `theme-toggle` | ⬜ |
 | 11 | Long tail: component-level Tailwind classes → Cynosure layout/props; remove Tailwind + CVA; delete `primitives/` remnants | ⬜ |

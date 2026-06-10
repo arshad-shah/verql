@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { EmptyState } from '@/primitives'
+import { EmptyState, EmptyStateTitle } from '@arshad-shah/cynosure-react/empty-state'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -72,7 +72,9 @@ export function TableDataView({ tab }: { tab: TableTab }) {
           <ResultsGrid results={state.result} tabId={tab.id} />
         ) : (
           <Flex align="center" justify="center" className="h-full">
-            <EmptyState title={t('table.empty')} />
+            <EmptyState variant="subtle">
+              <EmptyStateTitle>{t('table.empty')}</EmptyStateTitle>
+            </EmptyState>
           </Flex>
         )}
       </Box>

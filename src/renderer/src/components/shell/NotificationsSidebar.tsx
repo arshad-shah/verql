@@ -12,7 +12,12 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { Button } from '@arshad-shah/cynosure-react/button'
@@ -217,12 +222,13 @@ export function NotificationsSidebar() {
 
       {/* Notification list — chronological order */}
       {notifications.length === 0 ? (
-        <EmptyState
-          icon={<Bell size={24} className="text-text-disabled" />}
-          title={t('shell.notifications.allCaughtUp')}
-          description={t('shell.notifications.emptyDescription')}
-          className="py-12 px-4"
-        />
+        <EmptyState variant="subtle" className="py-12 px-4">
+          <EmptyStateIcon>
+            <Bell size={24} className="text-text-disabled" />
+          </EmptyStateIcon>
+          <EmptyStateTitle>{t('shell.notifications.allCaughtUp')}</EmptyStateTitle>
+          <EmptyStateDescription>{t('shell.notifications.emptyDescription')}</EmptyStateDescription>
+        </EmptyState>
       ) : (
         <div className="flex-1 divide-y divide-white/[0.04]">
           {notifications.map((n) => (

@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+  EmptyStateActions,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -58,19 +64,21 @@ export function ActiveConnectionsPanel() {
   if (connections.length === 0) {
     return (
       <Box className="p-4">
-        <EmptyState
-          icon={<Database size={20} className="text-text-muted" />}
-          title={t('connections.active.emptyTitle')}
-          description={t('connections.active.emptyDescription')}
-          action={
+        <EmptyState variant="subtle">
+          <EmptyStateIcon>
+            <Database size={20} className="text-text-muted" />
+          </EmptyStateIcon>
+          <EmptyStateTitle>{t('connections.active.emptyTitle')}</EmptyStateTitle>
+          <EmptyStateDescription>{t('connections.active.emptyDescription')}</EmptyStateDescription>
+          <EmptyStateActions>
             <button
               onClick={() => openConnectionForm()}
               className="text-xs text-accent hover:underline"
             >
               {t('connections.active.newConnection')}
             </button>
-          }
-        />
+          </EmptyStateActions>
+        </EmptyState>
       </Box>
     )
   }

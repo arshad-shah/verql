@@ -3,7 +3,12 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { NotificationItem } from './NotificationItem'
 import { Bell, X } from 'lucide-react'
 import { cn } from '@/primitives/utils/cn'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -129,12 +134,13 @@ export function NotificationPanel() {
       </Flex>
 
       {grouped.length === 0 ? (
-        <EmptyState
-          icon={<Bell size={24} className="text-text-disabled" />}
-          title={t('shell.notifications.allCaughtUp')}
-          description={t('shell.notifications.emptyDescriptionNew')}
-          className="py-8 px-4"
-        />
+        <EmptyState variant="subtle" className="py-8 px-4">
+          <EmptyStateIcon>
+            <Bell size={24} className="text-text-disabled" />
+          </EmptyStateIcon>
+          <EmptyStateTitle>{t('shell.notifications.allCaughtUp')}</EmptyStateTitle>
+          <EmptyStateDescription>{t('shell.notifications.emptyDescriptionNew')}</EmptyStateDescription>
+        </EmptyState>
       ) : (
         grouped.map((group) => (
           <Box key={group.category}>

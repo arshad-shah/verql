@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Badge } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Alert, AlertTitle, AlertDescription } from '@arshad-shah/cynosure-react/alert'
@@ -53,7 +53,7 @@ export function QueryErrorView({ error, dbType }: Props) {
           {/* Footer: stable code chip (analytics + bug reports) + raw disclosure. */}
           <Flex align="center" justify="between" gap="2" className="pt-1">
             {!isUnknown && (
-              <Badge variant="default" size="sm" className="font-mono text-[10px] uppercase">
+              <Badge colorScheme="neutral" size="sm" shape="pill" className="font-mono text-[10px] uppercase">
                 {parsed.code}
               </Badge>
             )}

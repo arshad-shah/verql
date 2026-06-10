@@ -5,7 +5,8 @@ import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Badge, Tabs } from '@/primitives'
+import { Tabs } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
@@ -141,8 +142,8 @@ export function PluginDetailView({ pluginName }: Props) {
             <Flex direction="row" align="center" gap="2" className="flex-wrap">
               <Text size="lg" weight="semibold">{plugin.displayName}</Text>
               <Text size="xs" color="fg.subtle">{t('plugins.detail.version', { version: plugin.version })}</Text>
-              <Badge size="sm" variant={stateConfig.variant}>{t(stateConfig.labelKey)}</Badge>
-              {plugin.bundled && <Badge size="sm">{t('plugins.detail.builtIn')}</Badge>}
+              <Badge size="sm" shape="pill" colorScheme={stateConfig.variant}>{t(stateConfig.labelKey)}</Badge>
+              {plugin.bundled && <Badge size="sm" shape="pill">{t('plugins.detail.builtIn')}</Badge>}
             </Flex>
             <Text size="sm" color="fg.muted" as="p" className="mt-1 leading-relaxed">{plugin.description}</Text>
           </Box>

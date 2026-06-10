@@ -5,7 +5,12 @@ import { useQueryHistoryStore } from '@/stores/query-history'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -65,12 +70,17 @@ export function QueryHistoryPanel() {
 
       <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
-          <EmptyState
-            icon={<History size={20} className="text-text-muted" />}
-            title={entries.length === 0 ? t('query.history.emptyTitle') : t('query.history.noMatches')}
-            description={entries.length === 0 ? t('query.history.emptyDescription') : undefined}
-            className="py-8"
-          />
+          <EmptyState variant="subtle" className="py-8">
+            <EmptyStateIcon>
+              <History size={20} className="text-text-muted" />
+            </EmptyStateIcon>
+            <EmptyStateTitle>
+              {entries.length === 0 ? t('query.history.emptyTitle') : t('query.history.noMatches')}
+            </EmptyStateTitle>
+            {entries.length === 0 && (
+              <EmptyStateDescription>{t('query.history.emptyDescription')}</EmptyStateDescription>
+            )}
+          </EmptyState>
         )}
 
         {filtered.map((entry) => (

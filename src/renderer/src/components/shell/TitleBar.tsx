@@ -1,4 +1,4 @@
-import { Badge } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import appIconUrl from '@brand/icon-light.svg?url'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -46,7 +46,7 @@ export function TitleBar({ platform = detectedPlatform }: TitleBarProps = {}) {
             {t('shell.titleBar.appName')}
           </Text>
           {isDev && (
-            <Badge variant="warning" size="sm" className="text-[9px] leading-none">
+            <Badge colorScheme="warning" size="sm" shape="pill" className="text-[9px] leading-none">
               {t('shell.statusBar.dev')}
             </Badge>
           )}

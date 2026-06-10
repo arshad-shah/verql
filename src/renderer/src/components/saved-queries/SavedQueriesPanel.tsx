@@ -5,7 +5,12 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -104,12 +109,17 @@ export function SavedQueriesPanel() {
 
       <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
-          <EmptyState
-            icon={<Clock size={20} className="text-text-muted" />}
-            title={queries.length === 0 ? t('query.saved.emptyTitle') : t('query.saved.noMatches')}
-            description={queries.length === 0 ? t('query.saved.emptyDescription') : undefined}
-            className="py-8"
-          />
+          <EmptyState variant="subtle" className="py-8">
+            <EmptyStateIcon>
+              <Clock size={20} className="text-text-muted" />
+            </EmptyStateIcon>
+            <EmptyStateTitle>
+              {queries.length === 0 ? t('query.saved.emptyTitle') : t('query.saved.noMatches')}
+            </EmptyStateTitle>
+            {queries.length === 0 && (
+              <EmptyStateDescription>{t('query.saved.emptyDescription')}</EmptyStateDescription>
+            )}
+          </EmptyState>
         )}
 
         {filtered.map(query => (

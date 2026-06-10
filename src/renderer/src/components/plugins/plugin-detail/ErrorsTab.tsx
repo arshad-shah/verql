@@ -1,5 +1,9 @@
 import { XCircle } from 'lucide-react'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -16,7 +20,12 @@ export function ErrorsTab({ errors, expandedError, onToggleError }: {
 }) {
   const { t } = useTranslation()
   if (errors.length === 0) {
-    return <EmptyState title={t('plugins.detail.errors.emptyTitle')} description={t('plugins.detail.errors.emptyDescription')} className="py-12" />
+    return (
+      <EmptyState variant="subtle" className="py-12">
+        <EmptyStateTitle>{t('plugins.detail.errors.emptyTitle')}</EmptyStateTitle>
+        <EmptyStateDescription>{t('plugins.detail.errors.emptyDescription')}</EmptyStateDescription>
+      </EmptyState>
+    )
   }
 
   return (

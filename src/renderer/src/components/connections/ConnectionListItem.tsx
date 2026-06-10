@@ -1,5 +1,5 @@
 import { MoreHorizontal } from 'lucide-react'
-import { Badge } from '@/primitives'
+import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -17,16 +17,16 @@ import { useTranslation } from '@/i18n/I18nProvider'
  * back to the first two letters of the type id (uppercased), so a future
  * plugin-contributed driver still renders sensibly without a code change.
  */
-const TYPE_BADGE: Record<string, { label: string; tone: 'accent' | 'warning' | 'info' | 'error' | 'default' | 'success' }> = {
+const TYPE_BADGE: Record<string, { label: string; tone: 'accent' | 'warning' | 'info' | 'danger' | 'neutral' | 'success' }> = {
   postgresql: { label: 'PG', tone: 'accent'  },
   mysql:      { label: 'MY', tone: 'warning' },
   sqlite:     { label: 'SL', tone: 'info'    },
   mongodb:    { label: 'MG', tone: 'success' },
-  redis:      { label: 'RD', tone: 'error'   },
+  redis:      { label: 'RD', tone: 'danger'  },
   snowflake:  { label: 'SF', tone: 'info'    },
 }
 function typeChip(type: string) {
-  return TYPE_BADGE[type] ?? { label: type.slice(0, 2).toUpperCase(), tone: 'default' as const }
+  return TYPE_BADGE[type] ?? { label: type.slice(0, 2).toUpperCase(), tone: 'neutral' as const }
 }
 
 /**
@@ -126,19 +126,19 @@ export function ConnectionListItem({
 
       <Flex direction="column" className="flex-1 min-w-0">
         <Flex align="center" gap="1">
-          <Badge variant={chip.tone} size="sm" className="font-mono text-[9px] leading-none px-1.5 py-0.5 shrink-0">
+          <Badge colorScheme={chip.tone} size="sm" shape="pill" className="font-mono text-[9px] leading-none px-1.5 py-0.5 shrink-0">
             {chip.label}
           </Badge>
           <Text size="xs" weight={active ? 'medium' : undefined} truncate className="flex-1">
             {connection.name}
           </Text>
           {connected && !active && (
-            <Badge variant="success" size="sm" className="text-[9px] uppercase tracking-wider shrink-0">
+            <Badge colorScheme="success" size="sm" shape="pill" className="text-[9px] uppercase tracking-wider shrink-0">
               {t('connections.active.badgeLive')}
             </Badge>
           )}
           {active && (
-            <Badge variant="accent" size="sm" className="text-[9px] uppercase tracking-wider shrink-0">
+            <Badge colorScheme="accent" size="sm" shape="pill" className="text-[9px] uppercase tracking-wider shrink-0">
               {t('connections.active.badgeActive')}
             </Badge>
           )}

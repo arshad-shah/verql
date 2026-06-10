@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, RefreshCw, Package } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { EmptyState, cn } from '@/primitives'
+import { cn } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -94,11 +99,14 @@ export function PluginsPanel() {
 
       <ScrollArea scrollbars="vertical" className="flex-1 px-1">
         {filtered.length === 0 && (
-          <EmptyState
-            icon={<Package size={24} className="text-text-muted" />}
-            title={search ? t('plugins.list.noMatches') : t('plugins.list.empty')}
-            className="py-8"
-          />
+          <EmptyState variant="subtle" className="py-8">
+            <EmptyStateIcon>
+              <Package size={24} className="text-text-muted" />
+            </EmptyStateIcon>
+            <EmptyStateTitle>
+              {search ? t('plugins.list.noMatches') : t('plugins.list.empty')}
+            </EmptyStateTitle>
+          </EmptyState>
         )}
 
         {bundledPlugins.length > 0 && (

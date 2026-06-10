@@ -2,7 +2,12 @@ import { useEffect } from 'react'
 import { Database, Loader2 } from 'lucide-react'
 import { useConnectionsStore } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
-import { EmptyState } from '@/primitives/data-display/EmptyState'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { SearchFilter } from './SearchFilter'
 import { DatabaseNode } from './DatabaseNode'
@@ -90,11 +95,15 @@ export function ExplorerTree({ onExportTable }: ExplorerTreeProps) {
           for who's connected and which connection is "active". */}
       {!isConnected ? (
         <div className="flex-1 flex items-center justify-center p-4">
-          <EmptyState
-            title={t('explorer.empty.noConnection.title')}
-            description={t('explorer.empty.noConnection.description')}
-            icon={<Database size={32} className="text-[var(--color-text-disabled)]" />}
-          />
+          <EmptyState variant="subtle">
+            <EmptyStateIcon>
+              <Database size={32} className="text-[var(--color-text-disabled)]" />
+            </EmptyStateIcon>
+            <EmptyStateTitle>{t('explorer.empty.noConnection.title')}</EmptyStateTitle>
+            <EmptyStateDescription>
+              {t('explorer.empty.noConnection.description')}
+            </EmptyStateDescription>
+          </EmptyState>
         </div>
       ) : !hierarchyLoaded ? (
         /* Show loading while databases/schemas are being fetched */

@@ -3,7 +3,12 @@ import { useTabsStore } from '@/stores/tabs'
 import { useConnectionsStore } from '@/stores/connections'
 import { useUiStore, BOTTOM_PANEL } from '@/stores/ui'
 import type { QueryTab } from '@shared/types'
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -25,12 +30,13 @@ export function ChartsDashboard() {
     <Stack className="h-full">
       <ScrollArea scrollbars="vertical" className="flex-1 px-1 py-1">
         {queryTabsWithResults.length === 0 && (
-          <EmptyState
-            icon={<BarChart3 size={20} className="text-text-muted" />}
-            title={t('shell.charts.emptyTitle')}
-            description={t('shell.charts.emptyDescription')}
-            className="py-8"
-          />
+          <EmptyState variant="subtle" className="py-8">
+            <EmptyStateIcon>
+              <BarChart3 size={20} className="text-text-muted" />
+            </EmptyStateIcon>
+            <EmptyStateTitle>{t('shell.charts.emptyTitle')}</EmptyStateTitle>
+            <EmptyStateDescription>{t('shell.charts.emptyDescription')}</EmptyStateDescription>
+          </EmptyState>
         )}
 
         {queryTabsWithResults.map(tab => (

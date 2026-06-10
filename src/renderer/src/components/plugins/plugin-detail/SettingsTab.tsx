@@ -1,4 +1,8 @@
-import { EmptyState } from '@/primitives'
+import {
+  EmptyState,
+  EmptyStateTitle,
+  EmptyStateDescription,
+} from '@arshad-shah/cynosure-react/empty-state'
 import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
@@ -74,7 +78,12 @@ export function SettingsTab({ schema, values, onChange }: {
 }) {
   const { t } = useTranslation()
   if (schema.length === 0) {
-    return <EmptyState title={t('plugins.detail.settings.emptyTitle')} description={t('plugins.detail.settings.emptyDescription')} className="py-12" />
+    return (
+      <EmptyState variant="subtle" className="py-12">
+        <EmptyStateTitle>{t('plugins.detail.settings.emptyTitle')}</EmptyStateTitle>
+        <EmptyStateDescription>{t('plugins.detail.settings.emptyDescription')}</EmptyStateDescription>
+      </EmptyState>
+    )
   }
 
   return (
