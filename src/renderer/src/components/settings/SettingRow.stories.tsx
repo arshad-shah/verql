@@ -2,7 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { SettingRow } from './SettingRow'
 import { Button } from '@arshad-shah/cynosure-react/button'
-import { Switch, Input } from '@/primitives'
+import { Switch } from '@arshad-shah/cynosure-react/switch'
+import { Input } from '@arshad-shah/cynosure-react/input'
+import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 
 // SettingRow lays out a labelled setting: SettingLabel on the left, an
 // arbitrary control on the right. It's prop-driven (label/description/children),
@@ -28,11 +30,9 @@ function ToggleRow() {
       label="Restore tabs on startup"
       description="Reopen the query tabs you had open when you last closed Verql."
     >
-      <Switch
-        label="Restore tabs on startup"
-        checked={on}
-        onChange={(e) => setOn(e.target.checked)}
-      />
+      <Switch checked={on} onCheckedChange={setOn}>
+        <VisuallyHidden>Restore tabs on startup</VisuallyHidden>
+      </Switch>
     </SettingRow>
   )
 }

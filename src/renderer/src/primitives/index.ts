@@ -4,9 +4,6 @@ export { ThemeProvider, useTheme } from './theme/ThemeProvider'
 // Utils
 export { cn } from './utils/cn'
 
-// Layout
-export * from './layout'
-
 // Surfaces
 export * from './surfaces'
 

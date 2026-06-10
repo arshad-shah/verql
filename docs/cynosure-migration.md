@@ -76,7 +76,7 @@ covers the scheme sync.
 | 5a | Forms (text-input family): `Input`, `Textarea`, `NumberInput`, `SearchInput`, `PasswordInput` (→ `Input type=password`, built-in reveal), `Label` | ✅ done |
 | 5b | Forms (choice controls): `Checkbox`, `Switch`, `Select` (+`Combobox` for searchable); unused `Radio`/`Slider`/`TagsInput`/`DatePicker` deleted | ✅ done |
 | 5c | Forms (composites): `FormField` → Cynosure form composition, `ColorInput`/`ColorPicker` → Cynosure `color-picker` (popover variant); `FileContentInput`/`FilePathInput` kept (native dialog behaviour) | ✅ done |
-| 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea`, `Container`, `AspectRatio` | ⬜ |
+| 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea` (`direction`→`scrollbars`), `Container`; unused `AspectRatio` deleted; gap/padding tokens xs/sm/md/lg/xl → 1/2/3/4/6 | ✅ done |
 | 7 | Surfaces/overlays: `Card`, `Modal`→`Dialog`, `Sheet`→`Drawer`, `Popover`, `Tooltip`, `DropdownMenu`, `ContextMenu`, `Accordion`, `Panel` | ⬜ |
 | 8 | Data display: `Badge`, `Tag`, `Avatar`, `EmptyState`, `Table`/`DataTable`, `List`, `TreeItem`→`Tree`, `KeyValue`, `CodeView`→`CodeBlock` | ⬜ |
 | 9 | Navigation: `Tabs`, `Breadcrumb`, `Link`, `Pagination`; utilities (`ResizeHandle`→`Resizable`, `VisuallyHidden`, `Portal`) | ⬜ |
