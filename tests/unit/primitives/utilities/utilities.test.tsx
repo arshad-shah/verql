@@ -1,44 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, fireEvent, screen } from '@testing-library/react'
 import React from 'react'
-import { VisuallyHidden } from '../../../../src/renderer/src/primitives/utilities/VisuallyHidden'
-import { Portal } from '../../../../src/renderer/src/primitives/utilities/Portal'
 import { ResizeHandle } from '../../../../src/renderer/src/primitives/utilities/ResizeHandle'
-
-describe('VisuallyHidden', () => {
-  it('renders children', () => {
-    render(<VisuallyHidden>Hidden text</VisuallyHidden>)
-    expect(screen.getByText('Hidden text')).toBeInTheDocument()
-  })
-
-  it('applies sr-only class', () => {
-    const { container } = render(<VisuallyHidden>Hidden</VisuallyHidden>)
-    expect(container.firstChild).toHaveClass('sr-only')
-  })
-
-  it('renders as a span', () => {
-    const { container } = render(<VisuallyHidden>Hidden</VisuallyHidden>)
-    expect(container.firstChild?.nodeName).toBe('SPAN')
-  })
-})
-
-describe('Portal', () => {
-  it('renders children into document.body by default', () => {
-    render(<Portal><div data-testid="portal-child">Portal content</div></Portal>)
-    const child = screen.getByTestId('portal-child')
-    expect(child).toBeInTheDocument()
-    expect(document.body.contains(child)).toBe(true)
-  })
-
-  it('renders children into a custom container', () => {
-    const container = document.createElement('div')
-    document.body.appendChild(container)
-    render(<Portal container={container}><div data-testid="custom-portal">Custom</div></Portal>)
-    const child = screen.getByTestId('custom-portal')
-    expect(container.contains(child)).toBe(true)
-    document.body.removeChild(container)
-  })
-})
 
 describe('ResizeHandle', () => {
   it('renders with horizontal cursor class for horizontal direction', () => {

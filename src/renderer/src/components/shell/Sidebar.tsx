@@ -11,7 +11,7 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Tabs } from '@/primitives'
+import { Tabs, TabsList, TabsTrigger } from '@arshad-shah/cynosure-react/tabs'
 import { Box } from '@arshad-shah/cynosure-react/box'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
@@ -79,10 +79,12 @@ export function Sidebar() {
         )}
         {activePanel === ACTIVITY_PANEL.QUERY && (
           <Flex direction="column" className="h-full">
-            <Tabs size="md" className="px-2" tabs={[
-              { id: 'saved', label: t('shell.sidebar.saved') },
-              { id: 'history', label: t('shell.sidebar.history') },
-            ]} activeTab={queryView} onTabChange={(id) => setQueryView(id as 'saved' | 'history')} />
+            <Tabs value={queryView} onValueChange={(id) => setQueryView(id as 'saved' | 'history')} className="px-2">
+              <TabsList>
+                <TabsTrigger value="saved">{t('shell.sidebar.saved')}</TabsTrigger>
+                <TabsTrigger value="history">{t('shell.sidebar.history')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <Box className="flex-1 min-h-0">
               {queryView === 'saved' ? <SavedQueriesPanel /> : <QueryHistoryPanel />}
             </Box>

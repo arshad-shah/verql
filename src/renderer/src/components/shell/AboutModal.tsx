@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
-import { Link, GradientSurface } from '@/primitives'
+import { GradientSurface } from '@/primitives'
+import { Link } from '@arshad-shah/cynosure-react/link'
 import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Dialog, DialogContent } from '@arshad-shah/cynosure-react/dialog'
 import { Divider } from '@arshad-shah/cynosure-react/divider'
@@ -161,7 +162,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
             <Divider className="my-4" />
 
             <Flex align="center" justify="between">
-              <Link size="sm" onClick={() => openExternal(LICENSE_URL)} className="cursor-pointer">
+              <Link onClick={() => openExternal(LICENSE_URL)} className="cursor-pointer text-sm">
                 {t('about.viewLicense')}
               </Link>
               <Button variant="outline" colorScheme="neutral" size="sm" onClick={onClose}>{t('common.close')}</Button>

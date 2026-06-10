@@ -5,7 +5,7 @@ import { PluginIcon } from './PluginIcon'
 import { useToastStore } from '@/stores/toast'
 import { usePluginUIStore } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { Tabs } from '@/primitives'
+import { Tabs, TabsList, TabsTrigger } from '@arshad-shah/cynosure-react/tabs'
 import { Badge } from '@arshad-shah/cynosure-react/badge'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -167,12 +167,13 @@ export function PluginDetailView({ pluginName }: Props) {
       </Box>
 
       {/* Sub-Tabs */}
-      <Tabs
-        tabs={DETAIL_TAB_IDS.map((id) => ({ id, label: t(`plugins.detail.tabs.${id}`) }))}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        className="px-6 shrink-0"
-      />
+      <Tabs value={activeTab} onValueChange={(id) => setActiveTab(id as typeof activeTab)} className="px-6 shrink-0">
+        <TabsList>
+          {DETAIL_TAB_IDS.map((id) => (
+            <TabsTrigger key={id} value={id}>{t(`plugins.detail.tabs.${id}`)}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Tab Content */}
       <ScrollArea scrollbars="vertical" className="flex-1">
