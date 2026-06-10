@@ -1,5 +1,5 @@
 import type { Widget } from '@shared/plugin-ui-types'
-import { Popover } from '@/primitives/surfaces/Popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@arshad-shah/cynosure-react/popover'
 import { SelectorWidgetRenderer } from './widgets/SelectorWidget'
 import { ActionButtonWidgetRenderer } from './widgets/ActionButtonWidget'
 import { StatusIndicatorWidgetRenderer } from './widgets/StatusIndicatorWidget'
@@ -27,11 +27,12 @@ function renderWidget(widget: Widget, pluginId: string) {
       return <hr key={widget.id} className="border-border-default my-1" />
     case 'popover':
       return (
-        <Popover
-          key={widget.id}
-          trigger={renderWidget(widget.trigger, pluginId)}
-          content={<WidgetRenderer widgets={widget.content} pluginId={pluginId} />}
-        />
+        <Popover key={widget.id}>
+          <PopoverTrigger asChild>{renderWidget(widget.trigger, pluginId)}</PopoverTrigger>
+          <PopoverContent side="top">
+            <WidgetRenderer widgets={widget.content} pluginId={pluginId} />
+          </PopoverContent>
+        </Popover>
       )
     default:
       return null

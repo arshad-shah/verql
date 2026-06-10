@@ -2,7 +2,12 @@ import React, { forwardRef, useState, useCallback } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { File, Shield, X, ChevronDown, ClipboardPaste, Upload } from 'lucide-react'
 import { cn } from '../utils/cn'
-import { DropdownMenu } from '../surfaces/DropdownMenu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@arshad-shah/cynosure-react/dropdown-menu'
 import { Textarea } from '@arshad-shah/cynosure-react/textarea'
 import { IPC_CHANNELS } from '@shared/ipc'
 
@@ -172,14 +177,20 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
                 <ClipboardPaste size={12} />
                 Paste content
               </span>
-              <DropdownMenu
-                trigger={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button type="button" aria-label="Input mode" className="flex items-center p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors">
                     <ChevronDown size={12} />
                   </button>
-                }
-                items={menuItems}
-              />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {menuItems.map((item) => (
+                    <DropdownMenuItem key={item.label} disabled={'disabled' in item ? item.disabled : undefined} onSelect={item.onSelect}>
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Textarea
               value={currentValue}
@@ -258,8 +269,8 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
             </button>
           )}
 
-          <DropdownMenu
-            trigger={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 disabled={disabled}
@@ -268,9 +279,15 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
               >
                 <ChevronDown size={12} />
               </button>
-            }
-            items={menuItems}
-          />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {menuItems.map((item) => (
+                    <DropdownMenuItem key={item.label} disabled={'disabled' in item ? item.disabled : undefined} onSelect={item.onSelect}>
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     )

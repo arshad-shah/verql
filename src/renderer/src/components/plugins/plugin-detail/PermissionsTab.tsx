@@ -1,4 +1,5 @@
-import { Card, Badge, EmptyState } from '@/primitives'
+import { Badge, EmptyState } from '@/primitives'
+import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Box } from '@arshad-shah/cynosure-react/box'
@@ -43,7 +44,8 @@ export function PermissionsTab({ permissions, onToggle }: {
       <Alert status="warning">
         <AlertDescription>{t('plugins.detail.permissions.warning')}</AlertDescription>
       </Alert>
-      <Card padding="md">
+      <Card size="sm">
+        <CardBody>
         <Stack gap="3">
           {permissions.declared.map((perm) => {
             const info = permissions.info[perm]
@@ -76,6 +78,7 @@ export function PermissionsTab({ permissions, onToggle }: {
             )
           })}
         </Stack>
+        </CardBody>
       </Card>
     </Stack>
   )

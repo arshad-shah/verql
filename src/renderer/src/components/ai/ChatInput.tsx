@@ -3,7 +3,7 @@ import { ArrowUp, Square, ChevronDown } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
 import { useConnectionsStore } from '@/stores/connections'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { Card } from '@/primitives/surfaces/Card'
+import { Card } from '@arshad-shah/cynosure-react/card'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { SchemaAutocomplete } from './SchemaAutocomplete'
 import { ModelPicker } from './ModelPicker'
@@ -136,7 +136,9 @@ export function ChatInput() {
           onDismiss={() => setShowModelPicker(false)}
         />
       )}
-      <Card padding="none" className="overflow-hidden">
+      {/* Cynosure Card applies padding only via Card parts (CardBody etc.), so a
+          bare Card matches the old `padding="none"`. */}
+      <Card className="overflow-hidden">
         <textarea
           ref={textareaRef}
           className="w-full resize-none bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"

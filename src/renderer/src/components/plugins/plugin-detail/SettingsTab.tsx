@@ -1,4 +1,5 @@
-import { Card, EmptyState } from '@/primitives'
+import { EmptyState } from '@/primitives'
+import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
@@ -77,7 +78,8 @@ export function SettingsTab({ schema, values, onChange }: {
   }
 
   return (
-    <Card padding="md">
+    <Card size="sm">
+      <CardBody>
       <Stack gap="1">
         {schema.map((setting) => (
           <SettingRow
@@ -93,6 +95,7 @@ export function SettingsTab({ schema, values, onChange }: {
           </SettingRow>
         ))}
       </Stack>
+      </CardBody>
     </Card>
   )
 }

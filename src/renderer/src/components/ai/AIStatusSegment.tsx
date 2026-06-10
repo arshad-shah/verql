@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { Sparkles, Loader2, Settings, Maximize2, Minimize2, Eye, Shield, Zap } from 'lucide-react'
-import { Popover } from '@/primitives/surfaces/Popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@arshad-shah/cynosure-react/popover'
 import { Switch } from '@arshad-shah/cynosure-react/switch'
 import { VisuallyHidden } from '@arshad-shah/cynosure-react'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -60,18 +60,6 @@ export function AIStatusSegment() {
     isStreaming || inlineState === 'thinking'
       ? 'bg-accent/15 text-accent'
       : 'bg-success/15 text-success'
-
-  const trigger = (
-    <StatusBarSegment
-      tone="default"
-      side="right"
-      aria-label={busy ? t('aiui.status.aiWorking') : t('aiui.status.aiStatus')}
-    >
-      {busy
-        ? <Loader2 size={12} className="animate-spin text-accent" />
-        : <Sparkles size={12} className={activeModelId ? 'text-accent' : 'text-text-muted'} />}
-    </StatusBarSegment>
-  )
 
   const popoverContent = (
     <div className="min-w-[260px] p-1 space-y-2">
@@ -138,7 +126,22 @@ export function AIStatusSegment() {
     </div>
   )
 
-  return <Popover trigger={trigger} content={popoverContent} placement="top" />
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <StatusBarSegment
+          tone="default"
+          side="right"
+          aria-label={busy ? t('aiui.status.aiWorking') : t('aiui.status.aiStatus')}
+        >
+          {busy
+            ? <Loader2 size={12} className="animate-spin text-accent" />
+            : <Sparkles size={12} className={activeModelId ? 'text-accent' : 'text-text-muted'} />}
+        </StatusBarSegment>
+      </PopoverTrigger>
+      <PopoverContent side="top">{popoverContent}</PopoverContent>
+    </Popover>
+  )
 }
 
 function Row({ label, value, valueNode }: { label: string; value?: string; valueNode?: ReactNode }) {

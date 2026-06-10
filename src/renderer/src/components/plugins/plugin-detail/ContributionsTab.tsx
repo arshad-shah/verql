@@ -1,4 +1,5 @@
-import { Badge, Card, EmptyState } from '@/primitives'
+import { Badge, EmptyState } from '@/primitives'
+import { Card, CardBody } from '@arshad-shah/cynosure-react/card'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Stack } from '@arshad-shah/cynosure-react/stack'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -12,7 +13,8 @@ export function ContributionsTab({ contributions }: { contributions: string[] })
   }
 
   return (
-    <Card padding="md">
+    <Card size="sm">
+      <CardBody>
       <Stack gap="1">
         {contributions.map((c, i) => {
           const [type, name] = c.includes(':') ? c.split(':') : ['feature', c]
@@ -25,6 +27,7 @@ export function ContributionsTab({ contributions }: { contributions: string[] })
           )
         })}
       </Stack>
+      </CardBody>
     </Card>
   )
 }

@@ -3,7 +3,12 @@ import { Badge } from '@/primitives'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { DropdownMenu } from '@/primitives/surfaces/DropdownMenu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@arshad-shah/cynosure-react/dropdown-menu'
 import type { ConnectionProfile } from '@shared/types'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -151,12 +156,18 @@ export function ConnectionListItem({
         className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
-        <DropdownMenu
-          trigger={
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <IconButton label={t('connections.active.moreActions')} size="xs" variant="ghost" colorScheme="neutral" icon={<MoreHorizontal size={13} />} />
-          }
-          items={menuItems}
-        />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {menuItems.map((item) => (
+              <DropdownMenuItem key={item.label} onSelect={item.onSelect}>
+                {item.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </span>
     </Flex>
   )

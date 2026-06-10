@@ -77,7 +77,7 @@ covers the scheme sync.
 | 5b | Forms (choice controls): `Checkbox`, `Switch`, `Select` (+`Combobox` for searchable); unused `Radio`/`Slider`/`TagsInput`/`DatePicker` deleted | ✅ done |
 | 5c | Forms (composites): `FormField` → Cynosure form composition, `ColorInput`/`ColorPicker` → Cynosure `color-picker` (popover variant); `FileContentInput`/`FilePathInput` kept (native dialog behaviour) | ✅ done |
 | 6 | Layout: `Box`, `Stack`, `Flex`, `Grid`, `Divider`, `Spacer`, `ScrollArea` (`direction`→`scrollbars`), `Container`; unused `AspectRatio` deleted; gap/padding tokens xs/sm/md/lg/xl → 1/2/3/4/6 | ✅ done |
-| 7 | Surfaces/overlays: `Card`, `Modal`→`Dialog`, `Sheet`→`Drawer`, `Popover`, `Tooltip`, `DropdownMenu`, `ContextMenu`, `Accordion`, `Panel` | ⬜ |
+| 7 | Surfaces/overlays: `Card` (+`CardBody`), `Modal`→`Dialog` composition, `Popover`, `Tooltip` (`delay`→`delayMs`), `DropdownMenu`/`ContextMenu` items→composition; unused `Sheet`/`Accordion` deleted; `Panel` folded into Sidebar; `GradientSurface` kept (brand) | ✅ done |
 | 8 | Data display: `Badge`, `Tag`, `Avatar`, `EmptyState`, `Table`/`DataTable`, `List`, `TreeItem`→`Tree`, `KeyValue`, `CodeView`→`CodeBlock` | ⬜ |
 | 9 | Navigation: `Tabs`, `Breadcrumb`, `Link`, `Pagination`; utilities (`ResizeHandle`→`Resizable`, `VisuallyHidden`, `Portal`) | ⬜ |
 | 10 | Notifications/toasts → Cynosure `Notification`/`Toast`; theme toggle UI → `theme-toggle` | ⬜ |

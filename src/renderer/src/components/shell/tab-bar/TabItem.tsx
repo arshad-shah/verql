@@ -2,7 +2,13 @@ import { useState, type DragEvent } from 'react'
 import { X } from 'lucide-react'
 import type { Tab } from '@shared/types'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
-import { ContextMenu, cn } from '@/primitives'
+import { cn } from '@/primitives'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@arshad-shah/cynosure-react/context-menu'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
 import { Text } from '@arshad-shah/cynosure-react/text'
@@ -42,7 +48,8 @@ export function TabItem({
   const isDirty = tab.type === 'query' && tab.isDirty
 
   return (
-    <ContextMenu items={contextMenuItems}>
+    <ContextMenu>
+      <ContextMenuTrigger>
       <Flex
         align="center"
         gap="1"
@@ -118,6 +125,14 @@ export function TabItem({
           )}
         />
       </Flex>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {contextMenuItems.map((item) => (
+          <ContextMenuItem key={item.label} disabled={item.disabled} onSelect={item.onSelect}>
+            {item.label}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuContent>
     </ContextMenu>
   )
 }

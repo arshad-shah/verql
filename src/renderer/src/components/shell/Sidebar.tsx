@@ -11,10 +11,10 @@ import { PluginsPanel } from '@/components/plugins/PluginsPanel'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ImportModal } from '@/components/import/ImportModal'
 import { Upload } from 'lucide-react'
-import { Panel, Tabs } from '@/primitives'
+import { Tabs } from '@/primitives'
+import { Box } from '@arshad-shah/cynosure-react/box'
 import { Tooltip } from '@arshad-shah/cynosure-react/tooltip'
 import { Flex } from '@arshad-shah/cynosure-react/flex'
-import { Box } from '@arshad-shah/cynosure-react/box'
 import { ScrollArea } from '@arshad-shah/cynosure-react/scroll-area'
 import { Text } from '@arshad-shah/cynosure-react/text'
 import { IconButton } from '@arshad-shah/cynosure-react/icon-button'
@@ -50,7 +50,7 @@ export function Sidebar() {
   const isConnected = activeConnectionId && connectedIds.has(activeConnectionId)
 
   return (
-    <Panel className="w-full h-full flex flex-col border-r border-b-0 border-t-0">
+    <Box className="w-full h-full flex flex-col bg-bg-secondary border-x border-border-default shadow-[var(--shadow-card)]">
       <Flex
         align="center"
         justify="between"
@@ -113,6 +113,6 @@ export function Sidebar() {
       {showImport && activeConnectionId && (
         <ImportModal connectionId={activeConnectionId} onClose={() => setShowImport(false)} />
       )}
-    </Panel>
+    </Box>
   )
 }
