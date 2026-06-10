@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { IpcChannelMap } from '@shared/ipc'
 
 const electronAPI = {
@@ -16,7 +16,13 @@ const electronAPI = {
     const listener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => callback(...args)
     ipcRenderer.on(channel, listener)
     return () => { ipcRenderer.removeListener(channel, listener) }
-  }
+  },
+
+  /** Resolve a `File` (from a browser file picker or drag-drop) to its absolute
+   *  on-disk path. Electron 32+ removed `File.path`; `webUtils.getPathForFile`
+   *  is the supported replacement. Returns `''` for files with no backing path
+   *  (e.g. ones synthesized in the renderer). */
+  getPathForFile: (file: File): string => webUtils.getPathForFile(file)
 }
 
 export type ElectronAPI = typeof electronAPI

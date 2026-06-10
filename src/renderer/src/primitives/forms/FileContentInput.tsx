@@ -1,41 +1,35 @@
-import React, { forwardRef, useState, useCallback } from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { File, Shield, X, ChevronDown, ClipboardPaste, Upload } from 'lucide-react'
-import { cn } from '../utils/cn'
+import { forwardRef, useMemo, useState } from 'react'
+import { ChevronDown, ClipboardPaste, Upload } from 'lucide-react'
+import { FileUpload } from '@arshad-shah/cynosure-react/file-upload'
+import { Textarea } from '@arshad-shah/cynosure-react/textarea'
 import { DropdownMenu } from '../surfaces/DropdownMenu'
-import { Textarea } from './Textarea'
-import { IPC_CHANNELS } from '@shared/ipc'
 
-const browseRowVariants = cva(
-  'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)]',
-  {
-    variants: {
-      size: {
-        xs: 'h-7 px-2 text-xs rounded',
-        sm: 'h-8 px-2 text-xs rounded',
-        md: 'h-9 px-3 text-sm rounded-md',
-        lg: 'h-10 px-3 text-sm rounded-md',
-        xl: 'h-12 px-4 text-base rounded-lg',
-      },
-    },
-    defaultVariants: { size: 'md' },
-  }
-)
-
-export interface FileContentInputProps extends VariantProps<typeof browseRowVariants> {
+export interface FileContentInputProps {
+  /** Controlled value — the file's text contents. */
   value?: string
+  /** Uncontrolled initial contents. */
   defaultValue?: string
+  /** Fires with the next contents (or `''` when cleared). */
   onChange?: (content: string) => void
   placeholder?: string
+  /** Accepted extensions/MIME types, e.g. `".pem,.key"`. */
   accept?: string
   disabled?: boolean
   className?: string
   id?: string
+  /** @default "browse" */
   defaultMode?: 'browse' | 'paste'
 }
 
+/**
+ * File-contents input — a value-based wrapper that reads and stores a file's
+ * **text** (an inline SSH key, a certificate, …) rather than its path. Browse
+ * mode delegates to Cynosure's `FileUpload` (reading the picked file via
+ * `File.text()`); paste mode swaps in Cynosure's `Textarea`. A small dropdown
+ * toggles between the two.
+ */
 export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps>(
-  (
+  function FileContentInput(
     {
       value: controlledValue,
       defaultValue = '',
@@ -43,226 +37,57 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
       placeholder = 'Paste content here...',
       accept,
       disabled,
-      size,
       className,
       id,
       defaultMode = 'browse',
     },
     ref
-  ) => {
+  ) {
     const isControlled = controlledValue !== undefined
     const [internalValue, setInternalValue] = useState(defaultValue)
     const [mode, setMode] = useState<'browse' | 'paste'>(defaultMode)
     const [fileName, setFileName] = useState<string | null>(null)
-    const [dragOver, setDragOver] = useState(false)
+    const content = isControlled ? controlledValue : internalValue
 
-    const currentValue = isControlled ? controlledValue : internalValue
-
-    const setValue = (v: string) => {
-      if (!isControlled) setInternalValue(v)
-      onChange?.(v)
+    const setValue = (next: string): void => {
+      if (!isControlled) setInternalValue(next)
+      onChange?.(next)
     }
 
-    const hasContent = currentValue.length > 0
-
-    const acceptExtensions = accept
-      ?.split(',')
-      .map((e) => e.trim().toLowerCase().replace(/^\./, ''))
-
-    const isAcceptedFile = (name: string) => {
-      if (!acceptExtensions) return true
-      const ext = name.split('.').pop()?.toLowerCase()
-      return ext ? acceptExtensions.includes(ext) : true
-    }
-
-    const readFileContent = (file: globalThis.File) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setFileName(file.name)
-        setMode('browse')
-        setValue(reader.result as string)
-      }
-      reader.readAsText(file)
-    }
-
-    const handleBrowse = async () => {
-      const filters = accept
-        ? [{ name: 'Files', extensions: accept.split(',').map(e => e.trim().replace(/^\./, '')) }]
-        : undefined
-      const result = await window.electronAPI.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE, { filters })
-      if ('cancelled' in result) return
-      setFileName(result.filePath)
-      setMode('browse')
-      setValue(result.content)
-    }
-
-    const handleClear = () => {
-      setFileName(null)
-      setValue('')
-    }
-
-    const handlePasteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setValue(e.target.value)
-    }
-
-    const handleDragOver = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (!disabled) setDragOver(true)
-      },
-      [disabled]
+    // Reflect the current contents back as a chip so a loaded selection (a
+    // picked file or pre-existing value) stays visible in the upload list.
+    const files = useMemo(
+      () => (content ? [new File([content], fileName ?? 'Pasted content')] : []),
+      [content, fileName]
     )
 
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setDragOver(false)
-    }, [])
-
-    const handleDrop = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        setDragOver(false)
-        if (disabled) return
-        const files = e.dataTransfer.files
-        if (files.length === 0) return
-        const file = files[0]
-        if (!isAcceptedFile(file.name)) return
-        // In Electron, dropped files have a .path property for native dialog fallback
-        // But for content reading, use FileReader
-        readFileContent(file)
+    const menuItems = [
+      {
+        label: 'Browse file',
+        onSelect: () => setMode('browse'),
+        disabled: mode === 'browse',
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [disabled, acceptExtensions]
-    )
-
-    const menuItems = mode === 'browse'
-      ? [
-          { label: 'Browse file', onSelect: handleBrowse },
-          { label: 'Paste content', onSelect: () => setMode('paste') },
-        ]
-      : [
-          { label: 'Browse file', onSelect: () => { setMode('browse'); handleBrowse() } },
-          { label: 'Paste content', onSelect: () => {}, disabled: true },
-        ]
-
-    const displayName = fileName ?? (hasContent ? 'Pasted content' : null)
-
-    if (mode === 'paste') {
-      return (
-        <div
-          ref={ref}
-          id={id}
-          className={cn('flex flex-col', className)}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className={cn(
-            'border rounded-md overflow-hidden',
-            'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
-            'shadow-[var(--shadow-input-inset)]',
-            dragOver ? 'border-accent ring-1 ring-accent/30' : 'border-border-default',
-            disabled && 'opacity-50 pointer-events-none'
-          )}>
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-default">
-              <span className="flex items-center gap-1.5 text-xs text-text-muted">
-                <ClipboardPaste size={12} />
-                Paste content
-              </span>
-              <DropdownMenu
-                trigger={
-                  <button type="button" aria-label="Input mode" className="flex items-center p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors">
-                    <ChevronDown size={12} />
-                  </button>
-                }
-                items={menuItems}
-              />
-            </div>
-            <Textarea
-              value={currentValue}
-              onChange={handlePasteChange}
-              placeholder={placeholder}
-              disabled={disabled}
-              className="border-0 rounded-none shadow-none focus:shadow-none min-h-[120px] font-mono text-xs resize-y"
-            />
-          </div>
-        </div>
-      )
-    }
+      {
+        label: 'Paste content',
+        onSelect: () => setMode('paste'),
+        disabled: mode === 'paste',
+      },
+    ]
 
     return (
-      <div
-        ref={ref}
-        id={id}
-        className={cn('flex flex-col', className)}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className={cn(
-          browseRowVariants({ size }),
-          dragOver
-            ? 'border-accent ring-1 ring-accent/30 bg-accent/5'
-            : hasContent
-              ? 'border-accent/30 bg-accent/5'
-              : 'border-border-default hover:border-border-strong',
-          disabled && 'opacity-50 pointer-events-none'
-        )}>
-          {dragOver ? (
-            <Upload size={14} className="shrink-0 text-accent" />
-          ) : hasContent ? (
-            <Shield size={14} className="shrink-0 text-accent" />
-          ) : (
-            <File size={14} className="shrink-0 text-text-muted" />
-          )}
-
-          <span className={cn(
-            'flex-1 truncate',
-            dragOver
-              ? 'text-accent font-medium'
-              : hasContent ? 'font-mono text-text-primary' : 'text-text-muted'
-          )}>
-            {dragOver ? 'Drop file here' : displayName ?? 'No file selected'}
+      <div ref={ref} id={id} className={className}>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+            {mode === 'paste' ? <ClipboardPaste size={12} /> : <Upload size={12} />}
+            {mode === 'paste' ? 'Paste content' : 'Browse file'}
           </span>
-
-          {hasContent && !dragOver && (
-            <>
-              <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium text-accent bg-accent/10">
-                loaded
-              </span>
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={disabled}
-                className="shrink-0 p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors"
-                aria-label="Clear"
-              >
-                <X size={12} />
-              </button>
-            </>
-          )}
-
-          {!hasContent && !dragOver && (
-            <button
-              type="button"
-              onClick={handleBrowse}
-              disabled={disabled}
-              className="shrink-0 px-2 py-0.5 rounded text-xs text-text-secondary bg-bg-tertiary border border-border-default hover:border-border-strong hover:text-text-primary transition-colors"
-            >
-              Browse
-            </button>
-          )}
-
           <DropdownMenu
             trigger={
               <button
                 type="button"
                 disabled={disabled}
                 aria-label="Input mode"
-                className="shrink-0 p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors"
+                className="flex items-center p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors"
               >
                 <ChevronDown size={12} />
               </button>
@@ -270,9 +95,35 @@ export const FileContentInput = forwardRef<HTMLDivElement, FileContentInputProps
             items={menuItems}
           />
         </div>
+
+        {mode === 'paste' ? (
+          <Textarea
+            value={content}
+            onChange={setValue}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={6}
+            resize="vertical"
+          />
+        ) : (
+          <FileUpload
+            variant="compact"
+            accept={accept}
+            disabled={disabled}
+            value={files}
+            onFilesChange={async (next) => {
+              const file = next[0]
+              if (!file) {
+                setFileName(null)
+                setValue('')
+                return
+              }
+              setFileName(file.name)
+              setValue(await file.text())
+            }}
+          />
+        )}
       </div>
     )
   }
 )
-
-FileContentInput.displayName = 'FileContentInput'

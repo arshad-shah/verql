@@ -339,14 +339,6 @@ export interface IpcChannelShapes {
     args: [category: string]
     return: unknown
   }
-  DIALOG_OPEN_FILE: {
-    args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
-    return: { filePath: string; content: string } | { cancelled: true }
-  }
-  DIALOG_OPEN_FILE_PATH: {
-    args: [options?: { title?: string; filters?: { name: string; extensions: string[] }[] }]
-    return: { filePath: string } | { cancelled: true }
-  }
   DB_CONNECTION_OPTIONS: {
     args: [profile: ConnectionProfile, fields: string[]]
     return: Record<string, string[]>
@@ -805,9 +797,6 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
   SETTINGS_RESET: 'settings:reset',
-  // ── File dialogs ───────────────────────────────────────────────────────
-  DIALOG_OPEN_FILE: 'dialog:open-file',
-  DIALOG_OPEN_FILE_PATH: 'dialog:open-file-path',
   // ── Keyring ────────────────────────────────────────────────────────────
   KEYRING_STORE: 'keyring:store',
   KEYRING_RETRIEVE: 'keyring:retrieve',

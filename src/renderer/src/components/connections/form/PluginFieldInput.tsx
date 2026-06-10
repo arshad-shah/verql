@@ -44,10 +44,9 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <FormField label={field.label} className={className}>
         <Input
           value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(v) => onChange(v)}
           placeholder={authStatus === 'authenticated' ? t('connections.form.typeAValue') : t('connections.form.authenticateFirst')}
           disabled={authStatus !== 'authenticated'}
-          size="lg"
         />
       </FormField>
     )
@@ -71,8 +70,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <FormField label={field.label} className={className}>
         <PasswordInput
           value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
-          size="lg"
+          onChange={(v) => onChange(v)}
         />
       </FormField>
     )
@@ -84,7 +82,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
         <NumberInput
           value={Number(value) || 0}
           onChange={(v) => onChange(v)}
-          size="lg"
+          size="sm"
         />
       </FormField>
     )
@@ -100,7 +98,6 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
           value={String(value)}
           onChange={(filePath) => onChange(filePath)}
           accept={field.accept}
-          size="lg"
         />
       </FormField>
     )
@@ -113,7 +110,6 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
           value={String(value)}
           onChange={(content) => onChange(content)}
           accept={field.accept ?? '.pem,.key'}
-          size="lg"
         />
       </FormField>
     )
@@ -124,8 +120,7 @@ export function PluginFieldInput({ field, value: rawValue, onChange, authStatus,
       <Input
         required={field.required}
         value={String(value)}
-        onChange={(e) => onChange(e.target.value)}
-        size="lg"
+        onChange={(v) => onChange(v)}
       />
     </FormField>
   )

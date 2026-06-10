@@ -39,7 +39,6 @@ import { registerSettingsHandlers } from './ipc/settings'
 import { registerKeyringHandlers } from './ipc/keyring'
 import { registerDbHandlers } from './ipc/db'
 import { registerExportImportHandlers } from './ipc/export-import'
-import { registerDialogHandlers } from './ipc/dialog'
 import { registerMigrationHandlers } from './ipc/migration'
 import { registerMcpHandlers } from './ipc/mcp'
 import { registerAppDataHandlers } from './ipc/appdata'
@@ -191,7 +190,6 @@ export function registerIpcHandlers(): void {
   })
   // The migration IPC handler resolves type mappings through the registry,
   // so it needs visibility into what each driver plugin contributed.
-  registerDialogHandlers(handle)
   registerMigrationHandlers(handle, typeMapperRegistry, ctx.driverRegistry)
   registerAppHandlers(handle)
   registerUpdaterHandlers(handle, createUpdaterRegistry())
