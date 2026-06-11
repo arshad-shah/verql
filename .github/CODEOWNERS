@@ -13,6 +13,7 @@
 /.github/workflows/publish-sdk.yml     @arshad-shah
 /scripts/release-tag.mjs               @arshad-shah
 /scripts/open-version-pr.mjs           @arshad-shah
+/scripts/setup-release-gates.sh        @arshad-shah
 /electron-builder.yml                  @arshad-shah
 
 # Security-relevant code.

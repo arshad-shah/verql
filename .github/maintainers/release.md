@@ -69,8 +69,15 @@ fork can't trigger a release.
 
 ## Approval gates & required GitHub settings
 
+> **Quick setup:** run [`scripts/setup-release-gates.sh`](../../scripts/setup-release-gates.sh)
+> once as a repo admin (`gh auth login` first). It creates the `release`
+> environment with you as required reviewer and protects `main`. Then add the
+> `RELEASE_PAT` secret in the UI (step 3 below). The rest of this section
+> explains what those settings are.
+
 Three gates put a release entirely in your hands; the first two are **repo
-settings you must configure once** (they can't live in a committed file):
+settings you must configure once** (they can't live in a committed file — the
+script above sets the first two for you):
 
 1. **Merge gate (your approval to land anything on `main`).** Branch protection
    on `main` → *Require a pull request before merging* + *Require review from
