@@ -1,5 +1,15 @@
 # @verql/plugin-sdk
 
+## 0.10.1
+
+### Patch Changes
+
+- First release published through the hardened CI pipeline: npm **trusted
+  publishing** via OIDC (no long-lived token) behind a required-reviewer
+  `npm-publish` environment, with an automatic provenance attestation. No API
+  changes — validates the publish path and backfills the provenance that the
+  manually-published `0.10.0` lacked. Also adds the package `README`.
+
 ## 0.10.0
 
 ### Minor Changes
