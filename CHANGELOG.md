@@ -1,5 +1,113 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+- [#107](https://github.com/arshad-shah/verql/pull/107) [`b64dc8b`](https://github.com/arshad-shah/verql/commit/b64dc8b87d5dcaece348c3bf5a6c97cde7e925ce) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Add first-run onboarding and per-version release notes, VS Code-style.
+
+  - **Welcome tab** — a "Get Started" walkthrough that opens on a fresh install:
+    a brand hero, quick actions (new connection / query / plugins), an interactive
+    setup checklist whose steps auto-complete from app state, and learn/resource
+    links. Re-openable any time from Help → Welcome, the command palette, or AI.
+  - **What's New tab** — a hand-authored, per-version release-notes page (titled
+    after the version) that opens automatically after an update when a curated
+    entry exists, and from Help → What's New. Content lives in a typed registry
+    (`lib/release-notes/`) with authoring instructions in `docs/onboarding.md`.
+  - New `settings.onboarding` state (`lastSeenVersion`, `completedSteps`,
+    `hideOnStartup`) drives a pure, unit-tested startup decision; the Welcome and
+    release surfaces are also exposed as `open-welcome` / `open-release-notes`
+    app-actions.
+
+### Patch Changes
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Centralize two more duplicated main-process patterns.
+
+  - **`broadcast(event, ...payload)`** (`src/main/ipc/broadcast.ts`) replaces the
+    hand-rolled `BrowserWindow.getAllWindows()` send-loop that was copied across
+    the IPC handlers, plugins/updater/MCP/settings subsystems. It's typed by
+    `IpcEventMap`, so a wrong broadcast payload is now a compile error. (The MCP
+    approval send keeps its own path — it early-returns when no window exists.)
+  - **`errorMessage(err)`** (`shared/errors.ts`) replaces the
+    `err instanceof Error ? err.message : String(err)` idiom hand-rolled in 13
+    places across the main process and renderer.
+  - Fix the `settings:changed` event type: it's declared as two positional args
+    (`keyPath`, `value`) to match what the main process sends and the renderer
+    listener reads — the previous single-object payload type was inaccurate.
+
+  No runtime behavior change.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Reduce duplicated code by centralizing shared helpers and hooks.
+
+  - `formatCompactNumber` (lib/format.ts) replaces three identical row/token
+    number formatters; `formatRelativeTime` / `formatClockTime` (lib/format-time.ts)
+    replace the per-file time formatters (and give NotificationItem the i18n it
+    was missing).
+  - One `useClipboard()` hook replaces the two narrow copy hooks and an inline
+    copy variant: it exposes a transient `copied` flag and an optional success
+    toast via `copy(text, { toast })`, covering every copy surface (code blocks,
+    chat messages, notifications, and the explorer's context menus / hover
+    actions).
+
+  CONTRIBUTING.md and CLAUDE.md now document this "centralize, don't duplicate"
+  requirement.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Apply the driver `nouns` capability to every relational label, completing the
+  DB-agnostic explorer. The context-menu / hover / export / copy labels and the
+  query-semantic error messages (not-found, duplicate, constraint, type-mismatch)
+  now read in the active driver's own terms (table/column/row, collection/field/
+  document, key/field/entry, …) with generic fallbacks. Noun resolution is
+  centralized in `lib/data-nouns.ts`.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Make the schema explorer DB-agnostic via a driver-supplied `nouns` capability.
+
+  Drivers can now declare what they call their data concepts —
+  `nouns: { object, field, record }` (each `{ one, many }`) — e.g. SQL drivers
+  table/column/row, MongoDB collection/field/document, Redis key/field/entry. The
+  renderer resolves them through `useDataNouns` (with generic fallbacks) so the
+  explorer's search placeholder, group headers, loading/empty states and row
+  counts read in the active driver's own terms instead of assuming SQL. Combined
+  with the earlier literal-"SQL" string cleanup, the shell no longer hardcodes SQL
+  terminology in generic surfaces.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix two transaction-session edge cases in query execution (renderer
+  orchestration only — session/pool logic stays in the driver adapters):
+
+  - A tab whose selected database differs from the connection's default no longer
+    throws "No open session" on its first transactional query. The database/schema
+    context is now applied _before_ the session is opened, so the pool-rebuilding
+    `switchDatabase` (already idempotent in the adapter) can't wipe the session.
+  - Switching a tab's connection now releases the open transactional session on
+    the old connection (tolerant no-op when none) and resets the tab's
+    transaction status, instead of orphaning the session.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Streamline IPC channel/event definitions so each wire string is authored once.
+
+  Previously every channel name (e.g. `'db:connect'`) was written twice in
+  `shared/ipc.ts` — as a key in `IpcChannelMap` and as the value in
+  `IPC_CHANNELS` — and kept in sync by hand. The `args`/`return` contracts now
+  live in `IpcChannelShapes` (and `IpcEventShapes`) keyed by the constant name,
+  the wire string lives only in `IPC_CHANNELS`/`IPC_EVENTS`, and the
+  wire-string-keyed `IpcChannelMap`/`IpcEventMap` consumed by `invoke`/`handle`/
+  the preload bridge are derived from the two. A `satisfies Record<keyof
+IpcChannelShapes, string>` clause makes any drift between the halves a
+  compile-time error. No runtime behavior or channel values change; all call
+  sites continue to use `IPC_CHANNELS.X` / `IPC_EVENTS.X`.
+
+- [#90](https://github.com/arshad-shah/verql/pull/90) [`1bce419`](https://github.com/arshad-shah/verql/commit/1bce4195e7e725d88424f5d11a4d286ce081d02a) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Break up the largest renderer components for clearer separation of concern.
+  No behavior or public-prop changes — each component's logic moved into
+  co-located hooks and sub-components:
+
+  - **ConnectionFormView** (518→263 lines) → `connections/form/` (`PluginFieldInput`,
+    `FetchableFieldsWizard`, `SshTunnelSection`, `Section`, `ToggleRow`, shared types).
+  - **QueryPanel** (463→138) → `useQueryExecution`, `useQueryTransactions`,
+    `useQuerySaveDialog` hooks + `SaveQueryDialog`.
+  - **App** (452→229) → `useAppKeyboardShortcuts`, `useFileDropForwarding`,
+    `useShellMenuEvents` hooks + `ActiveTabView` and `TabCloseGuard`.
+  - **TableNode** (364→221) → `useTableNodeActions` hook + shared `TableHoverActions`.
+  - **QueryEditor** (277→142) → `useEditorActions`, `useEditorOptions`,
+    `useSqlCompletions` hooks + a pure `parseKeybinding` helper (now unit-tested).
+
 ## 1.1.0
 
 ### Minor Changes
