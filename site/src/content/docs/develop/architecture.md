@@ -125,7 +125,7 @@ design system for UI.
 | `ai.ts` | AI chat: messages, providers/models, **conversations + history** |
 | `editor.ts`, `tab-actions.ts` | non-reactive registries of mounted Monaco editors / per-tab save+txn handlers |
 | `query-history.ts` | recorded query runs (mirror of the SQLite app-data `query_history` table), capped to `general.maxHistoryItems` |
-| `tab-persistence.ts` | debounced localStorage snapshot of open query tabs, restored on startup when `general.restoreTabsOnStartup` is on |
+| `lib/tab-persistence/` | incremental **tab-persistence engine** — per-tab restore-on-startup backed by the SQLite app-data store (`open_tabs`, over IPC); a pure diff/select core + debounced engine persists only the changed tab, restored when `general.restoreTabsOnStartup` is on |
 | `selection.ts`, `notifications.ts`, `toast.ts` | inspector selection, the notification center, transient toasts |
 | `driver-capabilities.ts`, `themes.ts`, `settings.ts` | capability flags, theme list, settings mirror |
 | `plugin-*.ts` | plugin-contributed commands / panels / lifecycle |

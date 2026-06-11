@@ -34,4 +34,7 @@ export function registerAppDataHandlers(handle: Handle, appData: AppDataStore): 
     appData.deleteQueryHistory(id),
   )
   handle(IPC_CHANNELS.APPDATA_QUERY_HISTORY_CLEAR, async () => appData.clearQueryHistory())
+
+  handle(IPC_CHANNELS.APPDATA_OPEN_TABS_LIST, async () => appData.listOpenTabs())
+  handle(IPC_CHANNELS.APPDATA_OPEN_TABS_APPLY, async (ops) => appData.applyOpenTabOps(ops))
 }

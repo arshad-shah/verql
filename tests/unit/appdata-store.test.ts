@@ -257,4 +257,82 @@ describe('AppDataStore', () => {
       expect(store.listQueryHistory()).toEqual([])
     })
   })
+
+  describe('open tabs', () => {
+    const tab = (id: string, position: number, over: Partial<import('../../shared/appdata').PersistedTab> = {}) => ({
+      kind: 'upsert' as const,
+      position,
+      tab: {
+        id,
+        title: id,
+        sql: '',
+        connectionId: null,
+        database: null,
+        schema: null,
+        autoCommit: true,
+        ...over,
+      },
+    })
+
+    it('starts empty with a null active id', () => {
+      expect(store.listOpenTabs()).toEqual({ tabs: [], activeId: null })
+    })
+
+    it('applies upserts and lists them ordered by position', () => {
+      store.applyOpenTabOps([
+        tab('a', 0, { sql: 'SELECT 1', connectionId: 'c1', database: 'db', schema: 's' }),
+        tab('b', 1, { savedQueryId: 'sq1', autoCommit: false }),
+      ])
+      const snap = store.listOpenTabs()
+      expect(snap.tabs).toEqual([
+        { id: 'a', title: 'a', sql: 'SELECT 1', connectionId: 'c1', database: 'db', schema: 's', autoCommit: true },
+        { id: 'b', title: 'b', sql: '', connectionId: null, database: null, schema: null, savedQueryId: 'sq1', autoCommit: false },
+      ])
+    })
+
+    it('upserts in place (content + position) on conflicting id', () => {
+      store.applyOpenTabOps([tab('a', 0, { sql: 'one' }), tab('b', 1)])
+      store.applyOpenTabOps([tab('a', 1, { sql: 'two' }), tab('b', 0)])
+      const snap = store.listOpenTabs()
+      expect(snap.tabs.map((t) => [t.id, t.sql])).toEqual([
+        ['b', ''],
+        ['a', 'two'],
+      ])
+    })
+
+    it('deletes a tab by id', () => {
+      store.applyOpenTabOps([tab('a', 0), tab('b', 1)])
+      store.applyOpenTabOps([{ kind: 'delete', id: 'a' }])
+      expect(store.listOpenTabs().tabs.map((t) => t.id)).toEqual(['b'])
+    })
+
+    it('records and clears the active tab id', () => {
+      store.applyOpenTabOps([tab('a', 0), { kind: 'active', id: 'a' }])
+      expect(store.listOpenTabs().activeId).toBe('a')
+      store.applyOpenTabOps([{ kind: 'active', id: null }])
+      expect(store.listOpenTabs().activeId).toBeNull()
+    })
+
+    it('applies a mixed batch (delete + upsert + active) atomically', () => {
+      store.applyOpenTabOps([tab('a', 0), tab('b', 1), { kind: 'active', id: 'a' }])
+      store.applyOpenTabOps([
+        { kind: 'delete', id: 'b' },
+        tab('a', 0, { sql: 'edited' }),
+        tab('c', 1),
+        { kind: 'active', id: 'c' },
+      ])
+      const snap = store.listOpenTabs()
+      expect(snap.tabs.map((t) => [t.id, t.sql])).toEqual([
+        ['a', 'edited'],
+        ['c', ''],
+      ])
+      expect(snap.activeId).toBe('c')
+    })
+
+    it('is a no-op for an empty op list', () => {
+      store.applyOpenTabOps([tab('a', 0)])
+      store.applyOpenTabOps([])
+      expect(store.listOpenTabs().tabs.map((t) => t.id)).toEqual(['a'])
+    })
+  })
 })

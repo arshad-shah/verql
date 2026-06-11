@@ -63,3 +63,47 @@ export interface QueryHistoryEntry {
   /** Epoch milliseconds. */
   executedAt: number
 }
+
+// ─── Open-tab persistence ──────────────────────────────────────────────────
+// The durable, per-tab restore-on-startup state. Owned by the tab-persistence
+// engine (src/renderer/src/lib/tab-persistence) and stored one row per tab in
+// the app-data SQLite `open_tabs` table, mutated incrementally via `TabOp`s so a
+// single-tab edit writes a single row regardless of how many tabs are open.
+
+/** The minimal, serialisable shape of a query tab we persist for restore. Keyed
+ *  by the live tab `id` so writes can target one tab. Transient runtime state
+ *  (results, execution, txn status) is intentionally dropped — restored tabs
+ *  come back clean and idle. */
+export interface PersistedTab {
+  id: string
+  title: string
+  sql: string
+  connectionId: string | null
+  database: string | null
+  schema: string | null
+  savedQueryId?: string
+  autoCommit: boolean
+}
+
+/** The full ordered set of persisted tabs plus which one was focused. */
+export interface OpenTabsSnapshot {
+  /** Ordered as they appear in the tab strip. */
+  tabs: PersistedTab[]
+  /** Id of the focused tab, or null (e.g. focus was on a non-persisted tab). */
+  activeId: string | null
+}
+
+/**
+ * One incremental mutation of the persisted tab set. The engine diffs the live
+ * tabs against the last-persisted snapshot and emits the minimal op list;
+ * AppDataStore applies a batch in a single transaction.
+ *
+ * - `upsert` — insert or update one tab's content + position.
+ * - `delete` — remove one tab by id.
+ * - `active` — record the focused tab id (or null).
+ */
+export type TabOp =
+  | { kind: 'upsert'; tab: PersistedTab; position: number }
+  | { kind: 'delete'; id: string }
+  | { kind: 'active'; id: string | null }
+

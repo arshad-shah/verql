@@ -8,6 +8,9 @@ import type {
   StoredConversation,
   SavedQuery,
   QueryHistoryEntry,
+  OpenTabsSnapshot,
+  PersistedTab,
+  TabOp,
 } from '@shared/appdata'
 
 const EMPTY_STATS: ConversationStats = {
@@ -77,9 +80,26 @@ const MIGRATIONS: ((db: Database.Database) => void)[] = [
       CREATE INDEX idx_query_history_executed_at ON query_history(executed_at DESC);
     `)
   },
+  /* v3 */ (db) => {
+    db.exec(`
+      CREATE TABLE open_tabs (
+        id              TEXT PRIMARY KEY,
+        position        INTEGER NOT NULL,
+        title           TEXT NOT NULL,
+        sql             TEXT NOT NULL,
+        connection_id   TEXT,
+        db_name         TEXT,
+        schema_name     TEXT,
+        saved_query_id  TEXT,
+        auto_commit     INTEGER NOT NULL DEFAULT 1
+      );
+      CREATE INDEX idx_open_tabs_position ON open_tabs(position);
+    `)
+  },
 ]
 
 const ACTIVE_CONVERSATION_KEY = 'activeConversationId'
+const ACTIVE_TAB_KEY = 'activeTabId'
 
 // Fields of AIChatMessage that live in the `extra` JSON column. The hot columns
 // (role, content, timestamp, ordering) are native; everything else rides along
@@ -425,5 +445,100 @@ export class AppDataStore {
 
   clearQueryHistory(): void {
     this.db.prepare(`DELETE FROM query_history`).run()
+  }
+
+  // ─── Open tabs ────────────────────────────────────────────────────
+  /** The ordered set of persisted tabs plus the focused id. */
+  listOpenTabs(): OpenTabsSnapshot {
+    const rows = this.db
+      .prepare(
+        `SELECT id, title, sql, connection_id, db_name, schema_name, saved_query_id, auto_commit
+         FROM open_tabs ORDER BY position ASC`,
+      )
+      .all() as Array<{
+      id: string
+      title: string
+      sql: string
+      connection_id: string | null
+      db_name: string | null
+      schema_name: string | null
+      saved_query_id: string | null
+      auto_commit: number
+    }>
+    const tabs: PersistedTab[] = rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      sql: r.sql,
+      connectionId: r.connection_id,
+      database: r.db_name,
+      schema: r.schema_name,
+      ...(r.saved_query_id ? { savedQueryId: r.saved_query_id } : {}),
+      autoCommit: r.auto_commit !== 0,
+    }))
+    return { tabs, activeId: this.getActiveTabId() }
+  }
+
+  /**
+   * Apply a batch of incremental tab mutations in a single transaction. The
+   * renderer's persistence engine diffs the live tabs against the last-persisted
+   * snapshot and sends only what changed — typically a single `upsert` when the
+   * user edits one tab's SQL — so write cost is bounded by the change, not by
+   * how many tabs are open.
+   */
+  applyOpenTabOps(ops: TabOp[]): void {
+    if (ops.length === 0) return
+    const upsert = this.db.prepare(
+      `INSERT INTO open_tabs
+         (id, position, title, sql, connection_id, db_name, schema_name, saved_query_id, auto_commit)
+       VALUES (@id, @position, @title, @sql, @connectionId, @database, @schema, @savedQueryId, @autoCommit)
+       ON CONFLICT(id) DO UPDATE SET
+         position = excluded.position,
+         title = excluded.title,
+         sql = excluded.sql,
+         connection_id = excluded.connection_id,
+         db_name = excluded.db_name,
+         schema_name = excluded.schema_name,
+         saved_query_id = excluded.saved_query_id,
+         auto_commit = excluded.auto_commit`,
+    )
+    const del = this.db.prepare(`DELETE FROM open_tabs WHERE id = ?`)
+    const run = this.db.transaction(() => {
+      for (const op of ops) {
+        if (op.kind === 'upsert') {
+          upsert.run({
+            id: op.tab.id,
+            position: op.position,
+            title: op.tab.title,
+            sql: op.tab.sql,
+            connectionId: op.tab.connectionId,
+            database: op.tab.database,
+            schema: op.tab.schema,
+            savedQueryId: op.tab.savedQueryId ?? null,
+            autoCommit: op.tab.autoCommit ? 1 : 0,
+          })
+        } else if (op.kind === 'delete') {
+          del.run(op.id)
+        } else {
+          this.setActiveTabId(op.id)
+        }
+      }
+    })
+    run()
+  }
+
+  private getActiveTabId(): string | null {
+    const row = this.db
+      .prepare(`SELECT value FROM meta WHERE key = ?`)
+      .get(ACTIVE_TAB_KEY) as { value: string | null } | undefined
+    return row?.value ?? null
+  }
+
+  private setActiveTabId(id: string | null): void {
+    this.db
+      .prepare(
+        `INSERT INTO meta (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      )
+      .run(ACTIVE_TAB_KEY, id)
   }
 }

@@ -1,11 +1,39 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useTabsStore } from '../../src/renderer/src/stores/tabs'
-import { initTabPersistence, restoreOpenTabs } from '../../src/renderer/src/stores/tab-persistence'
-
-const KEY = 'verql:open-tabs'
+import { initTabPersistence } from '../../src/renderer/src/lib/tab-persistence'
+import type { OpenTabsSnapshot, TabOp } from '../../shared/appdata'
+import type { TabPersistenceStore } from '../../src/renderer/src/lib/tab-persistence'
 
 function resetTabs() {
   useTabsStore.setState({ tabs: [], activeTabId: null, recentlyClosed: [] })
+}
+
+/** An in-memory implementation of the durable store that actually applies ops,
+ *  so `list()` round-trips — the same contract AppDataStore fulfils over IPC. */
+function memoryStore(seed: OpenTabsSnapshot = { tabs: [], activeId: null }): TabPersistenceStore & {
+  applied: TabOp[][]
+} {
+  const state: OpenTabsSnapshot = { tabs: seed.tabs.map((t) => ({ ...t })), activeId: seed.activeId }
+  const applied: TabOp[][] = []
+  return {
+    applied,
+    list: async () => ({ tabs: state.tabs.map((t) => ({ ...t })), activeId: state.activeId }),
+    apply: async (ops: TabOp[]) => {
+      applied.push(ops)
+      for (const op of ops) {
+        if (op.kind === 'delete') {
+          const i = state.tabs.findIndex((t) => t.id === op.id)
+          if (i >= 0) state.tabs.splice(i, 1)
+        } else if (op.kind === 'active') {
+          state.activeId = op.id
+        } else {
+          const existing = state.tabs.findIndex((t) => t.id === op.tab.id)
+          if (existing >= 0) state.tabs.splice(existing, 1)
+          state.tabs.splice(op.position, 0, { ...op.tab })
+        }
+      }
+    },
+  }
 }
 
 describe('restoreQueryTabs', () => {
@@ -34,8 +62,15 @@ describe('restoreQueryTabs', () => {
       expect(b.savedQueryId).toBe('sq1')
       expect(b.txn?.autoCommit).toBe(false)
     }
-    // activeIndex 1 selects the second restored tab
     expect(activeTabId).toBe(tabs[1].id)
+  })
+
+  it('reuses the persisted id when one is supplied', () => {
+    useTabsStore.getState().restoreQueryTabs(
+      [{ id: 'query-7', title: 'A', sql: 'x', connectionId: null, database: null, schema: null, autoCommit: true }],
+      0,
+    )
+    expect(useTabsStore.getState().tabs[0].id).toBe('query-7')
   })
 
   it('falls back to the first tab when activeIndex is null', () => {
@@ -53,45 +88,88 @@ describe('restoreQueryTabs', () => {
   })
 })
 
-describe('tab persistence round-trip', () => {
+describe('initTabPersistence (engine integration)', () => {
   beforeEach(() => {
     resetTabs()
     localStorage.clear()
-    vi.useRealTimers()
   })
 
-  it('persists query tabs (only) on change and restores them', () => {
-    vi.useFakeTimers()
-    const stop = initTabPersistence()
+  it('persists query tabs incrementally and round-trips them on restore', async () => {
+    const store = memoryStore()
+    const stop = await initTabPersistence({ restoreOnStartup: true, store, debounceMs: 0 })
 
     const id = useTabsStore.getState().addQueryTab('c1', 's1')
     useTabsStore.getState().updateTabSql(id, 'SELECT 42')
-    // A non-query tab must be excluded from the snapshot.
+    // A non-query tab must never enter the persisted set.
     useTabsStore.getState().openSettings()
 
-    vi.advanceTimersByTime(500)
-    stop()
+    await stop() // flushes pending writes
 
-    const raw = localStorage.getItem(KEY)
-    expect(raw).toBeTruthy()
-    const parsed = JSON.parse(raw!)
-    expect(parsed.tabs).toHaveLength(1)
-    expect(parsed.tabs[0].sql).toBe('SELECT 42')
-    expect(parsed.tabs[0].connectionId).toBe('c1')
+    const persisted = await store.list()
+    expect(persisted.tabs).toHaveLength(1)
+    expect(persisted.tabs[0]).toMatchObject({ id, sql: 'SELECT 42', connectionId: 'c1', schema: 's1' })
 
-    vi.useRealTimers()
-    // Restore into a fresh store.
+    // Restore into a fresh store from the same backend.
     resetTabs()
-    restoreOpenTabs()
+    await initTabPersistence({ restoreOnStartup: true, store })
     const restored = useTabsStore.getState().tabs
     expect(restored).toHaveLength(1)
-    expect(restored[0].type).toBe('query')
+    expect(restored[0].id).toBe(id) // identity preserved for future incremental writes
     if (restored[0].type === 'query') expect(restored[0].sql).toBe('SELECT 42')
   })
 
-  it('restoreOpenTabs is a no-op without a saved snapshot', () => {
-    localStorage.removeItem(KEY)
-    restoreOpenTabs()
-    expect(useTabsStore.getState().tabs).toHaveLength(0)
+  it('does not re-open tabs when restoreOnStartup is false, but still tracks them', async () => {
+    const store = memoryStore({
+      tabs: [{ id: 'query-9', title: 'A', sql: 'SELECT 1', connectionId: null, database: null, schema: null, autoCommit: true }],
+      activeId: 'query-9',
+    })
+    const stop = await initTabPersistence({ restoreOnStartup: false, store, debounceMs: 0 })
+    expect(useTabsStore.getState().tabs).toHaveLength(0) // nothing re-opened
+
+    // New live tabs are mirrored into the durable set (replacing the old ones).
+    const id = useTabsStore.getState().addQueryTab(null)
+    await stop()
+    const persisted = await store.list()
+    expect(persisted.tabs.map((t) => t.id)).toEqual([id])
+  })
+
+  it('migrates a legacy localStorage payload on first run and clears it', async () => {
+    localStorage.setItem(
+      'verql:open-tabs',
+      JSON.stringify({
+        tabs: [{ title: 'Legacy', sql: 'SELECT legacy', connectionId: 'c1', database: null, schema: null, autoCommit: true }],
+        activeIndex: 0,
+      }),
+    )
+    const store = memoryStore()
+    await initTabPersistence({ restoreOnStartup: true, store })
+
+    // Seeded into the durable store…
+    const persisted = await store.list()
+    expect(persisted.tabs).toHaveLength(1)
+    expect(persisted.tabs[0].sql).toBe('SELECT legacy')
+    // …re-opened into the live store…
+    const restored = useTabsStore.getState().tabs
+    expect(restored).toHaveLength(1)
+    if (restored[0].type === 'query') expect(restored[0].sql).toBe('SELECT legacy')
+    // …and the legacy key is gone.
+    expect(localStorage.getItem('verql:open-tabs')).toBeNull()
+  })
+
+  it('writes a single op batch for a one-tab edit among many', async () => {
+    const seedTabs = ['a', 'b', 'c', 'd'].map((id) => ({
+      id, title: id, sql: '', connectionId: null, database: null, schema: null, autoCommit: true,
+    }))
+    const store = memoryStore({ tabs: seedTabs, activeId: 'a' })
+    const stop = await initTabPersistence({ restoreOnStartup: true, store, debounceMs: 0 })
+    store.applied.length = 0 // ignore any startup writes
+
+    useTabsStore.getState().updateTabSql('c', 'edited')
+    await stop()
+
+    expect(store.applied).toHaveLength(1)
+    expect(store.applied[0]).toEqual([
+      { kind: 'upsert', tab: { id: 'c', title: 'c', sql: 'edited', connectionId: null, database: null, schema: null, autoCommit: true }, position: 2 },
+    ])
   })
 })

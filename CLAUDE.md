@@ -104,7 +104,7 @@ Zustand stores in `src/renderer/src/stores/`:
 - `selection.ts` / `notifications.ts` / `toast.ts` — inspector selection, notification center, transient toasts
 - `editor.ts` / `tab-actions.ts` — non-reactive registries of mounted Monaco editors and per-tab save/transaction handlers (refs, not reactive state)
 - `query-history.ts` — recorded query runs (mirror of the SQLite app-data `query_history` table), capped to `general.maxHistoryItems`; surfaced via the Saved/History toggle in the query sidebar panel
-- `tab-persistence.ts` — debounced localStorage snapshot of open query tabs, restored on startup when `general.restoreTabsOnStartup` is on
+- `lib/tab-persistence/` — the **tab-persistence engine**: an incremental, per-tab restore-on-startup system backed by the SQLite app-data store (`open_tabs` table, over IPC). A pure `diff` + `select` core, a debounced/coalesced `engine` that persists only the tabs that changed (one row per single-tab edit, regardless of how many tabs are open), an IPC `transport`, and a one-time `migrate` from the legacy localStorage snapshot. Restored on startup when `general.restoreTabsOnStartup` is on; persistence runs regardless
 
 ### Database Adapters
 
