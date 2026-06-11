@@ -306,6 +306,7 @@ ctx.exporters.register('parquet', {
   extension: 'parquet',
   displayName: 'Parquet',
   appliesToTypes: ['cassandra'], // optional
+  supportsSchema: false,         // optional — see below
   execute(rows, columns, options) {
     return serializeParquet(rows, columns)  // string | Buffer
   }
@@ -317,6 +318,16 @@ types. Omit it for neutral formats (CSV, JSON, Parquet). It is a declarative
 `string[]` (not a predicate function) so the contribution can be marshalled
 across the process-isolation boundary — see
 [plugin-security.md](/plugins/security/).
+
+The Export dialog lists exactly the formats registered for the active
+connection (resolved via `export:formats-list`), so it never offers a format the
+driver can't produce — a MongoDB connection isn't shown SQL export, for example.
+Set `supportsSchema: true` when your `execute` honours `options.includeSchema`
+(the SQL exporters prepend a schema definition); the dialog then shows the
+"include schema" toggle only for those formats instead of hardcoding it to
+`sql`. Importers are surfaced the same way (`import:formats-list`), with
+`driverExecutes: true` marking script importers (SQL) that run their own
+statements rather than parsing a data file into a target object.
 
 Worked examples:
 [core-formats](https://github.com/arshad-shah/verql/blob/main/src/main/plugins/bundled/core-formats/index.ts) (CSV/JSON),

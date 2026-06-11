@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Download, X } from 'lucide-react'
-import { useConnectionsStore } from '@/stores/connections'
 import { Modal, Button, Checkbox, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import type { ExportFormatInfo } from '@shared/export-import'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -11,19 +11,33 @@ interface Props {
   onClose: () => void
 }
 
-type ExportFormat = 'sql' | 'csv' | 'json'
-
 export function ExportModal({ tableName, connectionId, onClose }: Props) {
   const { t } = useTranslation()
-  const [format, setFormat] = useState<ExportFormat>('sql')
+  // Formats are driver-resolved (a Mongo connection won't offer SQL), fetched
+  // from the exporter registry rather than hardcoded.
+  const [formats, setFormats] = useState<ExportFormatInfo[]>([])
+  const [format, setFormat] = useState<string | null>(null)
   const [includeSchema, setIncludeSchema] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [result, setResult] = useState<{ text: string; isError: boolean } | null>(null)
-  const { connections } = useConnectionsStore()
-  const conn = connections.find(c => c.id === connectionId)
+
+  useEffect(() => {
+    let active = true
+    window.electronAPI
+      .invoke(IPC_CHANNELS.EXPORT_FORMATS_LIST, connectionId)
+      .then((list) => {
+        if (!active) return
+        setFormats(list)
+        setFormat((cur) => cur ?? list[0]?.format ?? null)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [connectionId])
+
+  const selected = formats.find((f) => f.format === format)
 
   const handleExport = async () => {
-    if (!tableName) return
+    if (!tableName || !format) return
     setExporting(true)
     try {
       const res = await window.electronAPI.invoke(IPC_CHANNELS.EXPORT_TABLE, connectionId, tableName, format, { includeSchema })
@@ -49,21 +63,21 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
         <Box>
           <Text size="xs" color="muted" as="p" className="mb-2">{t('shell.exportModal.format')}</Text>
           <Flex direction="row" gap="sm">
-            {(['sql', 'csv', 'json'] as ExportFormat[]).map(f => (
+            {formats.map(f => (
               <Button
-                key={f}
-                variant={format === f ? 'outline' : 'ghost'}
+                key={f.format}
+                variant={format === f.format ? 'outline' : 'ghost'}
                 size="sm"
-                onClick={() => setFormat(f)}
-                className={`flex-1 ${format === f ? 'border-accent text-accent bg-accent/10' : ''}`}
+                onClick={() => setFormat(f.format)}
+                className={`flex-1 ${format === f.format ? 'border-accent text-accent bg-accent/10' : ''}`}
               >
-                {f.toUpperCase()}
+                {f.displayName}
               </Button>
             ))}
           </Flex>
         </Box>
 
-        {format === 'sql' && (
+        {selected?.supportsSchema && (
           <Flex direction="row" align="center" gap="sm" className="cursor-pointer" onClick={() => setIncludeSchema(v => !v)}>
             <Checkbox checked={includeSchema} onChange={e => setIncludeSchema(e.target.checked)} />
             <Text size="sm" color="secondary">{t('shell.exportModal.includeCreateTable')}</Text>
@@ -81,7 +95,7 @@ export function ExportModal({ tableName, connectionId, onClose }: Props) {
           variant="solid"
           size="sm"
           onClick={handleExport}
-          disabled={exporting || !tableName}
+          disabled={exporting || !tableName || !format}
           className="flex items-center gap-1.5"
         >
           {exporting ? <Spinner size="xs" /> : <Download size={14} />}

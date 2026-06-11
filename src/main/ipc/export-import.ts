@@ -1,6 +1,7 @@
 import { dialog } from 'electron'
 import fs from 'fs'
 import type { SchemaColumn } from '@shared/types'
+import type { ExportFormatInfo, ImportFormatInfo } from '@shared/export-import'
 import type { ExporterRegistry } from '../plugins/sdk/exporter-registry'
 import type { ImporterRegistry } from '../plugins/sdk/importer-registry'
 import { importCsvToTable } from '../plugins/sdk/csv-into-table'
@@ -44,6 +45,42 @@ export function registerExportImportHandlers(
   deps: RegistryDeps
 ): void {
   const { exporterRegistry, importerRegistry } = deps
+
+  /** The driver type for a saved connection profile (''=unknown). */
+  const typeOf = (profileId: string): string =>
+    ctx.configStore.getConnection(profileId)?.type ?? ''
+
+  handle('export:formats-list', async (profileId) => {
+    const seen = new Set<string>()
+    const out: ExportFormatInfo[] = []
+    for (const e of exporterRegistry.list(typeOf(profileId))) {
+      if (seen.has(e.format)) continue // first registration wins per format
+      seen.add(e.format)
+      out.push({
+        format: e.format,
+        displayName: e.displayName,
+        extension: e.extension,
+        supportsSchema: !!e.supportsSchema,
+      })
+    }
+    return out
+  })
+
+  handle('import:formats-list', async (profileId) => {
+    const seen = new Set<string>()
+    const out: ImportFormatInfo[] = []
+    for (const i of importerRegistry.list(typeOf(profileId))) {
+      if (seen.has(i.format)) continue
+      seen.add(i.format)
+      out.push({
+        format: i.format,
+        displayName: i.displayName,
+        extensions: i.extensions,
+        driverExecutes: !!i.driverExecutes,
+      })
+    }
+    return out
+  })
 
   handle('export:table', async (profileId, tableName, format, options) => {
     const profile = ctx.configStore.getConnection(profileId)

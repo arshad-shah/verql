@@ -11,6 +11,7 @@ export const sqlExporter: RegisteredExporter = {
   extension: 'sql',
   displayName: 'SQL (SQLite)',
   appliesToTypes: ['sqlite'],
+  supportsSchema: true,
   execute(rows, columns, options) {
     let output = ''
     if (options.includeSchema) {
