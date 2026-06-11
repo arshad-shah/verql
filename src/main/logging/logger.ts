@@ -40,13 +40,33 @@ function toAppLevel(level: LogRecord['level']): LogLevel {
   return 'info'
 }
 
-/** Turn an arbitrary detail value into a readable, secret-free-ish string. */
+// Keys whose values are redacted before an object detail is serialised, so a
+// careless call site (e.g. logging a whole ConnectionProfile, which holds
+// plaintext secrets in memory) can't leak credentials into the console or the
+// persisted activity stream. Key-name based — covers the structured-object
+// footgun; free-text strings/stacks are still passed through as-is.
+const SECRET_KEY_PATTERN = /pass(word)?|secret|token|api[-_]?key|^key$|credential|authorization|^auth$/i
+const REDACTED = '[redacted]'
+
+/** Recursively copy a value, replacing any property whose key looks secret with
+ *  `[redacted]`. Depth-capped so a cyclic/huge object can't run away. */
+function redactSecrets(value: unknown, depth = 0): unknown {
+  if (depth > 6 || value === null || typeof value !== 'object') return value
+  if (Array.isArray(value)) return value.map((v) => redactSecrets(v, depth + 1))
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    out[k] = SECRET_KEY_PATTERN.test(k) ? REDACTED : redactSecrets(v, depth + 1)
+  }
+  return out
+}
+
+/** Turn an arbitrary detail value into a readable, secret-redacted string. */
 function stringifyDetail(detail: unknown): string | undefined {
   if (detail === undefined || detail === null) return undefined
   if (typeof detail === 'string') return detail
   if (detail instanceof Error) return detail.stack ?? `${detail.name}: ${detail.message}`
   try {
-    return JSON.stringify(detail, null, 2)
+    return JSON.stringify(redactSecrets(detail), null, 2)
   } catch {
     return String(detail)
   }

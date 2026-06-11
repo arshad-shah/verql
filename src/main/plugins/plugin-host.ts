@@ -28,6 +28,26 @@ import type { ConnectionProfile } from '@shared/types'
 /** Bundled plugins the user cannot disable — without them core features break. */
 const ESSENTIAL_BUNDLED = new Set(['verql-plugin-db-tools'])
 
+/**
+ * Reject archive entry names that would escape the extraction directory
+ * (zip-slip): absolute paths, Windows drive letters, or any `..` traversal
+ * segment. `unzip` strips these by default, but this explicit pre-extraction
+ * check is defense-in-depth — it doesn't trust that behaviour across `unzip`
+ * versions/platforms. Pure + exported for tests. Throws on the first bad entry.
+ */
+export function assertSafeArchivePaths(names: string[]): void {
+  for (const name of names) {
+    const trimmed = name.trim()
+    if (!trimmed) continue
+    if (path.isAbsolute(trimmed) || /^[a-zA-Z]:/.test(trimmed)) {
+      throw new Error(`Archive contains an absolute path entry: ${trimmed}`)
+    }
+    if (trimmed.split(/[\\/]+/).includes('..')) {
+      throw new Error(`Archive contains a path-traversal entry: ${trimmed}`)
+    }
+  }
+}
+
 // Manifest validation + the symlink walker live in ./manifest-validation (pure,
 // separately tested). Re-export validateManifest/ValidationResult so existing
 // importers (and tests) keep resolving them from the plugin-host barrel.
@@ -857,6 +877,14 @@ export class PluginBootCoordinator {
     // inside it) on a shared machine before `unzip -o` overwrites into it.
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verql-plugin-'))
     try {
+      // Defense-in-depth zip-slip guard: read the entry names (without
+      // extracting) and reject traversal/absolute paths before `unzip` writes
+      // anything to disk.
+      const listing = execFileSync('unzip', ['-Z1', zipPath], {
+        encoding: 'utf-8',
+        maxBuffer: 16 * 1024 * 1024,
+      })
+      assertSafeArchivePaths(listing.split('\n'))
       execFileSync('unzip', ['-o', '-q', zipPath, '-d', tmpDir])
       // The zip may contain a single top-level directory or files at root.
       // Check if there's exactly one subdirectory — if so, install from that.

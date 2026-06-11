@@ -135,6 +135,13 @@ model:
   `lstat` and refuses to install if it finds any symlink — otherwise
   `fs.cpSync` would copy a link pointing at `~/.ssh`, the keychain dir, or
   `/etc` into the trusted plugin folder. (Test: `audit/plugin-install-symlink.test.ts`.)
+- **Zip-slip guard before extraction.** `installFromZip` lists the archive's
+  entry names (via `unzip -Z1`) and runs the pure `assertSafeArchivePaths`
+  check — rejecting absolute paths, Windows drive letters, and any `..`
+  traversal segment — **before** `unzip` writes anything to disk. `unzip` strips
+  these by default; this explicit pre-check is defense-in-depth that doesn't
+  trust that behaviour across `unzip` versions/platforms. (Test:
+  `zip-slip-guard.test.ts`.)
 - **Name validation before copy.** The destination directory is
   `pluginDir/<name>`; the name is checked against `^[a-z0-9-]+$` *before* the
   join so it can't escape the plugin directory.
@@ -215,10 +222,11 @@ Be honest about what the model does and does not buy you:
    run in the main process (see above) and can `require` any Node builtin. For
    those, the enforced capability gates are the only boundary.
 2. **Zip extraction shells out to `unzip`.** `installFromZip` uses the system
-   `unzip` binary. Modern Info-ZIP refuses traversal entries, and the symlink
-   scan + name validation run on the extracted result before anything is
-   copied, but `unzip` is not present on stock Windows. Cross-platform
-   extraction is tracked below.
+   `unzip` binary. The entry names are now validated against traversal/absolute
+   paths (`assertSafeArchivePaths`) *before* extraction, and the symlink scan +
+   name validation run on the extracted result before anything is copied — but
+   `unzip` is not present on stock Windows. Cross-platform extraction is tracked
+   below.
 3. **No signature / publisher verification.** Verql does not yet verify a
    signature or checksum on an installed plugin, nor is there a curated
    registry. "Only install plugins you trust" is currently a social control. A

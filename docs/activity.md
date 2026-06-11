@@ -65,6 +65,13 @@ log call:
 2. records a `log` entry — `title` = message, `source` = scope, `detail` = the
    serialized detail (an `Error` becomes its stack; an object becomes pretty JSON).
 
+An object detail is **secret-redacted** before serialisation: any property whose
+key looks like a credential (`password`, `token`, `*key`, `secret`,
+`authorization`, `credential`) is replaced with `[redacted]`, recursively — so a
+call site that logs a whole `ConnectionProfile` (plaintext secrets in memory)
+can't leak them to the console or the persisted stream. Non-secret fields and
+free-text strings are untouched.
+
 `mark(label)` returns an `end(extra?)` that records a `log` entry carrying
 `durationMs` (and returns that number), so a timed operation — e.g. plugin boot —
 shows up in the stream like any other recorder. The engine underneath is

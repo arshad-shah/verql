@@ -51,6 +51,26 @@ describe('createLogger', () => {
     expect(log.list()[0].detail).toBe(JSON.stringify({ port: 7337 }, null, 2))
   })
 
+  it('redacts secret-looking keys in an object detail', () => {
+    const log = new ActivityLog()
+    const logger = createLogger(log, 'app')
+    logger.info('connect', {
+      host: 'db.example.com',
+      password: 'hunter2',
+      apiKey: 'sk-123',
+      nested: { authToken: 'abc', token: 'xyz' },
+      port: 5432,
+    })
+    const detail = log.list()[0].detail ?? ''
+    expect(detail).not.toContain('hunter2')
+    expect(detail).not.toContain('sk-123')
+    expect(detail).not.toContain('xyz')
+    expect(detail).toContain('[redacted]')
+    // Non-secret fields are preserved.
+    expect(detail).toContain('db.example.com')
+    expect(detail).toContain('5432')
+  })
+
   it('child() prefixes the scope', () => {
     const log = new ActivityLog()
     const logger = createLogger(log, 'app')
