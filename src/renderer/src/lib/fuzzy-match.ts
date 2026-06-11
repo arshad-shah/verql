@@ -59,7 +59,3 @@ function isBoundary(s: string, i: number): boolean {
   const prev = s[i - 1]
   return prev === '_' || prev === '-' || prev === '.' || prev === ' ' || prev === '/'
 }
-
-export function matchesFuzzy(query: string, target: string): boolean {
-  return fuzzyMatch(query, target) !== null
-}

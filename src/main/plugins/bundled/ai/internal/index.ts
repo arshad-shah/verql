@@ -13,7 +13,7 @@ import { PermissionManager } from './permission-manager'
 import { ConversationManager } from './conversation-manager'
 import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
-import { OllamaProvider } from './providers/ollama'
+import { OllamaProvider, assertSafeOllamaEndpoint } from './providers/ollama'
 import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess, ToolRegistry } from '../../../sdk/types'
 import type { AttentionHub } from '../../../../attention/attention-hub'
 import { createAIEnhancements } from './enhancements'
@@ -256,9 +256,13 @@ export function startAIModule(deps: AIDeps): AIModule {
     if (deps.keyring.has(AI_KEYRING_NS, 'openai')) configured.push({ id: 'openai', name: 'OpenAI' })
     const ollamaEndpoint = (deps.settingsStore.get('ai.ollamaEndpoint') as string) || 'http://localhost:11434'
     try {
+      // Guard the renderer-writable endpoint before the trusted main process
+      // fetches it — the same SSRF protection every other Ollama call uses.
+      // Without it a renderer could aim the probe at internal/metadata hosts.
+      assertSafeOllamaEndpoint(ollamaEndpoint)
       const resp = await fetch(`${ollamaEndpoint}/api/tags`, { signal: AbortSignal.timeout(2000) })
       if (resp.ok) configured.push({ id: 'ollama', name: 'Ollama' })
-    } catch { /* unreachable */ }
+    } catch { /* unreachable or unsafe endpoint — omit Ollama */ }
     return configured
   })
 

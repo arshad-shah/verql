@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { writeFileAtomic } from '../lib/atomic-write'
 import type { ConnectionProfile } from '@shared/types'
 import type { AppSettings } from '@shared/settings'
 import { defaultSettings, mergeWithDefaults } from '@shared/settings'
@@ -25,24 +26,6 @@ const noOpKeyring: KeyringLike = {
 // `setSetting('__proto__.polluted', …)` and affect every other object
 // in the main process.
 const FORBIDDEN_KEYPATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
-
-// Atomic save: write to a sibling temp file, then rename onto the final
-// path. The rename is atomic on POSIX (and `MoveFileEx`-style on
-// Windows), so a crash mid-save leaves either the old file or the new
-// file fully readable — never a half-written JSON that fails to parse
-// on next launch and drops every saved profile.
-function writeAtomic(filePath: string, contents: string): void {
-  const dir = path.dirname(filePath)
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-  const tmpPath = path.join(dir, `.${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`)
-  try {
-    fs.writeFileSync(tmpPath, contents, 'utf-8')
-    fs.renameSync(tmpPath, filePath)
-  } catch (err) {
-    try { fs.unlinkSync(tmpPath) } catch { /* ignore — temp file may not exist */ }
-    throw err
-  }
-}
 
 function splitSettingsKeyPath(keyPath: string): string[] {
   const parts = keyPath.split('.')
@@ -106,7 +89,7 @@ export class ConfigStore {
       connections: this.data.connections.map(c => stripSecretsForDisk(c, this.keyring)),
       settings: this.data.settings,
     }
-    writeAtomic(this.filePath, JSON.stringify(diskData, null, 2))
+    writeFileAtomic(this.filePath, JSON.stringify(diskData, null, 2))
   }
 
   // ─── Connections ──────────────────────────────────────────────

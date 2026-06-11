@@ -35,7 +35,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       return { settings: newSettings }
     })
     // Persist via IPC (guard for storybook/test environments)
-    await window.electronAPI?.invoke('settings:set', keyPath, value)
+    await window.electronAPI?.invoke(IPC_CHANNELS.SETTINGS_SET, keyPath, value)
   },
 
   resetCategory: async (category: keyof AppSettings) => {
