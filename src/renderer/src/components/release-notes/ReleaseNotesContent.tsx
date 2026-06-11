@@ -24,6 +24,7 @@ function formatDate(iso: string): string {
 function HighlightCard({ icon: Icon, title, description }: {
   icon: LucideIcon; title: string; description: string
 }) {
+  // title/description are already resolved to display strings by the caller.
   return (
     <Flex gap="md" className="rounded-lg border border-border-default bg-bg-secondary p-4">
       <Box className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
@@ -68,8 +69,8 @@ export function ReleaseNotesContent({ note }: { note: ReleaseNote }) {
             <Heading level={1}>{t('shell.releaseNotes.title', { version: note.version })}</Heading>
             <Text size="xs" color="muted">{t('shell.releaseNotes.released', { date: formatDate(note.date) })}</Text>
           </Stack>
-          <Text size="lg" weight="medium" color="primary" className="leading-snug">{note.headline}</Text>
-          <Text size="sm" color="secondary" className="leading-relaxed">{note.summary}</Text>
+          <Text size="lg" weight="medium" color="primary" className="leading-snug">{t(note.headline)}</Text>
+          <Text size="sm" color="secondary" className="leading-relaxed">{t(note.summary)}</Text>
         </Stack>
       </GradientSurface>
 
@@ -78,12 +79,12 @@ export function ReleaseNotesContent({ note }: { note: ReleaseNote }) {
         {note.groups.map((group) => (
           <Box key={group.title}>
             <Flex align="center" gap="sm">
-              <Heading level={4}>{group.title}</Heading>
+              <Heading level={4}>{t(group.title)}</Heading>
               <Badge variant={TONE_VARIANT[group.tone]} size="sm">{toneLabel(group.tone)}</Badge>
             </Flex>
             <Stack gap="sm" className="mt-4">
               {group.highlights.map((h) => (
-                <HighlightCard key={h.id} icon={h.icon} title={h.title} description={h.description} />
+                <HighlightCard key={h.id} icon={h.icon} title={t(h.title)} description={t(h.description)} />
               ))}
             </Stack>
           </Box>
@@ -103,7 +104,7 @@ export function ReleaseNotesContent({ note }: { note: ReleaseNote }) {
                 onClick={() => openExternal(link.url)}
                 className="inline-flex items-center gap-2 rounded-md border border-border-default bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-border-strong hover:bg-hover focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-glow)]"
               >
-                <span>{link.label}</span>
+                <span>{t(link.label)}</span>
                 <ExternalLink size={13} className="text-text-tertiary" />
               </button>
             ))}

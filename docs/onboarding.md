@@ -64,65 +64,73 @@ marking.
 Release notes are **hand-authored content**, deliberately *not* generated from
 `CHANGELOG.md`: the changelog is developer-facing (PRs, commit hashes, dialect
 detail) while these pages speak to end users in plain language with a polished,
-component-built layout. Authoring one is a small, structured task.
+component-built layout. Authoring one is a small, structured, **two-file** task —
+copy lives on the i18n surface, structure lives in the registry.
 
-**To add a "What's New" page for a release, edit only
-`src/renderer/src/lib/release-notes/registry.ts`:**
+**1. Add the copy to i18n** —
+`shared/i18n/locales/en/whats-new.ts` (the `whatsNew` domain). Add a block keyed
+`v<major>_<minor>_<patch>` with the headline, summary, and one `{ title,
+description }` per highlight. Reuse the shared `groups.*` headings and `links.*`
+labels:
 
-1. Add a new `ReleaseNote` object to the **top** of the `RELEASE_NOTES` array
-   (the array is newest-first; `getLatestReleaseNote()` returns `[0]`).
-2. Set `version` to **exactly** match `package.json`'s `version` — the running
-   app resolves the page by exact string match, so a mismatch means no page
-   opens on update.
-3. Fill the fields (shape defined in `./types.ts`):
+```ts
+v1_2_0: {
+  headline: 'One-line hero headline',
+  summary: 'A short paragraph (1–3 sentences) framing the release.',
+  sdkOnNpm: {
+    title: 'Short headline, sentence case, no trailing period',
+    description: 'One or two plain-language sentences. Speak to the user, not the codebase.',
+  },
+  // …one entry per highlight
+},
+```
 
-   ```ts
-   {
-     version: '1.2.0',          // exact semver, == package.json
-     date: '2026-06-01',        // ISO YYYY-MM-DD; rendered locale-formatted
-     headline: 'One line...',   // marketing headline for the hero
-     summary: 'A short paragraph (1–3 sentences) framing the release.',
-     groups: [
-       {
-         title: 'New features', // section heading
-         tone: 'feature',       // 'feature' | 'improvement' | 'fix'
-         highlights: [
-           {
-             id: 'unique-slug',  // unique within this release (React key)
-             icon: Sparkles,     // any lucide-react icon (import it at top)
-             title: 'Short headline, sentence case, no trailing period',
-             description: 'One or two plain-language sentences. Speak to the user, not the codebase.',
-           },
-         ],
-       },
-     ],
-     links: [                   // optional footer resource links
-       { label: 'Full changelog', url: 'https://github.com/arshad-shah/verql/blob/main/CHANGELOG.md' },
-     ],
-   }
-   ```
+**2. Add the structure to the registry** —
+`src/renderer/src/lib/release-notes/registry.ts`. Add a `ReleaseNote` to the
+**top** of `RELEASE_NOTES` (newest-first; `getLatestReleaseNote()` returns `[0]`)
+that references those keys:
+
+```ts
+{
+  version: '1.2.0',                 // exact semver, == package.json
+  date: '2026-06-01',               // ISO YYYY-MM-DD; rendered locale-formatted
+  headline: 'whatsNew.v1_2_0.headline',
+  summary: 'whatsNew.v1_2_0.summary',
+  groups: [
+    {
+      title: 'whatsNew.groups.features',   // shared heading key
+      tone: 'feature',                     // 'feature' | 'improvement' | 'fix'
+      highlights: [
+        {
+          id: 'sdk-on-npm',                // unique within this release (React key)
+          icon: Package,                   // any lucide-react icon (import it at top)
+          title: 'whatsNew.v1_2_0.sdkOnNpm.title',
+          description: 'whatsNew.v1_2_0.sdkOnNpm.description',
+        },
+      ],
+    },
+  ],
+  links: [{ label: 'whatsNew.links.changelog', url: 'https://github.com/arshad-shah/verql/blob/main/CHANGELOG.md' }],
+}
+```
 
 **Authoring rules**
 
+- **All prose comes from i18n, never inlined.** `title`/`description`/`headline`/
+  `summary`/`group.title`/`link.label` are `MessageKey`s — TypeScript rejects a
+  key that doesn't exist, and `tests/unit/release-notes.test.ts` asserts every
+  key actually resolves (so a dangling key fails the build).
+- Set `version` to **exactly** match `package.json` — the running app resolves
+  the page by exact string match, so a mismatch means no page opens on update.
 - Order groups **feature → improvement → fix**; `tone` drives the section badge
   and accent (`New` / `Improved` / `Fixed`).
-- Keep highlight `title`s short and sentence-case with **no trailing period**;
-  put the detail in `description`.
+- Keep highlight titles short and sentence-case with **no trailing period**; put
+  the detail in the description.
 - Write for **end users**: say what they can now do, not which file changed.
   Stay **DB-agnostic** (don't assume SQL — see CLAUDE.md) unless a highlight is
   genuinely driver-specific.
 - `icon` is any `lucide-react` component — add it to the import block at the top
-  of `registry.ts`.
-- Highlight `id`s must be unique within a release (enforced by
-  `tests/unit/release-notes.test.ts`).
-
-**This is content, not UI chrome**, so the authored strings live in the registry
-in English rather than the `shared/i18n` catalogue. The surrounding chrome (tab
-title, section labels, badges, "What's New" entry points) *is* localized through
-`shared/i18n`.
-
-After adding a note, `tests/unit/release-notes.test.ts` validates the structural
-invariants (unique ids, non-empty groups, version shape).
+  of `registry.ts`. Highlight `id`s must be unique within a release.
 
 ## Surfaces & entry points
 

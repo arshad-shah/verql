@@ -20,6 +20,7 @@ import { shell } from './shell'
 import { aiui } from './aiui'
 import { about } from './about'
 import { table } from './table'
+import { whatsNew } from './whats-new'
 
 export const en = {
   common,
@@ -36,4 +37,5 @@ export const en = {
   aiui,
   about,
   table,
+  whatsNew,
 } as const
