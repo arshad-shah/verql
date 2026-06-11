@@ -13,14 +13,18 @@ import type { DriverCapabilities } from '@/stores/driver-capabilities'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { t as coreT } from '@shared/i18n'
-import { isSchemaMutatingSql, destructiveKind } from '@/lib/sql-classify'
+import { isSchemaMutatingSql } from '@/lib/sql-classify'
+import { getStatementContribution } from '@/lib/statement-registry'
 
-/** Localized confirm message for a destructive statement, or null when safe. */
-function destructiveReason(sql: string): string | null {
-  const kind = destructiveKind(sql)
-  if (kind === 'delete-drop-truncate') return coreT('query.destructive.deleteDropTruncate')
-  if (kind === 'update-no-where') return coreT('query.destructive.updateNoWhere')
-  return null
+/** Localized confirm message for a destructive statement, or null when safe.
+ *  Detection is driver-aware: it routes through the statement contribution for
+ *  the connection's `statementSyntax` (SQL → DELETE/DROP/UPDATE-no-WHERE; Redis →
+ *  FLUSHALL/DEL; Mongo → drop/deleteMany; unknown syntax → no warning) instead
+ *  of assuming SQL semantics for every driver. */
+function destructiveReason(sql: string, statementSyntax: string | undefined): string | null {
+  if (!statementSyntax) return null
+  const reason = getStatementContribution(statementSyntax)?.classifyDestructive?.(sql)
+  return reason ? coreT(reason.messageKey) : null
 }
 
 export interface QueryExecution {
@@ -91,7 +95,7 @@ export function useQueryExecution(
     const sql = (selected || tab.sql).trim()
     if (!sql) return
     if (confirmDestructive) {
-      const reason = destructiveReason(sql)
+      const reason = destructiveReason(sql, caps?.statementSyntax)
       if (reason && !window.confirm(t('query.destructive.runAnyway', { reason }))) return
     }
     // Only single-statement runs (e.g. statement gutter) carry an override.
@@ -190,7 +194,7 @@ export function useQueryExecution(
         window.electronAPI.invoke(IPC_CHANNELS.DB_CANCEL_QUERY, tab.connectionId).catch(() => {})
       }
     }
-  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, queryTimeout, confirmDestructive, applyContext, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
+  }, [tab.id, tab.connectionId, tab.sql, tab.schema, tab.title, tab.txn, dbType, caps, queryTimeout, confirmDestructive, applyContext, setTabExecuting, setTabResults, setTabError, setTabTxnStatus, refreshQueryPlan, t])
 
   const handleExecute = useCallback(() => runStatement(), [runStatement])
 

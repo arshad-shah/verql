@@ -35,6 +35,7 @@ export const query = {
   destructive: {
     deleteDropTruncate: 'This query contains DELETE, DROP, or TRUNCATE.',
     updateNoWhere: 'This UPDATE has no WHERE clause — every row will be affected.',
+    generic: 'This statement can permanently change or delete data.',
     runAnyway: '{reason}\n\nRun anyway?',
   },
   timeout: {

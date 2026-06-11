@@ -1,6 +1,7 @@
 import { Play, Sparkles } from 'lucide-react'
 import { tabActions } from '@/stores/tab-actions'
-import type { Statement, StatementContribution } from '@/lib/statement-registry'
+import type { Statement, StatementContribution, DestructiveReason } from '@/lib/statement-registry'
+import { destructiveKind } from '@/lib/sql-classify'
 
 const STATEMENT_KEYWORDS = new Set([
   'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'WITH', 'CREATE', 'ALTER', 'DROP',
@@ -133,8 +134,17 @@ function isOnlyComments(text: string): boolean {
   return noLine.trim().length === 0
 }
 
+/** Map the SQL family's destructive kinds to their confirm-prompt messages. */
+function classifySqlDestructive(source: string): DestructiveReason | null {
+  const kind = destructiveKind(source)
+  if (kind === 'delete-drop-truncate') return { messageKey: 'query.destructive.deleteDropTruncate' }
+  if (kind === 'update-no-where') return { messageKey: 'query.destructive.updateNoWhere' }
+  return null
+}
+
 export const sqlStatementContribution: StatementContribution = {
   splitStatements: (source) => splitSqlStatements(source).filter((s) => !isOnlyComments(s.text)),
+  classifyDestructive: classifySqlDestructive,
   lensActions: [
     { id: 'run',     title: 'Run',     icon: Play,     handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
     { id: 'explain', title: 'Explain', icon: Sparkles, handler: (ctx) => tabActions.explainStatement(ctx.tabId, ctx.stmt.text) },

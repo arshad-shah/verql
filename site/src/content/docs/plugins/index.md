@@ -202,9 +202,13 @@ ctx.drivers.register('cassandra', {
   defaultSchemaCandidates: ['system'],  // renderer picks first match
   defaultSchemaUseConnectionDatabase: false,
 
-  // Which built-in statement splitter the CodeLens "Run/Explain" gutter uses.
-  // The renderer owns the (Monaco-coupled) splitters and selects one by this id;
-  // there is no hardcoded db-type list. Omit to disable the per-statement gutter.
+  // Which built-in statement syntax the renderer uses for this driver. It keys
+  // both the CodeLens "Run/Explain" gutter splitter AND the driver-aware
+  // destructive-statement detection behind the "run anyway?" confirm (SQL →
+  // DELETE/DROP/UPDATE-no-WHERE, Redis → FLUSHALL/DEL, Mongo → drop/deleteMany).
+  // The renderer owns these (Monaco-coupled) contributions and selects one by
+  // this id; there is no hardcoded db-type list. Omit to disable the gutter and
+  // the destructive confirm for this driver.
   statementSyntax: 'sql',               // 'sql' | 'redis' | 'mongodb'
 
   // Driver-owned error classification. Each rule's regex (matched

@@ -1,6 +1,18 @@
 import { Play } from 'lucide-react'
 import { tabActions } from '@/stores/tab-actions'
-import type { Statement, StatementContribution } from '@/lib/statement-registry'
+import type { Statement, StatementContribution, DestructiveReason } from '@/lib/statement-registry'
+
+// Commands that wipe a database or delete keys outright. Exported for tests.
+const REDIS_DESTRUCTIVE = /^\s*(FLUSHALL|FLUSHDB|DEL|UNLINK|GETDEL)\b/i
+
+/** A Redis script is destructive if any command line flushes the db or deletes
+ *  keys. */
+export function classifyRedisDestructive(source: string): DestructiveReason | null {
+  for (const line of source.split('\n')) {
+    if (REDIS_DESTRUCTIVE.test(line)) return { messageKey: 'query.destructive.generic' }
+  }
+  return null
+}
 
 export function splitRedisStatements(source: string): Statement[] {
   const out: Statement[] = []
@@ -24,6 +36,7 @@ export function splitRedisStatements(source: string): Statement[] {
 
 export const redisStatementContribution: StatementContribution = {
   splitStatements: splitRedisStatements,
+  classifyDestructive: classifyRedisDestructive,
   lensActions: [
     { id: 'run', title: 'Run', icon: Play, handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
   ],
