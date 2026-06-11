@@ -34,7 +34,7 @@ export const errors = {
   PERMISSION_DENIED: {
     title: 'Permission denied',
     message: "Your database user isn't allowed to run this query.",
-    hint: 'Use a role with the required privileges, or grant them explicitly (GRANT SELECT, ...).'
+    hint: 'Use an account with the required privileges, or grant them to this user.'
   },
   AUTH_FAILED: {
     title: 'Authentication failed',
@@ -54,7 +54,7 @@ export const errors = {
   TIMEOUT: {
     title: 'Query timed out',
     message: 'The query ran longer than the configured timeout.',
-    hint: 'Increase the query timeout in Settings → General, or narrow the query (add a WHERE / LIMIT).'
+    hint: 'Increase the query timeout in Settings → General, or return less data (filter the results or fetch fewer records).'
   },
   QUERY_CANCELLED: {
     title: 'Query cancelled',
@@ -84,12 +84,12 @@ export const errors = {
   TYPE_MISMATCH: {
     title: 'Type mismatch',
     message: "A value doesn't match the {field}'s declared type.",
-    hint: 'Cast explicitly (e.g. `value::int`) or fix the input — quoted numbers, malformed dates, and NULL where NOT NULL is expected are the usual culprits.'
+    hint: 'Cast or convert the value explicitly, or fix the input — quoted numbers, malformed dates, and a missing value where one is required are the usual culprits.'
   },
   DIVISION_BY_ZERO: {
     title: 'Division by zero',
     message: 'Something in the query divided by zero.',
-    hint: 'Guard the denominator with NULLIF(x, 0) or a CASE.'
+    hint: 'Guard the denominator so it can never be zero (skip or substitute zero values).'
   },
   DEADLOCK: {
     title: 'Deadlock',
@@ -99,13 +99,13 @@ export const errors = {
   TRANSACTION_ABORTED: {
     title: 'Transaction aborted',
     message: 'An earlier statement in this transaction failed and the whole transaction is now poisoned.',
-    hint: 'Run `ROLLBACK` to clear the transaction, then re-run your statements.'
+    hint: 'Roll back the transaction to clear it, then re-run your statements.'
   },
   DUPLICATE_TABLE: {
     title: '{Object} already exists',
     message: 'A {object} named `{name}` already exists.',
     messageGeneric: 'A {object} with that name already exists.',
-    hint: 'Use `CREATE TABLE IF NOT EXISTS` or drop the existing one first.'
+    hint: 'Use a create-if-not-exists form, or remove the existing {object} first.'
   },
   KEYRING_DECRYPT_FAILED: {
     title: "Couldn't unlock saved credentials",
