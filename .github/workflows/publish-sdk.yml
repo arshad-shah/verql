@@ -4,8 +4,16 @@ name: Publish @verql/plugin-sdk
 # The app's own releases use `v*.*.*` tags (release.yml); the SDK is versioned
 # and released independently so its API can stabilise on its own cadence.
 #
-# Required: an `NPM_TOKEN` repo secret (an npm automation token with publish
-# rights to the @verql scope). Provenance is emitted via OIDC (`id-token`).
+# Auth is npm **trusted publishing** via OIDC — NO long-lived token. The job
+# exchanges the `id-token` for a short-lived npm credential, and npm emits a
+# provenance attestation automatically (no `--provenance` flag needed).
+#
+# Two things must be configured out-of-band for this to work:
+#   1. A GitHub Environment named `npm-publish` with a required reviewer
+#      (Settings → Environments). This is the manual-approval lock on the run.
+#   2. A trusted publisher on npmjs.com for @verql/plugin-sdk pinned to this
+#      repo + workflow file (`publish-sdk.yml`) + environment (`npm-publish`).
+# Trusted publishing requires npm >= 11.5.1, so the job upgrades npm first.
 on:
   push:
     tags:
@@ -24,9 +32,12 @@ jobs:
     if: ${{ github.repository == 'arshad-shah/verql' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The run lock: this job pauses for a required reviewer before it can run,
+    # and the npm trusted-publisher config is pinned to this environment.
+    environment: npm-publish
     permissions:
       contents: read
-      id-token: write # npm provenance
+      id-token: write # OIDC: trusted publishing + provenance attestation
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -41,6 +52,10 @@ jobs:
           node-version: 22.x
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10.x.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -64,8 +79,9 @@ jobs:
         working-directory: packages/plugin-sdk
         run: pnpm run build
 
-      - name: Publish to npm
+      # Trusted publishing (OIDC): no token, and npm attaches provenance
+      # automatically. Uses `npm publish` rather than `pnpm publish` because
+      # pnpm 11 currently fails OIDC trusted publishing (pnpm/pnpm#11513).
+      - name: Publish to npm (OIDC trusted publishing)
         working-directory: packages/plugin-sdk
-        run: pnpm publish --no-git-checks --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
