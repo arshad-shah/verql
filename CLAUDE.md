@@ -29,6 +29,7 @@ area you're touching → the source it points to.
 - [`docs/ai.md`](./docs/ai.md) — the AI assistant: providers, the shared tool registry, App-Actions, the orchestration loop, and conversation history.
 - [`docs/i18n.md`](./docs/i18n.md) — internationalization: the homegrown, dependency-free, cross-process message catalogue (`shared/i18n`), the typed `t()` / `MessageKey`, the renderer `<I18nProvider>`/`useTranslation`, key-naming convention, interpolation/plural syntax, and how locales + plugin catalogues register. Diagram-rich. Read before adding or changing user-facing strings.
 - [`docs/onboarding.md`](./docs/onboarding.md) — first-run onboarding & release notes: the VS Code-style **Welcome** "Get Started" tab and the per-version, hand-authored **What's New** release-notes tab, the `settings.onboarding` state + pure startup decision (`lib/onboarding.ts`), the curated release registry (`lib/release-notes/`), and the **agent instructions for authoring a release-notes page**. Read before touching the welcome flow or adding a release page.
+- [`docs/tab-persistence.md`](./docs/tab-persistence.md) — restore-on-startup for open query tabs: the incremental, per-tab engine (pure `select` + `diff` core, a debounced/coalesced/serialized write loop, IPC `transport`, one-time localStorage `migrate`) backed by the SQLite app-data `open_tabs` table. Diagram-rich. Read before touching tab restore or the `open_tabs` schema.
 
 When you change a subsystem, update its doc (and this file) in the same change
 so the docs never drift from the code.

@@ -86,6 +86,9 @@ const MIGRATIONS: ((db: Database.Database) => void)[] = [
         id              TEXT PRIMARY KEY,
         position        INTEGER NOT NULL,
         title           TEXT NOT NULL,
+        -- Opaque editor buffer for any driver's query language (SQL, Mongo,
+        -- Redis, ...), never parsed here. The sql name mirrors the
+        -- saved_queries/query_history columns; not a relational assumption.
         sql             TEXT NOT NULL,
         connection_id   TEXT,
         db_name         TEXT,

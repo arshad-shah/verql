@@ -11,7 +11,9 @@ export interface TabsSlice {
 const isQueryTab = (tab: Tab): tab is QueryTab => tab.type === 'query'
 
 /** Project one query tab into its durable, serialisable shape. Transient
- *  runtime state (results, execution, txn status) is intentionally dropped. */
+ *  runtime state (results, execution, txn status) is intentionally dropped. The
+ *  `sql` field is copied verbatim — it's the opaque editor buffer in whatever
+ *  language the driver speaks (SQL, Mongo, Redis, …), never inspected here. */
 function toPersistedTab(tab: QueryTab): PersistedTab {
   return {
     id: tab.id,

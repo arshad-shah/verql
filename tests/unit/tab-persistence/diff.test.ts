@@ -87,6 +87,24 @@ describe('diffTabs', () => {
     ])
   })
 
+  it('round-trips arbitrary non-SQL driver syntax as opaque text', () => {
+    // The engine must never assume SQL — a query tab holds whatever the driver
+    // speaks. Mongo shell, Redis commands, and multi-byte content all diff and
+    // persist as plain strings.
+    const samples = [
+      'db.users.find({ age: { $gt: 21 } }).sort({ name: 1 })',
+      'HSET user:1 name "Arshad" | ZADD leaderboard 100 user:1',
+      'MATCH (n:Person)-[:KNOWS]->(m) RETURN n, m',
+      'SELECT * FROM "şehir" WHERE name = \'İstanbul\' -- 数据',
+    ]
+    for (const body of samples) {
+      const ops = diffTabs(snap([tab('a')]), snap([tab('a', { sql: body })]))
+      expect(ops).toEqual([{ kind: 'upsert', tab: tab('a', { sql: body }), position: 0 }])
+      // And an identical re-diff yields nothing — content compared, not parsed.
+      expect(diffTabs(snap([tab('a', { sql: body })]), snap([tab('a', { sql: body })]))).toEqual([])
+    }
+  })
+
   it('treats every persisted field as content (savedQueryId, autoCommit, conn…)', () => {
     const prev = snap([tab('a')])
     for (const over of [

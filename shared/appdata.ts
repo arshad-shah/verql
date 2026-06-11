@@ -77,6 +77,15 @@ export interface QueryHistoryEntry {
 export interface PersistedTab {
   id: string
   title: string
+  /**
+   * The raw editor buffer — stored and round-tripped as **opaque text**, never
+   * parsed or assumed to be SQL. A query tab is the driver-agnostic query
+   * surface (its language comes from the driver's `editorLanguage` capability),
+   * so this holds whatever the driver speaks: a SQL statement, a MongoDB shell
+   * command, a Redis command, etc. The `sql` name matches the sibling
+   * `saved_queries` / `query_history` columns (the app-wide term for "query
+   * text"), not a relational assumption.
+   */
   sql: string
   connectionId: string | null
   database: string | null
