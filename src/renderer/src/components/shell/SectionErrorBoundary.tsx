@@ -1,6 +1,9 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { Flex, Stack, Text, Button, Code } from '@/primitives'
+// Class component (error boundaries must be classes) — use the standalone t()
+// rather than the useTranslation() hook.
+import { t } from '@shared/i18n'
 
 interface Props {
   /** Short name shown in the recovery UI (e.g. "Query Editor", "Sidebar"). */
@@ -60,9 +63,9 @@ export class SectionErrorBoundary extends Component<Props, State> {
       <Flex align="center" justify="center" className="h-full w-full p-6">
         <Stack gap="sm" align="center" className="max-w-md text-center">
           <AlertTriangle size={28} className="text-warning" />
-          <Text size="sm" weight="medium">{this.props.label} crashed</Text>
+          <Text size="sm" weight="medium">{t('shell.sectionError.crashed', { label: this.props.label })}</Text>
           <Text size="xs" color="muted">
-            The rest of the app is still working. Retry this section or switch to another tab.
+            {t('shell.sectionError.description')}
           </Text>
           {this.state.error && (
             <Code block className="text-[11px] max-h-32 overflow-auto text-left w-full whitespace-pre-wrap">
@@ -70,7 +73,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
             </Code>
           )}
           <Button size="sm" variant="outline" onClick={this.retry} className="inline-flex items-center gap-2">
-            <RotateCcw size={12} /> Retry
+            <RotateCcw size={12} /> {t('shell.sectionError.retry')}
           </Button>
         </Stack>
       </Flex>

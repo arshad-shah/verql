@@ -105,7 +105,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           {/* Offset below the modal's absolute close (×) so the copy button
               never overlaps it. */}
           <Flex align="center" justify="between" className="mt-5">
-            <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
+            <Text size="xs" color="muted" className="uppercase tracking-wider">{t('about.build')}</Text>
             <IconButton variant="ghost" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild}>
               {copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />}
             </IconButton>

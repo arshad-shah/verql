@@ -107,11 +107,11 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
 
       {open && expandable && (
         <div className="mt-2 ml-[24px] flex flex-col gap-1.5 pb-1">
-          <Field label="Time">{formatClockTimeWithMillis(entry.ts)}</Field>
-          <Field label="Kind">{t(KIND_META[entry.kind].label)} · {entry.level}</Field>
-          {entry.source && <Field label="Source">{entry.source}</Field>}
-          {entry.durationMs !== undefined && <Field label="Duration">{Math.round(entry.durationMs)}ms</Field>}
-          {entry.traceId && <Field label="Trace">{entry.traceId}</Field>}
+          <Field label={t('shell.activity.fieldTime')}>{formatClockTimeWithMillis(entry.ts)}</Field>
+          <Field label={t('shell.activity.fieldKind')}>{t(KIND_META[entry.kind].label)} · {entry.level}</Field>
+          {entry.source && <Field label={t('shell.activity.fieldSource')}>{entry.source}</Field>}
+          {entry.durationMs !== undefined && <Field label={t('shell.activity.fieldDuration')}>{Math.round(entry.durationMs)}ms</Field>}
+          {entry.traceId && <Field label={t('shell.activity.fieldTrace')}>{entry.traceId}</Field>}
           {entry.detail && <Pre text={entry.detail} />}
           {metaJson && <Pre text={metaJson} />}
           {entry.stack && <Pre text={entry.stack} tone="error" />}

@@ -5,6 +5,9 @@ import { Sparkles, Check, X, Loader2 } from 'lucide-react'
 import { IconButton } from '@/primitives/forms/Button'
 import { Kbd } from '@/primitives/typography/Kbd'
 import { useAIStore } from '@/stores/ai'
+// Toolbar mounts in a separate createRoot (outside the I18nProvider tree), so
+// use the standalone t() rather than the useTranslation() hook.
+import { t } from '@shared/i18n'
 import {
   subscribeInlineAIState,
   getInlineAIState,
@@ -110,7 +113,7 @@ function Toolbar({ editor: ed }: { editor: editor.IStandaloneCodeEditor }) {
       style={{ animation: 'verql-ai-toolbar-in 140ms ease-out' }}
     >
       <IconButton
-        label="Accept suggestion"
+        label={t('aiui.inlineSuggest.accept')}
         variant="ghost"
         size="xs"
         className="!h-6 !w-6 !text-success"
@@ -121,7 +124,7 @@ function Toolbar({ editor: ed }: { editor: editor.IStandaloneCodeEditor }) {
       <Kbd size="sm">Tab</Kbd>
       <span className="mx-0.5 h-3 w-px bg-border-default" />
       <IconButton
-        label="Reject suggestion"
+        label={t('aiui.inlineSuggest.reject')}
         variant="ghost"
         size="xs"
         className="!h-6 !w-6 !text-error"
