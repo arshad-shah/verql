@@ -23,6 +23,8 @@
     "test:watch": "vitest",
     "changeset": "changeset",
     "version": "changeset version",
+    "release:tag": "node scripts/release-tag.mjs",
+    "release:version-pr": "node scripts/open-version-pr.mjs",
     "build:mac": "npm run build && electron-builder --mac",
     "build:win": "npm run build && electron-builder --win",
     "build:linux": "npm run build && electron-builder --linux",

@@ -1,9 +1,10 @@
 name: Release
 
-# Triggered by pushing a `v*` tag to the repo. The tag MUST be created
-# from `main` and signed by a maintainer (see SETTINGS.md → tag protection).
-# Forks that push tags will hit the repository guard and the workflow
-# will short-circuit before doing any work.
+# Triggered by a `v*.*.*` tag. Tags are normally created automatically by
+# release-version.yml when the "Version Packages" PR merges — you don't push
+# them by hand. (Pushing one manually still works as an escape hatch.) The
+# `publish` job is gated behind the `release` environment's required reviewer.
+# Forks that push tags hit the repository guard and short-circuit immediately.
 
 on:
   push:
@@ -184,6 +185,12 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    # Manual-approval lock: this job pauses for a required reviewer before it
+    # runs (Settings → Environments → `release` → required reviewers = the
+    # maintainer). Same pattern as publish-sdk.yml's `npm-publish`. Only an
+    # approved run can write the GitHub release — and it's created as a draft,
+    # so the maintainer still clicks Publish.
+    environment: release
     permissions:
       contents: write     # only this job can write to the release
       id-token: write
