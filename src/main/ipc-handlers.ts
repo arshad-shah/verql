@@ -260,8 +260,12 @@ export function registerIpcHandlers(): void {
     pluginCoordinator.registerBundledPlugin(plugin.manifest, plugin)
   }
 
+  // Time plugin boot — the duration lands in the activity stream as a `log`
+  // entry, so a slow startup is visible/exportable from the Activity panel.
+  const endBoot = logger.child('plugins').mark('boot')
   pluginCoordinator.boot()
     .then(() => {
+      endBoot({ plugins: bundledPlugins.length })
       // Auto-start the MCP server only after plugin boot completes, so the
       // db-tools bundled plugin has registered its tools into the shared
       // registry. Starting earlier (at handler-registration time) would expose

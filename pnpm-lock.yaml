@@ -32,6 +32,9 @@ importers:
 
   .:
     dependencies:
+      '@arshad-shah/log-kit':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@arshad-shah/swift-chart':
         specifier: ^1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -255,6 +258,9 @@ packages:
 
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
+
+  '@arshad-shah/log-kit@1.1.0':
+    resolution: {integrity: sha512-5JOYyI8mCUYzMsj+5mtSU1xqgJXi+jwLCNEwxWUg8OMNccyVQSzXF6+GQElYJytWbsiyiMEybcrWGnNSZvX9Kg==}
 
   '@arshad-shah/swift-chart@1.3.0':
     resolution: {integrity: sha512-9D33xCtDMrFBW1MKqMQ9yaYcMG7d6inpUvLti+eVCiZNNisputbMor/zuRo/sz5piG+b867pTaNO72p0xwjlEA==}
@@ -5225,6 +5231,8 @@ snapshots:
   7zip-bin@5.2.0: {}
 
   '@adobe/css-tools@4.4.4': {}
+
+  '@arshad-shah/log-kit@1.1.0': {}
 
   '@arshad-shah/swift-chart@1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     optionalDependencies:

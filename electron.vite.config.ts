@@ -40,6 +40,7 @@ const nativeExternals = [
 // doesn't depend on pnpm's node_modules layout (which is unreliable across
 // install variants).
 const bundleThese = [
+  '@arshad-shah/log-kit',
   'snowflake-sdk',
   'axios',
   'form-data',

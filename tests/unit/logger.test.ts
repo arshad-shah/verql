@@ -57,4 +57,21 @@ describe('createLogger', () => {
     logger.child('plugins').error('Boot failed')
     expect(log.list()[0].source).toBe('app:plugins')
   })
+
+  it('mark() records a log entry carrying the measured durationMs', () => {
+    const log = new ActivityLog()
+    const logger = createLogger(log, 'app')
+    const end = logger.child('plugins').mark('boot')
+    const ms = end({ plugins: 3 })
+
+    const entry = log.list()[0]
+    expect(entry.kind).toBe('log')
+    expect(entry.title).toBe('boot')
+    expect(entry.source).toBe('app:plugins')
+    expect(typeof entry.durationMs).toBe('number')
+    // end() returns the same duration it recorded, so callers can reuse it.
+    expect(entry.durationMs).toBe(ms)
+    // Extra context that isn't `detail`/`durationMs` is serialized into detail.
+    expect(entry.detail).toBe(JSON.stringify({ plugins: 3 }, null, 2))
+  })
 })
