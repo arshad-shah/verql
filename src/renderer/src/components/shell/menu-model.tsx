@@ -152,7 +152,7 @@ export function useMenus(): MenuDef[] {
         const id = useTabsStore.getState().activeTabId
         if (id) void tabActions.save(id)
       } },
-      { kind: 'item', label: t('menu.formatSql'), icon: Code2, accelerator: 'Shift+Alt+F', enabled: hasEditor, run: () => editorRegistry.runAction('editor.action.formatDocument') },
+      { kind: 'item', label: t('menu.formatDocument'), icon: Code2, accelerator: 'Shift+Alt+F', enabled: hasEditor, run: () => editorRegistry.runAction('editor.action.formatDocument') },
     ],
   }
 

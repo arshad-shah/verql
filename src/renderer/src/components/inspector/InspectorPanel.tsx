@@ -113,7 +113,7 @@ function QueryInspector({ tab }: { tab: QueryTab }) {
       {tab.sql.trim() && (
         <>
           <Divider />
-          <Section title={t('shell.inspector.sectionSql')}>
+          <Section title={t('shell.inspector.sectionStatement')}>
             <Box className="bg-bg-secondary rounded-sm p-2 max-h-40 overflow-auto">
               <Text size="xs" className="font-mono whitespace-pre-wrap break-words">
                 {tab.sql.length > 800 ? tab.sql.slice(0, 800) + '…' : tab.sql}
