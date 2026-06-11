@@ -3,7 +3,7 @@ import { Search, Play, Trash2, Clock } from 'lucide-react'
 import type { SavedQuery } from '@shared/appdata'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTabsStore } from '@/stores/tabs'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, getActiveProfile } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, SearchInput } from '@/primitives'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -195,8 +195,8 @@ export function findSavedQuery(idOrName: string): SavedQuery | undefined {
 
 /** Open a saved query in a new query tab, pre-filled but not executed. */
 export function openSavedQuery(query: SavedQuery): void {
-  const { activeConnectionId, connections } = useConnectionsStore.getState()
-  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
+  const { activeConnectionId } = useConnectionsStore.getState()
+  const activeProfile = getActiveProfile()
   const tabId = useTabsStore.getState().addQueryTab(activeConnectionId, null, {
     autoCommit: initialAutoCommit(activeProfile)
   })

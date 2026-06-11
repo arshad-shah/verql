@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useConnectionsStore } from '@/stores/connections'
+import { useDbType } from '@/stores/connections'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { resolveDataNouns, type ResolvedNouns } from '@/lib/data-nouns'
@@ -14,9 +14,7 @@ export { titleCase, nounVars } from '@/lib/data-nouns'
  *  declare its own via the `nouns` capability. */
 export function useDataNouns(connectionId: string | null): ResolvedNouns {
   const { t } = useTranslation()
-  const type = useConnectionsStore((s) =>
-    connectionId ? (s.connections.find((c) => c.id === connectionId)?.type ?? null) : null
-  )
+  const type = useDbType(connectionId)
   const caps = useDriverCapabilitiesStore((s) =>
     connectionId && type ? s.resolveCapabilities(connectionId, type) : null
   )

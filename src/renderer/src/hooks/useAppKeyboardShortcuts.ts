@@ -3,7 +3,7 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions, requestCloseTab as routeCloseTab } from '@/stores/tab-actions'
 import { useUiStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
-import { useConnectionsStore } from '@/stores/connections'
+import { getProfile } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { KEYBINDING_ACTION } from '@shared/settings'
 import { usePluginCommands } from '@/stores/plugin-commands'
@@ -37,7 +37,7 @@ export function useAppKeyboardShortcuts({ activeConnectionId, activeTabId, addQu
       // for query, settings, and any future tab kind.
       const actions: Record<string, () => void> = {
         [KEYBINDING_ACTION.NEW_TAB]: () => {
-          const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+          const activeProfile = getProfile(activeConnectionId)
           addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
         },
         [KEYBINDING_ACTION.CLOSE_TAB]: () => { if (activeTabId) requestCloseTab(activeTabId) },

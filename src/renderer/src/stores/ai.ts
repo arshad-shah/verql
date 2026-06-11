@@ -11,7 +11,7 @@ import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { parseAppError } from '@/lib/db-error'
 import { notifyError } from '@/lib/notify-error'
 import { useUiStore } from './ui'
-import { useConnectionsStore } from './connections'
+import { useConnectionsStore, getActiveProfile } from './connections'
 import { useNotificationsStore } from './notifications'
 import { appActions } from '@/lib/app-actions/registry'
 
@@ -468,8 +468,8 @@ export const useAIStore = create<AIState>((set, get) => ({
     if (isStreaming) return
     const lastUser = [...messages].reverse().find((m) => m.role === 'user')
     if (!lastUser) return
-    const { activeConnectionId, connections } = useConnectionsStore.getState()
-    const conn = activeConnectionId ? connections.find((c) => c.id === activeConnectionId) : undefined
+    const { activeConnectionId } = useConnectionsStore.getState()
+    const conn = getActiveProfile()
     const meta = conn ? { type: conn.type, driverName: conn.type } : undefined
     sendMessage(lastUser.content, activeConnectionId ?? undefined, meta)
   },

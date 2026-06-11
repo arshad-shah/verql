@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Flex } from '@/primitives'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { WidgetRenderer } from '@/components/plugin-ui/WidgetRenderer'
 import { PluginSlot } from '@/components/plugins/PluginSlot'
@@ -13,8 +13,8 @@ import {
 } from './status-bar'
 
 export function StatusBar() {
-  const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
-  const active = connections.find((c) => c.id === activeConnectionId)
+  const { activeConnectionId, connectedIds } = useConnectionsStore()
+  const active = useActiveProfile()
   const isConnected = activeConnectionId ? connectedIds.has(activeConnectionId) : false
 
   const [showNewConnection, setShowNewConnection] = useState(false)

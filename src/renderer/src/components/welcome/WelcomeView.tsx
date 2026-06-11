@@ -6,7 +6,7 @@ import {
 import { Flex, Box, Stack, Text, Heading, Badge, Switch, GradientSurface, ScrollArea } from '@/primitives'
 import { VerqlHero } from '@/components/brand/VerqlHero'
 import { useTranslation } from '@/i18n/I18nProvider'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, getActiveProfile } from '@/stores/connections'
 import { useQueryHistoryStore } from '@/stores/query-history'
 import { useSettingsStore } from '@/stores/settings'
 import { useTabsStore } from '@/stores/tabs'
@@ -107,8 +107,8 @@ export function WelcomeView() {
   const runStep = (id: string, fn: () => void) => { fn(); markStepDone(id) }
 
   const newQuery = () => {
-    const { activeConnectionId, connections } = useConnectionsStore.getState()
-    const conn = connections.find((c) => c.id === activeConnectionId) ?? null
+    const { activeConnectionId } = useConnectionsStore.getState()
+    const conn = getActiveProfile()
     useTabsStore.getState().addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(conn) })
   }
 
