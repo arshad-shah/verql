@@ -121,6 +121,25 @@ export interface AISettings {
   activeModel: string
 }
 
+/** First-run onboarding + release-awareness state. Drives the Welcome tab on a
+ *  fresh install and the version-named "What's New" tab after an update. Not a
+ *  user-facing settings category — there is no UI under Settings for these; they
+ *  are written by the app (boot logic + the Welcome checklist). */
+export interface OnboardingSettings {
+  /** Version whose release notes the user has already seen. Empty string means
+   *  a fresh install (no version has ever been recorded), which is the signal
+   *  to open the Welcome tab rather than a release-notes tab. */
+  lastSeenVersion: string
+  /** Ids of Get-Started checklist steps the user has manually marked done.
+   *  Steps can also be auto-satisfied (e.g. once a connection exists); the
+   *  Welcome view treats a step as complete if either is true. */
+  completedSteps: string[]
+  /** When true, the Welcome tab is not auto-opened on launch (the user opted
+   *  out via the "Show welcome on startup" toggle). It can still be reopened
+   *  from Help → Welcome or the command palette. */
+  hideOnStartup: boolean
+}
+
 export interface MCPSettings {
   enabled: boolean
   port: number
@@ -142,6 +161,7 @@ export interface AppSettings {
   dataDisplay: DataDisplaySettings
   ai: AISettings
   mcp: MCPSettings
+  onboarding: OnboardingSettings
   keybindings: KeyBinding[]
   plugins: Record<string, Record<string, unknown>>
   /** Names of plugins the user has explicitly deactivated. Persisted so the
@@ -223,6 +243,11 @@ export const defaultSettings: AppSettings = {
     readOnly: false,
     maxRows: 500,
     disabledTools: [],
+  },
+  onboarding: {
+    lastSeenVersion: '',
+    completedSteps: [],
+    hideOnStartup: false,
   },
   keybindings: [
     { id: KEYBINDING_ACTION.EXECUTE_QUERY, label: 'Execute Query', keys: ['Ctrl+Enter', 'Cmd+Enter'], category: 'Query Execution' },

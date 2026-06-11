@@ -8,7 +8,9 @@ import { ConnectionFormView } from '@/components/connections/ConnectionFormView'
 import { PluginDetailView } from '@/components/plugins/PluginDetailView'
 import { InstallPluginTab } from '@/components/plugins/InstallPluginTab'
 import { SettingsLayout } from '@/components/settings/SettingsLayout'
-import type { QueryTab, TableTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab } from '@shared/types'
+import { WelcomeView } from '@/components/welcome/WelcomeView'
+import { ReleaseNotesView } from '@/components/release-notes/ReleaseNotesView'
+import type { QueryTab, TableTab, ErDiagramTab, ConnectionFormTab, PluginDetailTab, ReleaseNotesTab } from '@shared/types'
 import type { useTabsStore } from '@/stores/tabs'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -50,6 +52,12 @@ export function ActiveTabView({ activeTab, activeTabId }: { activeTab: AppTab | 
         )}
         {activeTab?.type === 'settings' && (
           <SettingsLayout />
+        )}
+        {activeTab?.type === 'welcome' && (
+          <WelcomeView />
+        )}
+        {activeTab?.type === 'release-notes' && (
+          <ReleaseNotesView version={(activeTab as ReleaseNotesTab).version} />
         )}
       </SectionErrorBoundary>
       {!activeTab && (

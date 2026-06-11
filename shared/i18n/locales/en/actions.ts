@@ -91,6 +91,16 @@ export const actions = {
     description:
       'Open the plugin install screen. To enable or configure already-installed plugins instead, use open-settings with category "plugins".'
   },
+  openWelcome: {
+    title: 'Open Welcome',
+    description:
+      'Open the first-run Welcome / Get Started walkthrough — quick actions, a setup checklist, and resource links. Use this to orient a new user.'
+  },
+  openReleaseNotes: {
+    title: "Open What's New",
+    description:
+      "Open the \"What's New\" release-notes page for the current version (or a specific version if given). Use this to show what changed in a recent update."
+  },
   errors: {
     provideSavedQuery: 'Provide a saved query name or id.',
     noSavedQueryMatch: 'No saved query matches "{arg}".',

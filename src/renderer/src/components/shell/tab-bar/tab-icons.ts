@@ -1,4 +1,4 @@
-import { FileText, GitFork, Plug, Table2, Puzzle, Package, Settings, type LucideIcon } from 'lucide-react'
+import { FileText, GitFork, Plug, Table2, Puzzle, Package, Settings, Sparkles, PartyPopper, type LucideIcon } from 'lucide-react'
 import type { Tab } from '@shared/types'
 
 interface TabIconConfig {
@@ -14,6 +14,8 @@ const tabIconMap: Record<Tab['type'], TabIconConfig> = {
   'plugin-detail': { icon: Puzzle, className: 'text-emerald-400' },
   'install-plugin': { icon: Package, className: 'text-orange-400' },
   settings: { icon: Settings, className: 'text-text-tertiary' },
+  welcome: { icon: Sparkles, className: 'text-accent' },
+  'release-notes': { icon: PartyPopper, className: 'text-pink-400' },
 }
 
 export function getTabIcon(type: Tab['type']): TabIconConfig {

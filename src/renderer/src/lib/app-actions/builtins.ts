@@ -9,6 +9,7 @@ import { editorRegistry } from '@/stores/editor'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { findSavedQuery, openSavedQuery } from '@/components/saved-queries/SavedQueriesPanel'
+import { getLatestReleaseNote, getReleaseNote } from '@/lib/release-notes'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { t } from '@shared/i18n'
 import { resolveConnection } from './resolve'
@@ -327,6 +328,27 @@ const BUILTINS: AppAction[] = [
     description: t('actions.openInstallPlugin.description'),
     kind: 'navigation',
     run: () => { useTabsStore.getState().openInstallPlugin() }
+  },
+
+  // ── Onboarding & release notes ──────────────────────────────────────────
+  {
+    id: 'open-welcome',
+    title: t('actions.openWelcome.title'),
+    description: t('actions.openWelcome.description'),
+    kind: 'navigation',
+    run: () => { useTabsStore.getState().openWelcome() }
+  },
+  {
+    id: 'open-release-notes',
+    title: t('actions.openReleaseNotes.title'),
+    description: t('actions.openReleaseNotes.description'),
+    kind: 'navigation',
+    params: { version: { type: 'string', description: 'Version to show; defaults to the latest' } },
+    run: (p) => {
+      const version = str(p.version)
+      const note = version ? getReleaseNote(version) : getLatestReleaseNote()
+      if (note) useTabsStore.getState().openReleaseNotes(note.version)
+    }
   }
 ]
 
