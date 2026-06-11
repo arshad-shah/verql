@@ -140,3 +140,42 @@ export const useConnectionsStore = create<ConnectionsState>((set, get) => ({
     if (get().activeConnectionId === id) set({ activeConnectionId: null })
   }
 }))
+
+// ─── Profile selectors ────────────────────────────────────────────────────
+// Centralize the `connections.find(c => c.id === …)` lookup that was repeated
+// across ~25 call sites. Hooks for components; plain getters for non-React
+// contexts (store actions, app-action resolvers, getState() callers).
+
+/** Resolve a profile by id from a connections snapshot (pure). */
+function findProfile(
+  connections: ConnectionProfile[],
+  id: string | null | undefined,
+): ConnectionProfile | null {
+  return id ? connections.find((c) => c.id === id) ?? null : null
+}
+
+/** The active connection profile (reactive), or null when none is selected. */
+export function useActiveProfile(): ConnectionProfile | null {
+  return useConnectionsStore((s) => findProfile(s.connections, s.activeConnectionId))
+}
+
+/** The connection profile with `id` (reactive), or null. */
+export function useProfile(id: string | null | undefined): ConnectionProfile | null {
+  return useConnectionsStore((s) => findProfile(s.connections, id))
+}
+
+/** The driver type of a connection (reactive), e.g. 'postgresql', or null. */
+export function useDbType(id: string | null | undefined): ConnectionProfile['type'] | null {
+  return useConnectionsStore((s) => findProfile(s.connections, id)?.type ?? null)
+}
+
+/** Non-reactive: the active profile read from the current store state. */
+export function getActiveProfile(): ConnectionProfile | null {
+  const { connections, activeConnectionId } = useConnectionsStore.getState()
+  return findProfile(connections, activeConnectionId)
+}
+
+/** Non-reactive: a profile by id read from the current store state. */
+export function getProfile(id: string | null | undefined): ConnectionProfile | null {
+  return findProfile(useConnectionsStore.getState().connections, id)
+}

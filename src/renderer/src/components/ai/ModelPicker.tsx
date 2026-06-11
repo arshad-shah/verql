@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { AIProviderInfo, AIModelInfo } from '@shared/ai-types'
 import { Text } from '@/primitives/typography/Text'
 import { Card } from '@/primitives/surfaces/Card'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
+import { useClickOutside } from '@/hooks/useClickOutside'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface ModelPickerProps {
@@ -18,15 +19,7 @@ export function ModelPicker({ providers, models, activeModel, onSelect, onSelect
   const { t } = useTranslation()
   const ref = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onDismiss()
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onDismiss])
+  useClickOutside(ref, onDismiss)
 
   return (
     <div ref={ref} className="absolute bottom-full left-3 right-3 mb-1 z-50">

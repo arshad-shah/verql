@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
 import { ArrowUp, Square, ChevronDown } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { IconButton } from '@/primitives/forms/Button'
 import { Card } from '@/primitives/surfaces/Card'
 import { Text } from '@/primitives/typography/Text'
@@ -19,7 +19,7 @@ export function ChatInput() {
   const models = useAIStore(s => s.models)
   const providers = useAIStore(s => s.providers)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
-  const connections = useConnectionsStore(s => s.connections)
+  const connection = useActiveProfile()
   const composerSeed = useAIStore(s => s.composerSeed)
   const clearComposerSeed = useAIStore(s => s.clearComposerSeed)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -41,9 +41,6 @@ export function ChatInput() {
     const trimmed = input.trim()
     if (!trimmed || isStreaming) return
 
-    const connection = activeConnectionId
-      ? connections.find(c => c.id === activeConnectionId)
-      : undefined
     const connectionMeta = connection
       ? { type: connection.type, driverName: connection.type }
       : undefined
@@ -51,7 +48,7 @@ export function ChatInput() {
     sendMessage(trimmed, activeConnectionId ?? undefined, connectionMeta)
     setInput('')
     setShowAutocomplete(false)
-  }, [input, isStreaming, sendMessage, activeConnectionId, connections])
+  }, [input, isStreaming, sendMessage, activeConnectionId, connection])
 
   const handleChange = useCallback((value: string) => {
     setInput(value)
