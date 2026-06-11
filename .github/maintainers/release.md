@@ -84,6 +84,10 @@ script above sets the first two for you):
    Code Owners*. [`CODEOWNERS`](../CODEOWNERS) makes `@arshad-shah` the owner of
    everything, so no PR — including the auto-generated Version PR — merges
    without your review.
+   **Admins bypass:** the protection is set with `enforce_admins: false` (*Do
+   not allow bypassing the above settings* is **off**), so you can still merge
+   directly or push to `main` when you need to — the gate binds everyone else.
+   Leave `enforce_admins` off to keep that escape hatch.
    Configure at `…/settings/branches`.
 
 2. **Release-run gate (your approval to publish).** A GitHub **Environment**
