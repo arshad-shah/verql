@@ -1,15 +1,16 @@
 import { app } from 'electron'
+import { IPC_CHANNELS } from '@shared/ipc'
 import type { Handle } from './context'
 
 export function registerAppHandlers(handle: Handle): void {
-  handle('app:restart', async () => {
+  handle(IPC_CHANNELS.APP_RESTART, async () => {
     app.relaunch()
     app.exit(0)
   })
 
   // Powers the in-app About modal: app version + the runtime versions baked into
   // this build, so users can report exactly what they're running.
-  handle('app:about-info', async () => ({
+  handle(IPC_CHANNELS.APP_ABOUT_INFO, async () => ({
     name: app.getName(),
     version: app.getVersion(),
     electron: process.versions.electron,

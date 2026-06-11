@@ -1,4 +1,4 @@
-import { IPC_EVENTS } from '@shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { errorMessage } from '@shared/errors'
 import { broadcast } from './broadcast'
 import type { Handle } from './context'
@@ -6,7 +6,7 @@ import type { UpdaterRegistry } from '../updater'
 import type { UpdateProgress } from '../updater/types'
 
 export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistry): void {
-  handle('updater:status', async () => {
+  handle(IPC_CHANNELS.UPDATER_STATUS, async () => {
     const active = await registry.detectActive()
     if (!active) return { available: false as const }
     return {
@@ -17,7 +17,7 @@ export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistr
     }
   })
 
-  handle('updater:check', async () => {
+  handle(IPC_CHANNELS.UPDATER_CHECK, async () => {
     const active = await registry.detectActive()
     if (!active) {
       return { supported: false as const }
@@ -26,7 +26,7 @@ export function registerUpdaterHandlers(handle: Handle, registry: UpdaterRegistr
     return { supported: true as const, ...info }
   })
 
-  handle('updater:update', async () => {
+  handle(IPC_CHANNELS.UPDATER_UPDATE, async () => {
     const active = await registry.detectActive()
     if (!active) {
       return { started: false as const, reason: 'no-updater' as const }

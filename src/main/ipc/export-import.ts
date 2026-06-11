@@ -1,4 +1,5 @@
 import { dialog } from 'electron'
+import { IPC_CHANNELS } from '@shared/ipc'
 import fs from 'fs'
 import type { SchemaColumn } from '@shared/types'
 import type { ExportFormatInfo, ImportFormatInfo } from '@shared/export-import'
@@ -50,7 +51,7 @@ export function registerExportImportHandlers(
   const typeOf = (profileId: string): string =>
     ctx.configStore.getConnection(profileId)?.type ?? ''
 
-  handle('export:formats-list', async (profileId) => {
+  handle(IPC_CHANNELS.EXPORT_FORMATS_LIST, async (profileId) => {
     const seen = new Set<string>()
     const out: ExportFormatInfo[] = []
     for (const e of exporterRegistry.list(typeOf(profileId))) {
@@ -66,7 +67,7 @@ export function registerExportImportHandlers(
     return out
   })
 
-  handle('import:formats-list', async (profileId) => {
+  handle(IPC_CHANNELS.IMPORT_FORMATS_LIST, async (profileId) => {
     const seen = new Set<string>()
     const out: ImportFormatInfo[] = []
     for (const i of importerRegistry.list(typeOf(profileId))) {
@@ -82,7 +83,7 @@ export function registerExportImportHandlers(
     return out
   })
 
-  handle('export:table', async (profileId, tableName, format, options) => {
+  handle(IPC_CHANNELS.EXPORT_TABLE, async (profileId, tableName, format, options) => {
     const profile = ctx.configStore.getConnection(profileId)
     const connectionType = profile?.type ?? ''
     const exporter = exporterRegistry.resolve(format, connectionType)
@@ -107,7 +108,7 @@ export function registerExportImportHandlers(
     return { filePath }
   })
 
-  handle('export:query-result', async (rows, fields, format) => {
+  handle(IPC_CHANNELS.EXPORT_QUERY_RESULT, async (rows, fields, format) => {
     const exporter = exporterRegistry.resolve(format, '')
     if (!exporter) {
       throw new Error(`No exporter registered for format '${format}'`)
@@ -130,7 +131,7 @@ export function registerExportImportHandlers(
     return { filePath }
   })
 
-  handle('import:csv', async (profileId, tableName, columnMapping, onConflict) => {
+  handle(IPC_CHANNELS.IMPORT_CSV, async (profileId, tableName, columnMapping, onConflict) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (!adapter) throw new Error('Not connected')
     const profile = ctx.configStore.getConnection(profileId)
@@ -179,7 +180,7 @@ export function registerExportImportHandlers(
     }
   })
 
-  handle('import:sql', async (profileId) => {
+  handle(IPC_CHANNELS.IMPORT_SQL, async (profileId) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (!adapter) throw new Error('Not connected')
     const profile = ctx.configStore.getConnection(profileId)

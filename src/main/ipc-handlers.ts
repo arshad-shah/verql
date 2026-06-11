@@ -306,7 +306,7 @@ export function registerIpcHandlers(): void {
     broadcast(IPC_EVENTS.THEMES_CHANGED)
   })
 
-  handle('plugins:drag-drop', async (filePath) => {
+  handle(IPC_CHANNELS.PLUGINS_DRAG_DROP, async (filePath) => {
     const ext = filePath.split('.').pop() ?? ''
     const provider = dragDropRegistry.resolveByExtension(ext)
     if (!provider) return { handled: false }

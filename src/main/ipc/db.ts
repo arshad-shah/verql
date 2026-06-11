@@ -1,4 +1,5 @@
 import type { ConnectionProfile } from '@shared/types'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { errorMessage } from '@shared/errors'
 import type { DbAdapter } from '../db/adapter'
 import type { ActivityLog } from '../activity/log'
@@ -28,7 +29,7 @@ export function registerDbHandlers(
   // orphaning the losers (which never get disconnect()'d).
   const inFlightConnects = new Map<string, Promise<{ success: true } | { success: false; error: string }>>()
 
-  handle('db:connect', async (profileId: string) => {
+  handle(IPC_CHANNELS.DB_CONNECT, async (profileId: string) => {
     if (ctx.activeAdapters.has(profileId)) {
       connectionAccess.setActiveConnectionId(profileId)
       return { success: true }
@@ -79,14 +80,14 @@ export function registerDbHandlers(
   // (which AI tools and the MCP server read) would stay pinned to the previous
   // one and operate on the wrong database. The renderer pushes every active
   // change here so the two stay in sync.
-  handle('db:set-active-connection', async (profileId: string | null) => {
+  handle(IPC_CHANNELS.DB_SET_ACTIVE_CONNECTION, async (profileId: string | null) => {
     // Ignore stale ids for connections that aren't actually open; null (no
     // active connection) is always allowed.
     if (profileId !== null && !ctx.activeAdapters.has(profileId)) return
     connectionAccess.setActiveConnectionId(profileId)
   })
 
-  handle('db:disconnect', async (profileId: string) => {
+  handle(IPC_CHANNELS.DB_DISCONNECT, async (profileId: string) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter) {
       await adapter.disconnect()
@@ -109,7 +110,7 @@ export function registerDbHandlers(
     }
   })
 
-  handle('db:query', async (profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }) => {
+  handle(IPC_CHANNELS.DB_QUERY, async (profileId: string, sql: string, params?: unknown[], opts?: { sessionId?: string; timeoutMs?: number }) => {
     if (!activity) return requireAdapter(profileId).query(sql, params, opts)
     try {
       const result = await requireAdapter(profileId).query(sql, params, opts)
@@ -135,7 +136,7 @@ export function registerDbHandlers(
     return mergeIncomingProfile(profile, existing, secretKeys)
   }
 
-  handle('db:test-connection', async (profile: ConnectionProfile) => {
+  handle(IPC_CHANNELS.DB_TEST_CONNECTION, async (profile: ConnectionProfile) => {
     let adapter: DbAdapter | null = null
     try {
       adapter = createAdapter(resolveProfile(profile))
@@ -149,7 +150,7 @@ export function registerDbHandlers(
     }
   })
 
-  handle('db:connection-options', async (profile: ConnectionProfile, fields: string[]) => {
+  handle(IPC_CHANNELS.DB_CONNECTION_OPTIONS, async (profile: ConnectionProfile, fields: string[]) => {
     let adapter: DbAdapter | null = null
     try {
       adapter = createAdapter(resolveProfile(profile))
@@ -169,7 +170,7 @@ export function registerDbHandlers(
     }
   })
 
-  handle('db:get-tables', async (profileId, schema) =>
+  handle(IPC_CHANNELS.DB_GET_TABLES, async (profileId, schema) =>
     requireAdapter(profileId).getTables(schema)
   )
 
@@ -177,7 +178,7 @@ export function registerDbHandlers(
   // the same getTableData() export uses — so non-SQL drivers (Redis, Mongo) can
   // render a real grid. The renderer stays dialect-agnostic; the driver owns how
   // its data maps to rows + columns.
-  handle('db:get-table-data', async (profileId, table, schema) => {
+  handle(IPC_CHANNELS.DB_GET_TABLE_DATA, async (profileId, table, schema) => {
     const adapter = requireAdapter(profileId)
     const type = ctx.configStore.getConnection(profileId)?.type ?? ''
     const driver = ctx.driverRegistry.get(type)
@@ -187,88 +188,88 @@ export function registerDbHandlers(
     return driver.getTableData(adapter, table, schema)
   })
 
-  handle('db:get-columns', async (profileId, table, schema) =>
+  handle(IPC_CHANNELS.DB_GET_COLUMNS, async (profileId, table, schema) =>
     requireAdapter(profileId).getColumns(table, schema)
   )
 
-  handle('db:get-indexes', async (profileId, table, schema) =>
+  handle(IPC_CHANNELS.DB_GET_INDEXES, async (profileId, table, schema) =>
     requireAdapter(profileId).getIndexes(table, schema)
   )
 
-  handle('db:get-schemas', async (profileId) => requireAdapter(profileId).getSchemas())
+  handle(IPC_CHANNELS.DB_GET_SCHEMAS, async (profileId) => requireAdapter(profileId).getSchemas())
 
-  handle('db:get-databases', async (profileId) => requireAdapter(profileId).getDatabases())
+  handle(IPC_CHANNELS.DB_GET_DATABASES, async (profileId) => requireAdapter(profileId).getDatabases())
 
-  handle('db:get-row-count', async (profileId, table, schema) =>
+  handle(IPC_CHANNELS.DB_GET_ROW_COUNT, async (profileId, table, schema) =>
     requireAdapter(profileId).getRowCount(table, schema)
   )
 
-  handle('db:get-schema-objects', async (profileId, schema) => {
+  handle(IPC_CHANNELS.DB_GET_SCHEMA_OBJECTS, async (profileId, schema) => {
     const adapter = requireAdapter(profileId)
     return adapter.getSchemaObjects ? adapter.getSchemaObjects(schema) : []
   })
 
-  handle('db:get-table-names', async (profileId, schema) => {
+  handle(IPC_CHANNELS.DB_GET_TABLE_NAMES, async (profileId, schema) => {
     const tables = await requireAdapter(profileId).getTables(schema)
     return tables.map(t => t.name)
   })
 
-  handle('db:switch-database', async (profileId, database) => {
+  handle(IPC_CHANNELS.DB_SWITCH_DATABASE, async (profileId, database) => {
     if (!database) throw new Error('Database name is required')
     await requireAdapter(profileId).switchDatabase(database)
   })
 
-  handle('db:set-schema', async (profileId, schema) => {
+  handle(IPC_CHANNELS.DB_SET_SCHEMA, async (profileId, schema) => {
     const adapter = requireAdapter(profileId)
     if (adapter.setSchema) await adapter.setSchema(schema)
   })
 
-  handle('db:switch-warehouse', async (profileId, warehouse) => {
+  handle(IPC_CHANNELS.DB_SWITCH_WAREHOUSE, async (profileId, warehouse) => {
     const adapter = requireAdapter(profileId)
     if (adapter.switchWarehouse) await adapter.switchWarehouse(warehouse)
   })
 
-  handle('db:switch-role', async (profileId, role) => {
+  handle(IPC_CHANNELS.DB_SWITCH_ROLE, async (profileId, role) => {
     const adapter = requireAdapter(profileId)
     if (adapter.switchRole) await adapter.switchRole(role)
   })
 
-  handle('db:cancel-query', async (profileId) => {
+  handle(IPC_CHANNELS.DB_CANCEL_QUERY, async (profileId) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter?.cancelQuery) await adapter.cancelQuery()
   })
 
-  handle('db:session:open', async (profileId, sessionId, opts) => {
+  handle(IPC_CHANNELS.DB_SESSION_OPEN, async (profileId, sessionId, opts) => {
     const adapter = requireAdapter(profileId)
     if (adapter.openSession) await adapter.openSession(sessionId, opts)
   })
 
-  handle('db:session:close', async (profileId, sessionId) => {
+  handle(IPC_CHANNELS.DB_SESSION_CLOSE, async (profileId, sessionId) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter?.closeSession) await adapter.closeSession(sessionId)
   })
 
-  handle('db:session:set-autocommit', async (profileId, sessionId, enabled) => {
+  handle(IPC_CHANNELS.DB_SESSION_SET_AUTOCOMMIT, async (profileId, sessionId, enabled) => {
     const adapter = requireAdapter(profileId)
     if (adapter.setAutoCommit) await adapter.setAutoCommit(sessionId, enabled)
   })
 
-  handle('db:txn:begin', async (profileId, sessionId, opts) => {
+  handle(IPC_CHANNELS.DB_TXN_BEGIN, async (profileId, sessionId, opts) => {
     const adapter = requireAdapter(profileId)
     if (adapter.beginTransaction) await adapter.beginTransaction(sessionId, opts)
   })
 
-  handle('db:txn:commit', async (profileId, sessionId) => {
+  handle(IPC_CHANNELS.DB_TXN_COMMIT, async (profileId, sessionId) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter?.commit) await adapter.commit(sessionId)
   })
 
-  handle('db:txn:rollback', async (profileId, sessionId) => {
+  handle(IPC_CHANNELS.DB_TXN_ROLLBACK, async (profileId, sessionId) => {
     const adapter = ctx.activeAdapters.get(profileId)
     if (adapter?.rollback) await adapter.rollback(sessionId)
   })
 
-  handle('db:connection-capabilities', async (profileId) => {
+  handle(IPC_CHANNELS.DB_CONNECTION_CAPABILITIES, async (profileId) => {
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) return null
     const driver = ctx.driverRegistry.get(profile.type)
@@ -277,13 +278,13 @@ export function registerDbHandlers(
     return driver.getRuntimeCapabilities(adapter)
   })
 
-  handle('db:driver-capabilities', async (type: string) => {
+  handle(IPC_CHANNELS.DB_DRIVER_CAPABILITIES, async (type: string) => {
     const driver = ctx.driverRegistry.get(type)
     if (!driver) return null
     return serializeStaticCapabilities(driver)
   })
 
-  handle('db:parse-plan', async (profileId, result) => {
+  handle(IPC_CHANNELS.DB_PARSE_PLAN, async (profileId, result) => {
     // Plan parsing is dialect-specific and owned by the driver. The renderer
     // never parses EXPLAIN output itself. Returns [] when the driver has no
     // parser or the rows aren't a plan.
@@ -291,7 +292,7 @@ export function registerDbHandlers(
     return adapter?.parseQueryPlan?.(result) ?? []
   })
 
-  handle('db:sample-query', async (profileId, table, schema) => {
+  handle(IPC_CHANNELS.DB_SAMPLE_QUERY, async (profileId, table, schema) => {
     const profile = ctx.configStore.getConnection(profileId)
     if (!profile) throw new Error('Unknown connection')
     const driver = ctx.driverRegistry.get(profile.type)

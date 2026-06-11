@@ -1,4 +1,5 @@
 import type { IpcContext, Handle } from './context'
+import { IPC_CHANNELS } from '@shared/ipc'
 import { getSecretFieldKeys } from './secrets'
 
 /**
@@ -33,17 +34,17 @@ export function assertKeyringAccess(ctx: IpcContext, profileId: string, key: str
 }
 
 export function registerKeyringHandlers(ctx: IpcContext, handle: Handle): void {
-  handle('keyring:store', async (profileId: string, key: string, value: string) => {
+  handle(IPC_CHANNELS.KEYRING_STORE, async (profileId: string, key: string, value: string) => {
     assertKeyringAccess(ctx, profileId, key)
     await ctx.keyring.store(profileId, key, value)
   })
 
-  handle('keyring:retrieve', async (profileId: string, key: string) => {
+  handle(IPC_CHANNELS.KEYRING_RETRIEVE, async (profileId: string, key: string) => {
     assertKeyringAccess(ctx, profileId, key)
     return ctx.keyring.retrieve(profileId, key)
   })
 
-  handle('keyring:delete', async (profileId: string, key: string) => {
+  handle(IPC_CHANNELS.KEYRING_DELETE, async (profileId: string, key: string) => {
     assertKeyringAccess(ctx, profileId, key)
     await ctx.keyring.delete(profileId, key)
   })
