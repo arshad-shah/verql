@@ -6,6 +6,7 @@ export const command = {
     view: 'View',
     editor: 'Editor',
     schema: 'Schema',
+    help: 'Help',
   },
   newQueryTab: 'New Query Tab',
   showExplorer: 'Show Explorer',
@@ -18,6 +19,8 @@ export const command = {
   showInspector: 'View: Show Inspector',
   showNotifications: 'View: Show Notifications',
   openErDiagram: 'Open ER Diagram',
+  welcome: 'Help: Welcome',
+  whatsNew: "Help: What's New",
   /** "View: Show <panel title>" for plugin-contributed secondary panels. */
   viewShow: 'View: Show {title}',
 } as const

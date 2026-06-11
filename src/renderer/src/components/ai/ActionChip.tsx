@@ -4,18 +4,19 @@ import {
   ArrowUpRight, Settings, Plus, PanelLeft, SquarePlus, Network, AlertTriangle, type LucideIcon
 } from 'lucide-react'
 import { appActions } from '@/lib/app-actions/registry'
+import { APP_ACTION } from '@/lib/app-actions/ids'
 import { useToastStore } from '@/stores/toast'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 // Per-action icons (lucide only — no emoji). Unknown ids fall back to a generic
 // "jump to" arrow so any plugin-registered action still renders sensibly.
 const ICONS: Record<string, LucideIcon> = {
-  'open-settings': Settings,
-  'new-connection': Plus,
-  'open-explorer': PanelLeft,
-  'open-secondary-panel': PanelLeft,
-  'new-query-tab': SquarePlus,
-  'open-er-diagram': Network
+  [APP_ACTION.OPEN_SETTINGS]: Settings,
+  [APP_ACTION.NEW_CONNECTION]: Plus,
+  [APP_ACTION.OPEN_EXPLORER]: PanelLeft,
+  [APP_ACTION.OPEN_SECONDARY_PANEL]: PanelLeft,
+  [APP_ACTION.NEW_QUERY_TAB]: SquarePlus,
+  [APP_ACTION.OPEN_ER_DIAGRAM]: Network
 }
 
 interface Props {

@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { registerBuiltinAppActions } from '../../src/renderer/src/lib/app-actions/builtins'
 import { appActions } from '../../src/renderer/src/lib/app-actions/registry'
+import { APP_ACTION } from '../../src/renderer/src/lib/app-actions/ids'
 import { useUiStore } from '../../src/renderer/src/stores/ui'
 import { useTabsStore } from '../../src/renderer/src/stores/tabs'
 
@@ -18,7 +19,7 @@ beforeEach(() => {
 
 describe('open-settings app-action', () => {
   it('opens the Settings tab (not the sidebar panel), on the requested category', async () => {
-    await appActions.run('open-settings', { category: 'ai' })
+    await appActions.run(APP_ACTION.OPEN_SETTINGS, { category: 'ai' })
 
     const tabs = useTabsStore.getState()
     expect(tabs.tabs.some((t) => t.type === 'settings')).toBe(true)
@@ -29,7 +30,7 @@ describe('open-settings app-action', () => {
   })
 
   it('opens the Settings tab even without a category', async () => {
-    await appActions.run('open-settings', {})
+    await appActions.run(APP_ACTION.OPEN_SETTINGS, {})
     expect(useTabsStore.getState().activeTabId).toBe('settings')
     expect(useUiStore.getState().activePanel).toBe('explorer')
   })

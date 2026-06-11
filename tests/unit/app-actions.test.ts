@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { parseActionHref } from '../../src/renderer/src/lib/app-actions/parse'
 import { AppActionRegistry } from '../../src/renderer/src/lib/app-actions/registry'
 import { resolveConnection } from '../../src/renderer/src/lib/app-actions/resolve'
+import { APP_ACTION } from '../../src/renderer/src/lib/app-actions/ids'
 import type { AppAction } from '../../src/renderer/src/lib/app-actions/types'
 import type { ConnectionProfile } from '../../shared/types'
 
@@ -36,7 +37,7 @@ describe('AppActionRegistry', () => {
   let registry: AppActionRegistry
 
   const navAction: AppAction = {
-    id: 'open-settings', title: 'Open Settings', description: 'Open settings',
+    id: APP_ACTION.OPEN_SETTINGS, title: 'Open Settings', description: 'Open settings',
     kind: 'navigation', run: vi.fn()
   }
 
@@ -47,19 +48,19 @@ describe('AppActionRegistry', () => {
 
   it('registers and retrieves an action', () => {
     registry.register(navAction)
-    expect(registry.get('open-settings')).toBe(navAction)
+    expect(registry.get(APP_ACTION.OPEN_SETTINGS)).toBe(navAction)
     expect(registry.list()).toContain(navAction)
   })
 
   it('unregisters via the returned disposer', () => {
     const dispose = registry.register(navAction)
     dispose()
-    expect(registry.get('open-settings')).toBeUndefined()
+    expect(registry.get(APP_ACTION.OPEN_SETTINGS)).toBeUndefined()
   })
 
   it('runs an action with params', async () => {
     registry.register(navAction)
-    await registry.run('open-settings', { category: 'ai' })
+    await registry.run(APP_ACTION.OPEN_SETTINGS, { category: 'ai' })
     expect(navAction.run).toHaveBeenCalledWith({ category: 'ai' })
   })
 

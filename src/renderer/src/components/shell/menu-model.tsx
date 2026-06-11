@@ -3,8 +3,9 @@ import {
   Undo2, Redo2, Scissors, Copy, ClipboardPaste, TextSelect, Search,
   Command, Compass, Boxes, PanelLeft, PanelRight, PanelBottom, Maximize,
   RefreshCw, Wrench, Play, ListChecks, Save, Code2,
-  BookOpen, Puzzle, Bug, Info, type LucideIcon,
+  BookOpen, Puzzle, Bug, Info, Sparkles, PartyPopper, type LucideIcon,
 } from 'lucide-react'
+import { getLatestReleaseNote } from '@/lib/release-notes'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { KEYBINDING_ACTION, type KeybindingActionId } from '@shared/settings'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -155,9 +156,19 @@ export function useMenus(): MenuDef[] {
     ],
   }
 
+  const latestRelease = getLatestReleaseNote()
   const help: MenuDef = {
     label: t('menu.help'),
     items: [
+      { kind: 'item', label: t('menu.welcome'), icon: Sparkles, run: () => useTabsStore.getState().openWelcome() },
+      {
+        kind: 'item',
+        label: t('menu.whatsNew'),
+        icon: PartyPopper,
+        enabled: () => !!latestRelease,
+        run: () => { if (latestRelease) useTabsStore.getState().openReleaseNotes(latestRelease.version) },
+      },
+      { kind: 'separator' },
       { kind: 'item', label: t('menu.userGuideShort'), icon: BookOpen, run: () => openExternal(GUIDE_URL) },
       { kind: 'item', label: t('menu.buildPlugin'), icon: Puzzle, run: () => openExternal(SDK_URL) },
       { kind: 'item', label: t('menu.reportIssue'), icon: Bug, run: () => openExternal(ISSUES_URL) },

@@ -69,6 +69,10 @@ correct category.
   redirects them to the OS keyring and reads are redacted.
 - **Language** (`general.language`) — selects the i18n locale (see
   [i18n.md](./i18n.md)).
+- **Onboarding** (`onboarding.*`) — `lastSeenVersion`, `completedSteps`,
+  `hideOnStartup`. App-managed state (no Settings UI category): written by the
+  boot logic and the Welcome tab to drive the first-run Welcome / post-update
+  "What's New" tabs. See [onboarding.md](./onboarding.md).
 
 ## Adding a setting
 

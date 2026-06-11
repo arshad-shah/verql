@@ -170,4 +170,22 @@ export interface SettingsTab {
   title: string
 }
 
-export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab | SettingsTab
+/** The first-run "Get Started" walkthrough (VS Code-style Welcome). A singleton
+ *  tab opened on a fresh install and re-openable from Help → Welcome. */
+export interface WelcomeTab {
+  id: string
+  type: 'welcome'
+  title: string
+}
+
+/** A version's "What's New" release notes, rendered from the curated registry.
+ *  One tab per version (id keyed by version); the title is the version itself
+ *  (e.g. "v1.2.0"). Opened automatically after an update and from Help. */
+export interface ReleaseNotesTab {
+  id: string
+  type: 'release-notes'
+  title: string
+  version: string
+}
+
+export type Tab = QueryTab | TableTab | ErDiagramTab | ConnectionFormTab | PluginDetailTab | InstallPluginTab | SettingsTab | WelcomeTab | ReleaseNotesTab

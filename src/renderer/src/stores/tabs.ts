@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Tab, QueryTab, QueryTabTxnState, QueryResult, PlanNode, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab } from '@shared/types'
+import type { Tab, QueryTab, QueryTabTxnState, QueryResult, PlanNode, ConnectionFormTab, PluginDetailTab, InstallPluginTab, SettingsTab, WelcomeTab, ReleaseNotesTab } from '@shared/types'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useSelectionStore } from './selection'
 import { useUiStore } from './ui'
@@ -101,6 +101,11 @@ interface TabsState {
   openInstallPlugin: () => string
   /** Open the settings tab, optionally focusing a specific category. */
   openSettings: (category?: SettingsCategoryId) => string
+  /** Open (or focus) the first-run Welcome / Get Started walkthrough tab. */
+  openWelcome: () => string
+  /** Open (or focus) the "What's New" tab for a version. One tab per version;
+   *  the tab title is the version itself (e.g. "v1.2.0"). */
+  openReleaseNotes: (version: string) => string
   reorderTabs: (fromIndex: number, toIndex: number) => void
   duplicateTab: (id: string) => string | null
   reopenTab: () => void
@@ -363,6 +368,35 @@ export const useTabsStore = create<TabsState>((set, get) => ({
       return id
     }
     const tab: SettingsTab = { id, type: 'settings', title: t('shell.tabs.settings') }
+    set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
+    return id
+  },
+
+  openWelcome: () => {
+    const id = 'welcome'
+    const existing = get().tabs.find((t) => t.id === id)
+    if (existing) {
+      set({ activeTabId: id })
+      return id
+    }
+    const tab: WelcomeTab = { id, type: 'welcome', title: t('shell.tabs.welcome') }
+    set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
+    return id
+  },
+
+  openReleaseNotes: (version) => {
+    const id = `release-notes-${version}`
+    const existing = get().tabs.find((t) => t.id === id)
+    if (existing) {
+      set({ activeTabId: id })
+      return id
+    }
+    const tab: ReleaseNotesTab = {
+      id,
+      type: 'release-notes',
+      title: t('shell.tabs.releaseNotesTitle', { version }),
+      version,
+    }
     set((s) => ({ tabs: [...s.tabs, tab], activeTabId: id }))
     return id
   },

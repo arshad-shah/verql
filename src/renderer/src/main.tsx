@@ -9,6 +9,8 @@ import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import { useAIStore } from '@/stores/ai'
 import { useQueryHistoryStore } from '@/stores/query-history'
 import { initTabPersistence, restoreOpenTabs } from '@/stores/tab-persistence'
+import { useTabsStore } from '@/stores/tabs'
+import { decideStartupSurface } from '@/lib/onboarding'
 import { installRendererDiagnostics } from '@/lib/store-diagnostics'
 import { hydrateSavedQueries } from '@/components/saved-queries/SavedQueriesPanel'
 import './styles/globals.css'
@@ -67,6 +69,25 @@ function AppLoader() {
       void useAIStore.getState().hydrate()
       void hydrateSavedQueries()
       void useQueryHistoryStore.getState().hydrate()
+      // First-run Welcome / post-update "What's New". Runs after tab restore so
+      // the onboarding surface opens as the active tab, and records the running
+      // version so each surface opens at most once per transition. Non-blocking.
+      void (async () => {
+        try {
+          const { version } = await window.electronAPI.invoke(IPC_CHANNELS.APP_ABOUT_INFO)
+          const onboarding = useSettingsStore.getState().settings.onboarding
+          const surface = decideStartupSurface({
+            lastSeenVersion: onboarding.lastSeenVersion,
+            currentVersion: version,
+            hideWelcomeOnStartup: onboarding.hideOnStartup,
+          })
+          if (surface?.kind === 'welcome') useTabsStore.getState().openWelcome()
+          else if (surface?.kind === 'release-notes') useTabsStore.getState().openReleaseNotes(surface.version)
+          if (onboarding.lastSeenVersion !== version) {
+            void useSettingsStore.getState().set('onboarding.lastSeenVersion', version)
+          }
+        } catch { /* onboarding is best-effort; never block boot */ }
+      })()
     }
     init()
   }, [hydrate])

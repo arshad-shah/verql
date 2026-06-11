@@ -34,6 +34,8 @@ export const menu = {
   save: 'Save',
   formatSql: 'Format SQL',
   // Help
+  welcome: 'Welcome',
+  whatsNew: "What's New",
   userGuide: '{appName} User Guide',
   userGuideShort: 'User Guide',
   buildPlugin: 'Build a Plugin (SDK)',

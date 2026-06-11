@@ -9,6 +9,7 @@ import { editorRegistry } from '@/stores/editor'
 import { tabActions } from '@/stores/tab-actions'
 import { pickDefaultSchema } from '@/lib/pick-default-schema'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
+import { getLatestReleaseNote } from '@/lib/release-notes'
 import { Input, ScrollArea, Text, KbdGroup, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
 import { useTranslation } from '@/i18n/I18nProvider'
@@ -120,7 +121,17 @@ export function CommandPalette({ open, onClose }: Props) {
       { id: 'toggle-bottom-dock', title: t('command.toggleBottomDock'), category: t('command.category.view'), keybinding: 'Cmd+J', action: toggleBottom },
       { id: 'show-inspector', title: t('command.showInspector'), category: t('command.category.view'), action: () => setSecondaryActive(SECONDARY_PANEL.INSPECTOR) },
       { id: 'show-notifications', title: t('command.showNotifications'), category: t('command.category.view'), action: () => setSecondaryActive(SECONDARY_PANEL.NOTIFICATIONS) },
+      { id: 'help-welcome', title: t('command.welcome'), category: t('command.category.help'), action: () => useTabsStore.getState().openWelcome() },
     )
+    const latestRelease = getLatestReleaseNote()
+    if (latestRelease) {
+      cmds.push({
+        id: 'help-whats-new',
+        title: t('command.whatsNew'),
+        category: t('command.category.help'),
+        action: () => useTabsStore.getState().openReleaseNotes(latestRelease.version),
+      })
+    }
     for (const c of panelContribs) {
       if (c.meta.location === 'secondary') {
         cmds.push({
