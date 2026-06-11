@@ -13,7 +13,10 @@ export interface AppActionParam {
 }
 
 export interface AppAction {
-  /** Stable id used in `verql://action/<id>` links and tool names. */
+  /** Stable id used in `verql://action/<id>` links and tool names. Built-in
+   *  actions MUST use a constant from `APP_ACTION` (./ids) rather than a raw
+   *  string literal; plugin actions use composite `pluginId:commandId` ids,
+   *  which is why this stays a permissive `string`. */
   id: string
   /** Human label shown on chips and in the catalog. */
   title: string

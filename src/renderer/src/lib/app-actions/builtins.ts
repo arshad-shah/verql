@@ -14,6 +14,7 @@ import { IPC_CHANNELS } from '@shared/ipc'
 import { t } from '@shared/i18n'
 import { resolveConnection } from './resolve'
 import { appActions } from './registry'
+import { APP_ACTION } from './ids'
 import type { AppAction } from './types'
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined)
@@ -48,7 +49,7 @@ async function resolveSchema(
 const BUILTINS: AppAction[] = [
   // ── Navigation & panels ─────────────────────────────────────────────────
   {
-    id: 'open-settings',
+    id: APP_ACTION.OPEN_SETTINGS,
     title: t('actions.openSettings.title'),
     description: t('actions.openSettings.description', {
       categories: Object.values(SETTINGS_CATEGORY).join(', '),
@@ -65,28 +66,28 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'open-connections',
+    id: APP_ACTION.OPEN_CONNECTIONS,
     title: t('actions.openConnections.title'),
     description: t('actions.openConnections.description'),
     kind: 'navigation',
     run: () => useUiStore.getState().setSecondaryActivePanel(SECONDARY_PANEL.CONNECTIONS)
   },
   {
-    id: 'new-connection',
+    id: APP_ACTION.NEW_CONNECTION,
     title: t('actions.newConnection.title'),
     description: t('actions.newConnection.description'),
     kind: 'navigation',
-    run: () => useTabsStore.getState().openConnectionForm()
+    run: () => { useTabsStore.getState().openConnectionForm() }
   },
   {
-    id: 'open-explorer',
+    id: APP_ACTION.OPEN_EXPLORER,
     title: t('actions.openExplorer.title'),
     description: t('actions.openExplorer.description'),
     kind: 'navigation',
     run: () => useUiStore.getState().setActivePanel(ACTIVITY_PANEL.EXPLORER)
   },
   {
-    id: 'open-secondary-panel',
+    id: APP_ACTION.OPEN_SECONDARY_PANEL,
     title: t('actions.openSecondaryPanel.title'),
     description: t('actions.openSecondaryPanel.description'),
     kind: 'navigation',
@@ -97,7 +98,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'open-notifications',
+    id: APP_ACTION.OPEN_NOTIFICATIONS,
     title: t('actions.openNotifications.title'),
     description: t('actions.openNotifications.description'),
     kind: 'navigation',
@@ -111,7 +112,7 @@ const BUILTINS: AppAction[] = [
 
   // ── Query tabs & schema authoring ───────────────────────────────────────
   {
-    id: 'new-query-tab',
+    id: APP_ACTION.NEW_QUERY_TAB,
     title: t('actions.newQueryTab.title'),
     description: t('actions.newQueryTab.description'),
     kind: 'navigation',
@@ -125,7 +126,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'open-saved-query',
+    id: APP_ACTION.OPEN_SAVED_QUERY,
     title: t('actions.openSavedQuery.title'),
     description: t('actions.openSavedQuery.description'),
     kind: 'navigation',
@@ -139,7 +140,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'format-editor',
+    id: APP_ACTION.FORMAT_EDITOR,
     title: t('actions.formatEditor.title'),
     description: t('actions.formatEditor.description'),
     kind: 'navigation',
@@ -164,7 +165,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'insert-into-editor',
+    id: APP_ACTION.INSERT_INTO_EDITOR,
     title: t('actions.insertIntoEditor.title'),
     description: t('actions.insertIntoEditor.description'),
     kind: 'navigation',
@@ -187,7 +188,7 @@ const BUILTINS: AppAction[] = [
 
   // ── Connection lifecycle ────────────────────────────────────────────────
   {
-    id: 'connect-database',
+    id: APP_ACTION.CONNECT_DATABASE,
     title: t('actions.connectDatabase.title'),
     description: t('actions.connectDatabase.description'),
     kind: 'navigation',
@@ -200,7 +201,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'disconnect-database',
+    id: APP_ACTION.DISCONNECT_DATABASE,
     title: t('actions.disconnectDatabase.title'),
     description: t('actions.disconnectDatabase.description'),
     kind: 'navigation',
@@ -216,7 +217,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'switch-connection',
+    id: APP_ACTION.SWITCH_CONNECTION,
     title: t('actions.switchConnection.title'),
     description: t('actions.switchConnection.description'),
     kind: 'navigation',
@@ -236,7 +237,7 @@ const BUILTINS: AppAction[] = [
 
   // ── Result actions ──────────────────────────────────────────────────────
   {
-    id: 'export-results',
+    id: APP_ACTION.EXPORT_RESULTS,
     title: t('actions.exportResults.title'),
     description: t('actions.exportResults.description'),
     kind: 'navigation',
@@ -251,7 +252,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'open-chart',
+    id: APP_ACTION.OPEN_CHART,
     title: t('actions.openChart.title'),
     description: t('actions.openChart.description'),
     kind: 'navigation',
@@ -270,7 +271,7 @@ const BUILTINS: AppAction[] = [
 
   // ── Schema navigation ───────────────────────────────────────────────────
   {
-    id: 'focus-table',
+    id: APP_ACTION.FOCUS_TABLE,
     title: t('actions.focusTable.title'),
     description: t('actions.focusTable.description'),
     kind: 'navigation',
@@ -301,7 +302,7 @@ const BUILTINS: AppAction[] = [
     }
   },
   {
-    id: 'open-er-diagram',
+    id: APP_ACTION.OPEN_ER_DIAGRAM,
     title: t('actions.openErDiagram.title'),
     description: t('actions.openErDiagram.description'),
     kind: 'navigation',
@@ -323,7 +324,7 @@ const BUILTINS: AppAction[] = [
 
   // ── Plugins ─────────────────────────────────────────────────────────────
   {
-    id: 'open-install-plugin',
+    id: APP_ACTION.OPEN_INSTALL_PLUGIN,
     title: t('actions.openInstallPlugin.title'),
     description: t('actions.openInstallPlugin.description'),
     kind: 'navigation',
@@ -332,14 +333,14 @@ const BUILTINS: AppAction[] = [
 
   // ── Onboarding & release notes ──────────────────────────────────────────
   {
-    id: 'open-welcome',
+    id: APP_ACTION.OPEN_WELCOME,
     title: t('actions.openWelcome.title'),
     description: t('actions.openWelcome.description'),
     kind: 'navigation',
     run: () => { useTabsStore.getState().openWelcome() }
   },
   {
-    id: 'open-release-notes',
+    id: APP_ACTION.OPEN_RELEASE_NOTES,
     title: t('actions.openReleaseNotes.title'),
     description: t('actions.openReleaseNotes.description'),
     kind: 'navigation',
