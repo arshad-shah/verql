@@ -3,6 +3,7 @@ import { useConnectionsStore } from '@/stores/connections'
 import { Search, Plus, Check } from 'lucide-react'
 import { Button, Input, Text, Box, Flex, ScrollArea } from '@/primitives'
 import { cn } from '@/primitives/utils/cn'
+import { useClickOutside } from '@/hooks/useClickOutside'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 const DB_ABBREVIATIONS: Record<string, string> = {
@@ -51,21 +52,7 @@ export function ConnectionSwitcher({ isOpen, onClose, onNewConnection }: Connect
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
-  useEffect(() => {
-    if (!isOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    const timer = setTimeout(() => {
-      window.addEventListener('mousedown', handleClick)
-    }, 0)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('mousedown', handleClick)
-    }
-  }, [isOpen, onClose])
+  useClickOutside(panelRef, onClose, { enabled: isOpen, deferAttach: true })
 
   if (!isOpen) return null
 

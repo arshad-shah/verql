@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Upload, X } from 'lucide-react'
 import { Modal, Button, Input, Text, Flex, Spinner, Stack, Box } from '@/primitives'
 import { IPC_CHANNELS } from '@shared/ipc'
+import type { ImportFormatInfo } from '@shared/export-import'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 interface Props {
@@ -9,14 +10,33 @@ interface Props {
   onClose: () => void
 }
 
-type ImportType = 'csv' | 'sql'
-
 export function ImportModal({ connectionId, onClose }: Props) {
   const { t } = useTranslation()
-  const [importType, setImportType] = useState<ImportType>('sql')
+  // Formats are driver-resolved (a Mongo connection won't offer SQL-script
+  // import), fetched from the importer registry rather than hardcoded.
+  const [formats, setFormats] = useState<ImportFormatInfo[]>([])
+  const [format, setFormat] = useState<string | null>(null)
   const [tableName, setTableName] = useState('')
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<{ text: string; isError: boolean } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    window.electronAPI
+      .invoke(IPC_CHANNELS.IMPORT_FORMATS_LIST, connectionId)
+      .then((list) => {
+        if (!active) return
+        setFormats(list)
+        setFormat((cur) => cur ?? list[0]?.format ?? null)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [connectionId])
+
+  const selected = formats.find((f) => f.format === format)
+  // Driver-executed importers (SQL scripts) run their own statements and need no
+  // target object; data importers (CSV) parse a file into a named object.
+  const isDriverExecuted = selected?.driverExecutes ?? false
 
   const handleImportSql = async () => {
     setImporting(true)
@@ -35,13 +55,12 @@ export function ImportModal({ connectionId, onClose }: Props) {
     }
   }
 
-  const handleImportCsv = async () => {
+  const handleImportData = async () => {
     if (!tableName.trim()) return
     setImporting(true)
     try {
-      // Simple 1:1 column mapping — CSV headers match DB columns
+      // 1:1 column mapping — the backend matches file headers to columns.
       const mapping: Record<string, string> = {}
-      // We'll let the backend figure out the mapping from CSV headers
       const res = await window.electronAPI.invoke(IPC_CHANNELS.IMPORT_CSV, connectionId, tableName, mapping, 'skip')
       if ('cancelled' in res) { setImporting(false); return }
       const msg =
@@ -68,25 +87,25 @@ export function ImportModal({ connectionId, onClose }: Props) {
         <Box>
           <Text size="xs" color="muted" as="p" className="mb-2">{t('shell.importModal.importType')}</Text>
           <Flex direction="row" gap="sm">
-            {(['sql', 'csv'] as ImportType[]).map(item => (
+            {formats.map(f => (
               <Button
-                key={item}
-                variant={importType === item ? 'outline' : 'ghost'}
+                key={f.format}
+                variant={format === f.format ? 'outline' : 'ghost'}
                 size="sm"
-                onClick={() => setImportType(item)}
-                className={`flex-1 ${importType === item ? 'border-accent text-accent bg-accent/10' : ''}`}
+                onClick={() => setFormat(f.format)}
+                className={`flex-1 ${format === f.format ? 'border-accent text-accent bg-accent/10' : ''}`}
               >
-                {item.toUpperCase()}
+                {f.displayName}
               </Button>
             ))}
           </Flex>
         </Box>
 
-        {importType === 'sql' && (
+        {isDriverExecuted && (
           <Text size="xs" color="secondary" as="p">{t('shell.importModal.sqlHint')}</Text>
         )}
 
-        {importType === 'csv' && (
+        {selected && !isDriverExecuted && (
           <Box>
             <Text size="xs" color="muted" as="p" className="mb-1">{t('shell.importModal.targetTable')}</Text>
             <Input
@@ -109,8 +128,8 @@ export function ImportModal({ connectionId, onClose }: Props) {
         <Button
           variant="solid"
           size="sm"
-          onClick={importType === 'sql' ? handleImportSql : handleImportCsv}
-          disabled={importing || (importType === 'csv' && !tableName.trim())}
+          onClick={isDriverExecuted ? handleImportSql : handleImportData}
+          disabled={importing || !selected || (!isDriverExecuted && !tableName.trim())}
           className="flex items-center gap-1.5"
         >
           {importing ? <Spinner size="xs" /> : <Upload size={14} />}

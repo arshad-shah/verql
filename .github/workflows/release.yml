@@ -1,20 +1,29 @@
 name: Release
 
-# Triggered by pushing a `v*` tag to the repo. The tag MUST be created
-# from `main` and signed by a maintainer (see SETTINGS.md → tag protection).
-# Forks that push tags will hit the repository guard and the workflow
-# will short-circuit before doing any work.
+# Builds + publishes a release. Normally invoked as a reusable workflow by
+# release-version.yml right after the "Version Packages" PR merges and the
+# `vX.Y.Z` tag is created — no PAT, no cross-workflow tag trigger. A manual
+# `v*.*.*` tag push still works as an escape hatch. Either way the `publish`
+# job is gated behind the `release` environment's required reviewer, and forks
+# hit the repository guard and short-circuit immediately.
 
 on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag to build/publish, e.g. v1.3.0'
+        required: true
+        type: string
 
 permissions:
   contents: read    # tightened per-job below
 
 concurrency:
-  group: release-${{ github.ref }}
+  # `inputs.tag` when called by release-version.yml; the tag ref on a manual push.
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -51,6 +60,10 @@ jobs:
             artifact_glob: dist/Verql*Setup*.exe
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          # Build exactly the tagged commit, whether called with `tag` or via a
+          # manual tag push.
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
@@ -184,11 +197,23 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    # Manual-approval lock: this job pauses for a required reviewer before it
+    # runs (Settings → Environments → `release` → required reviewers = the
+    # maintainer). Same pattern as publish-sdk.yml's `npm-publish`. Only an
+    # approved run can write the GitHub release — and it's created as a draft,
+    # so the maintainer still clicks Publish.
+    environment: release
+    # The release tag, from either trigger: the `tag` input (reusable-workflow
+    # call by release-version.yml) or the pushed tag ref (manual escape hatch).
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     permissions:
       contents: write     # only this job can write to the release
       id-token: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
@@ -205,12 +230,12 @@ jobs:
         with:
           path: .
           format: cyclonedx-json
-          output-file: release/verql-${{ github.ref_name }}-sbom.cdx.json
+          output-file: release/verql-${{ env.RELEASE_TAG }}-sbom.cdx.json
 
       - name: Read release notes from CHANGELOG
         id: notes
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           if [ -f CHANGELOG.md ]; then
             awk -v v="$version" '
               $0 ~ "^## " v "([^0-9]|$)" { p=1; next }
@@ -219,16 +244,16 @@ jobs:
             ' CHANGELOG.md > release-notes.md
           fi
           if [ ! -s release-notes.md ]; then
-            echo "Release ${GITHUB_REF_NAME}." > release-notes.md
+            echo "Release ${RELEASE_TAG}." > release-notes.md
           fi
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
         with:
-          name: ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: ${{ env.RELEASE_TAG }}
+          tag_name: ${{ env.RELEASE_TAG }}
           body_path: release-notes.md
           draft: true            # maintainer reviews + publishes manually
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           files: release/*
           fail_on_unmatched_files: false

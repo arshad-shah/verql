@@ -54,12 +54,30 @@ dropped if it can't serialise), and `traceId` (correlates related entries, e.g.
 an IPC call and the query it triggered).
 
 `createLogger(sink, scope)` returns a `Logger` with `debug` / `info` / `warn` /
-`error(message, detail?)` and a `child(scope)` for narrower scopes
-(`app` → `app:plugins`). Each call:
+`error(message, detail?)`, a `child(scope)` for narrower scopes
+(`app` → `app:plugins`), and `mark(label)` for one-line operation timing. Each
+log call:
 
 1. mirrors to the matching `console` method (terminal / devtools unchanged), and
 2. records a `log` entry — `title` = message, `source` = scope, `detail` = the
    serialized detail (an `Error` becomes its stack; an object becomes pretty JSON).
+
+An object detail is **secret-redacted** before serialisation: any property whose
+key looks like a credential (`password`, `token`, `*key`, `secret`,
+`authorization`, `credential`) is replaced with `[redacted]`, recursively — so a
+call site that logs a whole `ConnectionProfile` can't leak secrets to the console
+or the persisted stream. Non-secret fields and free-text strings are untouched.
+
+`mark(label)` returns an `end(extra?)` that records a `log` entry carrying
+`durationMs` (and returns that number), so a timed operation — e.g. plugin boot —
+shows up in the stream like any other recorder. The engine underneath is
+[`@arshad-shah/log-kit`](https://www.npmjs.com/package/@arshad-shah/log-kit),
+which owns the record pipeline (level gating, child-scope nesting, perf markers)
+and fans each record out to two app-supplied transports — a **console** transport
+that preserves the `[scope] message` format + level→method mapping, and an
+**activity** transport that records into the `sink`. Transport fan-out is
+failure-isolated, so a throwing sink can never break console output (or vice
+versa).
 
 The host provides it as the `logger` service so plugins can log into the same
 stream, and wires a few glue call-sites (plugin boot, MCP auto-start, drag-drop)

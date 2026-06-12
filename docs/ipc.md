@@ -171,7 +171,7 @@ and `IpcEventMap` derived from the two.
 |-------|-------|--------------------------------|
 | Single-source key coverage | `IPC_CHANNELS` / `IPC_EVENTS` use `satisfies Record<keyof IpcChannelShapes, string>` | Constant without a shape (or shape without a constant) → build fail |
 | Compile-time map coverage | `tests/unit/ipc-channels-coverage.test.ts` re-asserts the shape↔constant key sets match | Drift between the two halves → build fail |
-| Runtime call-site audit | Same test scans source for string-literal `invoke`/`on` calls | Hand-rolled string literal → test fail |
+| Call-site single-sourcing | `tests/unit/audit/ipc-channels-single-sourced.test.ts` scans **all** processes for a raw `'domain:action'` literal passed to `invoke`/`on`/`send`/`handle`/`h`/`broadcast`/`emit` | Hand-rolled wire string at any call site (renderer **or** main `handle`/`broadcast`) → test fail. Always pass `IPC_CHANNELS.X` / `IPC_EVENTS.X`, never the literal |
 | Renderer typing | `window.electronAPI.invoke<K>()` | Wrong args / wrong return → build fail |
 | Handler typing | `handle: Handle` in `ipc/context.ts` | Wrong args / wrong return → build fail |
 

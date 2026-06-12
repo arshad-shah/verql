@@ -112,6 +112,31 @@ describe('Plugin-driven export/import architecture', () => {
     expect(exporterRegistry.resolve('sql', 'redis')).toBeUndefined()
   })
 
+  it('exposes supportsSchema and a driver-filtered export format list', () => {
+    // SQL exporters declare schema support; CSV/JSON don't — this drives the
+    // modal's "include schema" toggle instead of a hardcoded format === 'sql'.
+    expect(exporterRegistry.resolve('sql', 'postgresql')!.supportsSchema).toBe(true)
+    expect(exporterRegistry.resolve('csv', 'postgresql')!.supportsSchema).toBeFalsy()
+
+    // What EXPORT_FORMATS_LIST surfaces: SQL for a relational connection, never
+    // for Mongo (which still gets the format-neutral CSV/JSON).
+    const pgFormats = exporterRegistry.list('postgresql').map(e => e.format)
+    expect(pgFormats).toContain('sql')
+    expect(pgFormats).toEqual(expect.arrayContaining(['csv', 'json']))
+
+    const mongoFormats = exporterRegistry.list('mongodb').map(e => e.format)
+    expect(mongoFormats).not.toContain('sql')
+    expect(mongoFormats).toContain('csv')
+  })
+
+  it('flags driver-executed importers and filters the import list by driver', () => {
+    const pgImports = importerRegistry.list('postgresql')
+    expect(pgImports.find(i => i.format === 'sql')?.driverExecutes).toBe(true)
+    expect(pgImports.find(i => i.format === 'csv')?.driverExecutes).toBeFalsy()
+
+    expect(importerRegistry.list('mongodb').map(i => i.format)).not.toContain('sql')
+  })
+
   it('Postgres SQL exporter produces correctly-quoted DDL', () => {
     const exp = exporterRegistry.resolve('sql', 'postgresql')!
     const out = exp.execute(

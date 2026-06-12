@@ -3,7 +3,7 @@ import { Search, Play, Trash2, History, CheckCircle2, XCircle } from 'lucide-rea
 import type { QueryHistoryEntry } from '@shared/appdata'
 import { useQueryHistoryStore } from '@/stores/query-history'
 import { useTabsStore } from '@/stores/tabs'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, getProfile } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import {
   Stack, ScrollArea, Text, EmptyState, IconButton, Box, Flex, Input, Tooltip,
@@ -33,7 +33,7 @@ function openHistoryEntry(entry: QueryHistoryEntry): void {
     (entry.connectionId && connections.some((c) => c.id === entry.connectionId)
       ? entry.connectionId
       : activeConnectionId) ?? null
-  const targetProfile = connections.find((c) => c.id === targetId) ?? null
+  const targetProfile = getProfile(targetId)
   const tabId = useTabsStore.getState().addQueryTab(targetId, null, {
     autoCommit: initialAutoCommit(targetProfile),
   })

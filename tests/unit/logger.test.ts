@@ -51,10 +51,47 @@ describe('createLogger', () => {
     expect(log.list()[0].detail).toBe(JSON.stringify({ port: 7337 }, null, 2))
   })
 
+  it('redacts secret-looking keys in an object detail', () => {
+    const log = new ActivityLog()
+    const logger = createLogger(log, 'app')
+    logger.info('connect', {
+      host: 'db.example.com',
+      password: 'hunter2',
+      apiKey: 'sk-123',
+      nested: { authToken: 'abc', token: 'xyz' },
+      port: 5432,
+    })
+    const detail = log.list()[0].detail ?? ''
+    expect(detail).not.toContain('hunter2')
+    expect(detail).not.toContain('sk-123')
+    expect(detail).not.toContain('xyz')
+    expect(detail).toContain('[redacted]')
+    // Non-secret fields are preserved.
+    expect(detail).toContain('db.example.com')
+    expect(detail).toContain('5432')
+  })
+
   it('child() prefixes the scope', () => {
     const log = new ActivityLog()
     const logger = createLogger(log, 'app')
     logger.child('plugins').error('Boot failed')
     expect(log.list()[0].source).toBe('app:plugins')
+  })
+
+  it('mark() records a log entry carrying the measured durationMs', () => {
+    const log = new ActivityLog()
+    const logger = createLogger(log, 'app')
+    const end = logger.child('plugins').mark('boot')
+    const ms = end({ plugins: 3 })
+
+    const entry = log.list()[0]
+    expect(entry.kind).toBe('log')
+    expect(entry.title).toBe('boot')
+    expect(entry.source).toBe('app:plugins')
+    expect(typeof entry.durationMs).toBe('number')
+    // end() returns the same duration it recorded, so callers can reuse it.
+    expect(entry.durationMs).toBe(ms)
+    // Extra context that isn't `detail`/`durationMs` is serialized into detail.
+    expect(entry.detail).toBe(JSON.stringify({ plugins: 3 }, null, 2))
   })
 })

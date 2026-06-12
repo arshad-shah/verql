@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { ConnectionSwitcher } from '../ConnectionSwitcher'
 import { StatusBarSegment } from './StatusBarSegment'
 import { cn } from '@/primitives/utils/cn'
@@ -25,8 +25,8 @@ export function ConnectionSegment({ onNewConnection }: Props) {
     window.addEventListener('statusbar:open-switcher', handler)
     return () => window.removeEventListener('statusbar:open-switcher', handler)
   }, [])
-  const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
-  const active = connections.find((c) => c.id === activeConnectionId)
+  const { activeConnectionId, connectedIds } = useConnectionsStore()
+  const active = useActiveProfile()
   const isConnected = activeConnectionId ? connectedIds.has(activeConnectionId) : false
   const driver = active?.type
     ? (DB_ABBREVIATIONS[active.type] ?? active.type.slice(0, 2).toUpperCase())

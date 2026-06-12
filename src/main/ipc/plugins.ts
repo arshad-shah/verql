@@ -3,7 +3,7 @@ import path from 'path'
 import { dialog } from 'electron'
 import { broadcast } from './broadcast'
 import { PluginBootCoordinator } from '../plugins/plugin-host'
-import { IPC_EVENTS } from '@shared/ipc'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 import { PERMISSION_INFO, type PluginPermission } from '../plugins/sdk/permissions'
 import { UIRegistryImpl } from '../plugins/sdk/ui-registry'
 import { CompletionRegistryImpl } from '../plugins/sdk/completion-registry'
@@ -34,7 +34,7 @@ export function registerPluginHandlers(
 ): void {
   const { uiRegistry, completionRegistry, commandRegistry, pluginCoordinator } = deps
 
-  handle('plugins:list', async () => {
+  handle(IPC_CHANNELS.PLUGINS_LIST, async () => {
     return pluginCoordinator.getLoadedPlugins().map(p => {
       const perms = pluginCoordinator.getPermissionState(p.manifest.name)
       return {
@@ -54,13 +54,13 @@ export function registerPluginHandlers(
     })
   })
 
-  handle('plugins:get-permissions', async (name) => {
+  handle(IPC_CHANNELS.PLUGINS_GET_PERMISSIONS, async (name) => {
     const state = pluginCoordinator.getPermissionState(name)
     if (!state) return null
     return { ...state, info: PERMISSION_INFO }
   })
 
-  handle('plugins:set-permissions', async (name, permissions) => {
+  handle(IPC_CHANNELS.PLUGINS_SET_PERMISSIONS, async (name, permissions) => {
     const granted = pluginCoordinator.setGrants(name, permissions as PluginPermission[])
     return { granted }
   })
@@ -72,7 +72,7 @@ export function registerPluginHandlers(
     broadcast(IPC_EVENTS.PLUGINS_LIFECYCLE, { name, event })
   }
 
-  handle('plugins:activate', async (name) => {
+  handle(IPC_CHANNELS.PLUGINS_ACTIVATE, async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
     if (!plugin) return { success: false, error: 'Plugin not found' }
     const result = await pluginCoordinator.activatePlugin(plugin)
@@ -83,7 +83,7 @@ export function registerPluginHandlers(
     return { success: true }
   })
 
-  handle('plugins:deactivate', async (name) => {
+  handle(IPC_CHANNELS.PLUGINS_DEACTIVATE, async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
     if (plugin) {
       await pluginCoordinator.deactivatePlugin(plugin, { persist: true })
@@ -91,18 +91,18 @@ export function registerPluginHandlers(
     }
   })
 
-  handle('plugins:install-from-path', async (pluginPath) => {
+  handle(IPC_CHANNELS.PLUGINS_INSTALL_FROM_PATH, async (pluginPath) => {
     const result = await pluginCoordinator.installFromPath(pluginPath)
     if (result?.success && result.name) broadcastLifecycle(result.name, 'installed')
     return result
   })
-  handle('plugins:install-from-zip', async (zipPath) => {
+  handle(IPC_CHANNELS.PLUGINS_INSTALL_FROM_ZIP, async (zipPath) => {
     const result = await pluginCoordinator.installFromZip(zipPath)
     if (result?.success && result.name) broadcastLifecycle(result.name, 'installed')
     return result
   })
 
-  handle('plugins:open-install-dialog', async () => {
+  handle(IPC_CHANNELS.PLUGINS_OPEN_INSTALL_DIALOG, async () => {
     const result = await dialog.showOpenDialog({
       title: 'Select Plugin',
       properties: ['openFile', 'openDirectory'],
@@ -112,13 +112,13 @@ export function registerPluginHandlers(
     return result.filePaths[0]
   })
 
-  handle('plugins:uninstall', async (name) => {
+  handle(IPC_CHANNELS.PLUGINS_UNINSTALL, async (name) => {
     pluginCoordinator.uninstall(name)
     broadcastLifecycle(name, 'uninstalled')
   })
-  handle('plugins:errors', async (name) => pluginCoordinator.getErrorBudget().getErrors(name))
+  handle(IPC_CHANNELS.PLUGINS_ERRORS, async (name) => pluginCoordinator.getErrorBudget().getErrors(name))
 
-  handle('plugins:get-settings', async (name) => {
+  handle(IPC_CHANNELS.PLUGINS_GET_SETTINGS, async (name) => {
     const plugin = pluginCoordinator.getPlugin(name)
     if (!plugin) return { schema: [], values: {} }
     const schema = plugin.manifest.contributes.settings ?? []
@@ -131,11 +131,11 @@ export function registerPluginHandlers(
     return { schema, values }
   })
 
-  handle('plugins:set-setting', async (name, key, value) => {
+  handle(IPC_CHANNELS.PLUGINS_SET_SETTING, async (name, key, value) => {
     ctx.configStore.setSetting(`plugins.${name}.${key}`, value)
   })
 
-  handle('plugins:get-categorized-settings', async (category) => {
+  handle(IPC_CHANNELS.PLUGINS_GET_CATEGORIZED_SETTINGS, async (category) => {
     const result: Array<{
       pluginName: string
       pluginDisplayName: string
@@ -165,7 +165,7 @@ export function registerPluginHandlers(
     return result
   })
 
-  handle('plugins:get-commands', async () => {
+  handle(IPC_CHANNELS.PLUGINS_GET_COMMANDS, async () => {
     const result: { pluginId: string; pluginDisplayName: string; commandId: string; title: string; keybinding?: string }[] = []
     for (const plugin of pluginCoordinator.getLoadedPlugins()) {
       if (plugin.status.state !== 'active' && plugin.status.state !== 'degraded') continue
@@ -182,14 +182,14 @@ export function registerPluginHandlers(
     return result
   })
 
-  handle('plugins:connection-fields', async () => {
+  handle(IPC_CHANNELS.PLUGINS_CONNECTION_FIELDS, async () => {
     return ctx.driverRegistry.getDriverIds().map(id => {
       const factory = ctx.driverRegistry.get(id)!
       return { driverId: id, driverName: id, connectionFields: factory.connectionFields }
     })
   })
 
-  handle('plugins:middleware-fields', async () => {
+  handle(IPC_CHANNELS.PLUGINS_MIDDLEWARE_FIELDS, async () => {
     const fields: { key: string; label: string; type: string; required?: boolean; default?: string | number | boolean; group?: string }[] = []
     for (const plugin of pluginCoordinator.getLoadedPlugins()) {
       if (plugin.manifest.contributes.connectionFields) {
@@ -200,7 +200,7 @@ export function registerPluginHandlers(
   })
 
   // ─── Plugin UI ──────────────────────────────────────────────────────────────
-  handle('plugins:ui:get-contributions', async (surface) => {
+  handle(IPC_CHANNELS.PLUGINS_UI_GET_CONTRIBUTIONS, async (surface) => {
     const contributions: import('@shared/plugin-ui-types').UIContribution[] = []
     const getDisplayName = (pluginName: string) =>
       pluginCoordinator.getPlugin(pluginName)?.manifest.displayName ?? pluginName
@@ -307,19 +307,19 @@ export function registerPluginHandlers(
     return contributions
   })
 
-  handle('plugins:ui:resolve', async (pluginId, resolverId, context) => {
+  handle(IPC_CHANNELS.PLUGINS_UI_RESOLVE, async (pluginId, resolverId, context) => {
     return pluginCoordinator.safeCallWithBudget(pluginId, () =>
       uiRegistry.resolve(resolverId, context)
     )
   })
 
-  handle('plugins:ui:action', async (pluginId, commandId, payload) => {
+  handle(IPC_CHANNELS.PLUGINS_UI_ACTION, async (pluginId, commandId, payload) => {
     await pluginCoordinator.safeCallWithBudget(pluginId, () =>
       commandRegistry.execute(commandId, undefined, payload)
     )
   })
 
-  handle('plugins:completions', async (driverId, connectionId, context) => {
+  handle(IPC_CHANNELS.PLUGINS_COMPLETIONS, async (driverId, connectionId, context) => {
     const plugin = pluginCoordinator.getLoadedPlugins().find(
       p => p.manifest.contributes.drivers?.some(d => d.id === driverId)
     )

@@ -29,6 +29,10 @@ export interface RegisteredExporter {
    *  (not a predicate) so the descriptor can cross the process-isolation
    *  boundary — see docs/plugin-security.md. */
   appliesToTypes?: string[]
+  /** True when `execute` honours `options.includeSchema` (e.g. the SQL exporter
+   *  can prepend a schema definition). The renderer shows the "include schema"
+   *  toggle only for formats that declare this — so it isn't hardcoded to `sql`. */
+  supportsSchema?: boolean
   execute: ExporterFn
 }
 

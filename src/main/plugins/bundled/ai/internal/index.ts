@@ -1,5 +1,6 @@
 // src/main/plugins/bundled/ai/internal/index.ts
 import { errorMessage } from '@shared/errors'
+import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 //
 // The AI core. Called from src/main/plugins/bundled/ai/index.ts at plugin
 // activation time. Nothing in this module talks to Electron's `ipcMain`
@@ -13,7 +14,7 @@ import { PermissionManager } from './permission-manager'
 import { ConversationManager } from './conversation-manager'
 import { OpenAIProvider } from './providers/openai'
 import { AnthropicProvider } from './providers/anthropic'
-import { OllamaProvider } from './providers/ollama'
+import { OllamaProvider, assertSafeOllamaEndpoint } from './providers/ollama'
 import type { SchemaAccess, ConnectionAccess, PluginIpc, BroadcastFn, Disposable, KeyringAccess, ToolRegistry } from '../../../sdk/types'
 import type { AttentionHub } from '../../../../attention/attention-hub'
 import { createAIEnhancements } from './enhancements'
@@ -152,7 +153,7 @@ export function startAIModule(deps: AIDeps): AIModule {
   const pendingActions = new Map<string, (r: { success: boolean; error?: string }) => void>()
   const APP_ACTION_TIMEOUT_MS = 10_000
 
-  deps.ipc.handle('app:action:result', async (payload: { requestId: string; success: boolean; error?: string }) => {
+  deps.ipc.handle(IPC_CHANNELS.APP_ACTION_RESULT, async (payload: { requestId: string; success: boolean; error?: string }) => {
     const resolve = pendingActions.get(payload.requestId)
     if (resolve) {
       pendingActions.delete(payload.requestId)
@@ -186,7 +187,7 @@ export function startAIModule(deps: AIDeps): AIModule {
           resolve({ success: false, error: 'No response from the app (timed out)' })
         }, APP_ACTION_TIMEOUT_MS)
         pendingActions.set(requestId, (r) => { clearTimeout(timer); resolve(r) })
-        deps.broadcast('app:action:perform', { requestId, actionId, params: actionParams })
+        deps.broadcast(IPC_EVENTS.APP_ACTION_PERFORM, { requestId, actionId, params: actionParams })
       })
 
       if (outcome.success) return { success: true, data: { actionId }, display: actionId }
@@ -204,7 +205,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     fn: (...args: A) => R | Promise<R>
   ) => { deps.ipc.handle(channel, fn as never) }
 
-  h('ai:chat:start', async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string; notificationsSummary?: string }) => {
+  h(IPC_CHANNELS.AI_CHAT_START, async (request: { message: string; connectionId?: string; connectionMeta?: { type: string; driverName: string }; appActionsCatalog?: string; connectionsSummary?: string; notificationsSummary?: string }) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     activeStreams.set(streamId, controller)
@@ -220,10 +221,10 @@ export function startAIModule(deps: AIDeps): AIModule {
           ...(request.connectionsSummary ? { connectionsSummary: request.connectionsSummary } : {}),
           ...(request.notificationsSummary ? { notificationsSummary: request.notificationsSummary } : {})
         })) {
-          deps.broadcast('ai:chat:event', streamId, event)
+          deps.broadcast(IPC_EVENTS.AI_CHAT_EVENT, streamId, event)
         }
       } catch (err) {
-        deps.broadcast('ai:chat:event', streamId, {
+        deps.broadcast(IPC_EVENTS.AI_CHAT_EVENT, streamId, {
           type: 'error',
           error: errorMessage(err)
         } satisfies AIStreamEvent)
@@ -235,7 +236,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     return { streamId }
   })
 
-  h('ai:chat:abort', async (streamId: string) => {
+  h(IPC_CHANNELS.AI_CHAT_ABORT, async (streamId: string) => {
     const controller = activeStreams.get(streamId)
     if (controller) {
       controller.abort()
@@ -244,25 +245,29 @@ export function startAIModule(deps: AIDeps): AIModule {
     conversationManager.abort()
   })
 
-  h('ai:chat:approval-response', async (requestId: string, approved: boolean) => {
+  h(IPC_CHANNELS.AI_CHAT_APPROVAL_RESPONSE, async (requestId: string, approved: boolean) => {
     permissionManager.resolveApproval(requestId, approved)
   })
 
-  h('ai:providers:list', async () => providerRegistry.list().map(p => ({ id: p.id, name: p.name })))
+  h(IPC_CHANNELS.AI_PROVIDERS_LIST, async () => providerRegistry.list().map(p => ({ id: p.id, name: p.name })))
 
-  h('ai:providers:list-configured', async () => {
+  h(IPC_CHANNELS.AI_PROVIDERS_LIST_CONFIGURED, async () => {
     const configured: { id: string; name: string }[] = []
     if (deps.keyring.has(AI_KEYRING_NS, 'anthropic')) configured.push({ id: 'anthropic', name: 'Anthropic' })
     if (deps.keyring.has(AI_KEYRING_NS, 'openai')) configured.push({ id: 'openai', name: 'OpenAI' })
     const ollamaEndpoint = (deps.settingsStore.get('ai.ollamaEndpoint') as string) || 'http://localhost:11434'
     try {
+      // Guard the renderer-writable endpoint before the trusted main process
+      // fetches it — the same SSRF protection every other Ollama call uses.
+      // Without it a renderer could aim the probe at internal/metadata hosts.
+      assertSafeOllamaEndpoint(ollamaEndpoint)
       const resp = await fetch(`${ollamaEndpoint}/api/tags`, { signal: AbortSignal.timeout(2000) })
       if (resp.ok) configured.push({ id: 'ollama', name: 'Ollama' })
-    } catch { /* unreachable */ }
+    } catch { /* unreachable or unsafe endpoint — omit Ollama */ }
     return configured
   })
 
-  h('ai:providers:set-active', async (providerId: string) => {
+  h(IPC_CHANNELS.AI_PROVIDERS_SET_ACTIVE, async (providerId: string) => {
     providerRegistry.setActive(providerId)
     deps.settingsStore.set('ai.activeProvider', providerId)
 
@@ -280,51 +285,51 @@ export function startAIModule(deps: AIDeps): AIModule {
     }
   })
 
-  h('ai:providers:get-active', async () => {
+  h(IPC_CHANNELS.AI_PROVIDERS_GET_ACTIVE, async () => {
     const active = providerRegistry.getActive()
     return active ? { id: active.id, name: active.name } : null
   })
 
-  h('ai:models:list', async () => {
+  h(IPC_CHANNELS.AI_MODELS_LIST, async () => {
     const active = providerRegistry.getActive()
     if (!active) return []
     return active.models()
   })
 
-  h('ai:models:set-active', async (modelId: string) => {
+  h(IPC_CHANNELS.AI_MODELS_SET_ACTIVE, async (modelId: string) => {
     providerRegistry.setActiveModel(modelId)
     deps.settingsStore.set('ai.activeModel', modelId)
   })
 
-  h('ai:models:get-active', async () => providerRegistry.getActiveModel())
-  h('ai:messages:list', async () => conversationManager.getMessages())
-  h('ai:messages:clear', async () => { conversationManager.clearMessages() })
-  h('ai:messages:set', async (messages: Parameters<ConversationManager['setMessages']>[0]) => {
+  h(IPC_CHANNELS.AI_MODELS_GET_ACTIVE, async () => providerRegistry.getActiveModel())
+  h(IPC_CHANNELS.AI_MESSAGES_LIST, async () => conversationManager.getMessages())
+  h(IPC_CHANNELS.AI_MESSAGES_CLEAR, async () => { conversationManager.clearMessages() })
+  h(IPC_CHANNELS.AI_MESSAGES_SET, async (messages: Parameters<ConversationManager['setMessages']>[0]) => {
     conversationManager.setMessages(messages)
   })
 
-  h('ai:keys:has', async (provider: 'openai' | 'anthropic') => deps.keyring.has(AI_KEYRING_NS, provider))
-  h('ai:keys:set', async (provider: 'openai' | 'anthropic', value: string) => {
+  h(IPC_CHANNELS.AI_KEYS_HAS, async (provider: 'openai' | 'anthropic') => deps.keyring.has(AI_KEYRING_NS, provider))
+  h(IPC_CHANNELS.AI_KEYS_SET, async (provider: 'openai' | 'anthropic', value: string) => {
     deps.keyring.storeSync(AI_KEYRING_NS, provider, value)
   })
 
-  h('ai:tools:list', async () => toolRegistry.list().map(t => ({
+  h(IPC_CHANNELS.AI_TOOLS_LIST, async () => toolRegistry.list().map(t => ({
     id: t.id, name: t.name, description: t.description, permission: t.permission
   })))
 
-  h('ai:generate-sql', async (request: Parameters<typeof enhancements.generateSql>[0]) =>
+  h(IPC_CHANNELS.AI_GENERATE_SQL, async (request: Parameters<typeof enhancements.generateSql>[0]) =>
     enhancements.generateSql(request)
   )
-  h('ai:complete-sql', async (request: Parameters<typeof enhancements.completeSql>[0]) =>
+  h(IPC_CHANNELS.AI_COMPLETE_SQL, async (request: Parameters<typeof enhancements.completeSql>[0]) =>
     enhancements.completeSql(request)
   )
-  h('ai:explain-results', async (request: Parameters<typeof enhancements.explainResults>[0]) =>
+  h(IPC_CHANNELS.AI_EXPLAIN_RESULTS, async (request: Parameters<typeof enhancements.explainResults>[0]) =>
     enhancements.explainResults(request)
   )
 
   const explainAborts = new Map<string, AbortController>()
 
-  h('ai:explain:start', async (request: Parameters<typeof enhancements.explainResultsStream>[0]) => {
+  h(IPC_CHANNELS.AI_EXPLAIN_START, async (request: Parameters<typeof enhancements.explainResultsStream>[0]) => {
     const streamId = randomUUID()
     const controller = new AbortController()
     explainAborts.set(streamId, controller)
@@ -334,12 +339,12 @@ export function startAIModule(deps: AIDeps): AIModule {
       try {
         const { durationMs } = await enhancements.explainResultsStream(
           request,
-          (text) => { deps.broadcast('ai:explain:event', { streamId, kind: 'token', text }) },
+          (text) => { deps.broadcast(IPC_EVENTS.AI_EXPLAIN_EVENT, { streamId, kind: 'token', text }) },
           controller.signal,
         )
-        deps.broadcast('ai:explain:event', { streamId, kind: 'done', durationMs })
+        deps.broadcast(IPC_EVENTS.AI_EXPLAIN_EVENT, { streamId, kind: 'done', durationMs })
       } catch (err) {
-        deps.broadcast('ai:explain:event', { streamId, kind: 'error', message: errorMessage(err) })
+        deps.broadcast(IPC_EVENTS.AI_EXPLAIN_EVENT, { streamId, kind: 'error', message: errorMessage(err) })
       } finally {
         explainAborts.delete(streamId)
       }
@@ -348,7 +353,7 @@ export function startAIModule(deps: AIDeps): AIModule {
     return { streamId, model }
   })
 
-  h('ai:explain:abort', async (streamId: string) => {
+  h(IPC_CHANNELS.AI_EXPLAIN_ABORT, async (streamId: string) => {
     const controller = explainAborts.get(streamId)
     if (controller) {
       controller.abort()
@@ -356,12 +361,12 @@ export function startAIModule(deps: AIDeps): AIModule {
     }
   })
 
-  h('ai:conversation:summarize', async (messages: Parameters<typeof enhancements.summarizeConversation>[0]) =>
+  h(IPC_CHANNELS.AI_CONVERSATION_SUMMARIZE, async (messages: Parameters<typeof enhancements.summarizeConversation>[0]) =>
     enhancements.summarizeConversation(messages)
   )
 
-  h('ai:permission:get-profile', async () => permissionManager.getProfile())
-  h('ai:permission:set-profile', async (profile: 'read-only' | 'ask-write' | 'auto') => {
+  h(IPC_CHANNELS.AI_PERMISSION_GET_PROFILE, async () => permissionManager.getProfile())
+  h(IPC_CHANNELS.AI_PERMISSION_SET_PROFILE, async (profile: 'read-only' | 'ask-write' | 'auto') => {
     permissionManager.setProfile(profile)
     deps.settingsStore.set('ai.permissionProfile', profile)
   })

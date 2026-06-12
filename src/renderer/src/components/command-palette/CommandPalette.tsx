@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from 'react'
 import { Search } from 'lucide-react'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { useTabsStore } from '@/stores/tabs'
 import { useUiStore, ACTIVITY_PANEL, SECONDARY_PANEL } from '@/stores/ui'
 import { useSchemaStore } from '@/stores/schema'
@@ -12,6 +12,7 @@ import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { getLatestReleaseNote } from '@/lib/release-notes'
 import { Input, ScrollArea, Text, KbdGroup, Box, Flex, Button } from '@/primitives'
 import { usePluginUIStore, selectContributions } from '@/stores/plugin-ui'
+import type { PluginCommand } from '@/stores/plugin-commands'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { IPC_CHANNELS, IPC_EVENTS } from '@shared/ipc'
 
@@ -21,14 +22,6 @@ interface Command {
   category?: string
   keybinding?: string
   action: () => void
-}
-
-interface PluginCommand {
-  pluginId: string
-  pluginDisplayName: string
-  commandId: string
-  title: string
-  keybinding?: string
 }
 
 interface Props {
@@ -46,7 +39,7 @@ export function CommandPalette({ open, onClose }: Props) {
   // page reload, but stable while the user types so filtering doesn't churn.
   const [editorActions, setEditorActions] = useState<{ id: string; label: string }[]>([])
 
-  const { activeConnectionId, connections, connectedIds } = useConnectionsStore()
+  const { activeConnectionId, connectedIds } = useConnectionsStore()
   const { addQueryTab, openErDiagram } = useTabsStore()
   const { setActivePanel } = useUiStore()
   const toggleSecondary = useUiStore(s => s.toggleSecondarySidebar)
@@ -55,7 +48,7 @@ export function CommandPalette({ open, onClose }: Props) {
   const panelContribs = usePluginUIStore(selectContributions('panels'))
   const { t } = useTranslation()
 
-  const conn = connections.find(c => c.id === activeConnectionId)
+  const conn = useActiveProfile()
   const isConnected = activeConnectionId && connectedIds.has(activeConnectionId)
 
   useEffect(() => {

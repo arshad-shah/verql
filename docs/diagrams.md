@@ -22,6 +22,7 @@ prose; this doc is the picture book that goes with it.
 - [8. AI assistant](#8-ai-assistant)
 - [9. MCP server](#9-mcp-server)
 - [10. Build & packaging](#10-build--packaging)
+- [11. Tab persistence](#11-tab-persistence)
 
 ---
 
@@ -765,4 +766,41 @@ flowchart LR
     EB --> Win["Windows NSIS"]
     EB --> Lin["Linux AppImage"]
     Native["better-sqlite3 / pg / mysql2<br/>externalized + rebuilt"] -.-> EV
+```
+
+---
+
+## 11. Tab persistence
+
+Open query tabs are persisted **incrementally** — one row per changed tab — to
+the SQLite app-data store via a pure-cored renderer engine. Full prose +
+sequence/startup diagrams live in [`tab-persistence.md`](./tab-persistence.md).
+
+**Flow.** The live tabs store drives a debounce → pure `select` → pure `diff`
+against a held baseline; the minimal op batch goes over IPC to `applyOpenTabOps`,
+and the baseline advances only on success.
+
+```mermaid
+flowchart LR
+    tabs["useTabsStore<br/>(live tabs)"] -- subscribe --> debounce["debounce + coalesce"]
+    debounce --> select["select (pure)"] --> diff["diff (pure)"]
+    baseline["baseline"] --> diff
+    diff -- "TabOp[]" --> transport["transport (IPC)"]
+    transport -- "appdata:open-tabs:apply" --> store["AppDataStore.applyOpenTabOps"]
+    store --> db[("SQLite open_tabs")]
+    diff -. "advance on success" .-> baseline
+```
+
+**Write lifecycle.** Changes debounce, writes serialize, and a failed write
+keeps the baseline so it retries — never a silent drop.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Debouncing: store change
+    Debouncing --> Debouncing: another change (reset timer)
+    Debouncing --> Writing: debounce elapsed / flush()
+    Writing --> Idle: diff empty, or write ok (baseline advances)
+    Writing --> Writing: change during write (dirty, re-run)
+    Writing --> Idle: write failed (baseline kept, retries next change)
 ```

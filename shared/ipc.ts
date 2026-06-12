@@ -3,7 +3,8 @@ import type { AppSettings } from './settings'
 import type { AIChatStartRequest, AIStreamEvent, AIProviderInfo, AIModelInfo, AIChatMessage } from './ai-types'
 import type { DriverCapabilities, SessionOpts, RuntimeCapabilityOverlay } from './driver-capabilities'
 import type { ActivityEntry, ActivityQuery, ActivityKind, ActivityLevel } from './activity'
-import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry } from './appdata'
+import type { ConversationsSnapshot, StoredConversation, SavedQuery, QueryHistoryEntry, OpenTabsSnapshot, TabOp } from './appdata'
+import type { ExportFormatInfo, ImportFormatInfo } from './export-import'
 
 // ─── Channel shapes ──────────────────────────────────────────────────────────
 //
@@ -177,8 +178,20 @@ export interface IpcChannelShapes {
     return: RuntimeCapabilityOverlay | null
   }
   EXPORT_TABLE: {
-    args: [profileId: string, tableName: string, format: 'sql' | 'csv' | 'json', options?: { schema?: string; includeSchema?: boolean }]
+    // `format` is a registry id (csv/json/sql/plugin-contributed), not a fixed
+    // enum — the renderer lists the connection's formats via EXPORT_FORMATS_LIST.
+    args: [profileId: string, tableName: string, format: string, options?: { schema?: string; includeSchema?: boolean }]
     return: { filePath: string } | { cancelled: true }
+  }
+  /** The export formats available for a connection (driver-filtered). */
+  EXPORT_FORMATS_LIST: {
+    args: [profileId: string]
+    return: ExportFormatInfo[]
+  }
+  /** The import formats available for a connection (driver-filtered). */
+  IMPORT_FORMATS_LIST: {
+    args: [profileId: string]
+    return: ImportFormatInfo[]
   }
   EXPORT_QUERY_RESULT: {
     args: [rows: Record<string, unknown>[], fields: string[], format: 'csv' | 'json']
@@ -652,6 +665,16 @@ export interface IpcChannelShapes {
     args: []
     return: void
   }
+  /** The ordered set of persisted query tabs plus the focused id. */
+  APPDATA_OPEN_TABS_LIST: {
+    args: []
+    return: OpenTabsSnapshot
+  }
+  /** Apply a batch of incremental tab mutations in a single transaction. */
+  APPDATA_OPEN_TABS_APPLY: {
+    args: [ops: TabOp[]]
+    return: void
+  }
   // ─── MCP Server ─────────────────────────────────────────────────────────────
   MCP_START: {
     args: []
@@ -773,8 +796,10 @@ export const IPC_CHANNELS = {
   // ── Export / Import ────────────────────────────────────────────────────
   EXPORT_TABLE: 'export:table',
   EXPORT_QUERY_RESULT: 'export:query-result',
+  EXPORT_FORMATS_LIST: 'export:formats-list',
   IMPORT_CSV: 'import:csv',
   IMPORT_SQL: 'import:sql',
+  IMPORT_FORMATS_LIST: 'import:formats-list',
   // ── Migration ──────────────────────────────────────────────────────────
   MIGRATION_TYPE_MAP: 'migration:type-map',
   MIGRATION_GENERATE_DDL: 'migration:generate-ddl',
@@ -851,6 +876,8 @@ export const IPC_CHANNELS = {
   APPDATA_QUERY_HISTORY_ADD: 'appdata:query-history:add',
   APPDATA_QUERY_HISTORY_DELETE: 'appdata:query-history:delete',
   APPDATA_QUERY_HISTORY_CLEAR: 'appdata:query-history:clear',
+  APPDATA_OPEN_TABS_LIST: 'appdata:open-tabs:list',
+  APPDATA_OPEN_TABS_APPLY: 'appdata:open-tabs:apply',
   // ── MCP server ─────────────────────────────────────────────────────────
   MCP_START: 'mcp:start',
   MCP_STOP: 'mcp:stop',

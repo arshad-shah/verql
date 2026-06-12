@@ -6,6 +6,13 @@
  * driver capability (never from a hardcoded db-type list).
  */
 import type { LucideIcon } from 'lucide-react'
+import type { MessageKey } from '@shared/i18n'
+
+/** Why a statement is considered destructive — an i18n message key the
+ *  run-confirm prompt renders. Returned by a syntax's `classifyDestructive`. */
+export interface DestructiveReason {
+  messageKey: MessageKey
+}
 
 export interface Statement {
   startLine: number
@@ -34,6 +41,11 @@ export interface LensAction {
 export interface StatementContribution {
   splitStatements(source: string): Statement[]
   lensActions: LensAction[]
+  /** Classify a statement as destructive (drives the run-confirm prompt), or
+   *  null when it's safe. Optional — a syntax with no notion of destructive
+   *  statements omits it, so the confirm is driver-aware instead of assuming SQL
+   *  DELETE/DROP semantics apply to every driver. */
+  classifyDestructive?(source: string): DestructiveReason | null
 }
 
 const contributions = new Map<string, StatementContribution>()

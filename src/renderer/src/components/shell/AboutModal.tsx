@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Globe, BookOpen, Puzzle, Code2, AlertCircle, Copy, Check, X, type LucideIcon } from 'lucide-react'
 import { Modal, Text, Badge, Divider, Button, IconButton, KeyValue, Link, Box, Flex, Stack, GradientSurface } from '@/primitives'
 import { VerqlMark } from '@/components/brand/VerqlMark'
+import { useClipboard } from '@/hooks/useClipboard'
 import { IPC_CHANNELS } from '@shared/ipc'
 import { useTranslation } from '@/i18n/I18nProvider'
 
@@ -33,7 +34,7 @@ const openExternal = (url: string) =>
 export function AboutModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation()
   const [info, setInfo] = useState<AboutInfo | null>(null)
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useClipboard()
 
   useEffect(() => {
     if (!open) return
@@ -45,9 +46,6 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
     return () => { active = false }
   }, [open])
 
-  // Reset the copied affordance whenever the modal reopens.
-  useEffect(() => { if (!open) setCopied(false) }, [open])
-
   const rows: [string, string][] = info
     ? [
         ['electron', info.electron],
@@ -58,11 +56,9 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
       ]
     : []
 
-  const copyBuild = async () => {
+  const copyBuild = () => {
     const buildText = rows.map(([k, v]) => `${k.padEnd(10)}${v}`).join('\n')
-    try { await navigator.clipboard.writeText(`Verql v${info?.version ?? ''}\n${buildText}`) } catch { /* ignore */ }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1400)
+    copy(`Verql v${info?.version ?? ''}\n${buildText}`, { resetDelay: 1400 })
   }
 
   const links: { label: string; icon: LucideIcon; url: string }[] = [
@@ -105,7 +101,7 @@ export function AboutModal({ open, onClose }: { open: boolean; onClose: () => vo
           {/* Offset below the modal's absolute close (×) so the copy button
               never overlaps it. */}
           <Flex align="center" justify="between" className="mt-5">
-            <Text size="xs" color="muted" className="uppercase tracking-wider">Build</Text>
+            <Text size="xs" color="muted" className="uppercase tracking-wider">{t('about.build')}</Text>
             <IconButton variant="ghost" size="xs" label={copied ? t('about.copied') : t('about.copy')} onClick={copyBuild}>
               {copied ? <Check size={13} className="text-accent" /> : <Copy size={13} />}
             </IconButton>

@@ -1,6 +1,8 @@
 // src/main/plugins/sdk/index.ts
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain } from 'electron'
 import type { PluginContext, Disposable, PluginIpc, BroadcastFn, ToolRegistry } from './types'
+import { broadcast as broadcastEvent } from '../../ipc/broadcast'
+import type { IpcEventMap } from '@shared/ipc'
 import { DriverRegistryImpl } from './driver-registry'
 import { CommandRegistryImpl } from './command-registry'
 import { PanelRegistryImpl } from './panel-registry'
@@ -269,10 +271,11 @@ export function createPluginContext(deps: ContextDeps): PluginContext {
     }
   }
 
+  // The SDK's broadcast surface is intentionally loose (`(channel, ...args)`),
+  // while the shared helper is typed against IpcEventMap. Delegate to the shared
+  // send-loop, casting at this single boundary so plugins keep the looser type.
   const broadcast: BroadcastFn = (channel, ...args) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send(channel, ...args)
-    }
+    broadcastEvent(channel as keyof IpcEventMap, ...(args as IpcEventMap[keyof IpcEventMap]))
   }
 
   // The plugin's `services` is a *scoped* view of the global registry — provides

@@ -10,17 +10,31 @@ This document covers cutting a new release end-to-end:
 
 ## The flow
 
+Releasing is **tag-free** — you never run `git tag` / `git push --tags`. A
+changeset per PR drives an automated "Version Packages" PR; merging it (your
+review is the gate) auto-tags and builds.
+
 ```
-                ┌──────────────────────────────────┐
-   Maintainer ▶ │  pnpm changeset                  │  (per PR)
-                │  pnpm changeset version          │  (when cutting a release)
-                │  commit + push to main           │
-                │  git tag vX.Y.Z && git push tag  │
-                └──────────────────────────────────┘
-                          │
+   Contributor ▶  pnpm changeset            (per feature PR; describes the change)
+                          │  push to main
                           ▼
+              ┌────────────────────────────────────┐
+              │ release-version.yml (on push:main) │
+              │  pending changesets → open/update  │
+              │  the "Version Packages" PR          │
+              └────────────────────────────────────┘
+                          │
+            Maintainer ▶  review + MERGE the Version PR   ◀── approval gate (CODEOWNERS)
+                          │  merge lands the version bump
+                          ▼
+              ┌────────────────────────────────────┐
+              │ release-version.yml (same workflow)│
+              │  version changed → auto-tag         │
+              │  (scripts/release-tag.mjs) THEN     │
+              │  call release.yml (reusable)        │
+              └────────────────────────────────────┘
+                          │  uses: ./release.yml (no PAT) ▼
               ┌────────────────────────┐
-              │ .github/workflows/     │  triggered by `v*.*.*` tag
               │   release.yml          │
               └────────────────────────┘
                   │       │       │
@@ -29,30 +43,86 @@ This document covers cutting a new release end-to-end:
    ┌─────────┐       ┌──────────┐      ┌─────────┐
    │ macOS   │       │  Linux   │      │ Windows │
    │ build   │       │  build   │      │  build  │
-   │ + sign  │       │ (+GPG    │      │ (no     │
-   │ + notar │       │  sums)   │      │  sign)  │
+   │ + sign  │       │ (+sums)  │      │ (no     │
+   │ + notar │       │          │      │  sign)  │
    └─────────┘       └──────────┘      └─────────┘
         └──────────────┬───────────────────┘
                        ▼
               ┌──────────────────────┐
-              │ Aggregate + publish  │
+              │ Publish release      │  ◀── `release` environment:
+              │ (environment:release)│      required reviewer = you
               │ - sha256sums.txt     │
               │ - cosign signature   │
               │ - CycloneDX SBOM     │
-              │ - draft GitHub       │
-              │   release            │
+              │ - DRAFT GitHub rel.  │
               └──────────────────────┘
                        │
                        ▼
-                Maintainer reviews
-                and clicks Publish.
+                Maintainer approves the run,
+                then clicks Publish on the draft.
 ```
 
-The release workflow is in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
+Workflows: [`release-version.yml`](../workflows/release-version.yml) (versioning
++ auto-tag) and [`release.yml`](../workflows/release.yml) (build + gated
+publish). Both refuse to run for any repo other than `arshad-shah/verql`, so a
+fork can't trigger a release.
 
-A guard job runs first and refuses to publish from any repo other than
-`arshad-shah/verql`, so a fork that pushes a tag cannot trigger an
-arshad-shah/verql release.
+**The SDK rides the same flow.** `@verql/plugin-sdk` is versioned independently
+by changesets. When a changeset bumps it, the same Version PR carries its bump;
+on merge, `release-version.yml` auto-tags `sdk-vX.Y.Z` and calls
+[`publish-sdk.yml`](../workflows/publish-sdk.yml) (reusable) to publish to npm via
+OIDC trusted publishing — gated by the `npm-publish` environment's required
+reviewer. App and SDK publish independently in the same run: a PR can bump just
+the app (`vX.Y.Z`), just the SDK (`sdk-vX.Y.Z`), or both.
+
+## Approval gates & required GitHub settings
+
+> **Quick setup:** run [`scripts/setup-release-gates.sh`](../../scripts/setup-release-gates.sh)
+> once as a repo admin (`gh auth login` first). It creates the `release`
+> environment with you as required reviewer and protects `main` — that's
+> everything. No PAT or other secret is required. The rest of this section
+> explains what those settings are.
+
+Two gates put a release entirely in your hands; both are **repo settings you
+configure once** (they can't live in a committed file — the script above sets
+both for you):
+
+1. **Merge gate (your approval to land anything on `main`).** Branch protection
+   on `main` → *Require a pull request before merging* + *Require review from
+   Code Owners*. [`CODEOWNERS`](../CODEOWNERS) makes `@arshad-shah` the owner of
+   everything, so no PR — including the auto-generated Version PR — merges
+   without your review.
+   **Admins bypass:** the protection is set with `enforce_admins: false` (*Do
+   not allow bypassing the above settings* is **off**), so you can still merge
+   directly or push to `main` when you need to — the gate binds everyone else.
+   Leave `enforce_admins` off to keep that escape hatch.
+   Configure at `…/settings/branches`.
+
+2. **Release-run gate (your approval to publish).** A GitHub **Environment**
+   named `release` with **Required reviewers = `@arshad-shah`**. The
+   `publish` job in `release.yml` declares `environment: release`, so the run
+   pauses until you approve it in the Actions UI — exactly like the existing
+   `npm-publish` environment used by `publish-sdk.yml`. The GitHub release is
+   also created as a **draft**, so you still click *Publish* on it.
+   Configure at `…/settings/environments`.
+
+**No PAT or release secret is needed.** `release-version.yml` invokes
+`release.yml` as a **reusable workflow** (`uses: ./.github/workflows/release.yml`)
+right after it auto-tags, so the build never depends on a tag *triggering* a
+workflow — which is the only thing the default `GITHUB_TOKEN` can't do. The tag
+is still created (with `GITHUB_TOKEN`) for the release's name and record.
+
+Optional hardening: in `…/settings/actions`, set *Fork pull request workflows* →
+*Require approval for all outside collaborators* so CI on contributor PRs only
+runs after you approve it.
+
+### Cutting a release (what you actually do)
+
+1. Ensure the PRs you want shipped each merged with a changeset.
+2. The bot opens/updates a **Version Packages** PR — review the version bump +
+   `CHANGELOG.md`, then **merge it**.
+3. Approve the `release` environment run when prompted, then **Publish** the
+   draft GitHub release. That's it — no tags, ever.
 
 ## Required secrets & accounts
 

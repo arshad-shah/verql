@@ -129,4 +129,8 @@ export const aiui = {
     confirmMutating: 'Run "{title}"? This can change data.',
     actionFailed: 'Action failed',
   },
+  inlineSuggest: {
+    accept: 'Accept suggestion',
+    reject: 'Reject suggestion',
+  },
 } as const

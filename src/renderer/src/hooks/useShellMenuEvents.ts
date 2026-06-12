@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { IPC_EVENTS } from '@shared/ipc'
 import { useUiStore } from '@/stores/ui'
-import { useConnectionsStore } from '@/stores/connections'
+import { getProfile } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import type { useTabsStore } from '@/stores/tabs'
 
@@ -20,7 +20,7 @@ export function useShellMenuEvents({ activeConnectionId, addQueryTab, openConnec
   useEffect(() => {
     const cleanups = [
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_QUERY_TAB, () => {
-        const activeProfile = useConnectionsStore.getState().connections.find(c => c.id === activeConnectionId) ?? null
+        const activeProfile = getProfile(activeConnectionId)
         addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(activeProfile) })
       }),
       window.electronAPI.on(IPC_EVENTS.MENU_NEW_CONNECTION, () => openConnectionForm()),

@@ -60,8 +60,11 @@ correct category.
 - **Query history** (`maxHistoryItems`) — runs are recorded to the SQLite
   app-data `query_history` table, capped to the preference, surfaced via the
   Saved/History toggle. See `stores/query-history.ts`.
-- **Tab restore** (`restoreTabsOnStartup`) — open query tabs are snapshotted to
-  localStorage and re-opened on launch. See `stores/tab-persistence.ts`.
+- **Tab restore** (`restoreTabsOnStartup`) — open query tabs are persisted
+  incrementally (one row per tab) to the SQLite app-data store and re-opened on
+  launch. The pure diff/select core, the debounced coalescing engine, the IPC
+  transport, and the one-time localStorage migration live in
+  `lib/tab-persistence/`; the durable side is AppDataStore's `open_tabs` table.
 - **Keybinding rebind** — the persisted `keybindings[]` drives both App-level
   shortcuts (via `matchesAccelerator`) and the editor; the page captures a chord
   and writes compatible key strings. Action ids: `KEYBINDING_ACTION`.

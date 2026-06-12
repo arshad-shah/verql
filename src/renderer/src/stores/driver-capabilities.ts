@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { IpcChannelMap } from '@shared/ipc'
+import { IPC_CHANNELS, type IpcChannelMap } from '@shared/ipc'
 import { mergeCapabilities } from '@shared/driver-capabilities'
 import type { RuntimeCapabilityOverlay } from '@shared/driver-capabilities'
 
@@ -44,7 +44,7 @@ export const useDriverCapabilitiesStore = create<DriverCapsState>((set, get) => 
     const inflight = get().inflight[type]
     if (inflight) return inflight
     const p = window.electronAPI
-      .invoke('db:driver-capabilities', type)
+      .invoke(IPC_CHANNELS.DB_DRIVER_CAPABILITIES, type)
       .then((caps) => {
         set((s) => ({
           byType: { ...s.byType, [type]: caps },
@@ -62,7 +62,7 @@ export const useDriverCapabilitiesStore = create<DriverCapsState>((set, get) => 
 
   async fetchConnection(profileId: string, type: string) {
     await get().fetch(type) // ensure static caps are cached
-    const overlay = await window.electronAPI.invoke('db:connection-capabilities', profileId)
+    const overlay = await window.electronAPI.invoke(IPC_CHANNELS.DB_CONNECTION_CAPABILITIES, profileId)
     set((s) => ({ byConnection: { ...s.byConnection, [profileId]: overlay } }))
   },
 

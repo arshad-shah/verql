@@ -32,7 +32,7 @@ export const menu = {
   run: 'Run',
   runSelection: 'Run Selection',
   save: 'Save',
-  formatSql: 'Format SQL',
+  formatDocument: 'Format Document',
   // Help
   welcome: 'Welcome',
   whatsNew: "What's New",

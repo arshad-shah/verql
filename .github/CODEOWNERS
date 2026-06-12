@@ -7,9 +7,14 @@
 /src/main/ipc-handlers.ts     @arshad-shah
 /src/main/ipc/                @arshad-shah
 
-# Release pipeline must be reviewed.
-/.github/workflows/release.yml @arshad-shah
-/electron-builder.yml          @arshad-shah
+# Release pipeline must be reviewed (versioning, tagging, build, publish).
+/.github/workflows/release.yml         @arshad-shah
+/.github/workflows/release-version.yml @arshad-shah
+/.github/workflows/publish-sdk.yml     @arshad-shah
+/scripts/release-tag.mjs               @arshad-shah
+/scripts/open-version-pr.mjs           @arshad-shah
+/scripts/setup-release-gates.sh        @arshad-shah
+/electron-builder.yml                  @arshad-shah
 
 # Security-relevant code.
 /src/main/db/identifier.ts    @arshad-shah

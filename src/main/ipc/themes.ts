@@ -1,4 +1,5 @@
 import type { Handle } from './context'
+import { IPC_CHANNELS } from '@shared/ipc'
 import type { ThemeRegistry, RegisteredTheme } from '../plugins/sdk/theme-registry'
 
 export interface ThemesHandlerDeps {
@@ -21,7 +22,7 @@ export interface SerializedTheme {
 export function registerThemesHandlers(handle: Handle, deps: ThemesHandlerDeps): void {
   const { themeRegistry } = deps
 
-  handle('themes:list', async (): Promise<SerializedTheme[]> => {
+  handle(IPC_CHANNELS.THEMES_LIST, async (): Promise<SerializedTheme[]> => {
     return themeRegistry.getAll().map((t) => ({
       id: t.id,
       name: t.name,

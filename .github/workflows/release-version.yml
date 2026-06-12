@@ -1,0 +1,98 @@
+name: Release — version & tag
+
+# Tag-free, PAT-free releasing. On every push to `main`:
+#   • if changesets are pending → open/update the "Version Packages" PR.
+#     Merging that PR (your review = the approval gate) is the only manual step.
+#   • when that PR's merge lands the version bump → auto-create + push the
+#     `vX.Y.Z` tag, then invoke release.yml DIRECTLY as a reusable workflow
+#     (no cross-workflow tag trigger, so no PAT is needed). release.yml's
+#     publish job then waits for your approval in the `release` environment.
+# Nobody pushes tags by hand. See .github/maintainers/release.md.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write        # push the version branch + the release tag
+  pull-requests: write   # open / update the Version Packages PR
+
+concurrency:
+  group: release-version
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version & tag
+    # Never run for forks — releases only come from the canonical repo.
+    if: ${{ github.repository == 'arshad-shah/verql' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      app_tagged: ${{ steps.tag.outputs.app_tagged }}
+      app_tag: ${{ steps.tag.outputs.app_tag }}
+      sdk_tagged: ${{ steps.tag.outputs.sdk_tagged }}
+      sdk_tag: ${{ steps.tag.outputs.sdk_tag }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          # Default GITHUB_TOKEN is fine — the tag doesn't need to trigger
+          # anything; the `release` job below calls release.yml directly.
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
+        with:
+          version: 11.1.2
+
+      - name: Setup Node
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # FIRST, on the pristine `main` checkout: if this push merged the Version
+      # PR (version bumped), create + push the app and/or SDK tags and emit the
+      # *_tagged / *_tag outputs. Runs before the PR step, which switches branches.
+      - name: Auto-tag merged version bumps (app + SDK)
+        id: tag
+        run: node scripts/release-tag.mjs
+
+      # THEN: (re)open the Version Packages PR from any pending changesets.
+      - name: Open / update the Version Packages PR
+        run: node scripts/open-version-pr.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # When the APP version bumped, build + publish via release.yml (reusable).
+  # No PAT, no tag trigger. Publish gated by the `release` environment reviewer.
+  release-app:
+    name: Build & publish app
+    needs: version
+    if: ${{ needs.version.outputs.app_tagged == 'true' }}
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.version.outputs.app_tag }}
+    permissions:
+      contents: write
+      id-token: write
+    secrets: inherit
+
+  # When the SDK version bumped, publish @verql/plugin-sdk via publish-sdk.yml
+  # (reusable). Gated by the `npm-publish` environment reviewer; auth is OIDC
+  # trusted publishing (no token). The publish job stays defined in
+  # publish-sdk.yml so the OIDC claim still resolves to it.
+  publish-sdk:
+    name: Publish SDK
+    needs: version
+    if: ${{ needs.version.outputs.sdk_tagged == 'true' }}
+    uses: ./.github/workflows/publish-sdk.yml
+    with:
+      ref: ${{ needs.version.outputs.sdk_tag }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit

@@ -1,4 +1,5 @@
 import { createMCPServer, type MCPServerInstance } from '../mcp/server'
+import { IPC_CHANNELS } from '@shared/ipc'
 import type { ConnectionAccessImpl } from '../plugins/sdk/connection-access'
 import type { ToolRegistry } from '../plugins/sdk/types'
 import type { AttentionHub } from '../attention/attention-hub'
@@ -46,20 +47,20 @@ export function registerMcpHandlers(
     attention,
   })
 
-  handle('mcp:start', async () => {
+  handle(IPC_CHANNELS.MCP_START, async () => {
     const result = await mcpServer.start()
     ctx.configStore.setSetting('mcp.enabled', true)
     return result
   })
 
-  handle('mcp:stop', async () => {
+  handle(IPC_CHANNELS.MCP_STOP, async () => {
     await mcpServer.stop()
     ctx.configStore.setSetting('mcp.enabled', false)
   })
 
-  handle('mcp:status', async () => mcpServer.getStatus())
+  handle(IPC_CHANNELS.MCP_STATUS, async () => mcpServer.getStatus())
 
-  handle('mcp:tools', async (): Promise<MCPToolInfo[]> => {
+  handle(IPC_CHANNELS.MCP_TOOLS, async (): Promise<MCPToolInfo[]> => {
     const disabled = (ctx.configStore.getSetting('mcp.disabledTools') as string[]) ?? []
     return toolRegistry.list().map(t => ({
       id: t.id, name: t.name, description: t.description, permission: t.permission,
@@ -67,7 +68,7 @@ export function registerMcpHandlers(
     }))
   })
 
-  handle('mcp:set-tool-enabled', async (toolId, enabled) => {
+  handle(IPC_CHANNELS.MCP_SET_TOOL_ENABLED, async (toolId, enabled) => {
     const disabled = new Set((ctx.configStore.getSetting('mcp.disabledTools') as string[]) ?? [])
     if (enabled) disabled.delete(toolId)
     else disabled.add(toolId)
@@ -76,9 +77,9 @@ export function registerMcpHandlers(
     await mcpServer.reload()
   })
 
-  handle('mcp:activity', async () => mcpServer.getActivity())
+  handle(IPC_CHANNELS.MCP_ACTIVITY, async () => mcpServer.getActivity())
 
-  handle('mcp:regenerate-token', async () => {
+  handle(IPC_CHANNELS.MCP_REGENERATE_TOKEN, async () => {
     // Mints + persists a fresh token and updates the in-memory token, so the
     // returned status reflects it whether the server is running or stopped.
     mcpServer.regenerateToken()
@@ -87,12 +88,12 @@ export function registerMcpHandlers(
 
   // Rebuild the exposed tool set against current settings (e.g. after the
   // read-only toggle changes). No-op when the server is stopped.
-  handle('mcp:reload', async () => {
+  handle(IPC_CHANNELS.MCP_RELOAD, async () => {
     await mcpServer.reload()
     return mcpServer.getStatus()
   })
 
-  handle('mcp:approval-response', async (requestId, approved) => {
+  handle(IPC_CHANNELS.MCP_APPROVAL_RESPONSE, async (requestId, approved) => {
     mcpServer.resolveApproval(requestId, approved)
   })
 

@@ -1,7 +1,7 @@
 import { useUiStore, ACTIVITY_PANEL, SECONDARY_PANEL, BOTTOM_PANEL, type SecondaryPanelId } from '@/stores/ui'
 import { SETTINGS_CATEGORY, isSettingsCategory } from '@/lib/settings-categories'
 import { useTabsStore } from '@/stores/tabs'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, getActiveProfile, getProfile } from '@/stores/connections'
 import { useSchemaStore } from '@/stores/schema'
 import { useSelectionStore } from '@/stores/selection'
 import { useDriverCapabilitiesStore } from '@/stores/driver-capabilities'
@@ -118,8 +118,8 @@ const BUILTINS: AppAction[] = [
     kind: 'navigation',
     params: { sql: { type: 'string', description: 'SQL to pre-fill' } },
     run: (p) => {
-      const { activeConnectionId, connections } = useConnectionsStore.getState()
-      const conn = connections.find((c) => c.id === activeConnectionId) ?? null
+      const { activeConnectionId } = useConnectionsStore.getState()
+      const conn = getActiveProfile()
       useTabsStore.getState().addQueryTab(activeConnectionId, str(p.sql) ?? null, {
         autoCommit: initialAutoCommit(conn)
       })
@@ -153,9 +153,9 @@ const BUILTINS: AppAction[] = [
       if (!source.trim()) return
       const { tabs } = useTabsStore.getState()
       const tab = tabs.find((item) => item.id === reg.tabId)
-      const { activeConnectionId, connections } = useConnectionsStore.getState()
+      const { activeConnectionId } = useConnectionsStore.getState()
       const connId = (tab && tab.type === 'query' ? tab.connectionId : null) ?? activeConnectionId
-      const connType = connections.find((c) => c.id === connId)?.type ?? ''
+      const connType = getProfile(connId)?.type ?? ''
       const { formatted, changed } = await window.electronAPI.invoke(
         IPC_CHANNELS.DB_FORMAT_QUERY, model.getLanguageId(), connType, source
       )
@@ -211,7 +211,7 @@ const BUILTINS: AppAction[] = [
       const arg = str(p.connection)
       const conn = arg
         ? resolveConnection(state.connections, arg)
-        : state.connections.find((c) => c.id === state.activeConnectionId)
+        : getActiveProfile()
       if (!conn) throw new Error(t('actions.errors.noConnectionToDisconnect'))
       await useConnectionsStore.getState().disconnect(conn.id)
     }
@@ -283,8 +283,8 @@ const BUILTINS: AppAction[] = [
     run: async (p) => {
       const table = str(p.table)
       if (!table) throw new Error(t('actions.errors.provideTable'))
-      const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
-      const conn = connections.find((c) => c.id === activeConnectionId)
+      const { connectedIds } = useConnectionsStore.getState()
+      const conn = getActiveProfile()
       if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
       if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnected', { name: conn.name }))
       const schema = await resolveSchema(conn, str(p.schema))
@@ -311,8 +311,8 @@ const BUILTINS: AppAction[] = [
       table: { type: 'string', description: 'Table to select/focus in the diagram' }
     },
     run: async (p) => {
-      const { activeConnectionId, connections, connectedIds } = useConnectionsStore.getState()
-      const conn = connections.find((c) => c.id === activeConnectionId)
+      const { connectedIds } = useConnectionsStore.getState()
+      const conn = getActiveProfile()
       if (!conn) throw new Error(t('actions.errors.noActiveConnection'))
       if (!connectedIds.has(conn.id)) throw new Error(t('actions.errors.notConnectedEr', { name: conn.name }))
       const schema = (await resolveSchema(conn, str(p.schema))) || ''

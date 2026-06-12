@@ -15,6 +15,7 @@ import { buildErElements, layoutErDiagram, type TableNodeData } from './er-layou
 import { useSelectionStore } from '@/stores/selection'
 import { useSchemaStore } from '@/stores/schema'
 import { useConnectionsStore } from '@/stores/connections'
+import { useDataNouns, nounVars } from '@/hooks/useDataNouns'
 import { Loader2 } from 'lucide-react'
 import { Flex, Text, Box, Button, Spinner } from '@/primitives'
 import { useTheme } from '@/primitives/theme/ThemeProvider'
@@ -34,6 +35,7 @@ interface Props {
 
 export function ERDiagram({ connectionId, schema }: Props) {
   const { t } = useTranslation()
+  const nouns = useDataNouns(connectionId)
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<TableNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [loading, setLoading] = useState(true)
@@ -90,7 +92,7 @@ export function ERDiagram({ connectionId, schema }: Props) {
   if (nodes.length === 0) {
     return (
       <Flex align="center" justify="center" className="flex-1 bg-bg-tertiary h-full">
-        <Text size="sm" color="muted">{t('shell.er.noTables', { schema })}</Text>
+        <Text size="sm" color="muted">{t('shell.er.noTables', { ...nounVars(nouns), schema })}</Text>
       </Flex>
     )
   }

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTabsStore } from '@/stores/tabs'
 import { requestCloseTab } from '@/stores/tab-actions'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { Flex, IconButton, Tooltip, cn } from '@/primitives'
 import { TabItem } from './TabItem'
@@ -24,8 +24,8 @@ export function TabBar() {
     reorderTabs,
     duplicateTab,
   } = useTabsStore()
-  const { activeConnectionId, connections } = useConnectionsStore()
-  const activeProfile = connections.find(c => c.id === activeConnectionId) ?? null
+  const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
+  const activeProfile = useActiveProfile()
 
   const { scrollRef, canScrollLeft, canScrollRight, scrollLeft, scrollRight, scrollIntoView, onWheel } =
     useTabScroll()

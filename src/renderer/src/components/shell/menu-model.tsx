@@ -12,7 +12,7 @@ import { useTranslation } from '@/i18n/I18nProvider'
 import { isMac } from '@/lib/platform'
 import { initialAutoCommit } from '@/lib/initial-autocommit'
 import { useTabsStore } from '@/stores/tabs'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, getActiveProfile } from '@/stores/connections'
 import { useUiStore, ACTIVITY_PANEL } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { editorRegistry } from '@/stores/editor'
@@ -52,8 +52,8 @@ function accel(actionId: KeybindingActionId): string | undefined {
 }
 
 function newQuery(): void {
-  const { activeConnectionId, connections } = useConnectionsStore.getState()
-  const profile = connections.find((c) => c.id === activeConnectionId) ?? null
+  const { activeConnectionId } = useConnectionsStore.getState()
+  const profile = getActiveProfile()
   useTabsStore.getState().addQueryTab(activeConnectionId, null, { autoCommit: initialAutoCommit(profile) })
 }
 
@@ -152,7 +152,7 @@ export function useMenus(): MenuDef[] {
         const id = useTabsStore.getState().activeTabId
         if (id) void tabActions.save(id)
       } },
-      { kind: 'item', label: t('menu.formatSql'), icon: Code2, accelerator: 'Shift+Alt+F', enabled: hasEditor, run: () => editorRegistry.runAction('editor.action.formatDocument') },
+      { kind: 'item', label: t('menu.formatDocument'), icon: Code2, accelerator: 'Shift+Alt+F', enabled: hasEditor, run: () => editorRegistry.runAction('editor.action.formatDocument') },
     ],
   }
 

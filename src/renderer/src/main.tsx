@@ -8,7 +8,7 @@ import { App } from './App'
 import { useSettingsStore, initSettingsListener } from '@/stores/settings'
 import { useAIStore } from '@/stores/ai'
 import { useQueryHistoryStore } from '@/stores/query-history'
-import { initTabPersistence, restoreOpenTabs } from '@/stores/tab-persistence'
+import { initTabPersistence } from '@/lib/tab-persistence'
 import { useTabsStore } from '@/stores/tabs'
 import { decideStartupSurface } from '@/lib/onboarding'
 import { installRendererDiagnostics } from '@/lib/store-diagnostics'
@@ -58,11 +58,11 @@ function AppLoader() {
       installRendererDiagnostics()
       // Restore the previous session's query tabs before the shell paints,
       // gated by the user's preference. Persistence runs regardless so the
-      // snapshot stays fresh if they enable restore later.
-      if (useSettingsStore.getState().settings.general.restoreTabsOnStartup) {
-        restoreOpenTabs()
-      }
-      initTabPersistence()
+      // durable set stays fresh if they enable restore later. Backed by the
+      // app-data SQLite store + the incremental tab-persistence engine.
+      await initTabPersistence({
+        restoreOnStartup: useSettingsStore.getState().settings.general.restoreTabsOnStartup,
+      })
       // Load app-data-store–backed state (AI conversations, saved queries),
       // migrating any legacy localStorage payload on first run. Non-blocking
       // for first paint — these populate the AI panel and saved-queries list.

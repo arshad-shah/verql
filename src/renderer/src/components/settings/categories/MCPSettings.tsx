@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Stack, Divider, Flex, Button, Text, Input, CodeView, Switch, Alert } from '@/primitives'
 import { useSettingsStore } from '@/stores/settings'
+import { useClipboard } from '@/hooks/useClipboard'
 import { useTranslation } from '@/i18n/I18nProvider'
 import { SettingRow } from '../SettingRow'
 import { PluginContributedSettings } from '../PluginContributedSettings'
@@ -17,7 +18,7 @@ export function MCPSettings() {
   const [status, setStatus] = useState<MCPServerStatus>(DEFAULT_STATUS)
   const [tools, setTools] = useState<MCPToolInfo[]>([])
   const [activity, setActivity] = useState<MCPActivityEntry[]>([])
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useClipboard()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -60,8 +61,7 @@ export function MCPSettings() {
   const configJson = JSON.stringify(buildMcpClientConfig({ port, token: token || t('settings.mcp.tokenPlaceholderConfig') }), null, 2)
 
   const copyConfig = () => {
-    navigator.clipboard.writeText(JSON.stringify(buildMcpClientConfig({ port, token }), null, 2))
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
+    copy(JSON.stringify(buildMcpClientConfig({ port, token }), null, 2), { resetDelay: 2000 })
   }
 
   const regenerate = async () => {

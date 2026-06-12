@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { Sparkles } from 'lucide-react'
 import { useAIStore } from '@/stores/ai'
-import { useConnectionsStore } from '@/stores/connections'
+import { useConnectionsStore, useActiveProfile } from '@/stores/connections'
 import { ScrollArea } from '@/primitives/layout/ScrollArea'
 import { Text } from '@/primitives/typography/Text'
 import { MessageBubble } from './MessageBubble'
@@ -22,10 +22,9 @@ function EmptyState() {
   const { t } = useTranslation()
   const sendMessage = useAIStore(s => s.sendMessage)
   const activeConnectionId = useConnectionsStore(s => s.activeConnectionId)
-  const connections = useConnectionsStore(s => s.connections)
+  const conn = useActiveProfile()
 
   const ask = (text: string) => {
-    const conn = activeConnectionId ? connections.find(c => c.id === activeConnectionId) : undefined
     const meta = conn ? { type: conn.type, driverName: conn.type } : undefined
     sendMessage(text, activeConnectionId ?? undefined, meta)
   }

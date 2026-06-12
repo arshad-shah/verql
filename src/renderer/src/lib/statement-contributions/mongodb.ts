@@ -1,6 +1,16 @@
 import { Play } from 'lucide-react'
 import { tabActions } from '@/stores/tab-actions'
-import type { Statement, StatementContribution } from '@/lib/statement-registry'
+import type { Statement, StatementContribution, DestructiveReason } from '@/lib/statement-registry'
+
+// Collection/db operations that remove documents or drop collections. Exported
+// for tests.
+const MONGO_DESTRUCTIVE = /\.\s*(drop|dropDatabase|deleteMany|deleteOne|remove|findOneAndDelete)\s*\(/
+
+/** A Mongo shell command is destructive if it drops a collection/db or deletes
+ *  documents. */
+export function classifyMongoDestructive(source: string): DestructiveReason | null {
+  return MONGO_DESTRUCTIVE.test(source) ? { messageKey: 'query.destructive.generic' } : null
+}
 
 /**
  * Splits a Mongo shell buffer into one statement per top-level brace-balanced
@@ -61,6 +71,7 @@ export function splitMongoStatements(source: string): Statement[] {
 
 export const mongoStatementContribution: StatementContribution = {
   splitStatements: splitMongoStatements,
+  classifyDestructive: classifyMongoDestructive,
   lensActions: [
     { id: 'run', title: 'Run', icon: Play, handler: (ctx) => tabActions.runStatement(ctx.tabId, ctx.stmt.text) },
   ],

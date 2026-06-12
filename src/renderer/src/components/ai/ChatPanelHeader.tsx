@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   History, Plus, Trash2, Pencil, Check, X, Sparkles,
   Minimize2, MoreHorizontal, ChevronDown, Loader2,
@@ -7,6 +7,7 @@ import { useAIStore } from '@/stores/ai'
 import { Flex, Text, Input, IconButton, ScrollArea } from '@/primitives'
 import { Tooltip } from '@/primitives/surfaces/Tooltip'
 import { formatCompactNumber } from '@/lib/format'
+import { useClickOutside } from '@/hooks/useClickOutside'
 import { useTranslation } from '@/i18n/I18nProvider'
 
 /**
@@ -50,17 +51,11 @@ export function ChatPanelHeader() {
 
   const canCompact = messages.length >= 6 && !isCompacting
 
-  useEffect(() => {
-    if (!historyOpen && !moreOpen) return
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setHistoryOpen(false)
-        setMoreOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [historyOpen, moreOpen])
+  const closeMenus = useCallback(() => {
+    setHistoryOpen(false)
+    setMoreOpen(false)
+  }, [])
+  useClickOutside(ref, closeMenus, { enabled: historyOpen || moreOpen })
 
   const commitEdit = () => {
     if (editingId) renameConversation(editingId, draft)

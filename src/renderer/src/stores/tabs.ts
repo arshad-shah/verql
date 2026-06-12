@@ -56,6 +56,10 @@ const MAX_RECENTLY_CLOSED = 10
  *  restore-on-startup. Transient runtime state (results, execution, txn status)
  *  is intentionally dropped; restored tabs come back clean and idle. */
 export interface QueryTabSnapshot {
+  /** Stable tab id. When present (restoring from the persistence engine) it's
+   *  reused so the restored tab keeps its identity for incremental persistence;
+   *  when absent (legacy/migration) a fresh id is generated. */
+  id?: string
   title: string
   sql: string
   connectionId: string | null
@@ -443,7 +447,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const restored: QueryTab[] = snapshots.map((s) => {
       tabCounter++
       return {
-        id: `query-${tabCounter}-${Date.now()}`,
+        id: s.id ?? `query-${tabCounter}-${Date.now()}`,
         type: 'query',
         title: s.title,
         connectionId: s.connectionId,
