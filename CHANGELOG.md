@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- [#111](https://github.com/arshad-shah/verql/pull/111) [`2de46a4`](https://github.com/arshad-shah/verql/commit/2de46a4bcc117931c7499daec3096480f547828b) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Fix the automated release tagging: `scripts/release-tag.mjs` ran `git tag -a`
+  on a CI runner with no committer identity, so the first auto-tag of a merged
+  Version PR died with "empty ident name" and no `vX.Y.Z` / `sdk-vX.Y.Z` tag was
+  created. The script now configures a bot git identity (only when none is set)
+  before tagging, so the canonical Changesets merge → auto-tag → gated publish
+  flow completes without a manual tag push.
+
 ## 1.3.0
 
 ### Minor Changes
