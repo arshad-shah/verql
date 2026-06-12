@@ -38,6 +38,14 @@ const TARGETS = [
   { id: 'sdk', pkg: 'packages/plugin-sdk/package.json', tag: (v) => `sdk-v${v}` },
 ]
 
+// Annotated tags (`git tag -a`) need a committer identity, and CI runners have
+// none configured. Set one (locally, only when missing) so tagging never dies
+// with "empty ident name". Mirrors the bot identity the rest of the flow uses.
+if (!tryGet('git config user.email')) {
+  execSync('git config user.name "github-actions[bot]"', { stdio: 'inherit' })
+  execSync('git config user.email "github-actions[bot]@users.noreply.github.com"', { stdio: 'inherit' })
+}
+
 for (const t of TARGETS) {
   const version = versionOf(t.pkg)
   const tag = version ? t.tag(version) : null
