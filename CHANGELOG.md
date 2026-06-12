@@ -1,5 +1,132 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Make destructive-statement detection driver-aware.
+
+  The "this can change data — run anyway?" confirm no longer assumes SQL for every
+  connection. Detection now routes through the statement contribution selected by
+  the driver's `statementSyntax` capability (the same mechanism the Run/Explain
+  gutter uses), so each driver gets the right semantics:
+
+  - **SQL** — `DELETE`/`DROP`/`TRUNCATE` and an `UPDATE` with no `WHERE`.
+  - **Redis** — `FLUSHALL`/`FLUSHDB`/`DEL`/`UNLINK`/`GETDEL`.
+  - **MongoDB** — `drop`/`dropDatabase`/`deleteMany`/`deleteOne`/`remove`/`findOneAndDelete`.
+  - **Any other syntax** — no spurious SQL-keyword warning unless that syntax
+    contributes its own `classifyDestructive`.
+
+  A new generic confirm message backs the non-SQL cases. The SQL classifier still
+  reuses the pure, unit-tested `destructiveKind` helper.
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Export/import dialogs now show the formats the connection actually supports.
+
+  The Export and Import dialogs no longer hardcode `sql | csv | json`. They fetch
+  the formats registered for the active connection (`export:formats-list` /
+  `import:formats-list`, driver-filtered through the exporter/importer registries),
+  so the list is always correct — a MongoDB or Redis connection is no longer
+  offered a SQL export it can't produce.
+
+  - `RegisteredExporter` gains an optional `supportsSchema` flag (the SQL exporters
+    set it); the "include schema definition" toggle now shows for any format that
+    declares it, instead of being hardcoded to `sql`.
+  - The Import dialog branches on the importer's `driverExecutes` flag (SQL scripts
+    run their own statements; data files parse into a target object) rather than on
+    the literal format name.
+  - `export:table`'s `format` is now a registry id (`string`), not a fixed enum, so
+    plugin-contributed formats work end to end.
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Persist open tabs incrementally to SQLite instead of localStorage.
+
+  Restore-on-startup for open query tabs moves off a renderer-`localStorage`
+  snapshot — which rewrote _every_ tab on _every_ change, synchronously on the UI
+  thread, and silently dropped saves at the ~5 MB origin quota — and onto the
+  existing main-process SQLite app-data store, behind a per-tab-incremental engine.
+
+  - **Durable layer** — a new `open_tabs` table (one row per tab); `listOpenTabs()`
+    / `applyOpenTabOps()` apply an upsert/delete/active batch in a single
+    transaction, over two typed IPC channels.
+  - **Engine** (`src/renderer/src/lib/tab-persistence/`) — a pure `select` +
+    `diff` core (a single-tab edit yields exactly one row write, regardless of tab
+    count), a debounced/coalesced/serialized write loop whose baseline only
+    advances after a successful write (so a failed write retries instead of being
+    lost), an IPC transport, and a one-time migration of the legacy localStorage
+    payload.
+  - Tabs keep their identity across restore, so writes stay incremental. The
+    persisted query buffer is treated as **opaque, driver-agnostic text** (SQL,
+    MongoDB, Redis, …) — never parsed.
+
+  Result: tab writes leave the UI thread, cost is bounded by what changed, there's
+  no quota cliff, and commits are crash-safe (WAL). Existing localStorage tabs are
+  migrated automatically on first launch.
+
+### Patch Changes
+
+- [#109](https://github.com/arshad-shah/verql/pull/109) [`4cc3495`](https://github.com/arshad-shah/verql/commit/4cc3495e36219ed11690284ee26e4a6a7a3aa143) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Modernize the release pipeline. The "Version Packages" step now uses the
+  canonical `changesets/action` (SHA-pinned) instead of a hand-rolled script —
+  fixing the `GITHUB_TOKEN`/changelog-github failure that broke versioning &
+  tagging — while the gated, PAT-free auto-tag → reusable-publish flow is
+  unchanged. Adds Microsoft Store (MSIX) publishing: an `appx` target in
+  `electron-builder.yml` and a `publish-msstore` job in `release.yml`, gated
+  behind the `release` environment and skipped until `MICROSOFT_STORE_PRODUCT_ID`
+  is set. The `setup-release-gates.sh` script now also provisions the
+  `npm-publish` environment and the "Actions can create PRs" permission.
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Make the shared error hints driver-neutral.
+
+  The error-classification system already keeps messages renderer-owned and i18n'd
+  (drivers contribute only regex→code patterns via `errorRules`, which carry no
+  text), and a `DbErrorCode` is a cross-driver taxonomy. Several fallback **hints**
+  still baked in SQL syntax, so a MongoDB/Redis user hitting a shared code (timeout,
+  permission denied, type mismatch, …) saw SQL-only advice. Those hints are now
+  phrased generically:
+
+  - timeout — "return less data (filter the results or fetch fewer records)"
+    instead of "add a WHERE / LIMIT"
+  - permission denied — "grant them to this user" instead of "GRANT SELECT, ..."
+  - type mismatch — "cast or convert the value explicitly" instead of "value::int"
+  - division by zero — "guard the denominator so it can never be zero" instead of
+    "NULLIF(x, 0)"
+  - transaction aborted — "roll back the transaction" instead of "Run \`ROLLBACK\`"
+  - duplicate object — "a create-if-not-exists form, or remove the existing
+    {object} first" instead of "CREATE TABLE IF NOT EXISTS"
+
+  The driver-specific destructive-run warnings (DELETE/DROP/TRUNCATE) are unchanged
+  — they now surface only for SQL connections via the driver-aware classifier.
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Build the main-process app logger on `@arshad-shah/log-kit`.
+
+  The hand-rolled logger core is replaced by log-kit while the app's narrow
+  four-level `Logger` facade (serialised `detail`, `child(scope)`) stays
+  byte-for-byte compatible — every existing call site is unchanged.
+
+  - log-kit owns the record pipeline (level gating, child-scope nesting) and fans
+    each record out to two app-supplied transports with **failure isolation**: a
+    throwing activity sink can no longer break console output, and vice versa.
+  - The transports preserve existing behaviour exactly — a console transport keeps
+    the `[scope] message` format and level→method mapping (info → `console.log`),
+    and an activity transport records `log` entries into the unified activity
+    stream.
+  - Adds `logger.mark(label)` perf markers (recording `durationMs`); plugin boot is
+    wired through it as the first use.
+
+  No user-facing behavior change.
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Security hardening (defense-in-depth).
+
+  - **Secret-redacting logger.** The app logger now recursively redacts
+    secret-looking object keys (`password`, `token`, `*key`, `secret`,
+    `authorization`, `credential`) before serialising a detail object to the
+    console or the persisted activity stream — so a careless call site that logs a
+    whole `ConnectionProfile` (which holds plaintext secrets in memory) can't leak
+    credentials. Free-text strings/stacks are unchanged; non-secret fields are
+    preserved verbatim.
+  - **Explicit zip-slip guard on plugin install.** Before extracting a third-party
+    plugin archive, the entry names are validated and any absolute path, Windows
+    drive-letter path, or `..` traversal segment is rejected — defense-in-depth
+    that no longer trusts `unzip`'s implicit stripping across versions/platforms.
+
 ## 1.2.0
 
 ### Minor Changes
