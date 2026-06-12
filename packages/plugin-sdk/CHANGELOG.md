@@ -1,5 +1,17 @@
 # @verql/plugin-sdk
 
+## 0.11.0
+
+### Minor Changes
+
+- [#108](https://github.com/arshad-shah/verql/pull/108) [`3f57477`](https://github.com/arshad-shah/verql/commit/3f57477b20c86dc15f232b3061aea0797cf669e7) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Add an optional `supportsSchema` flag to `RegisteredExporter`.
+
+  Exporters that honour `options.includeSchema` (e.g. SQL exporters that can
+  prepend a schema definition) can now declare `supportsSchema: true`. The host's
+  Export dialog shows the "include schema" toggle only for formats that declare
+  it, instead of hardcoding it to `sql`. Backward-compatible — the field is
+  optional and defaults to off.
+
 ## 0.10.1
 
 ### Patch Changes
