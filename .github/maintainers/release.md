@@ -302,9 +302,9 @@ A published release on
 
 | Asset | Platform | What it is |
 |-------|----------|------------|
-| `Verql-X.Y.Z-x64.dmg` | macOS Intel | Disk image, signed & notarised; download source for the Homebrew cask |
-| `Verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
-| `Verql-X.Y.Z.AppImage` | Linux x64 | Portable; download source for the Homebrew formula |
+| `verql-X.Y.Z-x64.dmg` | macOS Intel | Disk image (currently unsigned); download source for the Homebrew cask |
+| `verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
+| `verql-X.Y.Z-x86_64.AppImage` | Linux x64 | Portable; download source for the Homebrew formula |
 | `sha256sums.txt` | All | One cosign-signed file covering every platform's binaries |
 | `sha256sums.txt.sig` + `.pem` | All | Sigstore signature + cert |
 | `verql-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
@@ -351,9 +351,16 @@ pure `render()` core that fails closed on any unresolved `{{PLACEHOLDER}}`). On
 DMGs + AppImage, computes their sha256s, runs the generator to write the whole
 `Casks/verql.rb` + `Formula/verql.rb`, and pushes to the tap via the scoped
 `HOMEBREW_VERQL_DEPLOY_KEY` deploy key. No awk surgery — the files are rewritten
-in full each release. Artifact names are pinned in `electron-builder.yml`
-(`Verql-${version}-${arch}.dmg`, `Verql-${version}.AppImage`) so the build,
-release, and tap URLs always agree. Users self-update with `brew upgrade`.
+in full each release. The templates use electron-builder's lowercase default
+artifact names (`verql-${version}-${arch}.dmg`, `verql-${version}-x86_64.AppImage`);
+the generator injects only the version + the three sha256s (the URLs are built
+with Ruby `#{version}` interpolation). Users self-update with `brew upgrade`.
+
+> **Unsigned-app handling.** The cask deliberately keeps a `postflight` that runs
+> `xattr -dr com.apple.quarantine` on `Verql.app` — while builds are unsigned,
+> macOS Sequoia otherwise reports "Verql is damaged". The cask template preserves
+> this block verbatim; remove it once macOS builds are signed + notarised (set
+> the `MAC_CERT_*` / `APPLE_*` secrets above).
 
 ### Promote a draft release
 

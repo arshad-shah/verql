@@ -38,6 +38,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
 
+      # electron-builder emits lowercase names with x86_64 for the AppImage.
       - name: Download release binaries (DMGs + AppImage)
         env:
           TAG: ${{ github.event.release.tag_name }}
@@ -45,17 +46,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download "$TAG" -R "$REPO" -D assets \
-            -p "Verql-${VERSION}-arm64.dmg" \
-            -p "Verql-${VERSION}-x64.dmg" \
-            -p "Verql-${VERSION}.AppImage"
+            -p "verql-${VERSION}-arm64.dmg" \
+            -p "verql-${VERSION}-x64.dmg" \
+            -p "verql-${VERSION}-x86_64.AppImage"
           ls -la assets
 
       - name: Compute sha256s
         run: |
           {
-            echo "SHA_ARM64=$(sha256sum "assets/Verql-${VERSION}-arm64.dmg" | awk '{print $1}')"
-            echo "SHA_X64=$(sha256sum "assets/Verql-${VERSION}-x64.dmg"     | awk '{print $1}')"
-            echo "SHA_APPIMAGE=$(sha256sum "assets/Verql-${VERSION}.AppImage" | awk '{print $1}')"
+            echo "SHA_ARM64=$(sha256sum "assets/verql-${VERSION}-arm64.dmg" | awk '{print $1}')"
+            echo "SHA_X64=$(sha256sum "assets/verql-${VERSION}-x64.dmg"     | awk '{print $1}')"
+            echo "SHA_APPIMAGE=$(sha256sum "assets/verql-${VERSION}-x86_64.AppImage" | awk '{print $1}')"
           } >> "$GITHUB_ENV"
 
       - name: Configure SSH deploy key
@@ -71,12 +72,9 @@ jobs:
         run: git clone git@github.com:arshad-shah/homebrew-verql.git tap
 
       - name: Render cask + formula
-        env:
-          TAG: ${{ github.event.release.tag_name }}
-          REPO: ${{ github.repository }}
         run: |
           node scripts/render-homebrew.mjs \
-            --version "$VERSION" --tag "$TAG" --repo "$REPO" \
+            --version "$VERSION" \
             --sha-arm64 "$SHA_ARM64" --sha-x64 "$SHA_X64" --sha-appimage "$SHA_APPIMAGE" \
             --tap-dir tap
 

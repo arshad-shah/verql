@@ -14,8 +14,8 @@ phases.
 
 | OS | Channel | Release artifact (download source) | Self-update |
 |---|---|---|---|
-| macOS | Homebrew **cask** | `Verql-X.Y.Z-x64.dmg`, `Verql-X.Y.Z-arm64.dmg` (signed + notarized) | `brew upgrade` via `HomebrewUpdater` |
-| Linux | Homebrew **formula** | `Verql-X.Y.Z.AppImage` | `brew upgrade` via `HomebrewUpdater` |
+| macOS | Homebrew **cask** | `verql-X.Y.Z-x64.dmg`, `verql-X.Y.Z-arm64.dmg` (currently unsigned; cask strips quarantine) | `brew upgrade` via `HomebrewUpdater` |
+| Linux | Homebrew **formula** | `verql-X.Y.Z-x86_64.AppImage` | `brew upgrade` via `HomebrewUpdater` |
 | Windows | Microsoft **Store** | MSIX (Store only — **not** attached to the GitHub release) | Store |
 
 **Dropped entirely:** the NSIS `.exe` (and its SmartScreen problem), the mac
@@ -52,16 +52,24 @@ churn CODEOWNERS + environment wiring. "From scratch" is achieved by rewriting
 
 Single source of truth lives in the **main repo**, not the tap:
 
-- `packaging/homebrew/verql.cask.rb.tmpl` — macOS cask, placeholders
-  `{{VERSION}} {{SHA_ARM64}} {{SHA_X64}} {{URL_ARM64}} {{URL_X64}}`.
+- `packaging/homebrew/verql.cask.rb.tmpl` — the **existing working cask** with
+  only the version and the two dmg sha256s turned into `{{VERSION}} {{SHA_ARM64}}
+  {{SHA_X64}}`. Everything else is preserved verbatim — in particular the
+  `postflight` that strips `com.apple.quarantine` (load-bearing: builds are
+  unsigned, and without it macOS Sequoia reports "Verql is damaged"), the
+  `livecheck`, `auto_updates false`, `depends_on macos: ">= :ventura"`, and the
+  zap paths. The URLs use Ruby `#{version}` interpolation, so they need no
+  placeholder.
 - `packaging/homebrew/verql.formula.rb.tmpl` — Linux formula, placeholders
-  `{{VERSION}} {{SHA_APPIMAGE}} {{URL_APPIMAGE}}`.
+  `{{VERSION}} {{SHA_APPIMAGE}}`; URL built with Ruby `#{version}` interpolation.
 - `scripts/render-homebrew.mjs` — pure function `render(template, vars)` that
   rejects any unresolved `{{…}}` placeholder (fail-closed) and writes the
   **whole** file. No regex against the live tap file — the tap file is a pure
   build artifact, regenerated each release.
 - `tests/unit/render-homebrew.test.ts` — covers substitution, the
-  fail-closed unresolved-placeholder guard, and idempotent output.
+  fail-closed unresolved-placeholder guard, and idempotent output. Additionally
+  verified by rendering against v1.3.0's real shas and diffing byte-for-byte
+  against the live cask.
 
 `homebrew-bump.yml` (on `release:published`, non-prerelease): downloads the DMGs
 + AppImage from the release, computes sha256s, runs the generator, writes
@@ -69,30 +77,30 @@ Single source of truth lives in the **main repo**, not the tap:
 existing scoped `HOMEBREW_VERQL_DEPLOY_KEY` (write-only deploy key bound to the
 one tap repo — minimal privilege, kept).
 
-## Deterministic artifact names (hard requirement)
+## Artifact names (left at electron-builder defaults)
 
-`electron-builder.yml` currently sets **no** `artifactName`, so defaults
-(`Verql-1.3.0-x64.dmg`) silently disagree with what `homebrew-bump.yml`
-downloads (`verql-1.3.0-x64.dmg`) — a latent break. Pin them so the build, the
-release assets, the generator, and the cask/formula URLs all share one naming
-convention:
+> **Correction from an earlier draft of this spec.** An earlier version claimed a
+> latent name mismatch and proposed pinning `artifactName`. That was wrong:
+> electron-builder's defaults already emit lowercase names, and the existing
+> workflow matched them. The pins were reverted. Verified by a local
+> `electron-builder --mac dmg` build → `verql-1.3.0-arm64.dmg`.
 
-- dmg: `Verql-${version}-${arch}.dmg`
-- AppImage: `Verql-${version}.AppImage`
-- appx: `Verql-${version}.appx`
+The templates and `homebrew-bump.yml` use electron-builder's default lowercase
+names, confirmed empirically:
 
-The generator and templates derive URLs from these names + the release tag, so
-there is exactly one place naming is defined.
+- dmg: `verql-${version}-arm64.dmg` / `verql-${version}-x64.dmg`
+- AppImage: `verql-${version}-x86_64.AppImage`
 
 ## electron-builder.yml changes
 
 - `win.target`: `appx` only (drop `nsis`); drop `verifyUpdateCodeSignature`
   (was only for the NSIS electron-updater).
 - `mac.target`: `dmg` only (drop `zip` — it existed only for electron-updater).
-- Remove the `publish:` GitHub provider block so electron-builder stops emitting
-  `latest*.yml` feeds (we publish assets explicitly in `release.yml`; nothing
-  consumes the feeds).
-- Add the pinned `artifactName` values above.
+- Remove the `publish:` GitHub provider block. (Note: electron-builder still
+  *emits* `latest*.yml` during the build by inferring the repo from
+  `package.json`, but `release.yml` only uploads/publishes the `.dmg`/`.AppImage`,
+  so the feeds never reach the GitHub release.)
+- No `artifactName` — defaults already produce the lowercase names above.
 - `appx:` identity block unchanged (real Partner Center values).
 
 ## release.yml changes
