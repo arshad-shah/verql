@@ -208,8 +208,8 @@ persists it. Full detail in [ai.md](./ai.md).
   `electron.vite.config.ts`. Native modules (`better-sqlite3`, `pg`, `mysql2`)
   are externalised from the bundle. Path aliases: `@shared` → `shared/`,
   `@` → `src/renderer/src/`.
-- **Packaging:** `electron-builder.yml` (macOS `.dmg`, Windows NSIS, Linux
-  AppImage).
+- **Packaging:** the `build` field in `package.json` (electron-builder config;
+  macOS `.dmg`, Windows MSIX/appx → Microsoft Store, Linux AppImage).
 - **Testing:** Vitest with two projects (`vitest.config.ts`) — `unit` (jsdom,
   `tests/unit/`) and `storybook` (Playwright browser, validates stories +
   accessibility). `better-sqlite3` is rebuilt for Electron's ABI on install, so

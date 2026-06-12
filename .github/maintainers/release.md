@@ -44,8 +44,11 @@ review is the gate) auto-tags and builds.
    ┌─────────┐       ┌──────────┐      ┌─────────┐
    │ macOS   │       │  Linux   │      │ Windows │
    │ build   │       │  build   │      │  build  │
-   │ + sign  │       │ (+sums)  │      │ (no     │
-   │ + notar │       │          │      │  sign)  │
+   │ + sign  │       │ AppImage │      │ MSIX →  │
+   │ + notar │       │ → brew   │      │ Store   │
+   │ DMG →   │       │ formula  │      │         │
+   │ brew    │       │          │      │         │
+   │ cask    │       │          │      │         │
    └─────────┘       └──────────┘      └─────────┘
         └──────────────┬───────────────────┘
                        ▼
@@ -135,9 +138,16 @@ runs after you approve it.
 ### Cutting a release (what you actually do)
 
 1. Ensure the PRs you want shipped each merged with a changeset.
-2. The bot opens/updates a **Version Packages** PR — review the version bump +
+2. **Author the in-app "What's New" page** for the upcoming version (a hand-written
+   step — humans or an AI agent, not generated). This is part of cutting a release,
+   not an afterthought: add the i18n copy + registry entry for the new version per
+   [`docs/onboarding.md`](../../docs/onboarding.md) → *Authoring release notes*, and
+   set its `version` to the exact number the Version PR will produce (so the running
+   app opens the page on update). Skip only for pure patch releases with nothing
+   user-facing to say.
+3. The bot opens/updates a **Version Packages** PR — review the version bump +
    `CHANGELOG.md`, then **merge it**.
-3. Approve the run when prompted — the `release` environment for the app (and
+4. Approve the run when prompted — the `release` environment for the app (and
    the Microsoft Store, once configured), the `npm-publish` environment if the
    SDK bumped — then **Publish** the draft GitHub release. That's it — no tags,
    ever.
@@ -203,21 +213,18 @@ If you'd rather use a traditional GPG key:
 The current pipeline uses sigstore by default because it requires no
 key material at all.
 
-### Windows — **Microsoft Store (MSIX) + GitHub (NSIS)**
+### Windows — **Microsoft Store (MSIX) only**
 
-The same Windows build emits two artifacts (`electron-builder.yml` → `win.target`):
+The Windows build emits a single artifact (`package.json` → `build.win.target: appx`):
 
 - **MSIX (`.appx`) → Microsoft Store.** The Store code-signs the package and
   drives its own updates, so no code-signing certificate is needed on our side.
   The `publish-msstore` job in `release.yml` submits it via the `msstore` CLI,
   gated behind the same `release` environment reviewer as the GitHub release.
-- **NSIS (`.exe`) → GitHub Releases** as a direct download with a `latest.yml`
-  feed that electron-updater consumes. This `.exe` is **unsigned** — users get a
-  SmartScreen "Unrecognized App" warning on first run (click *More info → Run
-  anyway*); the cosign-signed `sha256sums.txt` provides provenance.
 
 > The `.appx` is **not** attached to the GitHub release (the publish job filters
-> it out) — it only goes to the Store.
+> it out) — it only goes to the Store. There is no non-Store Windows install
+> path.
 
 #### One-time Microsoft Store setup — do this before the first Store release
 
@@ -228,15 +235,22 @@ the Store being configured. To turn it on:
 1. **Reserve the app** in [Partner Center](https://partner.microsoft.com/dashboard)
    (Apps and games → New product → MSIX or PWA app) and pick the name.
 2. Open the reserved app → **Product management → Product identity** and confirm
-   the three identity values in the `appx:` block of `electron-builder.yml` match
-   exactly (they already hold this app's values — `identityName`, `publisher`
-   `CN=…` GUID, and `publisherDisplayName`). A mismatch makes the Store reject
-   the upload.
+   the identity values in the `build.appx` block of `package.json` match exactly
+   (they already hold this app's values — `identityName` `Arshadshah.verql`,
+   `publisher` `CN=2ABEC305-…` GUID, and `publisherDisplayName`). A mismatch makes
+   the Store reject the upload — electron-builder only writes these when the
+   `build.appx` block is present, so a missing/ignored config yields the default
+   `verql` / `CN=ms` identity that Partner Center refuses.
 3. **Seed the listing with one manual submission.** `msstore publish` only
-   *updates* an app that is already live, so build an MSIX locally
-   (`pnpm build && pnpm exec electron-builder --win appx`) and submit it once
-   through Partner Center by hand. **This is the manual release that starts it
-   up** — CI takes over from the next tagged release.
+   *updates* an app that is already live. MSIX/appx can only be built on Windows,
+   so produce the seed package on a Windows CI runner:
+   `gh workflow run release.yml --ref <branch>`, let the `Build (windows-latest)`
+   job finish, then `gh run download <run-id> -n verql-windows-latest` to get the
+   `.appx`. (The gated `publish`/`publish-msstore` jobs are refused from a
+   non-protected branch, so this is safe.) Upload that `.appx` to Partner Center
+   by hand once. **This is the manual release that starts it up** — CI takes over
+   from the next tagged release. The seed's version just needs to be ≤ the first
+   version CI publishes.
 4. Note the app's **Store product ID** (Product identity page) and set it as a
    repository **variable** `MICROSOFT_STORE_PRODUCT_ID` (a variable, not a
    secret — it isn't sensitive; `msstore publish -id` reads it).
@@ -266,17 +280,6 @@ Then set these GitHub **secrets**
 (`…/settings/variables/actions`).
 
 Reference: [Publish app updates to the Microsoft Store with GitHub Actions](https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions).
-
-#### Signing the NSIS `.exe` later (optional)
-
-To get rid of the SmartScreen warning on the GitHub `.exe`, the recommended path
-is **Azure Trusted Signing** (~$10/month, no hardware token, signs in CI). Add
-`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` (a Service Principal
-with the Code Signing role) and replace the `Build (Windows)` step with
-[Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action).
-Alternatives: [SignPath.io](https://signpath.io/) (free for OSS, manual portal),
-or traditional EV/OV certs from DigiCert / Sectigo / SSL.com (cost more; EV needs
-a hardware token that doesn't translate cleanly into CI).
 
 ### Sigstore keyless signing
 
@@ -313,15 +316,15 @@ A published release on
 
 | Asset | Platform | What it is |
 |-------|----------|------------|
-| `Verql-X.Y.Z.dmg` | macOS Intel | Disk image, signed & notarised |
-| `Verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
-| `Verql-X.Y.Z-mac.zip` | macOS (both arches) | For auto-updater |
-| `Verql-X.Y.Z.AppImage` | Linux x64 | Portable, no install needed |
-| `Verql Setup X.Y.Z.exe` | Windows x64 | NSIS installer (currently unsigned) |
-| `latest-mac.yml` / `latest-linux.yml` / `latest.yml` | All | Auto-updater feeds |
-| `sha256sums.txt` | All | Hashes of every binary |
+| `verql-X.Y.Z-x64.dmg` | macOS Intel | Disk image (currently unsigned); download source for the Homebrew cask |
+| `verql-X.Y.Z-arm64.dmg` | macOS Apple Silicon | Same as above |
+| `verql-X.Y.Z-x86_64.AppImage` | Linux x64 | Portable; download source for the Homebrew formula |
+| `sha256sums.txt` | All | One cosign-signed file covering every platform's binaries |
 | `sha256sums.txt.sig` + `.pem` | All | Sigstore signature + cert |
 | `verql-vX.Y.Z-sbom.cdx.json` | All | Software Bill of Materials (CycloneDX) |
+
+> Windows ships as an MSIX through the **Microsoft Store** (published by
+> `release.yml`'s `publish-msstore` job) and is **not** a release asset.
 
 ## Verifying a release as a user
 
@@ -347,25 +350,31 @@ mutated it after the build.
 
 ## Upgrading the pipeline
 
-### Add Windows signing later
+### Homebrew tap (cask + formula)
 
-1. Sign up for Azure Trusted Signing.
-2. Add the three Azure secrets above.
-3. Replace the `Build (Windows)` step in `release.yml` with the
-   trusted-signing action (or wire `electron-builder` to call
-   `signtool.exe` via the SignPath toolset).
+The `arshad-shah/homebrew-verql` tap is **regenerated from templates** in this
+repo, never hand-edited. The source of truth is
+[`packaging/homebrew/verql.cask.rb.tmpl`](../../packaging/homebrew/verql.cask.rb.tmpl)
+(macOS DMGs) and
+[`packaging/homebrew/verql.formula.rb.tmpl`](../../packaging/homebrew/verql.formula.rb.tmpl)
+(the Linux AppImage + a `verql` launcher shim — brew on Linux has no casks),
+filled by [`scripts/render-homebrew.mjs`](../../scripts/render-homebrew.mjs) (a
+pure `render()` core that fails closed on any unresolved `{{PLACEHOLDER}}`). On
+`release: published` (non-prerelease), the
+[`homebrew-bump.yml`](../workflows/homebrew-bump.yml) workflow downloads the
+DMGs + AppImage, computes their sha256s, runs the generator to write the whole
+`Casks/verql.rb` + `Formula/verql.rb`, and pushes to the tap via the scoped
+`HOMEBREW_VERQL_DEPLOY_KEY` deploy key. No awk surgery — the files are rewritten
+in full each release. The templates use electron-builder's lowercase default
+artifact names (`verql-${version}-${arch}.dmg`, `verql-${version}-x86_64.AppImage`);
+the generator injects only the version + the three sha256s (the URLs are built
+with Ruby `#{version}` interpolation). Users self-update with `brew upgrade`.
 
-### Add `latest*.yml` upload for auto-updates
-
-Already produced by `electron-builder` per platform. They're uploaded
-alongside the binaries. `electron-updater` in the app can be wired
-later by:
-
-1. `pnpm add electron-updater`
-2. In `src/main/index.ts`, call `autoUpdater.checkForUpdatesAndNotify()`
-   on app startup.
-3. The renderer can subscribe to lifecycle events via a new IPC
-   channel.
+> **Unsigned-app handling.** The cask deliberately keeps a `postflight` that runs
+> `xattr -dr com.apple.quarantine` on `Verql.app` — while builds are unsigned,
+> macOS Sequoia otherwise reports "Verql is damaged". The cask template preserves
+> this block verbatim; remove it once macOS builds are signed + notarised (set
+> the `MAC_CERT_*` / `APPLE_*` secrets above).
 
 ### Promote a draft release
 
@@ -375,5 +384,6 @@ before users see them. Once you're happy:
 1. Go to https://github.com/arshad-shah/verql/releases
 2. Find the draft, click Edit
 3. Click "Publish release"
-4. Users with the app installed will get notified by the
-   auto-updater (once that's wired).
+4. Publishing fires `homebrew-bump.yml`, which regenerates the cask + formula.
+   macOS/Linux users then self-update with `brew upgrade`; Windows users get
+   the update through the Microsoft Store.

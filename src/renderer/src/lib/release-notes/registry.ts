@@ -12,6 +12,9 @@ import {
   Package,
   PartyPopper,
   Languages,
+  MonitorDown,
+  Store,
+  RefreshCw,
 } from 'lucide-react'
 import type { ReleaseNote } from './types'
 
@@ -31,6 +34,34 @@ import type { ReleaseNote } from './types'
  * resolves it.
  */
 export const RELEASE_NOTES: ReleaseNote[] = [
+  {
+    version: '1.3.1',
+    date: '2026-06-12',
+    headline: 'whatsNew.v1_3_1.headline',
+    summary: 'whatsNew.v1_3_1.summary',
+    groups: [
+      {
+        title: 'whatsNew.groups.features',
+        tone: 'feature',
+        highlights: [
+          { id: 'linux', icon: MonitorDown, title: 'whatsNew.v1_3_1.linux.title', description: 'whatsNew.v1_3_1.linux.description' },
+          { id: 'microsoft-store', icon: Store, title: 'whatsNew.v1_3_1.microsoftStore.title', description: 'whatsNew.v1_3_1.microsoftStore.description' },
+        ],
+      },
+      {
+        title: 'whatsNew.groups.improvements',
+        tone: 'improvement',
+        highlights: [
+          { id: 'effortless-updates', icon: RefreshCw, title: 'whatsNew.v1_3_1.updates.title', description: 'whatsNew.v1_3_1.updates.description' },
+          { id: 'verifiable-downloads', icon: ShieldCheck, title: 'whatsNew.v1_3_1.verifiableDownloads.title', description: 'whatsNew.v1_3_1.verifiableDownloads.description' },
+        ],
+      },
+    ],
+    links: [
+      { label: 'whatsNew.links.userGuide', url: 'https://verql.arshadshah.com/guide/' },
+      { label: 'whatsNew.links.changelog', url: 'https://github.com/arshad-shah/verql/blob/main/CHANGELOG.md' },
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-06-11',

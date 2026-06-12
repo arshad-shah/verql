@@ -17,6 +17,31 @@ export const whatsNew = {
     sdkDocs: 'Plugin SDK docs',
     userGuide: 'User guide',
   },
+  v1_3_1: {
+    headline: 'Verql comes to Linux and the Microsoft Store',
+    summary:
+      'Installing and updating Verql just got easier on more platforms. Linux users can now install it with Homebrew, Windows users can get it from the Microsoft Store, and every download is published with a verifiable, signed checksum.',
+    linux: {
+      title: 'Now available on Linux',
+      description:
+        'Install Verql on Linux with Homebrew — "brew install arshad-shah/verql/verql" — and keep it current with "brew upgrade", the same way as on macOS.',
+    },
+    microsoftStore: {
+      title: 'Now on the Microsoft Store',
+      description:
+        'Windows users can install Verql straight from the Microsoft Store, with the Store handling signing and automatic updates — no security prompts to click through.',
+    },
+    updates: {
+      title: 'Effortless updates',
+      description:
+        'Verql keeps itself current through your platform’s own channel: "brew upgrade" on macOS and Linux, and the Store on Windows. No separate updater to babysit.',
+    },
+    verifiableDownloads: {
+      title: 'Verifiable, signed downloads',
+      description:
+        'Every release now ships a single checksum manifest signed with Sigstore, plus a software bill of materials — so you can confirm a download came from Verql’s build and wasn’t tampered with.',
+    },
+  },
   v1_2_0: {
     headline: 'Plugins go public on npm, and a warmer first run',
     summary:

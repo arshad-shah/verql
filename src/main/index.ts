@@ -172,7 +172,7 @@ function buildAppMenu(): void {
 /**
  * Resolves the app icon at runtime.
  *
- * In production the icon is baked in by electron-builder from electron-builder.yml,
+ * In production the icon is baked in by electron-builder from the package.json `build` config,
  * but in `pnpm dev` we hit Electron's default icon because nothing tells the
  * window where to find ours. We point at `build/icon.png` (the rasterized
  * Verql mark) explicitly so the Dock / taskbar / window match in dev too.
