@@ -185,6 +185,7 @@ jobs:
             dist/*.zip
             dist/*.AppImage
             dist/*.exe
+            dist/*.appx
             dist/latest*.yml
             dist/sha256sums.txt
             dist/sha256sums.txt.sig
@@ -222,7 +223,9 @@ jobs:
       - name: Flatten artifacts
         run: |
           mkdir -p release
-          find artifacts -type f -exec cp -n {} release/ \;
+          # The .appx is published to the Microsoft Store by the publish-msstore
+          # job, not attached to the GitHub release — exclude it here.
+          find artifacts -type f -not -name '*.appx' -exec cp -n {} release/ \;
           ls -la release
 
       - name: Generate SBOM (CycloneDX)
@@ -257,3 +260,53 @@ jobs:
           prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           files: release/*
           fail_on_unmatched_files: false
+
+  # ─── 3. Publish the MSIX to the Microsoft Store ───────────────────────────
+  # The Windows build already produced a `.appx` (uploaded with the other
+  # artifacts). This job submits it to the Store via the `msstore` CLI. It is
+  # gated behind the same `release` environment reviewer as the GitHub release,
+  # and is SKIPPED automatically until the repository variable
+  # `MICROSOFT_STORE_PRODUCT_ID` is set — so the rest of a release never depends
+  # on the Store being configured. One-time setup (reserve the app, seed a
+  # manual submission, create PARTNER_CENTER_* secrets) is in
+  # .github/maintainers/release.md → "Microsoft Store". `msstore publish` only
+  # *updates* an app that is already live, so the listing must be seeded once by
+  # hand before this job can succeed.
+  publish-msstore:
+    name: Publish to Microsoft Store
+    needs: build
+    if: ${{ vars.MICROSOFT_STORE_PRODUCT_ID != '' }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: verql-windows-latest
+          path: dist
+
+      - name: Setup Microsoft Store CLI
+        uses: microsoft/setup-msstore-cli@b76227f539d68e6465f79bbbc82ed92f61081aa4 # v1.3
+
+      - name: Configure msstore CLI
+        run: >
+          msstore reconfigure
+          --tenantId ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          --sellerId ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          --clientId ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          --clientSecret ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+
+      - name: Publish to the Microsoft Store
+        shell: bash
+        env:
+          PRODUCT_ID: ${{ vars.MICROSOFT_STORE_PRODUCT_ID }}
+        run: |
+          appx=$(ls dist/*.appx | head -n1)
+          if [ -z "$appx" ]; then
+            echo "::error::No .appx found in the Windows build artifact."
+            exit 1
+          fi
+          echo "Publishing $appx to product $PRODUCT_ID"
+          msstore publish "$appx" -id "$PRODUCT_ID"

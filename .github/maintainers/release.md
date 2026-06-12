@@ -20,8 +20,9 @@ review is the gate) auto-tags and builds.
                           ▼
               ┌────────────────────────────────────┐
               │ release-version.yml (on push:main) │
-              │  pending changesets → open/update  │
-              │  the "Version Packages" PR          │
+              │  changesets/action: pending        │
+              │  changesets → open/update the       │
+              │  "Version Packages" PR              │
               └────────────────────────────────────┘
                           │
             Maintainer ▶  review + MERGE the Version PR   ◀── approval gate (CODEOWNERS)
@@ -62,10 +63,15 @@ review is the gate) auto-tags and builds.
                 then clicks Publish on the draft.
 ```
 
-Workflows: [`release-version.yml`](../workflows/release-version.yml) (versioning
-+ auto-tag) and [`release.yml`](../workflows/release.yml) (build + gated
-publish). Both refuse to run for any repo other than `arshad-shah/verql`, so a
-fork can't trigger a release.
+Workflows: [`release-version.yml`](../workflows/release-version.yml) (the
+canonical `changesets/action` Version PR + auto-tag) and
+[`release.yml`](../workflows/release.yml) (build + gated publish + Microsoft
+Store). Both refuse to run for any repo other than `arshad-shah/verql`, so a
+fork can't trigger a release. The Version PR itself is the standard
+[Changesets](https://github.com/changesets/changesets) flow — the action runs
+`pnpm changeset version` with `GITHUB_TOKEN` in scope so the changelog links
+resolve; we deliberately don't give it a `publish` command, keeping releasing
+behind the environment gates below.
 
 **The SDK rides the same flow.** `@verql/plugin-sdk` is versioned independently
 by changesets. When a changeset bumps it, the same Version PR carries its bump;
@@ -98,19 +104,29 @@ both for you):
    Leave `enforce_admins` off to keep that escape hatch.
    Configure at `…/settings/branches`.
 
-2. **Release-run gate (your approval to publish).** A GitHub **Environment**
-   named `release` with **Required reviewers = `@arshad-shah`**. The
-   `publish` job in `release.yml` declares `environment: release`, so the run
-   pauses until you approve it in the Actions UI — exactly like the existing
-   `npm-publish` environment used by `publish-sdk.yml`. The GitHub release is
-   also created as a **draft**, so you still click *Publish* on it.
-   Configure at `…/settings/environments`.
+2. **Release-run gates (your approval to publish).** Two GitHub **Environments**,
+   each with **Required reviewers = `@arshad-shah`**:
+   - `release` — gates `release.yml`'s `publish` job (the GitHub release) **and**
+     its `publish-msstore` job (the Store submission).
+   - `npm-publish` — gates `publish-sdk.yml`'s `publish` job, and is where npm's
+     trusted-publisher config is pinned.
+
+   Each job declares its `environment:`, so the run pauses until you approve it
+   in the Actions UI. The GitHub release is also created as a **draft**, so you
+   still click *Publish* on it. Configure at `…/settings/environments`.
+
+3. **Version-PR permission.** *Settings → Actions → General → Workflow
+   permissions → Allow GitHub Actions to create and approve pull requests* must
+   be **on** — that's how `changesets/action` opens the "Version Packages" PR.
+   `setup-release-gates.sh` sets this for you (the default token stays
+   read-only; the workflow widens its own scope per-job).
 
 **No PAT or release secret is needed.** `release-version.yml` invokes
-`release.yml` as a **reusable workflow** (`uses: ./.github/workflows/release.yml`)
-right after it auto-tags, so the build never depends on a tag *triggering* a
-workflow — which is the only thing the default `GITHUB_TOKEN` can't do. The tag
-is still created (with `GITHUB_TOKEN`) for the release's name and record.
+`release.yml` / `publish-sdk.yml` as **reusable workflows**
+(`uses: ./.github/workflows/release.yml`) right after it auto-tags, so the build
+never depends on a tag *triggering* a workflow — which is the only thing the
+default `GITHUB_TOKEN` can't do. The tag is still created (with `GITHUB_TOKEN`)
+for the release's name and record.
 
 Optional hardening: in `…/settings/actions`, set *Fork pull request workflows* →
 *Require approval for all outside collaborators* so CI on contributor PRs only
@@ -121,8 +137,10 @@ runs after you approve it.
 1. Ensure the PRs you want shipped each merged with a changeset.
 2. The bot opens/updates a **Version Packages** PR — review the version bump +
    `CHANGELOG.md`, then **merge it**.
-3. Approve the `release` environment run when prompted, then **Publish** the
-   draft GitHub release. That's it — no tags, ever.
+3. Approve the run when prompted — the `release` environment for the app (and
+   the Microsoft Store, once configured), the `npm-publish` environment if the
+   SDK bumped — then **Publish** the draft GitHub release. That's it — no tags,
+   ever.
 
 ## Required secrets & accounts
 
@@ -185,27 +203,80 @@ If you'd rather use a traditional GPG key:
 The current pipeline uses sigstore by default because it requires no
 key material at all.
 
-### Windows — **unsigned per your decision**
+### Windows — **Microsoft Store (MSIX) + GitHub (NSIS)**
 
-The pipeline ships the NSIS installer without signing. Users will see a
-SmartScreen "Unrecognized App" warning on first run and can click
-"More info" → "Run anyway". This is fine for the first public release
-but should be revisited if you want a smoother install experience.
+The same Windows build emits two artifacts (`electron-builder.yml` → `win.target`):
 
-When you're ready to sign, the recommended path is **Azure Trusted
-Signing** (~$10/month, no hardware token, signs in CI). Add these
-secrets and replace the `Build (Windows)` step with a sign action
-([Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action)):
+- **MSIX (`.appx`) → Microsoft Store.** The Store code-signs the package and
+  drives its own updates, so no code-signing certificate is needed on our side.
+  The `publish-msstore` job in `release.yml` submits it via the `msstore` CLI,
+  gated behind the same `release` environment reviewer as the GitHub release.
+- **NSIS (`.exe`) → GitHub Releases** as a direct download with a `latest.yml`
+  feed that electron-updater consumes. This `.exe` is **unsigned** — users get a
+  SmartScreen "Unrecognized App" warning on first run (click *More info → Run
+  anyway*); the cosign-signed `sha256sums.txt` provides provenance.
 
-- `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` — for
-  a Service Principal with the Code Signing role on your Trusted
-  Signing account.
+> The `.appx` is **not** attached to the GitHub release (the publish job filters
+> it out) — it only goes to the Store.
 
-Alternatives: [SignPath.io](https://signpath.io/) is free for OSS and
-provides a signing portal you trigger manually. Traditional EV / OV
-certs from DigiCert / Sectigo / SSL.com work too but cost more and
-(for EV) require a hardware token, which doesn't translate cleanly
-into CI.
+#### One-time Microsoft Store setup — do this before the first Store release
+
+The CI job is **skipped automatically** until the repository variable
+`MICROSOFT_STORE_PRODUCT_ID` is set, so the rest of a release never depends on
+the Store being configured. To turn it on:
+
+1. **Reserve the app** in [Partner Center](https://partner.microsoft.com/dashboard)
+   (Apps and games → New product → MSIX or PWA app) and pick the name.
+2. Open the reserved app → **Product management → Product identity** and confirm
+   the three identity values in the `appx:` block of `electron-builder.yml` match
+   exactly (they already hold this app's values — `identityName`, `publisher`
+   `CN=…` GUID, and `publisherDisplayName`). A mismatch makes the Store reject
+   the upload.
+3. **Seed the listing with one manual submission.** `msstore publish` only
+   *updates* an app that is already live, so build an MSIX locally
+   (`pnpm build && pnpm exec electron-builder --win appx`) and submit it once
+   through Partner Center by hand. **This is the manual release that starts it
+   up** — CI takes over from the next tagged release.
+4. Note the app's **Store product ID** (Product identity page) and set it as a
+   repository **variable** `MICROSOFT_STORE_PRODUCT_ID` (a variable, not a
+   secret — it isn't sensitive; `msstore publish -id` reads it).
+
+**Publishing credentials (Azure Entra app registration):**
+
+1. Azure portal → **Microsoft Entra ID → App registrations → New registration**.
+   Note the **Application (client) ID** and the **Directory (tenant) ID**.
+2. In that registration → **Certificates & secrets → New client secret** and
+   copy the secret *value* immediately.
+3. **Link the registration in Partner Center**: Account settings → User
+   management → **Azure AD applications → Add Azure AD application**, pick the
+   registration, and grant it the **Manager** role.
+4. Find your **Seller ID** under Partner Center → Account settings → Identifiers.
+
+Then set these GitHub **secrets**
+(`…/settings/secrets/actions`):
+
+| Secret | What it is |
+|--------|------------|
+| `PARTNER_CENTER_TENANT_ID` | Entra **Directory (tenant) ID** |
+| `PARTNER_CENTER_CLIENT_ID` | Entra **Application (client) ID** of the registration |
+| `PARTNER_CENTER_CLIENT_SECRET` | The client secret **value** from step 2 |
+| `PARTNER_CENTER_SELLER_ID` | Partner Center **Seller ID** |
+
+…and the repository **variable** `MICROSOFT_STORE_PRODUCT_ID`
+(`…/settings/variables/actions`).
+
+Reference: [Publish app updates to the Microsoft Store with GitHub Actions](https://learn.microsoft.com/windows/apps/publish/msstore-dev-cli/github-actions).
+
+#### Signing the NSIS `.exe` later (optional)
+
+To get rid of the SmartScreen warning on the GitHub `.exe`, the recommended path
+is **Azure Trusted Signing** (~$10/month, no hardware token, signs in CI). Add
+`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` (a Service Principal
+with the Code Signing role) and replace the `Build (Windows)` step with
+[Azure/trusted-signing-action](https://github.com/Azure/trusted-signing-action).
+Alternatives: [SignPath.io](https://signpath.io/) (free for OSS, manual portal),
+or traditional EV/OV certs from DigiCert / Sectigo / SSL.com (cost more; EV needs
+a hardware token that doesn't translate cleanly into CI).
 
 ### Sigstore keyless signing
 
