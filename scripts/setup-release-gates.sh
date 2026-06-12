@@ -14,10 +14,11 @@
 #      merging — so nothing (including the auto-generated Version PR) lands
 #      without your review.
 #
-# It does NOT (these can't be set reliably via this API; do them in the UI):
-#   • Add the RELEASE_PAT secret  → Settings → Secrets and variables → Actions.
+# It does NOT (can't be set reliably via this API; do it in the UI if you want):
 #   • Require approval for fork-PR CI → Settings → Actions → General →
 #     "Fork pull request workflows from outside collaborators".
+# No PAT is needed — release-version.yml calls release.yml as a reusable
+# workflow, so nothing depends on a token that can trigger workflows.
 #
 # Requires: gh (https://cli.github.com), authenticated with admin on the repo.
 set -euo pipefail
@@ -66,10 +67,7 @@ echo "  ✓ 'main' requires a PR + Code-Owner review (admins may still merge; en
 
 cat <<DONE
 
-Done. Remaining manual steps (one-time, in the GitHub UI):
-  • Add a fine-grained PAT (contents: write) as the RELEASE_PAT secret:
-      https://github.com/${OWNER}/${REPO}/settings/secrets/actions
-    (lets the auto-created tag trigger release.yml).
+Done — both gates are set, and no PAT is needed.
   • Optional: Settings → Actions → General → require approval for fork-PR CI.
 
 See .github/maintainers/release.md for the full flow.

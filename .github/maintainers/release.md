@@ -29,11 +29,11 @@ review is the gate) auto-tags and builds.
                           ▼
               ┌────────────────────────────────────┐
               │ release-version.yml (same workflow)│
-              │  version changed → auto-create +   │
-              │  push the `vX.Y.Z` tag             │
-              │  (scripts/release-tag.mjs)          │
+              │  version changed → auto-tag         │
+              │  (scripts/release-tag.mjs) THEN     │
+              │  call release.yml (reusable)        │
               └────────────────────────────────────┘
-                          │  tag triggers ▼
+                          │  uses: ./release.yml (no PAT) ▼
               ┌────────────────────────┐
               │   release.yml          │
               └────────────────────────┘
@@ -71,13 +71,13 @@ fork can't trigger a release.
 
 > **Quick setup:** run [`scripts/setup-release-gates.sh`](../../scripts/setup-release-gates.sh)
 > once as a repo admin (`gh auth login` first). It creates the `release`
-> environment with you as required reviewer and protects `main`. Then add the
-> `RELEASE_PAT` secret in the UI (step 3 below). The rest of this section
+> environment with you as required reviewer and protects `main` — that's
+> everything. No PAT or other secret is required. The rest of this section
 > explains what those settings are.
 
-Three gates put a release entirely in your hands; the first two are **repo
-settings you must configure once** (they can't live in a committed file — the
-script above sets the first two for you):
+Two gates put a release entirely in your hands; both are **repo settings you
+configure once** (they can't live in a committed file — the script above sets
+both for you):
 
 1. **Merge gate (your approval to land anything on `main`).** Branch protection
    on `main` → *Require a pull request before merging* + *Require review from
@@ -98,11 +98,11 @@ script above sets the first two for you):
    also created as a **draft**, so you still click *Publish* on it.
    Configure at `…/settings/environments`.
 
-3. **Auto-tag trigger.** Add a fine-grained **PAT** with `contents: write` on
-   this repo as the `RELEASE_PAT` repository secret. `release-version.yml`
-   checks out with it so the auto-created tag can trigger `release.yml` (the
-   default `GITHUB_TOKEN` deliberately cannot trigger other workflows). Without
-   it the tag is still created, but you'd start `release.yml` manually once.
+**No PAT or release secret is needed.** `release-version.yml` invokes
+`release.yml` as a **reusable workflow** (`uses: ./.github/workflows/release.yml`)
+right after it auto-tags, so the build never depends on a tag *triggering* a
+workflow — which is the only thing the default `GITHUB_TOKEN` can't do. The tag
+is still created (with `GITHUB_TOKEN`) for the release's name and record.
 
 Optional hardening: in `…/settings/actions`, set *Fork pull request workflows* →
 *Require approval for all outside collaborators* so CI on contributor PRs only

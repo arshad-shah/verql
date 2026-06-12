@@ -1,11 +1,12 @@
 name: Release — version & tag
 
-# Tag-free releasing. On every push to `main`:
+# Tag-free, PAT-free releasing. On every push to `main`:
 #   • if changesets are pending → open/update the "Version Packages" PR.
 #     Merging that PR (your review = the approval gate) is the only manual step.
 #   • when that PR's merge lands the version bump → auto-create + push the
-#     `vX.Y.Z` tag, which triggers release.yml (whose publish job then waits for
-#     your approval in the `release` environment).
+#     `vX.Y.Z` tag, then invoke release.yml DIRECTLY as a reusable workflow
+#     (no cross-workflow tag trigger, so no PAT is needed). release.yml's
+#     publish job then waits for your approval in the `release` environment.
 # Nobody pushes tags by hand. See .github/maintainers/release.md.
 
 on:
@@ -27,15 +28,15 @@ jobs:
     if: ${{ github.repository == 'arshad-shah/verql' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      tagged: ${{ steps.tag.outputs.tagged }}
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
-          # A PAT (contents: write) lets the auto-created tag trigger
-          # release.yml — the default GITHUB_TOKEN deliberately cannot trigger
-          # other workflows. Falls back to the default token, in which case the
-          # tag is still created but release.yml must be started manually.
-          token: ${{ secrets.RELEASE_PAT || github.token }}
+          # Default GITHUB_TOKEN is fine — the tag doesn't need to trigger
+          # anything; the `release` job below calls release.yml directly.
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
@@ -52,13 +53,29 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # FIRST, on the pristine `main` checkout: if this push merged the Version
-      # PR (version bumped), create + push the release tag. Runs before the PR
-      # step, which switches branches.
+      # PR (version bumped), create + push the release tag and emit `tagged`.
+      # Runs before the PR step, which switches branches.
       - name: Auto-tag a merged version bump
+        id: tag
         run: node scripts/release-tag.mjs
 
       # THEN: (re)open the Version Packages PR from any pending changesets.
       - name: Open / update the Version Packages PR
         run: node scripts/open-version-pr.mjs
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT || github.token }}
+          GH_TOKEN: ${{ github.token }}
+
+  # When a new tag was created, build + publish — release.yml as a reusable
+  # workflow. No PAT, no tag trigger. Its publish job is gated by the `release`
+  # environment's required reviewer.
+  release:
+    name: Build & publish
+    needs: version
+    if: ${{ needs.version.outputs.tagged == 'true' }}
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.version.outputs.tag }}
+    permissions:
+      contents: write
+      id-token: write
+    secrets: inherit
