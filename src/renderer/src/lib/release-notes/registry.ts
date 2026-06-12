@@ -35,25 +35,25 @@ import type { ReleaseNote } from './types'
  */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
-    version: '1.4.0',
+    version: '1.3.1',
     date: '2026-06-12',
-    headline: 'whatsNew.v1_4_0.headline',
-    summary: 'whatsNew.v1_4_0.summary',
+    headline: 'whatsNew.v1_3_1.headline',
+    summary: 'whatsNew.v1_3_1.summary',
     groups: [
       {
         title: 'whatsNew.groups.features',
         tone: 'feature',
         highlights: [
-          { id: 'linux', icon: MonitorDown, title: 'whatsNew.v1_4_0.linux.title', description: 'whatsNew.v1_4_0.linux.description' },
-          { id: 'microsoft-store', icon: Store, title: 'whatsNew.v1_4_0.microsoftStore.title', description: 'whatsNew.v1_4_0.microsoftStore.description' },
+          { id: 'linux', icon: MonitorDown, title: 'whatsNew.v1_3_1.linux.title', description: 'whatsNew.v1_3_1.linux.description' },
+          { id: 'microsoft-store', icon: Store, title: 'whatsNew.v1_3_1.microsoftStore.title', description: 'whatsNew.v1_3_1.microsoftStore.description' },
         ],
       },
       {
         title: 'whatsNew.groups.improvements',
         tone: 'improvement',
         highlights: [
-          { id: 'effortless-updates', icon: RefreshCw, title: 'whatsNew.v1_4_0.updates.title', description: 'whatsNew.v1_4_0.updates.description' },
-          { id: 'verifiable-downloads', icon: ShieldCheck, title: 'whatsNew.v1_4_0.verifiableDownloads.title', description: 'whatsNew.v1_4_0.verifiableDownloads.description' },
+          { id: 'effortless-updates', icon: RefreshCw, title: 'whatsNew.v1_3_1.updates.title', description: 'whatsNew.v1_3_1.updates.description' },
+          { id: 'verifiable-downloads', icon: ShieldCheck, title: 'whatsNew.v1_3_1.verifiableDownloads.title', description: 'whatsNew.v1_3_1.verifiableDownloads.description' },
         ],
       },
     ],

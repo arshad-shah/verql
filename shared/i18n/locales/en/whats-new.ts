@@ -17,7 +17,7 @@ export const whatsNew = {
     sdkDocs: 'Plugin SDK docs',
     userGuide: 'User guide',
   },
-  v1_4_0: {
+  v1_3_1: {
     headline: 'Verql comes to Linux and the Microsoft Store',
     summary:
       'Installing and updating Verql just got easier on more platforms. Linux users can now install it with Homebrew, Windows users can get it from the Microsoft Store, and every download is published with a verifiable, signed checksum.',
