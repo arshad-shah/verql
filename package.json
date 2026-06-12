@@ -128,8 +128,19 @@
       "identity": null
     },
     "win": {
-      "target": "nsis",
+      "target": "appx",
       "icon": "build/icon.ico"
+    },
+    "appx": {
+      "identityName": "Arshadshah.verql",
+      "publisher": "CN=2ABEC305-C7D9-4693-92FC-165FCE8EEA94",
+      "publisherDisplayName": "Arshad shah",
+      "applicationId": "Verql",
+      "displayName": "Verql",
+      "backgroundColor": "#1e1e2e",
+      "languages": [
+        "en-US"
+      ]
     },
     "linux": {
       "target": "AppImage",

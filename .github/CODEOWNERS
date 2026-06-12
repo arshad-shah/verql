@@ -16,7 +16,6 @@
 /scripts/render-homebrew.mjs           @arshad-shah
 /scripts/setup-release-gates.sh        @arshad-shah
 /packaging/                            @arshad-shah
-/electron-builder.yml                  @arshad-shah
 
 # Security-relevant code.
 /src/main/db/identifier.ts    @arshad-shah

@@ -85,23 +85,40 @@ one tap repo — minimal privilege, kept).
 > workflow matched them. The pins were reverted. Verified by a local
 > `electron-builder --mac dmg` build → `verql-1.3.0-arm64.dmg`.
 
-The templates and `homebrew-bump.yml` use electron-builder's default lowercase
-names, confirmed empirically:
+The templates and `homebrew-bump.yml` use the lowercase names produced by the
+`artifactName: ${name}-${version}-${arch}.${ext}` in `package.json` build,
+confirmed empirically:
 
 - dmg: `verql-${version}-arm64.dmg` / `verql-${version}-x64.dmg`
 - AppImage: `verql-${version}-x86_64.AppImage`
 
-## electron-builder.yml changes
+## The packaging config lives in `package.json` `build` (not `electron-builder.yml`)
 
-- `win.target`: `appx` only (drop `nsis`); drop `verifyUpdateCodeSignature`
-  (was only for the NSIS electron-updater).
-- `mac.target`: `dmg` only (drop `zip` — it existed only for electron-updater).
-- Remove the `publish:` GitHub provider block. (Note: electron-builder still
-  *emits* `latest*.yml` during the build by inferring the repo from
-  `package.json`, but `release.yml` only uploads/publishes the `.dmg`/`.AppImage`,
-  so the feeds never reach the GitHub release.)
-- No `artifactName` — defaults already produce the lowercase names above.
-- `appx:` identity block unchanged (real Partner Center values).
+> **Major correction.** The repo had **both** an `electron-builder.yml` and a
+> `package.json` `build` field. electron-builder uses `package.json build` and
+> **ignores `electron-builder.yml`** when both exist — proven because v1.3.0
+> shipped with `build.appId` `com.electron.verql` (the yml said
+> `com.arshadshah.verql`) and the `${name}`-based lowercase artifact names. So
+> `electron-builder.yml` was dead config; every edit to it had no effect, which
+> is why the seed MSIX came out with electron-builder's default identity
+> (`verql` / `CN=ms`) and Partner Center rejected it.
+
+Resolution: **delete `electron-builder.yml`** (dead, and its wrong appId is a
+landmine) and make the changes in `package.json` `build` (the proven-active
+config, with the production-correct `com.electron.verql` appId):
+
+- `build.win.target`: `appx` (Store-only; nsis was already not built by the new
+  `release.yml`, which calls `electron-builder --win appx`).
+- Add the `build.appx` identity block (`identityName: Arshadshah.verql`,
+  `publisher: CN=2ABEC305-…`, `publisherDisplayName`, `applicationId: Verql`,
+  `displayName`, `backgroundColor`, `languages`) — without it the MSIX gets
+  electron-builder's default `verql` / `CN=ms` identity.
+- `build.mac.target` stays `dmg` (no zip was ever built), `build.linux` stays
+  AppImage. `appId` stays `com.electron.verql` (matches existing installs + the
+  cask zap — do **not** change it).
+- electron-builder still emits `latest*.yml` (inferred from `package.json`
+  `repository`), but `release.yml` only uploads the `.dmg`/`.AppImage`, so the
+  feeds never reach the release.
 
 ## release.yml changes
 

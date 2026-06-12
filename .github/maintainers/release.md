@@ -215,7 +215,7 @@ key material at all.
 
 ### Windows — **Microsoft Store (MSIX) only**
 
-The Windows build emits a single artifact (`electron-builder.yml` → `win.target`):
+The Windows build emits a single artifact (`package.json` → `build.win.target: appx`):
 
 - **MSIX (`.appx`) → Microsoft Store.** The Store code-signs the package and
   drives its own updates, so no code-signing certificate is needed on our side.
@@ -235,15 +235,22 @@ the Store being configured. To turn it on:
 1. **Reserve the app** in [Partner Center](https://partner.microsoft.com/dashboard)
    (Apps and games → New product → MSIX or PWA app) and pick the name.
 2. Open the reserved app → **Product management → Product identity** and confirm
-   the three identity values in the `appx:` block of `electron-builder.yml` match
-   exactly (they already hold this app's values — `identityName`, `publisher`
-   `CN=…` GUID, and `publisherDisplayName`). A mismatch makes the Store reject
-   the upload.
+   the identity values in the `build.appx` block of `package.json` match exactly
+   (they already hold this app's values — `identityName` `Arshadshah.verql`,
+   `publisher` `CN=2ABEC305-…` GUID, and `publisherDisplayName`). A mismatch makes
+   the Store reject the upload — electron-builder only writes these when the
+   `build.appx` block is present, so a missing/ignored config yields the default
+   `verql` / `CN=ms` identity that Partner Center refuses.
 3. **Seed the listing with one manual submission.** `msstore publish` only
-   *updates* an app that is already live, so build an MSIX locally
-   (`pnpm build && pnpm exec electron-builder --win appx`) and submit it once
-   through Partner Center by hand. **This is the manual release that starts it
-   up** — CI takes over from the next tagged release.
+   *updates* an app that is already live. MSIX/appx can only be built on Windows,
+   so produce the seed package on a Windows CI runner:
+   `gh workflow run release.yml --ref <branch>`, let the `Build (windows-latest)`
+   job finish, then `gh run download <run-id> -n verql-windows-latest` to get the
+   `.appx`. (The gated `publish`/`publish-msstore` jobs are refused from a
+   non-protected branch, so this is safe.) Upload that `.appx` to Partner Center
+   by hand once. **This is the manual release that starts it up** — CI takes over
+   from the next tagged release. The seed's version just needs to be ≤ the first
+   version CI publishes.
 4. Note the app's **Store product ID** (Product identity page) and set it as a
    repository **variable** `MICROSOFT_STORE_PRODUCT_ID` (a variable, not a
    secret — it isn't sensitive; `msstore publish -id` reads it).

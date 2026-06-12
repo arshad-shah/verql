@@ -213,7 +213,7 @@ persists it. Full detail in [ai.md](/develop/ai/).
   `electron.vite.config.ts`. Native modules (`better-sqlite3`, `pg`, `mysql2`)
   are externalised from the bundle. Path aliases: `@shared` → `shared/`,
   `@` → `src/renderer/src/`.
-- **Packaging:** `electron-builder.yml` (macOS `.dmg`, Windows NSIS, Linux
+- **Packaging:** the `build` field in `package.json` (macOS `.dmg`, Windows MSIX, Linux
   AppImage).
 - **Testing:** Vitest with two projects (`vitest.config.ts`) — `unit` (jsdom,
   `tests/unit/`) and `storybook` (Playwright browser, validates stories +

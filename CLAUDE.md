@@ -146,7 +146,7 @@ Three-layer theming in `primitives/theme/tokens.css`: raw color scale → semant
 
 - `electron.vite.config.ts` — Main/preload/renderer build config. Native modules (better-sqlite3, pg, mysql2) are externalized from bundle.
 - Path aliases: `@shared` → `shared/`, `@` → `src/renderer/src/`
-- `electron-builder.yml` — Packaging for macOS (DMG), Windows (NSIS), Linux (AppImage)
+- `package.json` `build` field — electron-builder packaging config (the active one; there is no separate `electron-builder.yml`). macOS DMG, Windows MSIX/appx → Microsoft Store, Linux AppImage. Includes the `appx` Store identity block.
 
 ## Testing
 
