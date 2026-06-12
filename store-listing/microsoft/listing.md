@@ -98,7 +98,7 @@ Redis
   runFullTrust is required for the packaged Win32 runtime."* Routinely approved.
 
 ## Assets checklist (see [`../assets.md`](../assets.md))
-- [ ] 300×300 Store logo (from `build/icon.png`)
-- [ ] ≥ 1 screenshot, 1366×768+ (suggested set in `assets.md`)
-- [ ] Privacy policy page is live at the URL above (the Store rejects a 404)
+- [x] 300×300 Store logo → `assets/store-logo-300.png` (also 512 / 1024)
+- [ ] ≥ 1 screenshot, 1366×768+ (suggested set in `assets.md`) — needs the running app
+- [ ] Privacy policy page is live at the URL above (the Store rejects a 404 — deploys with `main`)
 - [ ] One-time manual seed submission uploaded (`msstore publish` only updates a live app)

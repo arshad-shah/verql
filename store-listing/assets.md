@@ -15,11 +15,21 @@ derived from that source.
 
 ## Microsoft Store assets (Partner Center)
 
-| Asset | Spec | Source |
+| Asset | Spec | Status |
 |-------|------|--------|
-| Store logo | 300×300 PNG | Downscale `build/icon.png` |
-| App screenshots | ≥ 1, 1366×768 or larger PNG (up to 10) | Capture from the running app |
-| Promotional images (optional) | per Partner Center sizes | Designed if desired |
+| Store logo | 300×300 PNG | ✅ `microsoft/assets/store-logo-300.png` (+ 512, 1024) |
+| App screenshots | ≥ 1, 1366×768 or larger PNG (up to 10) | ⛔ Not captured — needs the running app (see below) |
+| Promotional images (optional) | per Partner Center sizes | ⛔ Optional |
+
+### Regenerating the logos
+
+Rendered from `build/icon.svg` (the source of truth) with `rsvg-convert`:
+
+```bash
+for s in 300 512 1024; do
+  rsvg-convert -w $s -h $s build/icon.svg -o store-listing/microsoft/assets/store-logo-$s.png
+done
+```
 
 The MSIX itself already carries the tile/logo assets electron-builder generates
 from `build/icon.ico` + the `backgroundColor` (`#1e1e2e`) in `package.json`
