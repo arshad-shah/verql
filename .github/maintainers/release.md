@@ -87,8 +87,9 @@ the app (`vX.Y.Z`), just the SDK (`sdk-vX.Y.Z`), or both.
 ## Approval gates & required GitHub settings
 
 > **Quick setup:** run [`scripts/setup-release-gates.sh`](../../scripts/setup-release-gates.sh)
-> once as a repo admin (`gh auth login` first). It creates the `release`
-> environment with you as required reviewer and protects `main` — that's
+> once as a repo admin (`gh auth login` first; needs `gh` + `jq`). It creates the
+> `release` / `npm-publish` environments with you as required reviewer, protects
+> `main`, and fixes tag rulesets so the auto-tagger isn't blocked — that's
 > everything. No PAT or other secret is required. The rest of this section
 > explains what those settings are.
 
@@ -123,6 +124,21 @@ both for you):
    be **on** — that's how `changesets/action` opens the "Version Packages" PR.
    `setup-release-gates.sh` sets this for you (the default token stays
    read-only; the workflow widens its own scope per-job).
+
+4. **Tag protection (must NOT restrict creations).** After the Version PR
+   merges, `scripts/release-tag.mjs` pushes the `vX.Y.Z` / `sdk-vX.Y.Z` tag with
+   the default `GITHUB_TOKEN`. A repository **ruleset** that *restricts tag
+   creations* rejects that push — `GH013: Cannot create ref due to creations
+   being restricted` — and the publication chain (`release.yml` /
+   `publish-sdk.yml`) never starts. The `github-actions[bot]` is a system bot
+   that **can't be added to a ruleset bypass list**, so a token won't fix it.
+   Release tags no longer *trigger* anything (the publish workflows are reusable
+   calls, not tag triggers), so there's nothing to protect by blocking their
+   creation. `setup-release-gates.sh` therefore **strips any "restrict tag
+   creations" rule** and replaces it with the protection that matters — release
+   tags are **immutable** (a ruleset blocking deletion + force-moves of
+   `refs/tags/v*` and `refs/tags/sdk-v*`). Configure rulesets at
+   `…/settings/rules`.
 
 **No PAT or release secret is needed.** `release-version.yml` invokes
 `release.yml` / `publish-sdk.yml` as **reusable workflows**
@@ -308,6 +324,13 @@ full command without the CI gobbledygook.)
 Provided automatically by GitHub Actions. The workflow's job-level
 `permissions:` block scopes it to `contents: write` only in the
 `publish` job. No action needed.
+
+> **Gotcha — tag rulesets.** The token *can* create the `vX.Y.Z` / `sdk-vX.Y.Z`
+> tag, but only if no ruleset **restricts tag creations**. Because the
+> `github-actions[bot]` can't be bypass-listed, such a ruleset hard-fails the
+> auto-tagger (`GH013`) and silently stops every release. `setup-release-gates.sh`
+> removes that restriction and keeps release tags immutable instead — see
+> [Tag protection](#approval-gates--required-github-settings) above.
 
 ## What the user gets
 

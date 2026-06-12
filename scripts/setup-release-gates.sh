@@ -17,6 +17,15 @@
 #   3. Branch protection on `main`: require a PR and a Code-Owner approval before
 #      merging — so nothing (including the auto-generated Version PR) lands
 #      without your review.
+#   4. Tag protection: release-version.yml auto-tags `vX.Y.Z` / `sdk-vX.Y.Z`
+#      with the default GITHUB_TOKEN. A repository ruleset that *restricts tag
+#      creations* rejects that push (GH013 "Cannot create ref due to creations
+#      being restricted") because the github-actions[bot] is a system bot that
+#      can't be added to a ruleset bypass list — which silently breaks every
+#      automatic publication. This strips any such "restrict creations" rule
+#      from tag rulesets and ensures release tags stay immutable (no deletion /
+#      no force-move) instead — the protection that actually matters now that
+#      release.yml is a reusable call, not a tag trigger.
 #
 # It does NOT (can't be set reliably via this API; do it in the UI if you want):
 #   • Require approval for fork-PR CI → Settings → Actions → General →
@@ -24,7 +33,7 @@
 # No PAT is needed — release-version.yml calls release.yml as a reusable
 # workflow, so nothing depends on a token that can trigger workflows.
 #
-# Requires: gh (https://cli.github.com), authenticated with admin on the repo.
+# Requires: gh (https://cli.github.com) + jq, authenticated with admin on the repo.
 set -euo pipefail
 
 OWNER="${OWNER:-arshad-shah}"
@@ -36,6 +45,7 @@ REVIEWER="${REVIEWER:-arshad-shah}"   # the GitHub user who must approve release
 ENVIRONMENTS="${ENVIRONMENTS:-release npm-publish}"
 
 command -v gh >/dev/null || { echo "error: gh CLI not found — https://cli.github.com" >&2; exit 1; }
+command -v jq >/dev/null || { echo "error: jq not found — https://jqlang.github.io/jq/" >&2; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "error: run 'gh auth login' first (as a repo admin)" >&2; exit 1; }
 
 echo "› Resolving reviewer '$REVIEWER'…"
@@ -79,6 +89,54 @@ gh api -X PUT "repos/${OWNER}/${REPO}/branches/main/protection" --input - >/dev/
 }
 JSON
 echo "  ✓ 'main' requires a PR + Code-Owner review (admins may still merge; enforce_admins=false)."
+
+# ─── Tag protection ──────────────────────────────────────────────────────────
+# The auto-tagger (scripts/release-tag.mjs) pushes vX.Y.Z / sdk-vX.Y.Z with the
+# default GITHUB_TOKEN. A ruleset that *restricts tag creations* rejects that
+# push because github-actions[bot] can't be bypass-listed — breaking automatic
+# publication. Release tags are no longer a trigger (release-version.yml calls
+# release.yml as a reusable workflow), so blocking their creation only blocks
+# automation. Strip any such rule, then keep the protection that matters:
+# published release tags can't be deleted or force-moved.
+RULESET_NAME="Release tags - immutable (v*, sdk-v*)"
+
+echo "› Removing any 'restrict tag creations' rule that would block the auto-tagger…"
+gh api "repos/${OWNER}/${REPO}/rulesets" \
+  --jq '.[] | select(.target=="tag") | .id' 2>/dev/null | while read -r RID; do
+  [ -n "$RID" ] || continue
+  FULL="$(gh api "repos/${OWNER}/${REPO}/rulesets/${RID}")"
+  if echo "$FULL" | jq -e '.rules[]? | select(.type=="creation")' >/dev/null; then
+    NAME="$(echo "$FULL" | jq -r '.name')"
+    echo "  • ruleset '$NAME' (#$RID) restricts tag creation — removing that rule."
+    echo "$FULL" \
+      | jq '{name, target, enforcement, bypass_actors, conditions,
+             rules: [.rules[] | select(.type != "creation")]}' \
+      | gh api -X PUT "repos/${OWNER}/${REPO}/rulesets/${RID}" --input - >/dev/null
+    echo "    ✓ '$NAME' now lets the bot create release tags."
+  fi
+done
+
+echo "› Ensuring release tags stay immutable (no deletion / no force-move)…"
+RULESET_BODY=$(cat <<JSON
+{
+  "name": "${RULESET_NAME}",
+  "target": "tag",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": { "ref_name": { "include": ["refs/tags/v*", "refs/tags/sdk-v*"], "exclude": [] } },
+  "rules": [ { "type": "deletion" }, { "type": "non_fast_forward" } ]
+}
+JSON
+)
+EXISTING_ID="$(gh api "repos/${OWNER}/${REPO}/rulesets" \
+  --jq ".[] | select(.name==\"${RULESET_NAME}\") | .id" 2>/dev/null | head -n1)"
+if [ -n "$EXISTING_ID" ]; then
+  echo "$RULESET_BODY" | gh api -X PUT "repos/${OWNER}/${REPO}/rulesets/${EXISTING_ID}" --input - >/dev/null
+  echo "  ✓ updated the release-tag immutability ruleset (#$EXISTING_ID)."
+else
+  echo "$RULESET_BODY" | gh api -X POST "repos/${OWNER}/${REPO}/rulesets" --input - >/dev/null
+  echo "  ✓ created the release-tag immutability ruleset."
+fi
 
 cat <<DONE
 

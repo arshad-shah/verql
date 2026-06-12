@@ -70,7 +70,24 @@ for (const t of TARGETS) {
 
   console.log(`[${t.id}] version bumped ${prev} → ${version}. Creating tag ${tag}…`)
   execSync(`git tag -a ${tag} -m "Release ${tag}"`, { stdio: 'inherit' })
-  execSync(`git push origin ${tag}`, { stdio: 'inherit' })
+  try {
+    execSync(`git push origin ${tag}`, { stdio: 'inherit' })
+  } catch (err) {
+    // The usual culprit is a repository ruleset that "restricts tag creations":
+    // the push is rejected with GH013 "Cannot create ref due to creations being
+    // restricted". The github-actions[bot] is a system bot and can't be added to
+    // a ruleset's bypass list, so the fix isn't a token — it's the ruleset.
+    console.error(
+      `\n[${t.id}] Failed to push tag ${tag}.\n` +
+        `If the error above is a ruleset violation (GH013 "creations being\n` +
+        `restricted"), a repository ruleset is blocking tag creation. Release\n` +
+        `tags no longer trigger anything, so that restriction only blocks this\n` +
+        `auto-tagger. Fix it by running scripts/setup-release-gates.sh (it drops\n` +
+        `the creation restriction and keeps release tags immutable instead).\n` +
+        `See .github/maintainers/release.md → "Tag protection".\n`
+    )
+    throw err
+  }
   console.log(`[${t.id}] pushed ${tag}.`)
   setOutput(`${t.id}_tagged`, 'true')
 }
