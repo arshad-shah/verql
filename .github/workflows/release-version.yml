@@ -1,12 +1,17 @@
 name: Release — version & tag
 
-# Tag-free, PAT-free releasing. On every push to `main`:
-#   • if changesets are pending → open/update the "Version Packages" PR.
-#     Merging that PR (your review = the approval gate) is the only manual step.
-#   • when that PR's merge lands the version bump → auto-create + push the
-#     `vX.Y.Z` tag, then invoke release.yml DIRECTLY as a reusable workflow
-#     (no cross-workflow tag trigger, so no PAT is needed). release.yml's
-#     publish job then waits for your approval in the `release` environment.
+# Tag-free, PAT-free releasing, driven by the canonical Changesets flow. On
+# every push to `main`:
+#   • if changesets are pending → `changesets/action` opens/updates the
+#     "Version Packages" PR (consuming the changesets, bumping versions and
+#     regenerating CHANGELOGs). Merging that PR (your review = the approval
+#     gate) is the only manual step. The action runs the changelog generator
+#     with GITHUB_TOKEN in scope, so the GitHub changelog links resolve.
+#   • when that PR's merge lands the version bump → `scripts/release-tag.mjs`
+#     auto-creates + pushes the `vX.Y.Z` / `sdk-vX.Y.Z` tag, then this workflow
+#     invokes release.yml / publish-sdk.yml DIRECTLY as reusable workflows (no
+#     cross-workflow tag trigger, so no PAT is needed). Those publish jobs then
+#     wait for your approval in the `release` / `npm-publish` environments.
 # Nobody pushes tags by hand. See .github/maintainers/release.md.
 
 on:
@@ -56,16 +61,29 @@ jobs:
 
       # FIRST, on the pristine `main` checkout: if this push merged the Version
       # PR (version bumped), create + push the app and/or SDK tags and emit the
-      # *_tagged / *_tag outputs. Runs before the PR step, which switches branches.
+      # *_tagged / *_tag outputs. Runs before the Changesets step, which only
+      # acts when changesets are *pending* (none on a Version-PR merge), so the
+      # two never collide.
       - name: Auto-tag merged version bumps (app + SDK)
         id: tag
         run: node scripts/release-tag.mjs
 
-      # THEN: (re)open the Version Packages PR from any pending changesets.
+      # THEN: canonical Changesets flow. When changesets are pending, this
+      # opens/updates the "Version Packages" PR — running `pnpm changeset
+      # version` to consume them, bump versions and regenerate CHANGELOGs.
+      # `@changesets/changelog-github` needs GITHUB_TOKEN in scope (the missing
+      # piece that previously failed the run); the action provides it. We do NOT
+      # set `publish` here — releasing stays gated by the reusable workflows
+      # below (the `release` / `npm-publish` environments), not auto-published
+      # on merge.
       - name: Open / update the Version Packages PR
-        run: node scripts/open-version-pr.mjs
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          version: pnpm changeset version
+          title: 'chore(release): version packages'
+          commit: 'chore(release): version packages'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
 
   # When the APP version bumped, build + publish via release.yml (reusable).
   # No PAT, no tag trigger. Publish gated by the `release` environment reviewer.

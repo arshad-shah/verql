@@ -30,14 +30,36 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
   # gatekeeperAssess: false  # left at default; CI runs codesign + notarytool
 
-# Windows: shipped UNSIGNED on first release. Users will see a SmartScreen
-# warning until reputation builds or a code-signing certificate is added.
-# (See .github/maintainers/release.md for the upgrade path.)
+# Windows ships two ways from the same build:
+#   • appx (MSIX) → the Microsoft Store. The Store code-signs the package and
+#     drives its own updates, so no code-signing cert is needed on our side and
+#     electron-builder generates no update feed for this target.
+#   • nsis (.exe) → GitHub Releases as a direct download, with a latest.yml feed
+#     that electron-updater consumes. Shipped UNSIGNED — users see a SmartScreen
+#     warning until reputation builds or a code-signing certificate is added.
+# (See .github/maintainers/release.md → "Microsoft Store" for the full setup.)
 win:
   target:
+    - target: appx
+      arch: [x64]
     - target: nsis
       arch: [x64]
+  # Required so electron-updater applies updates to the unsigned NSIS build;
+  # the Store MSIX is unaffected (the Store signs it).
   verifyUpdateCodeSignature: false
+
+# MSIX identity. These values come from Partner Center under Product
+# management → Product identity, and MUST match it exactly or the Store rejects
+# the upload (see .github/maintainers/release.md → "Microsoft Store").
+appx:
+  identityName: Arshadshah.verql                      # Package/Identity/Name
+  publisher: CN=2ABEC305-C7D9-4693-92FC-165FCE8EEA94  # Package/Identity/Publisher
+  publisherDisplayName: Arshad shah                   # Package/Properties/PublisherDisplayName
+  applicationId: Verql                                # alphanumeric, no spaces/dots
+  displayName: Verql
+  backgroundColor: "#1e1e2e"
+  languages:
+    - en-US
 
 linux:
   target:

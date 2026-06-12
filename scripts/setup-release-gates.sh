@@ -7,10 +7,14 @@
 #   ./scripts/setup-release-gates.sh
 #
 # Configures, via the GitHub REST API (using your `gh` auth):
-#   1. The `release` environment with you as a Required Reviewer + a
-#      protected-branches deployment policy. This is the manual-approval lock on
-#      release.yml's `publish` job (mirrors the existing `npm-publish` env).
-#   2. Branch protection on `main`: require a PR and a Code-Owner approval before
+#   1. The `release` AND `npm-publish` environments, each with you as a Required
+#      Reviewer + a protected-branches deployment policy. These are the
+#      manual-approval locks on release.yml's `publish` / `publish-msstore` jobs
+#      and publish-sdk.yml's `publish` job.
+#   2. "Allow GitHub Actions to create and approve pull requests" — required so
+#      `changesets/action` (in release-version.yml) can open the "Version
+#      Packages" PR.
+#   3. Branch protection on `main`: require a PR and a Code-Owner approval before
 #      merging — so nothing (including the auto-generated Version PR) lands
 #      without your review.
 #
@@ -26,7 +30,10 @@ set -euo pipefail
 OWNER="${OWNER:-arshad-shah}"
 REPO="${REPO:-verql}"
 REVIEWER="${REVIEWER:-arshad-shah}"   # the GitHub user who must approve releases
-ENVIRONMENT="${ENVIRONMENT:-release}"
+# Both publish gates. `release` locks the app build/publish + Microsoft Store;
+# `npm-publish` locks the SDK npm publish (and is where npm's trusted-publisher
+# config is pinned). Override with: ENVIRONMENTS="release" ./setup-release-gates.sh
+ENVIRONMENTS="${ENVIRONMENTS:-release npm-publish}"
 
 command -v gh >/dev/null || { echo "error: gh CLI not found — https://cli.github.com" >&2; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "error: run 'gh auth login' first (as a repo admin)" >&2; exit 1; }
@@ -36,8 +43,9 @@ REVIEWER_ID="$(gh api "users/${REVIEWER}" --jq '.id')"
 REVIEWER_TYPE="$(gh api "users/${REVIEWER}" --jq '.type')"   # "User" or "Organization"
 echo "  $REVIEWER → id $REVIEWER_ID ($REVIEWER_TYPE)"
 
-echo "› Creating/updating the '$ENVIRONMENT' environment with a required reviewer…"
-gh api -X PUT "repos/${OWNER}/${REPO}/environments/${ENVIRONMENT}" --input - >/dev/null <<JSON
+for ENVIRONMENT in $ENVIRONMENTS; do
+  echo "› Creating/updating the '$ENVIRONMENT' environment with a required reviewer…"
+  gh api -X PUT "repos/${OWNER}/${REPO}/environments/${ENVIRONMENT}" --input - >/dev/null <<JSON
 {
   "wait_timer": 0,
   "prevent_self_review": false,
@@ -45,7 +53,14 @@ gh api -X PUT "repos/${OWNER}/${REPO}/environments/${ENVIRONMENT}" --input - >/d
   "deployment_branch_policy": { "protected_branches": true, "custom_branch_policies": false }
 }
 JSON
-echo "  ✓ '$ENVIRONMENT' now pauses release.yml's publish job for $REVIEWER's approval."
+  echo "  ✓ '$ENVIRONMENT' now pauses its publish job for $REVIEWER's approval."
+done
+
+echo "› Allowing GitHub Actions to create pull requests (for the Version PR)…"
+gh api -X PUT "repos/${OWNER}/${REPO}/actions/permissions/workflow" --input - >/dev/null <<'JSON'
+{ "default_workflow_permissions": "read", "can_approve_pull_request_reviews": true }
+JSON
+echo "  ✓ changesets/action can open the 'Version Packages' PR (default token stays read-only)."
 
 echo "› Protecting 'main' (require a PR + a Code-Owner approval)…"
 gh api -X PUT "repos/${OWNER}/${REPO}/branches/main/protection" --input - >/dev/null <<'JSON'
@@ -67,8 +82,10 @@ echo "  ✓ 'main' requires a PR + Code-Owner review (admins may still merge; en
 
 cat <<DONE
 
-Done — both gates are set, and no PAT is needed.
+Done — both publish gates + the Version-PR permission are set, no PAT needed.
   • Optional: Settings → Actions → General → require approval for fork-PR CI.
+  • Microsoft Store publishing additionally needs the PARTNER_CENTER_* secrets
+    and the MICROSOFT_STORE_PRODUCT_ID variable (see release.md → Microsoft Store).
 
 See .github/maintainers/release.md for the full flow.
 DONE
