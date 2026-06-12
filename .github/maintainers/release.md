@@ -67,6 +67,14 @@ Workflows: [`release-version.yml`](../workflows/release-version.yml) (versioning
 publish). Both refuse to run for any repo other than `arshad-shah/verql`, so a
 fork can't trigger a release.
 
+**The SDK rides the same flow.** `@verql/plugin-sdk` is versioned independently
+by changesets. When a changeset bumps it, the same Version PR carries its bump;
+on merge, `release-version.yml` auto-tags `sdk-vX.Y.Z` and calls
+[`publish-sdk.yml`](../workflows/publish-sdk.yml) (reusable) to publish to npm via
+OIDC trusted publishing — gated by the `npm-publish` environment's required
+reviewer. App and SDK publish independently in the same run: a PR can bump just
+the app (`vX.Y.Z`), just the SDK (`sdk-vX.Y.Z`), or both.
+
 ## Approval gates & required GitHub settings
 
 > **Quick setup:** run [`scripts/setup-release-gates.sh`](../../scripts/setup-release-gates.sh)

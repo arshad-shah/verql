@@ -29,8 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      tagged: ${{ steps.tag.outputs.tagged }}
-      tag: ${{ steps.tag.outputs.tag }}
+      app_tagged: ${{ steps.tag.outputs.app_tagged }}
+      app_tag: ${{ steps.tag.outputs.app_tag }}
+      sdk_tagged: ${{ steps.tag.outputs.sdk_tagged }}
+      sdk_tag: ${{ steps.tag.outputs.sdk_tag }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -53,9 +55,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # FIRST, on the pristine `main` checkout: if this push merged the Version
-      # PR (version bumped), create + push the release tag and emit `tagged`.
-      # Runs before the PR step, which switches branches.
-      - name: Auto-tag a merged version bump
+      # PR (version bumped), create + push the app and/or SDK tags and emit the
+      # *_tagged / *_tag outputs. Runs before the PR step, which switches branches.
+      - name: Auto-tag merged version bumps (app + SDK)
         id: tag
         run: node scripts/release-tag.mjs
 
@@ -65,17 +67,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  # When a new tag was created, build + publish — release.yml as a reusable
-  # workflow. No PAT, no tag trigger. Its publish job is gated by the `release`
-  # environment's required reviewer.
-  release:
-    name: Build & publish
+  # When the APP version bumped, build + publish via release.yml (reusable).
+  # No PAT, no tag trigger. Publish gated by the `release` environment reviewer.
+  release-app:
+    name: Build & publish app
     needs: version
-    if: ${{ needs.version.outputs.tagged == 'true' }}
+    if: ${{ needs.version.outputs.app_tagged == 'true' }}
     uses: ./.github/workflows/release.yml
     with:
-      tag: ${{ needs.version.outputs.tag }}
+      tag: ${{ needs.version.outputs.app_tag }}
     permissions:
       contents: write
+      id-token: write
+    secrets: inherit
+
+  # When the SDK version bumped, publish @verql/plugin-sdk via publish-sdk.yml
+  # (reusable). Gated by the `npm-publish` environment reviewer; auth is OIDC
+  # trusted publishing (no token). The publish job stays defined in
+  # publish-sdk.yml so the OIDC claim still resolves to it.
+  publish-sdk:
+    name: Publish SDK
+    needs: version
+    if: ${{ needs.version.outputs.sdk_tagged == 'true' }}
+    uses: ./.github/workflows/publish-sdk.yml
+    with:
+      ref: ${{ needs.version.outputs.sdk_tag }}
+    permissions:
+      contents: read
       id-token: write
     secrets: inherit

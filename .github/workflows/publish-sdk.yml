@@ -1,8 +1,10 @@
 name: Publish @verql/plugin-sdk
 
-# Publishes the plugin SDK to npm when a tag like `sdk-v1.2.3` is pushed.
-# The app's own releases use `v*.*.*` tags (release.yml); the SDK is versioned
-# and released independently so its API can stabilise on its own cadence.
+# Publishes the plugin SDK to npm. Normally invoked automatically as a reusable
+# workflow by release-version.yml when a changeset bumps @verql/plugin-sdk and
+# the "Version Packages" PR merges (it passes the `sdk-vX.Y.Z` ref). A manual
+# `sdk-v*` tag push still works as an escape hatch. The SDK is versioned
+# independently of the app (whose releases use `v*.*.*` tags).
 #
 # Auth is npm **trusted publishing** via OIDC — NO long-lived token. The job
 # exchanges the `id-token` for a short-lived npm credential, and npm emits a
@@ -13,17 +15,25 @@ name: Publish @verql/plugin-sdk
 #      (Settings → Environments). This is the manual-approval lock on the run.
 #   2. A trusted publisher on npmjs.com for @verql/plugin-sdk pinned to this
 #      repo + workflow file (`publish-sdk.yml`) + environment (`npm-publish`).
+#      The publish job stays defined here even when called reusably, so the
+#      OIDC `job_workflow_ref` claim still resolves to `publish-sdk.yml`.
 # Trusted publishing requires npm >= 11.5.1, so the job upgrades npm first.
 on:
   push:
     tags:
       - 'sdk-v*'
+  workflow_call:
+    inputs:
+      ref:
+        description: 'SDK tag to publish, e.g. sdk-v1.2.3'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-sdk-${{ github.ref_name }}
+  group: publish-sdk-${{ inputs.ref || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -35,11 +45,17 @@ jobs:
     # The run lock: this job pauses for a required reviewer before it can run,
     # and the npm trusted-publisher config is pinned to this environment.
     environment: npm-publish
+    # The SDK tag, from either trigger: the `ref` input (reusable-workflow call
+    # by release-version.yml) or the pushed tag ref (manual escape hatch).
+    env:
+      SDK_REF: ${{ inputs.ref || github.ref_name }}
     permissions:
       contents: read
       id-token: write # OIDC: trusted publishing + provenance attestation
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.SDK_REF }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v4
@@ -63,7 +79,7 @@ jobs:
       - name: Verify the tag version matches package.json
         working-directory: packages/plugin-sdk
         run: |
-          TAG="${GITHUB_REF_NAME#sdk-v}"
+          TAG="${SDK_REF#sdk-v}"
           PKG="$(node -p "require('./package.json').version")"
           if [ "$TAG" != "$PKG" ]; then
             echo "::error::Tag version ($TAG) does not match packages/plugin-sdk/package.json ($PKG)"

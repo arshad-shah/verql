@@ -1,22 +1,23 @@
-// Auto-create the `vX.Y.Z` release tag when a version bump lands on `main`, so
-// nobody has to push tags by hand. Run on every push to main (release-version.yml).
+// Auto-create release tags when a version bump lands on `main`, so nobody has to
+// push tags by hand. Run on every push to main (release-version.yml).
 //
-// It tags ONLY when this push actually changed package.json's version (i.e. the
-// merged "Version Packages" PR) AND no matching tag exists yet — so ordinary
-// pushes, and re-runs, are no-ops. The tag is pushed with the default
-// GITHUB_TOKEN (no PAT needed): release-version.yml invokes release.yml directly
-// as a reusable workflow, so nothing depends on the tag triggering a workflow.
+// Handles BOTH releasable packages:
+//   • the app  → `vX.Y.Z`        from package.json
+//   • the SDK  → `sdk-vX.Y.Z`    from packages/plugin-sdk/package.json
 //
-// Emits Actions outputs `tagged` (true/false) and `tag` so the workflow can
-// decide whether to call release.yml.
+// For each, it tags ONLY when this push actually changed that package's version
+// (i.e. the merged "Version Packages" PR) AND no matching tag exists yet — so
+// ordinary pushes, and re-runs, are no-ops. Tags are pushed with the default
+// GITHUB_TOKEN (no PAT): release-version.yml invokes release.yml / publish-sdk.yml
+// directly as reusable workflows, so nothing depends on a tag triggering a run.
+//
+// Emits Actions outputs per target: `app_tagged`/`app_tag` and
+// `sdk_tagged`/`sdk_tag`, so the workflow knows which reusable workflow to call.
 import { execSync } from 'node:child_process'
 import { appendFileSync, readFileSync } from 'node:fs'
 
 const sh = (cmd) => execSync(cmd, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim()
 const tryGet = (cmd) => { try { return sh(cmd) } catch { return null } }
-
-const version = JSON.parse(readFileSync('package.json', 'utf-8')).version
-const tag = `v${version}`
 
 /** Emit a GitHub Actions step output (no-op when run locally). */
 function setOutput(key, value) {
@@ -24,34 +25,44 @@ function setOutput(key, value) {
   if (file) appendFileSync(file, `${key}=${value}\n`)
 }
 
-function done(tagged) {
-  setOutput('tagged', String(tagged))
-  setOutput('tag', tag)
-  process.exit(0)
+const versionOf = (path) => {
+  try { return JSON.parse(readFileSync(path, 'utf-8')).version } catch { return null }
+}
+const prevVersionOf = (path) => {
+  const prev = tryGet(`git show HEAD^:${path}`)
+  try { return prev ? JSON.parse(prev).version : null } catch { return null }
 }
 
-// Did THIS push bump the version? Compare HEAD's package.json against its first
-// parent. On a Version-PR merge the parent is old `main` (old version); on an
-// ordinary push the version is unchanged.
-const prevPkg = tryGet('git show HEAD^:package.json')
-const prevVersion = prevPkg ? JSON.parse(prevPkg).version : null
-if (prevVersion === null) {
-  console.log('No parent commit to compare — skipping tag.')
-  done(false)
-}
-if (prevVersion === version) {
-  console.log(`Version unchanged (${version}) — nothing to tag.`)
-  done(false)
-}
+const TARGETS = [
+  { id: 'app', pkg: 'package.json', tag: (v) => `v${v}` },
+  { id: 'sdk', pkg: 'packages/plugin-sdk/package.json', tag: (v) => `sdk-v${v}` },
+]
 
-// Already tagged? (idempotent / re-run safe)
-if (tryGet(`git ls-remote --tags origin refs/tags/${tag}`)) {
-  console.log(`Tag ${tag} already exists on origin — nothing to do.`)
-  done(false)
-}
+for (const t of TARGETS) {
+  const version = versionOf(t.pkg)
+  const tag = version ? t.tag(version) : null
+  setOutput(`${t.id}_tag`, tag ?? '')
 
-console.log(`Version bumped ${prevVersion} → ${version}. Creating release tag ${tag}…`)
-execSync(`git tag -a ${tag} -m "Release ${tag}"`, { stdio: 'inherit' })
-execSync(`git push origin ${tag}`, { stdio: 'inherit' })
-console.log(`Pushed ${tag}. release.yml will build + publish (gated by the release environment).`)
-done(true)
+  if (!version) { console.log(`[${t.id}] no package — skipping.`); setOutput(`${t.id}_tagged`, 'false'); continue }
+
+  // Did THIS push bump the version? Compare HEAD's package.json to its first
+  // parent (old `main` on a Version-PR merge; unchanged on an ordinary push).
+  const prev = prevVersionOf(t.pkg)
+  if (prev === null || prev === version) {
+    console.log(`[${t.id}] version unchanged (${version}) — nothing to tag.`)
+    setOutput(`${t.id}_tagged`, 'false')
+    continue
+  }
+  // Already tagged? (idempotent / re-run safe)
+  if (tryGet(`git ls-remote --tags origin refs/tags/${tag}`)) {
+    console.log(`[${t.id}] tag ${tag} already exists on origin — nothing to do.`)
+    setOutput(`${t.id}_tagged`, 'false')
+    continue
+  }
+
+  console.log(`[${t.id}] version bumped ${prev} → ${version}. Creating tag ${tag}…`)
+  execSync(`git tag -a ${tag} -m "Release ${tag}"`, { stdio: 'inherit' })
+  execSync(`git push origin ${tag}`, { stdio: 'inherit' })
+  console.log(`[${t.id}] pushed ${tag}.`)
+  setOutput(`${t.id}_tagged`, 'true')
+}
