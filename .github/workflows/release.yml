@@ -17,6 +17,15 @@ on:
         description: 'Release tag to build/publish, e.g. v1.3.0'
         required: true
         type: string
+  # Manual escape hatch: rebuild/republish a ref by hand (e.g. to re-cut a
+  # failed release). With no `tag`, it builds the selected branch/tag ref.
+  # The publish jobs still wait on the `release` environment reviewer.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Ref to build (tag or branch). Defaults to the selected ref.'
+        required: false
+        type: string
 
 permissions:
   contents: read    # tightened per-job below
@@ -127,11 +136,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --linux --publish=never
 
+      # Name both targets explicitly. With a bare `--win`, electron-builder
+      # silently built only nsis and skipped the appx (MSIX) target; naming them
+      # forces the appx build and surfaces any real error instead of skipping.
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec electron-builder --win --publish=never
+        run: pnpm exec electron-builder --win appx nsis --publish=never
 
       # ─── Hash + sign ──────────────────────────────────────────────────────
       - name: Compute SHA-256 of build artifacts
