@@ -138,9 +138,16 @@ runs after you approve it.
 ### Cutting a release (what you actually do)
 
 1. Ensure the PRs you want shipped each merged with a changeset.
-2. The bot opens/updates a **Version Packages** PR — review the version bump +
+2. **Author the in-app "What's New" page** for the upcoming version (a hand-written
+   step — humans or an AI agent, not generated). This is part of cutting a release,
+   not an afterthought: add the i18n copy + registry entry for the new version per
+   [`docs/onboarding.md`](../../docs/onboarding.md) → *Authoring release notes*, and
+   set its `version` to the exact number the Version PR will produce (so the running
+   app opens the page on update). Skip only for pure patch releases with nothing
+   user-facing to say.
+3. The bot opens/updates a **Version Packages** PR — review the version bump +
    `CHANGELOG.md`, then **merge it**.
-3. Approve the run when prompted — the `release` environment for the app (and
+4. Approve the run when prompted — the `release` environment for the app (and
    the Microsoft Store, once configured), the `npm-publish` environment if the
    SDK bumped — then **Publish** the draft GitHub release. That's it — no tags,
    ever.

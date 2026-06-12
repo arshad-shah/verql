@@ -1,5 +1,5 @@
 ---
-'verql': patch
+'verql': minor
 ---
 
 Rebuild the release & distribution pipeline around three clean channels —
