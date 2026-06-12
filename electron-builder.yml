@@ -9,44 +9,35 @@ files:
 asarUnpack:
   - "**/*.{node,dylib}"
 
-# Publish target — releases go to the GitHub Releases of this repo only.
-# CI guards on $GITHUB_REPOSITORY before invoking electron-builder, so a
-# fork that triggers the workflow can't publish to this owner.
-publish:
-  provider: github
-  owner: arshad-shah
-  repo: verql
-  releaseType: release
+# No `publish:` provider block on purpose. release.yml uploads the release
+# assets explicitly (with --publish=never), and nothing consumes electron-builder
+# update feeds — macOS/Linux self-update via Homebrew, Windows via the Store.
+# Omitting it stops electron-builder from emitting unused latest*.yml feeds.
 
+# Deterministic artifact names — the SINGLE place download names are defined.
+# The Homebrew generator (scripts/render-homebrew.mjs → artifactNames()) and the
+# cask/formula URLs must match these exactly, so the build, the release assets,
+# and the tap files all agree.
 mac:
   category: public.app-category.developer-tools
+  artifactName: ${productName}-${version}-${arch}.${ext}   # Verql-X.Y.Z-{x64,arm64}.dmg
   target:
     - target: dmg
-      arch: [x64, arm64]
-    - target: zip
       arch: [x64, arm64]
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   # gatekeeperAssess: false  # left at default; CI runs codesign + notarytool
 
-# Windows ships two ways from the same build:
-#   • appx (MSIX) → the Microsoft Store. The Store code-signs the package and
-#     drives its own updates, so no code-signing cert is needed on our side and
-#     electron-builder generates no update feed for this target.
-#   • nsis (.exe) → GitHub Releases as a direct download, with a latest.yml feed
-#     that electron-updater consumes. Shipped UNSIGNED — users see a SmartScreen
-#     warning until reputation builds or a code-signing certificate is added.
-# (See .github/maintainers/release.md → "Microsoft Store" for the full setup.)
+# Windows ships ONE way: appx (MSIX) → the Microsoft Store. The Store
+# code-signs the package and drives its own updates, so we need no code-signing
+# cert and no update feed. (The MSIX is published by release.yml's
+# publish-msstore job, not attached to the GitHub release.)
 win:
+  artifactName: ${productName}-${version}.${ext}   # Verql-X.Y.Z.appx
   target:
     - target: appx
       arch: [x64]
-    - target: nsis
-      arch: [x64]
-  # Required so electron-updater applies updates to the unsigned NSIS build;
-  # the Store MSIX is unaffected (the Store signs it).
-  verifyUpdateCodeSignature: false
 
 # MSIX identity. These values come from Partner Center under Product
 # management → Product identity, and MUST match it exactly or the Store rejects
@@ -62,8 +53,10 @@ appx:
     - en-US
 
 linux:
+  artifactName: ${productName}-${version}.${ext}   # Verql-X.Y.Z.AppImage
   target:
     - AppImage
   category: Development
-  # AppImage isn't signed at the binary level; the release pipeline
-  # publishes a detached GPG signature for the sha256sums file instead.
+  # AppImage isn't signed at the binary level; the release pipeline publishes a
+  # cosign signature over the sha256sums file instead. Installed on Linux via the
+  # Homebrew formula (Formula/verql.rb), which downloads this AppImage.

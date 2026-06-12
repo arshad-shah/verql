@@ -7,12 +7,15 @@
 /src/main/ipc-handlers.ts     @arshad-shah
 /src/main/ipc/                @arshad-shah
 
-# Release pipeline must be reviewed (versioning, tagging, build, publish).
+# Release pipeline must be reviewed (versioning, tagging, build, publish, distribute).
 /.github/workflows/release.yml         @arshad-shah
 /.github/workflows/release-version.yml @arshad-shah
 /.github/workflows/publish-sdk.yml     @arshad-shah
+/.github/workflows/homebrew-bump.yml   @arshad-shah
 /scripts/release-tag.mjs               @arshad-shah
+/scripts/render-homebrew.mjs           @arshad-shah
 /scripts/setup-release-gates.sh        @arshad-shah
+/packaging/                            @arshad-shah
 /electron-builder.yml                  @arshad-shah
 
 # Security-relevant code.

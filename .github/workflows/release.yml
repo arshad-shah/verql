@@ -6,6 +6,11 @@ name: Release
 # `v*.*.*` tag push still works as an escape hatch. Either way the `publish`
 # job is gated behind the `release` environment's required reviewer, and forks
 # hit the repository guard and short-circuit immediately.
+#
+# Channels (see docs/superpowers/specs/2026-06-12-clean-release-pipeline-design.md):
+#   • macOS  → signed+notarized DMG (x64+arm64) → GitHub release → Homebrew cask
+#   • Linux  → AppImage             → GitHub release → Homebrew formula
+#   • Windows→ MSIX (appx)          → Microsoft Store (NOT attached to the release)
 
 on:
   push:
@@ -49,6 +54,9 @@ jobs:
           fi
 
   # ─── 1. Build per-platform binaries ──────────────────────────────────────
+  # Each runner only BUILDS and uploads its raw artifact. Hashing + signing +
+  # the release happen once, centrally, in the `publish` job — so provenance
+  # covers every platform's binaries with a single signature.
   build:
     name: Build (${{ matrix.os }})
     needs: guard
@@ -56,17 +64,10 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      id-token: write   # for sigstore keyless signing of artifacts
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-14
-            artifact_glob: dist/Verql-*.dmg
-          - os: ubuntu-latest
-            artifact_glob: dist/Verql-*.AppImage
-          - os: windows-latest
-            artifact_glob: dist/Verql*Setup*.exe
+        os: [macos-14, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -127,85 +128,33 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERT_P12_BASE64 != '' && 'true' || 'false' }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # used only for publish=never, kept for parity
         run: pnpm exec electron-builder --mac --publish=never
 
       - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --linux --publish=never
 
-      # Name both targets explicitly. With a bare `--win`, electron-builder
-      # silently built only nsis and skipped the appx (MSIX) target; naming them
-      # forces the appx build and surfaces any real error instead of skipping.
+      # Windows builds ONLY the MSIX (appx) for the Microsoft Store. No NSIS,
+      # no code-signing on our side (the Store signs it), no update feed.
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec electron-builder --win appx nsis --publish=never
+        run: pnpm exec electron-builder --win appx --publish=never
 
-      # ─── Hash + sign ──────────────────────────────────────────────────────
-      - name: Compute SHA-256 of build artifacts
-        shell: bash
-        run: |
-          cd dist
-          # Only the user-facing installers, not the intermediate files.
-          shopt -s nullglob
-          if [ "${{ matrix.os }}" = "macos-14" ]; then
-            files=( *.dmg *.zip latest-mac.yml )
-          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            files=( *.AppImage latest-linux.yml )
-          else
-            files=( *.exe latest.yml )
-          fi
-          # macOS ships `shasum` (Perl); Linux/Windows runners ship GNU
-          # `sha256sum`. Pick whichever is available so output format is
-          # identical (`<hash>  <filename>`).
-          if command -v sha256sum >/dev/null 2>&1; then
-            HASH=(sha256sum)
-          else
-            HASH=(shasum -a 256)
-          fi
-          : > sha256sums.txt
-          for f in "${files[@]}"; do
-            [ -f "$f" ] && "${HASH[@]}" "$f" | tee -a sha256sums.txt
-          done
-
-      # Sigstore keyless: signs sha256sums.txt with a short-lived OIDC token,
-      # producing sha256sums.txt.sig + .pem (no long-lived signing key needed).
-      - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
-      - name: Sign sha256sums with cosign keyless
-        shell: bash
-        run: |
-          cd dist
-          if [ ! -s sha256sums.txt ]; then
-            echo "No artifacts to sign; skipping."
-            exit 0
-          fi
-          cosign sign-blob --yes \
-            --output-signature sha256sums.txt.sig \
-            --output-certificate sha256sums.txt.pem \
-            sha256sums.txt
-
+      # Upload the raw installers only. The DMG/AppImage feed the GitHub release
+      # (and Homebrew); the appx feeds the Store. Hashing/signing is centralized
+      # in `publish`, so nothing is signed here.
       - name: Upload artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: verql-${{ matrix.os }}
           path: |
             dist/*.dmg
-            dist/*.zip
             dist/*.AppImage
-            dist/*.exe
             dist/*.appx
-            dist/latest*.yml
-            dist/sha256sums.txt
-            dist/sha256sums.txt.sig
-            dist/sha256sums.txt.pem
           if-no-files-found: warn
           retention-days: 7
 
-  # ─── 2. Aggregate + publish ───────────────────────────────────────────────
+  # ─── 2. Hash, sign, and publish the GitHub release ───────────────────────
   publish:
     name: Publish release
     needs: build
@@ -222,7 +171,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     permissions:
       contents: write     # only this job can write to the release
-      id-token: write
+      id-token: write     # for sigstore keyless signing
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -232,13 +181,40 @@ jobs:
         with:
           path: artifacts
 
-      - name: Flatten artifacts
+      - name: Collect release binaries
         run: |
           mkdir -p release
-          # The .appx is published to the Microsoft Store by the publish-msstore
-          # job, not attached to the GitHub release — exclude it here.
-          find artifacts -type f -not -name '*.appx' -exec cp -n {} release/ \;
+          # The .appx goes to the Microsoft Store (publish-msstore), never the
+          # GitHub release — exclude it. Only the user-facing installers ship here.
+          find artifacts -type f \( -name '*.dmg' -o -name '*.AppImage' \) -exec cp {} release/ \;
+          echo "Release binaries:"
           ls -la release
+
+      # One sha256sums.txt over EVERY release binary (all platforms), signed
+      # once — fixes the previous per-runner files that clobbered each other.
+      - name: Compute SHA-256 of all release binaries
+        working-directory: release
+        run: |
+          shopt -s nullglob
+          : > sha256sums.txt
+          for f in *.dmg *.AppImage; do
+            sha256sum "$f" | tee -a sha256sums.txt
+          done
+
+      # Sigstore keyless: signs sha256sums.txt with a short-lived OIDC token,
+      # producing sha256sums.txt.sig + .pem (no long-lived signing key needed).
+      - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+      - name: Sign sha256sums with cosign keyless
+        working-directory: release
+        run: |
+          if [ ! -s sha256sums.txt ]; then
+            echo "::error::No release binaries were produced — nothing to sign."
+            exit 1
+          fi
+          cosign sign-blob --yes \
+            --output-signature sha256sums.txt.sig \
+            --output-certificate sha256sums.txt.pem \
+            sha256sums.txt
 
       - name: Generate SBOM (CycloneDX)
         uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.7
@@ -248,7 +224,6 @@ jobs:
           output-file: release/verql-${{ env.RELEASE_TAG }}-sbom.cdx.json
 
       - name: Read release notes from CHANGELOG
-        id: notes
         run: |
           version="${RELEASE_TAG#v}"
           if [ -f CHANGELOG.md ]; then
@@ -262,7 +237,7 @@ jobs:
             echo "Release ${RELEASE_TAG}." > release-notes.md
           fi
 
-      - name: Create GitHub release
+      - name: Create GitHub release (draft)
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
         with:
           name: ${{ env.RELEASE_TAG }}
@@ -274,16 +249,15 @@ jobs:
           fail_on_unmatched_files: false
 
   # ─── 3. Publish the MSIX to the Microsoft Store ───────────────────────────
-  # The Windows build already produced a `.appx` (uploaded with the other
-  # artifacts). This job submits it to the Store via the `msstore` CLI. It is
-  # gated behind the same `release` environment reviewer as the GitHub release,
-  # and is SKIPPED automatically until the repository variable
-  # `MICROSOFT_STORE_PRODUCT_ID` is set — so the rest of a release never depends
-  # on the Store being configured. One-time setup (reserve the app, seed a
-  # manual submission, create PARTNER_CENTER_* secrets) is in
-  # .github/maintainers/release.md → "Microsoft Store". `msstore publish` only
-  # *updates* an app that is already live, so the listing must be seeded once by
-  # hand before this job can succeed.
+  # The Windows build produced a `.appx` (uploaded with the other artifacts).
+  # This job submits it to the Store via the `msstore` CLI. It is gated behind
+  # the same `release` environment reviewer as the GitHub release, and is SKIPPED
+  # automatically until the repository variable `MICROSOFT_STORE_PRODUCT_ID` is
+  # set — so the rest of a release never depends on the Store being configured.
+  # One-time setup (reserve the app, seed a manual submission, create
+  # PARTNER_CENTER_* secrets) is in .github/maintainers/release.md → "Microsoft
+  # Store". `msstore publish` only *updates* an app that is already live, so the
+  # listing must be seeded once by hand before this job can succeed.
   publish-msstore:
     name: Publish to Microsoft Store
     needs: build
