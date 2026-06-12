@@ -56,6 +56,13 @@ export default defineConfig({
           label: 'Plugins & SDK',
           items: [{ autogenerate: { directory: 'plugins' } }],
         },
+        {
+          label: 'Legal',
+          items: [
+            { label: 'Privacy Policy', link: '/privacy' },
+            { label: 'Terms & Conditions', link: '/terms' },
+          ],
+        },
       ],
     }),
   ],
