@@ -282,9 +282,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             tabIndex={-1}
             aria-label="Resize"
             onPointerDown={handleGripDown}
-            style={{ width: 'calc(var(--field-ctl-fs) + 5px)', height: 'calc(var(--field-ctl-fs) + 5px)' }}
+            style={{ width: 'calc(var(--field-ctl-fs) - 2px)', height: 'calc(var(--field-ctl-fs) - 2px)' }}
             className={cn(
-              'absolute bottom-[2px] right-[2px] grid place-items-center text-text-muted hover:text-text-secondary touch-none',
+              'absolute bottom-[3px] right-[3px] grid place-items-center text-text-muted hover:text-text-secondary touch-none',
               gripCursor
             )}
           >
