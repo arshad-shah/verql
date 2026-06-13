@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+- [#116](https://github.com/arshad-shah/verql/pull/116) [`a42e108`](https://github.com/arshad-shah/verql/commit/a42e10897dca239b73e2bce70e5fd52cde1c7c7f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Polish the toast notifications that appear bottom-right. Toasts now slide in,
+  and dismissing one smoothly slides the rest up instead of jumping. Each toast
+  shows an auto-dismiss progress bar that pauses while you hover so you have time
+  to read it, and the message reads in normal high-contrast text with the status
+  colour on the icon and a slim left rail. Long-running "loading" toasts keep
+  their spinner and stay until they finish.
+
+- [#116](https://github.com/arshad-shah/verql/pull/116) [`a42e108`](https://github.com/arshad-shah/verql/commit/a42e10897dca239b73e2bce70e5fd52cde1c7c7f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Refine the form-field primitives and rebuild the multi-line text editor. Every
+  field — text input, number input, password, file path/content pickers, date
+  picker, and the text area — now scales with the **UI density** setting
+  (Settings → Appearance → compact / comfortable / spacious), changing height,
+  text size, corner radius, and padding together. Field glyphs are now crisp
+  icons (show/hide password, file, calendar, clear, …) instead of text symbols.
+
+  The password field shows a four-segment strength meter; the file pickers tint
+  when a file is selected and highlight on drag-and-drop. The text area is rebuilt
+  as a card you can resize with a corner grip (vertical, horizontal, or both),
+  with optional auto-grow, a character counter that warns near a limit, a clear
+  button, and a footer toolbar. Existing usages are unchanged — the new
+  capabilities are opt-in.
+
+- [#116](https://github.com/arshad-shah/verql/pull/116) [`a42e108`](https://github.com/arshad-shah/verql/commit/a42e10897dca239b73e2bce70e5fd52cde1c7c7f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Make toast notifications easier to read and optionally self-dismissing. The
+  message now renders in normal high-contrast text instead of being tinted the
+  status colour; the status colour moves to the icon and a slim colored rail down
+  the left edge, over a faint tonal background. Toasts can now take a `duration`
+  to auto-dismiss with a progress bar that pauses while you hover, so you have
+  time to read them. Padding and corners follow the UI density setting.
+
+### Patch Changes
+
+- [#116](https://github.com/arshad-shah/verql/pull/116) [`a42e108`](https://github.com/arshad-shah/verql/commit/a42e10897dca239b73e2bce70e5fd52cde1c7c7f) Thanks [@arshad-shah](https://github.com/arshad-shah)! - Refresh the checkbox: the checkmark is now a crisp icon that springs in when
+  ticked (with a centered dash for the mixed/indeterminate state), the box size
+  follows the UI density setting (Settings → Appearance), and the focus glow only
+  appears for keyboard navigation. No behaviour or API changes.
+
 ## 1.3.2
 
 ### Patch Changes
