@@ -265,6 +265,11 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     environment: release
+    # The Store is the newest, fiddliest channel (and needs a one-time manual
+    # seed submission). Don't let a Store hiccup fail an otherwise-good release —
+    # the GitHub release is published by the independent `publish` job. A failure
+    # here is surfaced (the step still errors) but doesn't mark the run failed.
+    continue-on-error: true
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     permissions:
