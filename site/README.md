@@ -64,6 +64,21 @@ The output directory is relative to the root directory, so the built site is at
 `site/dist`. Cloudflare auto-detects pnpm from the committed `pnpm-lock.yaml`
 and the `packageManager` field in `package.json`.
 
+### Bundled Storybook (`/storybook`)
+
+`pnpm build` here runs `astro build` and then `build:storybook`, which climbs to
+the **repo root**, installs the app's deps (`pnpm install --frozen-lockfile
+--ignore-scripts` — Storybook's browser bundle needs no Electron binary or
+native modules, so the install scripts are skipped) and runs `storybook build`
+straight into `site/dist/storybook`. The result ships in the same `dist/`, so
+Cloudflare serves it at **`/storybook/`** with no extra config. It is **not**
+linked from any nav and is excluded from the sitemap, so it's reachable only by
+typing the URL; `public/_headers` marks `/storybook/*` `noindex` and relaxes
+`X-Frame-Options` to `SAMEORIGIN` so Storybook's preview iframe renders. This
+relies on Cloudflare checking out the whole repo (it does — "root directory"
+only changes the working dir, not the checkout). No built Storybook assets are
+committed to the repo.
+
 After the first deploy, add the **custom domain** `verql.arshadshah.com` to the
 Pages project (Cloudflare manages the DNS `CNAME` and TLS automatically).
 

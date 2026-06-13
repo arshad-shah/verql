@@ -1,26 +1,27 @@
-import React, { forwardRef, useState, useCallback } from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
+import React, { forwardRef, useReducer, useCallback } from 'react'
+import { type VariantProps } from 'class-variance-authority'
 import { File, X, Upload, HardDrive } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { fieldRowVariants } from './field-variants'
 import { IPC_CHANNELS } from '@shared/ipc'
 
-const rowVariants = cva(
-  'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)]',
-  {
-    variants: {
-      size: {
-        xs: 'h-7 px-2 text-xs rounded',
-        sm: 'h-8 px-2 text-xs rounded',
-        md: 'h-9 px-3 text-sm rounded-md',
-        lg: 'h-10 px-3 text-sm rounded-md',
-        xl: 'h-12 px-4 text-base rounded-lg',
-      },
-    },
-    defaultVariants: { size: 'md' },
+type FpState = { value: string; dragOver: boolean }
+type FpAction =
+  | { type: 'setValue'; value: string }
+  | { type: 'clear' }
+  | { type: 'setDrag'; dragOver: boolean }
+function fpReducer(s: FpState, a: FpAction): FpState {
+  switch (a.type) {
+    case 'setValue':
+      return { ...s, value: a.value }
+    case 'clear':
+      return { ...s, value: '' }
+    case 'setDrag':
+      return { ...s, dragOver: a.dragOver }
   }
-)
+}
 
-export interface FilePathInputProps extends VariantProps<typeof rowVariants> {
+export interface FilePathInputProps extends VariantProps<typeof fieldRowVariants> {
   value?: string
   defaultValue?: string
   onChange?: (filePath: string) => void
@@ -47,14 +48,14 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
     ref
   ) => {
     const isControlled = controlledValue !== undefined
-    const [internalValue, setInternalValue] = useState(defaultValue)
-    const [dragOver, setDragOver] = useState(false)
+    const [state, dispatch] = useReducer(fpReducer, { value: defaultValue, dragOver: false })
 
-    const currentValue = isControlled ? controlledValue : internalValue
+    const currentValue = isControlled ? controlledValue : state.value
     const hasValue = currentValue.length > 0
+    const { dragOver } = state
 
     const setValue = (v: string) => {
-      if (!isControlled) setInternalValue(v)
+      if (!isControlled) dispatch({ type: 'setValue', value: v })
       onChange?.(v)
     }
 
@@ -70,7 +71,7 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
 
     const handleBrowse = async () => {
       const filters = accept
-        ? [{ name: 'Files', extensions: accept.split(',').map(e => e.trim().replace(/^\./, '')) }]
+        ? [{ name: 'Files', extensions: accept.split(',').map((e) => e.trim().replace(/^\./, '')) }]
         : undefined
       const result = await window.electronAPI.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE_PATH, { filters })
       if ('cancelled' in result) return
@@ -78,14 +79,15 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
     }
 
     const handleClear = () => {
-      setValue('')
+      if (!isControlled) dispatch({ type: 'clear' })
+      onChange?.('')
     }
 
     const handleDragOver = useCallback(
       (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        if (!disabled) setDragOver(true)
+        if (!disabled) dispatch({ type: 'setDrag', dragOver: true })
       },
       [disabled]
     )
@@ -93,14 +95,14 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
     const handleDragLeave = useCallback((e: React.DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      setDragOver(false)
+      dispatch({ type: 'setDrag', dragOver: false })
     }, [])
 
     const handleDrop = useCallback(
       (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        setDragOver(false)
+        dispatch({ type: 'setDrag', dragOver: false })
         if (disabled) return
         const files = e.dataTransfer.files
         if (files.length === 0) return
@@ -116,9 +118,7 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
       [disabled, acceptExtensions]
     )
 
-    const displayName = hasValue
-      ? currentValue.split(/[/\\]/).pop() ?? currentValue
-      : null
+    const displayName = hasValue ? currentValue.split(/[/\\]/).pop() ?? currentValue : null
 
     return (
       <div
@@ -129,15 +129,17 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className={cn(
-          rowVariants({ size }),
-          dragOver
-            ? 'border-accent ring-1 ring-accent/30 bg-accent/5'
-            : hasValue
-              ? 'border-accent/30 bg-accent/5'
-              : 'border-border-default hover:border-border-strong',
-          disabled && 'opacity-50 pointer-events-none'
-        )}>
+        <div
+          className={cn(
+            fieldRowVariants({ size }),
+            dragOver
+              ? 'border-accent shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)] bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]'
+              : hasValue
+                ? 'border-[color-mix(in_srgb,var(--color-accent)_36%,transparent)] bg-[color-mix(in_srgb,var(--color-accent)_7%,transparent)]'
+                : 'border-border-default hover:border-border-strong',
+            disabled && 'opacity-50 pointer-events-none'
+          )}
+        >
           {dragOver ? (
             <Upload size={14} className="shrink-0 text-accent" />
           ) : hasValue ? (
@@ -149,9 +151,7 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
           <span
             className={cn(
               'flex-1 truncate',
-              dragOver
-                ? 'text-accent font-medium'
-                : hasValue ? 'font-mono text-text-primary' : 'text-text-muted'
+              dragOver ? 'text-accent font-medium' : hasValue ? 'font-mono text-text-primary' : 'text-text-muted'
             )}
             title={hasValue ? currentValue : undefined}
           >
@@ -160,14 +160,14 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
 
           {hasValue && !dragOver && (
             <>
-              <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium text-accent bg-accent/10">
+              <span className="inline-flex shrink-0 items-center rounded-full bg-accent-muted px-[7px] py-0.5 text-[10px] font-semibold text-accent">
                 selected
               </span>
               <button
                 type="button"
                 onClick={handleClear}
                 disabled={disabled}
-                className="shrink-0 p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-hover transition-colors"
+                className="shrink-0 rounded p-0.5 text-text-muted hover:bg-hover hover:text-text-primary transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none"
                 aria-label="Clear"
               >
                 <X size={12} />
@@ -180,7 +180,7 @@ export const FilePathInput = forwardRef<HTMLDivElement, FilePathInputProps>(
               type="button"
               onClick={handleBrowse}
               disabled={disabled}
-              className="shrink-0 px-2 py-0.5 rounded text-xs text-text-secondary bg-bg-tertiary border border-border-default hover:border-border-strong hover:text-text-primary transition-colors"
+              className="shrink-0 inline-flex items-center rounded-[var(--field-r-sm)] border border-border-default bg-bg-elevated px-2 text-[length:var(--field-ctl-fs)] text-text-secondary hover:border-border-strong hover:text-text-primary transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none h-[calc(var(--field-ctl-h)*0.72)]"
             >
               Browse
             </button>

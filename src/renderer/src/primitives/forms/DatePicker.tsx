@@ -1,20 +1,21 @@
-import React, { forwardRef, useState, useCallback, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import React, { forwardRef, useReducer, useCallback, useRef, useEffect } from 'react'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
+import { fieldSizeVariants } from './field-variants'
 
 const dateInputVariants = cva(
-  'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)] border-border-default hover:border-border-strong',
+  [
+    'flex items-center gap-[var(--field-gap)] border text-text-primary',
+    'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
+    'shadow-[var(--shadow-input-inset)]',
+    'h-[var(--field-ctl-h)] px-[var(--field-px)] text-[length:var(--field-ctl-fs)] rounded-[var(--field-ctl-r)]',
+    'transition-all duration-[var(--transition-fast)] motion-reduce:transition-none',
+    'focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
+    'border-border-default hover:border-border-strong',
+  ].join(' '),
   {
-    variants: {
-      size: {
-        xs: 'h-7 px-2 text-xs rounded',
-        sm: 'h-8 px-2 text-xs rounded',
-        md: 'h-9 px-3 text-sm rounded-md',
-        lg: 'h-10 px-3 text-sm rounded-md',
-        xl: 'h-12 px-4 text-base rounded-lg',
-      },
-    },
+    variants: { size: fieldSizeVariants },
     defaultVariants: { size: 'md' },
   }
 )
@@ -44,6 +45,53 @@ function getFirstDayOfWeek(year: number, month: number): number {
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const DAY_HEADERS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
+type DpState = {
+  value: string
+  draft: string
+  editing: boolean
+  open: boolean
+  viewYear: number
+  viewMonth: number
+}
+type DpAction =
+  | { type: 'focus' }
+  | { type: 'edit'; text: string }
+  | { type: 'commit'; value: string | null }
+  | { type: 'toggle' }
+  | { type: 'close' }
+  | { type: 'prevMonth' }
+  | { type: 'nextMonth' }
+  | { type: 'pick'; value: string }
+  | { type: 'syncView'; value: string }
+
+function syncTo(s: DpState, value: string): DpState {
+  const d = parseDate(value)
+  return d ? { ...s, value, viewYear: d.getFullYear(), viewMonth: d.getMonth() } : { ...s, value }
+}
+
+function dpReducer(s: DpState, a: DpAction): DpState {
+  switch (a.type) {
+    case 'focus':
+      return { ...s, editing: true, draft: s.value }
+    case 'edit':
+      return { ...s, draft: a.text }
+    case 'commit':
+      return a.value != null ? { ...syncTo(s, a.value), editing: false } : { ...s, editing: false }
+    case 'toggle':
+      return s.open ? { ...s, open: false } : { ...syncTo(s, s.value), open: true }
+    case 'close':
+      return { ...s, open: false }
+    case 'prevMonth':
+      return s.viewMonth === 0 ? { ...s, viewYear: s.viewYear - 1, viewMonth: 11 } : { ...s, viewMonth: s.viewMonth - 1 }
+    case 'nextMonth':
+      return s.viewMonth === 11 ? { ...s, viewYear: s.viewYear + 1, viewMonth: 0 } : { ...s, viewMonth: s.viewMonth + 1 }
+    case 'pick':
+      return { ...syncTo(s, a.value), open: false }
+    case 'syncView':
+      return syncTo(s, a.value)
+  }
+}
+
 export interface DatePickerProps extends VariantProps<typeof dateInputVariants> {
   value?: string
   defaultValue?: string
@@ -58,44 +106,43 @@ export interface DatePickerProps extends VariantProps<typeof dateInputVariants> 
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   ({ value: controlledValue, defaultValue, onChange, min, max, disabled, placeholder = 'YYYY-MM-DD', size, className }, ref) => {
     const isControlled = controlledValue !== undefined
-    const [internalValue, setInternalValue] = useState(defaultValue ?? '')
-    const [textValue, setTextValue] = useState('')
-    const [isEditing, setIsEditing] = useState(false)
-    const [showCalendar, setShowCalendar] = useState(false)
+    const [state, dispatch] = useReducer(dpReducer, undefined, () => {
+      const d = parseDate(defaultValue ?? '') ?? new Date()
+      return {
+        value: defaultValue ?? '',
+        draft: '',
+        editing: false,
+        open: false,
+        viewYear: d.getFullYear(),
+        viewMonth: d.getMonth(),
+      }
+    })
     const containerRef = useRef<HTMLDivElement>(null)
 
-    const currentValue = isControlled ? controlledValue : internalValue
-    const currentDate = parseDate(currentValue) ?? new Date()
-    const [viewYear, setViewYear] = useState(currentDate.getFullYear())
-    const [viewMonth, setViewMonth] = useState(currentDate.getMonth())
+    const value = isControlled ? controlledValue : state.value
+    const { editing, open, viewYear, viewMonth } = state
 
-    const setValue = useCallback(
+    // Day-select & Today: notify and sync the view + close. The stored value is
+    // ignored when controlled (display reads props), so we always dispatch.
+    const commitValue = useCallback(
       (v: string) => {
-        if (!isControlled) setInternalValue(v)
         onChange?.(v)
+        dispatch({ type: 'pick', value: v })
       },
-      [isControlled, onChange]
+      [onChange]
     )
 
-    const selectDay = useCallback(
-      (day: number) => {
-        const d = new Date(viewYear, viewMonth, day)
-        setValue(formatDate(d))
-        setShowCalendar(false)
-      },
-      [viewYear, viewMonth, setValue]
-    )
-
-    const handleBlur = () => {
-      setIsEditing(false)
-      const d = parseDate(textValue)
-      if (d) setValue(formatDate(d))
+    const commitDraft = () => {
+      const d = parseDate(state.draft)
+      const v = d ? formatDate(d) : null
+      if (v) onChange?.(v)
+      dispatch({ type: 'commit', value: isControlled ? null : v })
     }
 
-    const handleFocus = () => {
-      setTextValue(currentValue)
-      setIsEditing(true)
-    }
+    // Keep the calendar view in step with a controlled value prop.
+    useEffect(() => {
+      if (isControlled) dispatch({ type: 'syncView', value: controlledValue! })
+    }, [isControlled, controlledValue])
 
     const isDateDisabled = useCallback(
       (day: number) => {
@@ -108,28 +155,19 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
     )
 
     useEffect(() => {
-      if (!showCalendar) return
+      if (!open) return
       const handler = (e: MouseEvent) => {
         if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-          setShowCalendar(false)
+          dispatch({ type: 'close' })
         }
       }
       document.addEventListener('mousedown', handler)
       return () => document.removeEventListener('mousedown', handler)
-    }, [showCalendar])
+    }, [open])
 
     const daysInMonth = getDaysInMonth(viewYear, viewMonth)
     const firstDay = getFirstDayOfWeek(viewYear, viewMonth)
-    const selectedDateStr = currentValue
-
-    const prevMonth = () => {
-      if (viewMonth === 0) { setViewYear(viewYear - 1); setViewMonth(11) }
-      else setViewMonth(viewMonth - 1)
-    }
-    const nextMonth = () => {
-      if (viewMonth === 11) { setViewYear(viewYear + 1); setViewMonth(0) }
-      else setViewMonth(viewMonth + 1)
-    }
+    const selectedDateStr = value
 
     return (
       <div ref={containerRef} className="relative">
@@ -137,40 +175,57 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="text-text-muted hover:text-text-primary transition-colors shrink-0"
+            onClick={() => dispatch({ type: 'toggle' })}
+            className="shrink-0 text-text-muted hover:text-text-primary transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none"
             aria-label="Toggle calendar"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path d="M16 2v4M8 2v4M3 10h18" />
-            </svg>
+            <Calendar size={16} />
           </button>
           <input
             ref={ref}
             type="text"
-            value={isEditing ? textValue : currentValue}
-            onChange={(e) => setTextValue(e.target.value)}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            value={editing ? state.draft : value}
+            onChange={(e) => dispatch({ type: 'edit', text: e.target.value })}
+            onFocus={() => dispatch({ type: 'focus' })}
+            onBlur={commitDraft}
             placeholder={placeholder}
             disabled={disabled}
-            className="flex-1 h-full bg-transparent outline-none min-w-0 font-mono text-inherit placeholder:text-text-muted"
+            className="flex-1 h-full bg-transparent outline-none min-w-0 font-mono tabular-nums text-inherit placeholder:text-text-muted"
           />
         </div>
 
-        {showCalendar && (
-          <div className="absolute top-full left-0 mt-1 z-50 rounded-md border border-border-default bg-bg-secondary shadow-[var(--shadow-dropdown)] p-3 w-[260px]">
+        {open && (
+          <div className="absolute top-full left-0 mt-1 z-50 w-[264px] rounded-[10px] border border-border-default bg-bg-secondary shadow-[var(--shadow-dropdown)] p-3">
             <div className="flex items-center justify-between mb-2">
-              <button type="button" onClick={prevMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Previous month"><ChevronLeft size={14} /></button>
-              <span className="text-sm font-medium text-text-primary">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-              <button type="button" onClick={nextMonth} className="p-1 hover:bg-hover rounded text-text-secondary transition-colors" aria-label="Next month"><ChevronRight size={14} /></button>
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'prevMonth' })}
+                className="p-1 rounded text-text-secondary hover:bg-hover transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none"
+                aria-label="Previous month"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-sm font-medium text-text-primary">
+                {MONTH_NAMES[viewMonth]} {viewYear}
+              </span>
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'nextMonth' })}
+                className="p-1 rounded text-text-secondary hover:bg-hover transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none"
+                aria-label="Next month"
+              >
+                <ChevronRight size={14} />
+              </button>
             </div>
             <div className="grid grid-cols-7 gap-0.5 text-center text-[11px] text-text-muted mb-1">
-              {DAY_HEADERS.map((d) => <div key={d}>{d}</div>)}
+              {DAY_HEADERS.map((d) => (
+                <div key={d}>{d}</div>
+              ))}
             </div>
             <div className="grid grid-cols-7 gap-0.5">
-              {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+              {Array.from({ length: firstDay }).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                 const dateStr = formatDate(new Date(viewYear, viewMonth, day))
                 const isSelected = dateStr === selectedDateStr
@@ -181,10 +236,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                   <button
                     key={day}
                     type="button"
-                    onClick={() => !isDayDisabled && selectDay(day)}
+                    onClick={() => !isDayDisabled && commitValue(dateStr)}
                     disabled={isDayDisabled}
                     className={cn(
-                      'h-7 w-7 rounded text-xs transition-colors',
+                      'h-7 w-7 rounded-[7px] text-xs tabular-nums transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none',
                       isSelected && 'bg-accent text-text-inverse',
                       !isSelected && isToday && 'border border-accent text-accent',
                       !isSelected && !isToday && 'hover:bg-hover text-text-primary',
@@ -198,8 +253,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             </div>
             <button
               type="button"
-              onClick={() => { const today = new Date(); setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); selectDay(today.getDate()) }}
-              className="mt-2 w-full text-xs text-accent hover:underline"
+              onClick={() => commitValue(formatDate(new Date()))}
+              className="mt-2 w-full rounded-[var(--field-r-sm)] border border-border-default bg-bg-elevated py-1 text-xs text-text-secondary hover:border-border-strong hover:text-text-primary transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none"
             >
               Today
             </button>

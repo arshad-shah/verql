@@ -17,29 +17,33 @@ describe('Input', () => {
     expect(container.querySelector('input')).toBeInTheDocument()
   })
 
+  // Sizing is density-token driven: every size shares the same base height
+  // class (`h-[var(--field-ctl-h)]`) and differs only by the control-local
+  // var it sets from the `--field-*` tokens.
   it('applies md size by default', () => {
     const { container } = render(<Input />)
-    expect(container.firstChild).toHaveClass('h-9')
+    expect(container.firstChild).toHaveClass('h-[var(--field-ctl-h)]')
+    expect(container.firstChild).toHaveClass('[--field-ctl-h:var(--field-h-md)]')
   })
 
   it('applies xs size', () => {
     const { container } = render(<Input size="xs" />)
-    expect(container.firstChild).toHaveClass('h-7')
+    expect(container.firstChild).toHaveClass('[--field-ctl-h:var(--field-h-xs)]')
   })
 
   it('applies sm size', () => {
     const { container } = render(<Input size="sm" />)
-    expect(container.firstChild).toHaveClass('h-8')
+    expect(container.firstChild).toHaveClass('[--field-ctl-h:var(--field-h-sm)]')
   })
 
   it('applies lg size', () => {
     const { container } = render(<Input size="lg" />)
-    expect(container.firstChild).toHaveClass('h-10')
+    expect(container.firstChild).toHaveClass('[--field-ctl-h:var(--field-h-lg)]')
   })
 
   it('applies xl size', () => {
     const { container } = render(<Input size="xl" />)
-    expect(container.firstChild).toHaveClass('h-12')
+    expect(container.firstChild).toHaveClass('[--field-ctl-h:var(--field-h-xl)]')
   })
 
   it('applies error border when error is true', () => {
@@ -81,9 +85,9 @@ describe('Textarea', () => {
     expect(container.firstChild).toHaveClass('border-error')
   })
 
-  it('applies resize-y class', () => {
+  it('disables native resize on the textarea (custom grip handles it)', () => {
     const { container } = render(<Textarea />)
-    expect(container.firstChild).toHaveClass('resize-y')
+    expect(container.querySelector('textarea')).toHaveClass('resize-none')
   })
 
   it('forwards ref', () => {

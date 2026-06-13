@@ -8,6 +8,10 @@ export interface Toast {
   message?: string
   /** If true, toast stays until manually dismissed or updated */
   persistent?: boolean
+  /** Auto-dismiss time (ms) for non-persistent toasts. The ToastContainer owns
+   *  the countdown (so it can animate the toast out before removal); falls back
+   *  to its own default when omitted. */
+  duration?: number
 }
 
 interface ToastState {
@@ -21,28 +25,20 @@ let nextId = 0
 
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
+  // The store no longer auto-removes on a timer — the ToastContainer runs the
+  // countdown and calls removeToast(id) after it animates the toast out.
+  // Removing it here would make non-persistent toasts vanish without animating.
   addToast: (toast) => {
     const id = toast.id ?? String(++nextId)
     set((state) => ({
       toasts: [...state.toasts.filter((t) => t.id !== id), { ...toast, id }],
     }))
-    if (!toast.persistent) {
-      setTimeout(() => {
-        set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
-      }, 5000)
-    }
     return id
   },
   updateToast: (id, updates) => {
     set((state) => ({
       toasts: state.toasts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
     }))
-    // If updated to non-persistent, auto-dismiss
-    if (updates.persistent === false) {
-      setTimeout(() => {
-        set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
-      }, 4000)
-    }
   },
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),

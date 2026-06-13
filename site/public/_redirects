@@ -1,0 +1,7 @@
+# Cloudflare Pages redirects. https://developers.cloudflare.com/pages/configuration/redirects/
+
+# Storybook is a raw static bundle at /storybook/ that references its assets
+# relatively (./sb-manager/…). Visited without the trailing slash, those
+# relative URLs resolve against / and 404, leaving the manager stuck on its
+# loading spinner. Force the trailing slash so the manager + preview resolve.
+/storybook /storybook/ 301

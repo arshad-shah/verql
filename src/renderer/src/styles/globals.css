@@ -136,6 +136,57 @@ dialog[open] { display: flex; flex-direction: column; }
 }
 .toast-enter { animation: slide-in-right 0.2s ease-out; }
 
+/* Toast auto-dismiss progress track (rendered only when <Toast duration> is set) */
+.toast-progress { transform: scaleX(1); animation: toast-progress linear forwards; }
+.toast:hover .toast-progress { animation-play-state: paused; }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .toast-progress { animation: none; } }
+
+/* Toast region — shell, rail, progress track, enter/leave motion (ToastContainer) */
+.vq-toast{
+  --vc: var(--color-accent);
+  --toast-gap: calc(var(--field-gap) + 1px);
+  position: relative; overflow: hidden; pointer-events: auto;
+  padding: calc(var(--field-gap) + 2px) calc(var(--field-px) + 1px);
+  padding-left: calc(var(--field-px) + 5px);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--field-r-lg);
+  background: color-mix(in srgb, var(--color-bg-elevated) 86%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-elevated);
+  transition: opacity .24s ease, transform .24s cubic-bezier(.22,1,.36,1),
+              max-height .26s ease, margin .26s ease, padding .26s ease, border-width .26s ease;
+}
+.vq-toast.error   { --vc: var(--color-error); }
+.vq-toast.success { --vc: var(--color-success); }
+.vq-toast.info    { --vc: var(--color-accent); }
+/* tonal wash + tinted border (every type is colored; there is no neutral toast) */
+.vq-toast{ background: color-mix(in srgb, var(--vc) 7%, color-mix(in srgb, var(--color-bg-elevated) 86%, transparent));
+           border-color: color-mix(in srgb, var(--vc) 26%, var(--color-border-default)); }
+.vq-toast::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--vc); }
+.vq-toast__icon{ color: var(--vc); }
+
+/* enter starts here, then the component drops .is-enter and CSS transitions in */
+.vq-toast.is-enter{ opacity:0; transform: translateX(16px) scale(.97); }
+/* leave: opacity/transform/margin/padding/border via class; max-height is set inline (measured) so it can collapse */
+.vq-toast.is-leaving{ opacity:0; transform: translateX(16px) scale(.97); margin-top:0; padding-top:0; padding-bottom:0; border-width:0; }
+
+.vq-toast__track{ position:absolute; left:0; bottom:0; height:2px; width:100%; background:var(--vc); opacity:.85; transform-origin:left; }
+.vq-toast.is-running .vq-toast__track{ animation: vq-toast-track var(--dur, 5000ms) linear forwards; }
+.vq-toast:hover .vq-toast__track{ animation-play-state: paused; }
+@keyframes vq-toast-track{ from{ transform: scaleX(1);} to{ transform: scaleX(0);} }
+
+.vq-toast__spin{ animation: vq-toast-spin 1s linear infinite; }
+@keyframes vq-toast-spin{ to{ transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce){
+  .vq-toast{ transition: none; }
+  .vq-toast.is-running .vq-toast__track{ animation: none; }
+  .vq-toast__spin{ animation: none; }
+}
+
+
+
 @keyframes cursor-pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 1; }
@@ -169,6 +220,64 @@ dialog[open] { display: flex; flex-direction: column; }
 [data-density="spacious"] .py-2 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 [data-density="spacious"] .gap-sm { gap: 0.75rem; }
 [data-density="spacious"] .gap-md { gap: 1.125rem; }
+
+/* Shared control density tokens — Input, NumberInput, Textarea, Select… all
+   size off these. One [data-density] flip rescales every field (height,
+   font-size, radius, padding). Heights/font-sizes/radii/spacing only; no
+   colors. The :root block is the fallback (= comfortable) so controls size
+   correctly even before density is wired. */
+:root {
+  --field-h-xs:26px; --field-h-sm:30px; --field-h-md:36px; --field-h-lg:40px; --field-h-xl:48px;
+  --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
+  --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
+  --field-px:10px; --field-gap:7px; --ta-py:9px;
+  /* Checkbox box-size tokens (fallback = comfortable). */
+  --check-sm:14px; --check-md:16px; --check-lg:20px;
+  /* Checkbox mark silhouettes — used as an alpha mask so the box's own fill shows through. */
+  --cb-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.4 6.5 11.4 12.5 4.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --cb-dash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.2 8 11.8 8' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+[data-density="compact"] {
+  --field-h-xs:22px; --field-h-sm:26px; --field-h-md:30px; --field-h-lg:34px; --field-h-xl:40px;
+  --field-fs-xs:10px; --field-fs-sm:11px; --field-fs-md:12px; --field-fs-lg:13px; --field-fs-xl:15px;
+  --field-r-sm:5px; --field-r-md:6px; --field-r-lg:8px;
+  --field-px:8px; --field-gap:6px; --ta-py:7px;
+  --check-sm:13px; --check-md:15px; --check-lg:18px;
+}
+[data-density="comfortable"] {
+  --field-h-xs:26px; --field-h-sm:30px; --field-h-md:36px; --field-h-lg:40px; --field-h-xl:48px;
+  --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
+  --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
+  --field-px:10px; --field-gap:7px; --ta-py:9px;
+  --check-sm:14px; --check-md:16px; --check-lg:20px;
+}
+[data-density="spacious"] {
+  --field-h-xs:30px; --field-h-sm:34px; --field-h-md:42px; --field-h-lg:46px; --field-h-xl:54px;
+  --field-fs-xs:12px; --field-fs-sm:13px; --field-fs-md:14px; --field-fs-lg:15px; --field-fs-xl:17px;
+  --field-r-sm:7px; --field-r-md:9px; --field-r-lg:11px;
+  --field-px:13px; --field-gap:9px; --ta-py:12px;
+  --check-sm:16px; --check-md:18px; --check-lg:22px;
+}
+
+/* Checkbox masked mark — the component carries the `cb-mark` base class; the
+   box's own accent fill shows through this alpha mask. Lives here (not as
+   Tailwind arbitrary utilities) because of the vendor-prefixed mask + spring
+   ease. */
+.cb-mark::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: #fff; /* mark color on the accent fill — matches the old before:border-white */
+  -webkit-mask: var(--cb-check) center / 62% no-repeat;
+          mask: var(--cb-check) center / 62% no-repeat;
+  opacity: 0; transform: scale(0.5);
+  transition: opacity var(--transition-fast) ease,
+              transform var(--transition-fast) cubic-bezier(.34, 1.4, .64, 1);
+}
+.cb-mark:checked::before { opacity: 1; transform: scale(1); }
+.cb-mark:indeterminate::before {
+  opacity: 1; transform: scale(1);
+  -webkit-mask-image: var(--cb-dash); mask-image: var(--cb-dash);
+}
+@media (prefers-reduced-motion: reduce) { .cb-mark::before { transition: none; } }
 
 /* Honour the appearance.animations toggle. When off, kill all transitions/
    animations app-wide so settings → UI is consistent. The exception list

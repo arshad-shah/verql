@@ -46,3 +46,14 @@ export const Variants: Story = {
     </div>
   ),
 }
+
+export const WithProgress: Story = {
+  name: 'Auto-dismiss (hover to pause)',
+  args: {
+    variant: 'success',
+    message: 'Saved — auto-dismisses in 6s. Hover to pause the countdown.',
+    duration: 6000,
+    onDismiss: fn(),
+  },
+  decorators: [(Story) => <div style={{ width: 320 }}><Story /></div>],
+}
