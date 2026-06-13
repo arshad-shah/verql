@@ -2,16 +2,19 @@
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  X-Frame-Options: DENY
+  # SAMEORIGIN (not DENY): still blocks cross-origin clickjacking, but the
+  # published Storybook frames its own preview (iframe.html) from this same
+  # origin — DENY blocks ALL framing, including same-origin, which left the
+  # preview pane stuck on its loading spinner. A single global value here keeps
+  # the header unambiguous (no per-path override that Cloudflare could emit
+  # alongside the global one, producing a conflicting header pair).
+  X-Frame-Options: SAMEORIGIN
 
 # Astro emits content-hashed filenames under /_astro — safe to cache forever.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
 # Storybook is published here for manual validation only (not linked from any
-# nav). Keep it out of search indexes, and relax X-Frame-Options to SAMEORIGIN
-# so Storybook's same-origin preview iframe renders — the global rule above
-# sets DENY, which would otherwise blank the preview pane.
+# nav) — keep it out of search indexes.
 /storybook/*
   X-Robots-Tag: noindex, nofollow
-  X-Frame-Options: SAMEORIGIN
