@@ -1,0 +1,1 @@
+import{B as s}from"./iframe-CdY22T7n.js";function a({children:e}){return s.jsx("span",{className:"sr-only",children:e})}a.__docgenInfo={description:"",methods:[],displayName:"VisuallyHidden",props:{children:{required:!0,tsType:{name:"ReactReactNode",raw:"React.ReactNode"},description:""}}};export{a as V};

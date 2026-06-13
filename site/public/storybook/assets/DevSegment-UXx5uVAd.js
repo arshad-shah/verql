@@ -1,0 +1,1 @@
+import"./iframe-CdY22T7n.js";import"./StatusBarSegment-B9b9S1Aa.js";import{u as e}from"./I18nProvider-QSPSpfHa.js";function n(){return e(),null}n.__docgenInfo={description:"",methods:[],displayName:"DevSegment"};export{n as D};

@@ -7,3 +7,11 @@
 # Astro emits content-hashed filenames under /_astro — safe to cache forever.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Storybook is published here for manual validation only (not linked from any
+# nav). Keep it out of search indexes, and relax X-Frame-Options to SAMEORIGIN
+# so Storybook's same-origin preview iframe renders — the global rule above
+# sets DENY, which would otherwise blank the preview pane.
+/storybook/*
+  X-Robots-Tag: noindex, nofollow
+  X-Frame-Options: SAMEORIGIN

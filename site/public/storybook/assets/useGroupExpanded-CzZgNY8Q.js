@@ -1,0 +1,1 @@
+import{J as c}from"./iframe-CdY22T7n.js";function p(a,e){const r=`schema-group:${a}`,[o,s]=c.useState(()=>{try{const t=localStorage.getItem(r);return t===null?e:t==="1"}catch{return e}});return[o,t=>{s(t);try{localStorage.setItem(r,t?"1":"0")}catch{}}]}export{p as u};

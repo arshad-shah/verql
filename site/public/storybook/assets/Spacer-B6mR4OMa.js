@@ -1,0 +1,1 @@
+import{J as o,B as p}from"./iframe-CdY22T7n.js";import{a as t}from"./cn-DDt1maD9.js";const a=o.forwardRef(({className:r,...e},s)=>p.jsx("div",{ref:s,className:t("flex-1",r),...e}));a.displayName="Spacer";a.__docgenInfo={description:"",methods:[],displayName:"Spacer"};export{a as S};

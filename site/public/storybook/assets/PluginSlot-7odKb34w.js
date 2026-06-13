@@ -1,0 +1,9 @@
+import{J as h,B as e}from"./iframe-CdY22T7n.js";import{u,s as g}from"./plugin-ui-9V3NCBVr.js";import{C as f}from"./ChatPanel-tmdcdd_T.js";import{A as w}from"./AIToggleButton-TCxBe5m_.js";import{E as b}from"./ExplainPanel-VSF4Rsr_.js";import{A as x}from"./AIStatusSegment-BxzqCcrS.js";const y={"ai-chat-panel":f,"ai-toggle-button":w,"ai-explain":b,"ai-status":x};function S({id:c,context:p,wrap:n}){const d=u(g("slot")),o=u(t=>t.fetchContributions);h.useEffect(()=>{o("slot")},[o]);const i=d.filter(t=>t.slotId===c);if(i.length===0)return null;const r=i.flatMap(t=>t.widgets.map((s,m)=>{if(s.type!=="host-component")return null;const a=s,l=y[a.componentId];return l?e.jsx(l,{...a.props??{},...p??{}},`${t.contributionId}-${m}`):null}));return e.jsx(e.Fragment,{children:n?n(r):r})}S.__docgenInfo={description:`Generic mount point for plugin-contributed UI. The host drops one of these
+wherever it wants plugins to be able to add UI; plugins call
+\`ctx.ui.registerSlot('<id>', [widgets])\` to fill it. Disabling the plugin
+removes the contribution and the slot empties automatically.
+
+No \`if (someFeature)\` checks — the host renders whatever is here and
+nothing when nothing is contributed.`,methods:[],displayName:"PluginSlot",props:{id:{required:!0,tsType:{name:"string"},description:"Slot identifier — plugins target this with ctx.ui.registerSlot."},context:{required:!1,tsType:{name:"Record",elements:[{name:"string"},{name:"unknown"}],raw:"Record<string, unknown>"},description:`Optional context object forwarded as props to every mounted host component.
+Components destructure whatever keys they need; the host doesn't have to
+know about plugin-specific shapes.`},wrap:{required:!1,tsType:{name:"signature",type:"function",raw:"(children: ReactNode) => ReactNode",signature:{arguments:[{type:{name:"ReactNode"},name:"children"}],return:{name:"ReactNode"}}},description:"Optional wrapper around the contribution list (e.g. a flex container)."}}};export{S as P};
