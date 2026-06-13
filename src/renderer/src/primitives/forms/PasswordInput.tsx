@@ -1,18 +1,21 @@
-import React, { forwardRef, useState } from 'react'
+import React, { forwardRef, useReducer, useMemo } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { fieldSizeVariants } from './field-variants'
 
 const passwordInputVariants = cva(
-  'flex items-center gap-2 border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
+  [
+    'flex items-center gap-[var(--field-gap)] border text-text-primary',
+    'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
+    'shadow-[var(--shadow-input-inset)]',
+    'h-[var(--field-ctl-h)] px-[var(--field-px)] text-[length:var(--field-ctl-fs)] rounded-[var(--field-ctl-r)]',
+    'transition-all duration-[var(--transition-fast)] motion-reduce:transition-none',
+    'focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
+  ].join(' '),
   {
     variants: {
-      size: {
-        xs: 'h-6 px-2 text-xs rounded',
-        sm: 'h-7 px-3 text-xs rounded',
-        md: 'h-8 px-3 text-sm rounded-md',
-        lg: 'h-9 px-3 text-sm rounded-md',
-        xl: 'h-10 px-4 text-base rounded-lg',
-      },
+      size: fieldSizeVariants,
       error: {
         true: 'border-error focus-within:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
         false: 'border-border-default hover:border-border-strong',
@@ -22,7 +25,14 @@ const passwordInputVariants = cva(
   }
 )
 
-function getStrength(password: string): { label: string; percent: number; color: string } {
+interface Strength {
+  label: string
+  fill: 1 | 2 | 3 | 4
+  bar: string
+  text: string
+}
+
+function getStrength(password: string): Strength {
   let score = 0
   if (password.length >= 8) score++
   if (password.length >= 12) score++
@@ -30,10 +40,21 @@ function getStrength(password: string): { label: string; percent: number; color:
   if (/\d/.test(password)) score++
   if (/[^a-zA-Z0-9]/.test(password)) score++
 
-  if (score <= 1) return { label: 'Weak', percent: 25, color: 'bg-error' }
-  if (score <= 2) return { label: 'Fair', percent: 50, color: 'bg-warning' }
-  if (score <= 3) return { label: 'Strong', percent: 75, color: 'bg-info' }
-  return { label: 'Very strong', percent: 100, color: 'bg-success' }
+  if (score <= 1) return { label: 'Weak', fill: 1, bar: 'bg-error', text: 'text-error' }
+  if (score <= 2) return { label: 'Fair', fill: 2, bar: 'bg-warning', text: 'text-warning' }
+  if (score <= 3) return { label: 'Strong', fill: 3, bar: 'bg-info', text: 'text-info' }
+  return { label: 'Very strong', fill: 4, bar: 'bg-success', text: 'text-success' }
+}
+
+type PwState = { visible: boolean; value: string }
+type PwAction = { type: 'toggle' } | { type: 'setValue'; value: string }
+function pwReducer(s: PwState, a: PwAction): PwState {
+  switch (a.type) {
+    case 'toggle':
+      return { ...s, visible: !s.visible }
+    case 'setValue':
+      return { ...s, value: a.value }
+  }
 }
 
 export interface PasswordInputProps extends VariantProps<typeof passwordInputVariants> {
@@ -48,14 +69,16 @@ export interface PasswordInputProps extends VariantProps<typeof passwordInputVar
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ value, defaultValue, onChange, showStrength, disabled, placeholder = 'Password', size, error, className, ...props }, ref) => {
-    const [visible, setVisible] = useState(false)
-    const [internalValue, setInternalValue] = useState(defaultValue ?? '')
+    const [state, dispatch] = useReducer(pwReducer, { visible: false, value: defaultValue ?? '' })
 
-    const currentValue = value ?? internalValue
-    const strength = showStrength ? getStrength(currentValue) : null
+    const currentValue = value ?? state.value
+    const strength = useMemo(
+      () => (showStrength ? getStrength(currentValue) : null),
+      [showStrength, currentValue]
+    )
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (value === undefined) setInternalValue(e.target.value)
+      if (value === undefined) dispatch({ type: 'setValue', value: e.target.value })
       onChange?.(e)
     }
 
@@ -64,7 +87,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         <div className={cn(passwordInputVariants({ size, error }), disabled && 'opacity-50 pointer-events-none', className)}>
           <input
             ref={ref}
-            type={visible ? 'text' : 'password'}
+            type={state.visible ? 'text' : 'password'}
             value={value}
             defaultValue={value === undefined ? defaultValue : undefined}
             onChange={handleChange}
@@ -76,32 +99,27 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => setVisible(!visible)}
-            className="text-text-muted hover:text-text-primary transition-colors shrink-0"
-            aria-label={visible ? 'Hide password' : 'Show password'}
+            onClick={() => dispatch({ type: 'toggle' })}
+            className="shrink-0 text-text-muted hover:text-text-primary transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none active:[&>svg]:scale-90"
+            aria-label={state.visible ? 'Hide password' : 'Show password'}
           >
-            {visible ? (
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
+            {state.visible ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
         {strength && currentValue.length > 0 && (
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-1 rounded-full bg-bg-tertiary overflow-hidden">
-              <div
-                className={cn('h-full rounded-full transition-all duration-[var(--transition-normal)]', strength.color)}
-                style={{ width: `${strength.percent}%` }}
-              />
+            <div className="flex flex-1 gap-1">
+              {[0, 1, 2, 3].map((i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'h-[3px] flex-1 rounded-full bg-bg-tertiary transition-colors duration-[var(--transition-normal)] motion-reduce:transition-none',
+                    i < strength.fill && strength.bar
+                  )}
+                />
+              ))}
             </div>
-            <span className="text-[10px] text-text-muted">{strength.label}</span>
+            <span className={cn('min-w-[64px] text-right text-[10px] font-semibold', strength.text)}>{strength.label}</span>
           </div>
         )}
       </div>

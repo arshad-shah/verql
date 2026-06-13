@@ -170,28 +170,34 @@ dialog[open] { display: flex; flex-direction: column; }
 [data-density="spacious"] .gap-sm { gap: 0.75rem; }
 [data-density="spacious"] .gap-md { gap: 1.125rem; }
 
-/* NumberInput density tokens — one [data-density] flip rescales the control.
-   Heights/font-sizes/radii only; no colors. The :root block is a fallback
-   (= comfortable) so the control sizes correctly even before density is wired. */
+/* Shared control density tokens — Input, NumberInput, Textarea, Select… all
+   size off these. One [data-density] flip rescales every field (height,
+   font-size, radius, padding). Heights/font-sizes/radii/spacing only; no
+   colors. The :root block is the fallback (= comfortable) so controls size
+   correctly even before density is wired. */
 :root {
-  --ni-h-xs: 26px; --ni-h-sm: 30px; --ni-h-md: 36px; --ni-h-lg: 40px; --ni-h-xl: 48px;
-  --ni-fs-xs: 11px; --ni-fs-sm: 12px; --ni-fs-md: 13px; --ni-fs-lg: 14px; --ni-fs-xl: 16px;
-  --ni-r-sm: 6px;  --ni-r-md: 8px;  --ni-r-lg: 10px;
+  --field-h-xs:26px; --field-h-sm:30px; --field-h-md:36px; --field-h-lg:40px; --field-h-xl:48px;
+  --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
+  --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
+  --field-px:10px; --field-gap:7px; --ta-py:9px;
 }
 [data-density="compact"] {
-  --ni-h-xs: 22px; --ni-h-sm: 26px; --ni-h-md: 30px; --ni-h-lg: 34px; --ni-h-xl: 40px;
-  --ni-fs-xs: 10px; --ni-fs-sm: 11px; --ni-fs-md: 12px; --ni-fs-lg: 13px; --ni-fs-xl: 15px;
-  --ni-r-sm: 5px;  --ni-r-md: 6px;  --ni-r-lg: 8px;
+  --field-h-xs:22px; --field-h-sm:26px; --field-h-md:30px; --field-h-lg:34px; --field-h-xl:40px;
+  --field-fs-xs:10px; --field-fs-sm:11px; --field-fs-md:12px; --field-fs-lg:13px; --field-fs-xl:15px;
+  --field-r-sm:5px; --field-r-md:6px; --field-r-lg:8px;
+  --field-px:8px; --field-gap:6px; --ta-py:7px;
 }
 [data-density="comfortable"] {
-  --ni-h-xs: 26px; --ni-h-sm: 30px; --ni-h-md: 36px; --ni-h-lg: 40px; --ni-h-xl: 48px;
-  --ni-fs-xs: 11px; --ni-fs-sm: 12px; --ni-fs-md: 13px; --ni-fs-lg: 14px; --ni-fs-xl: 16px;
-  --ni-r-sm: 6px;  --ni-r-md: 8px;  --ni-r-lg: 10px;
+  --field-h-xs:26px; --field-h-sm:30px; --field-h-md:36px; --field-h-lg:40px; --field-h-xl:48px;
+  --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
+  --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
+  --field-px:10px; --field-gap:7px; --ta-py:9px;
 }
 [data-density="spacious"] {
-  --ni-h-xs: 30px; --ni-h-sm: 34px; --ni-h-md: 42px; --ni-h-lg: 46px; --ni-h-xl: 54px;
-  --ni-fs-xs: 12px; --ni-fs-sm: 13px; --ni-fs-md: 14px; --ni-fs-lg: 15px; --ni-fs-xl: 17px;
-  --ni-r-sm: 7px;  --ni-r-md: 9px;  --ni-r-lg: 11px;
+  --field-h-xs:30px; --field-h-sm:34px; --field-h-md:42px; --field-h-lg:46px; --field-h-xl:54px;
+  --field-fs-xs:12px; --field-fs-sm:13px; --field-fs-md:14px; --field-fs-lg:15px; --field-fs-xl:17px;
+  --field-r-sm:7px; --field-r-md:9px; --field-r-lg:11px;
+  --field-px:13px; --field-gap:9px; --ta-py:12px;
 }
 
 /* Honour the appearance.animations toggle. When off, kill all transitions/

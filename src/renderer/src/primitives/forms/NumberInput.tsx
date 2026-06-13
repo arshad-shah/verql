@@ -1,26 +1,21 @@
 import React, { forwardRef, useState, useCallback, useRef, useEffect } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
+import { fieldSizeVariants } from './field-variants'
 
 const numberInputVariants = cva(
   [
     'inline-flex items-center overflow-hidden border text-text-primary',
     'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
     'shadow-[var(--shadow-input-inset)]',
-    // size is driven by density tokens via the size variant below
-    'h-[var(--ni-ctl-h)] rounded-[var(--ni-ctl-r)] text-[length:var(--ni-ctl-fs)]',
+    // size is driven by the shared density tokens via the size variant below
+    'h-[var(--field-ctl-h)] rounded-[var(--field-ctl-r)] text-[length:var(--field-ctl-fs)]',
     'transition-all duration-[var(--transition-fast)] motion-reduce:transition-none',
     'focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
   ].join(' '),
   {
     variants: {
-      size: {
-        xs: '[--ni-ctl-h:var(--ni-h-xs)] [--ni-ctl-fs:var(--ni-fs-xs)] [--ni-ctl-r:var(--ni-r-sm)]',
-        sm: '[--ni-ctl-h:var(--ni-h-sm)] [--ni-ctl-fs:var(--ni-fs-sm)] [--ni-ctl-r:var(--ni-r-sm)]',
-        md: '[--ni-ctl-h:var(--ni-h-md)] [--ni-ctl-fs:var(--ni-fs-md)] [--ni-ctl-r:var(--ni-r-md)]',
-        lg: '[--ni-ctl-h:var(--ni-h-lg)] [--ni-ctl-fs:var(--ni-fs-lg)] [--ni-ctl-r:var(--ni-r-md)]',
-        xl: '[--ni-ctl-h:var(--ni-h-xl)] [--ni-ctl-fs:var(--ni-fs-xl)] [--ni-ctl-r:var(--ni-r-lg)]',
-      },
+      size: fieldSizeVariants,
       error: {
         true: 'border-error focus-within:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
         false: 'border-border-default hover:border-border-strong',
@@ -32,7 +27,7 @@ const numberInputVariants = cva(
 
 // Square-ish stepper cells that stay proportional to the control height across densities.
 const stepperButtonClass = cn(
-  'flex shrink-0 items-center justify-center w-[calc(var(--ni-ctl-h)*0.84)] h-full',
+  'flex shrink-0 items-center justify-center w-[calc(var(--field-ctl-h)*0.84)] h-full',
   'border-0 bg-transparent text-text-secondary cursor-pointer select-none',
   'transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none',
   'hover:text-text-primary hover:bg-hover',
