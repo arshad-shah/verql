@@ -136,6 +136,13 @@ dialog[open] { display: flex; flex-direction: column; }
 }
 .toast-enter { animation: slide-in-right 0.2s ease-out; }
 
+/* Toast auto-dismiss progress track (rendered only when <Toast duration> is set) */
+.toast-progress { transform: scaleX(1); animation: toast-progress linear forwards; }
+.toast:hover .toast-progress { animation-play-state: paused; }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .toast-progress { animation: none; } }
+
+
 @keyframes cursor-pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 1; }
