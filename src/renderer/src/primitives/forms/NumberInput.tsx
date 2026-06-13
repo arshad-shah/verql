@@ -3,15 +3,23 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../utils/cn'
 
 const numberInputVariants = cva(
-  'flex items-center border bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)] text-text-primary shadow-[var(--shadow-input-inset)] transition-all duration-[var(--transition-fast)] focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
+  [
+    'inline-flex items-center overflow-hidden border text-text-primary',
+    'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
+    'shadow-[var(--shadow-input-inset)]',
+    // size is driven by density tokens via the size variant below
+    'h-[var(--ni-ctl-h)] rounded-[var(--ni-ctl-r)] text-[length:var(--ni-ctl-fs)]',
+    'transition-all duration-[var(--transition-fast)] motion-reduce:transition-none',
+    'focus-within:shadow-[var(--shadow-focus-glow),var(--shadow-input-inset)]',
+  ].join(' '),
   {
     variants: {
       size: {
-        xs: 'h-7 text-xs rounded',
-        sm: 'h-8 text-xs rounded',
-        md: 'h-9 text-sm rounded-md',
-        lg: 'h-10 text-sm rounded-md',
-        xl: 'h-12 text-base rounded-lg',
+        xs: '[--ni-ctl-h:var(--ni-h-xs)] [--ni-ctl-fs:var(--ni-fs-xs)] [--ni-ctl-r:var(--ni-r-sm)]',
+        sm: '[--ni-ctl-h:var(--ni-h-sm)] [--ni-ctl-fs:var(--ni-fs-sm)] [--ni-ctl-r:var(--ni-r-sm)]',
+        md: '[--ni-ctl-h:var(--ni-h-md)] [--ni-ctl-fs:var(--ni-fs-md)] [--ni-ctl-r:var(--ni-r-md)]',
+        lg: '[--ni-ctl-h:var(--ni-h-lg)] [--ni-ctl-fs:var(--ni-fs-lg)] [--ni-ctl-r:var(--ni-r-md)]',
+        xl: '[--ni-ctl-h:var(--ni-h-xl)] [--ni-ctl-fs:var(--ni-fs-xl)] [--ni-ctl-r:var(--ni-r-lg)]',
       },
       error: {
         true: 'border-error focus-within:shadow-[var(--shadow-error-ring),var(--shadow-input-inset)]',
@@ -22,8 +30,46 @@ const numberInputVariants = cva(
   }
 )
 
-const stepperButtonClass =
-  'flex items-center justify-center border-0 bg-transparent text-text-secondary hover:text-text-primary hover:bg-hover transition-colors duration-[var(--transition-fast)] disabled:opacity-50 disabled:pointer-events-none h-full px-2 select-none'
+// Square-ish stepper cells that stay proportional to the control height across densities.
+const stepperButtonClass = cn(
+  'flex shrink-0 items-center justify-center w-[calc(var(--ni-ctl-h)*0.84)] h-full',
+  'border-0 bg-transparent text-text-secondary cursor-pointer select-none',
+  'transition-colors duration-[var(--transition-fast)] motion-reduce:transition-none',
+  'hover:text-text-primary hover:bg-hover',
+  'active:[&>svg]:scale-[0.86]',
+  'disabled:text-text-disabled disabled:bg-transparent disabled:pointer-events-none disabled:cursor-not-allowed'
+)
+
+const stepIconClass =
+  'h-[1.1em] w-[1.1em] transition-transform duration-[var(--transition-fast)] motion-reduce:transition-none'
+
+const MinusIcon = () => (
+  <svg
+    className={stepIconClass}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M4 8h8" />
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg
+    className={stepIconClass}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M8 4v8M4 8h8" />
+  </svg>
+)
 
 export interface NumberInputProps extends VariantProps<typeof numberInputVariants> {
   value?: number
@@ -75,10 +121,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       [precision]
     )
 
-    const clamp = useCallback(
-      (v: number) => Math.min(max, Math.max(min, v)),
-      [min, max]
-    )
+    const clamp = useCallback((v: number) => Math.min(max, Math.max(min, v)), [min, max])
 
     const setValue = useCallback(
       (next: number) => {
@@ -126,7 +169,13 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     }, [ref])
 
     return (
-      <div className={cn(numberInputVariants({ size, error }), disabled && 'opacity-50 pointer-events-none', className)}>
+      <div
+        className={cn(
+          numberInputVariants({ size, error }),
+          disabled && 'opacity-50 pointer-events-none',
+          className
+        )}
+      >
         <button
           type="button"
           tabIndex={-1}
@@ -135,14 +184,14 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           disabled={disabled || currentValue <= min}
           aria-label="Decrement"
         >
-          −
+          <MinusIcon />
         </button>
         <input
           ref={inputRef}
           id={id}
           type="text"
           inputMode="decimal"
-          className="flex-1 h-full bg-transparent text-center font-mono outline-none min-w-0 text-inherit"
+          className="flex-1 h-full min-w-0 bg-transparent text-center font-mono tabular-nums tracking-[-0.01em] outline-none text-inherit placeholder:text-text-muted px-1.5"
           value={isEditing ? textValue : formatValue(currentValue)}
           onChange={handleTextChange}
           onFocus={handleFocus}
@@ -165,7 +214,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           disabled={disabled || currentValue >= max}
           aria-label="Increment"
         >
-          +
+          <PlusIcon />
         </button>
       </div>
     )
