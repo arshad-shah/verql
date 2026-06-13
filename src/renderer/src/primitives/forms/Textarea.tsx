@@ -170,14 +170,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ;(e.target as Element).setPointerCapture?.(e.pointerId)
       const startX = e.clientX
       const startY = e.clientY
-      const startH = field.getBoundingClientRect().height
+      // Resize the root (the `flex-1` field fills it). Setting the field's own
+      // height is overridden by the flex layout, so drive the card instead —
+      // symmetric with the horizontal axis below.
+      const startH = root.getBoundingClientRect().height
       const startW = root.getBoundingClientRect().width
       const vertical = resize === 'vertical' || resize === 'both'
       const horizontal = resize === 'horizontal' || resize === 'both'
       setDragging(true)
 
       const onMove = (ev: PointerEvent) => {
-        if (vertical) field.style.height = `${Math.max(MIN_HEIGHT, startH + (ev.clientY - startY))}px`
+        if (vertical) root.style.height = `${Math.max(MIN_HEIGHT, startH + (ev.clientY - startY))}px`
         if (horizontal) root.style.width = `${Math.max(MIN_WIDTH, startW + (ev.clientX - startX))}px`
       }
       const onUp = () => {
