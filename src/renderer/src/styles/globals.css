@@ -180,25 +180,53 @@ dialog[open] { display: flex; flex-direction: column; }
   --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
   --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
   --field-px:10px; --field-gap:7px; --ta-py:9px;
+  /* Checkbox box-size tokens (fallback = comfortable). */
+  --check-sm:14px; --check-md:16px; --check-lg:20px;
+  /* Checkbox mark silhouettes — used as an alpha mask so the box's own fill shows through. */
+  --cb-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.4 6.5 11.4 12.5 4.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --cb-dash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.2 8 11.8 8' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 [data-density="compact"] {
   --field-h-xs:22px; --field-h-sm:26px; --field-h-md:30px; --field-h-lg:34px; --field-h-xl:40px;
   --field-fs-xs:10px; --field-fs-sm:11px; --field-fs-md:12px; --field-fs-lg:13px; --field-fs-xl:15px;
   --field-r-sm:5px; --field-r-md:6px; --field-r-lg:8px;
   --field-px:8px; --field-gap:6px; --ta-py:7px;
+  --check-sm:13px; --check-md:15px; --check-lg:18px;
 }
 [data-density="comfortable"] {
   --field-h-xs:26px; --field-h-sm:30px; --field-h-md:36px; --field-h-lg:40px; --field-h-xl:48px;
   --field-fs-xs:11px; --field-fs-sm:12px; --field-fs-md:13px; --field-fs-lg:14px; --field-fs-xl:16px;
   --field-r-sm:6px; --field-r-md:8px; --field-r-lg:10px;
   --field-px:10px; --field-gap:7px; --ta-py:9px;
+  --check-sm:14px; --check-md:16px; --check-lg:20px;
 }
 [data-density="spacious"] {
   --field-h-xs:30px; --field-h-sm:34px; --field-h-md:42px; --field-h-lg:46px; --field-h-xl:54px;
   --field-fs-xs:12px; --field-fs-sm:13px; --field-fs-md:14px; --field-fs-lg:15px; --field-fs-xl:17px;
   --field-r-sm:7px; --field-r-md:9px; --field-r-lg:11px;
   --field-px:13px; --field-gap:9px; --ta-py:12px;
+  --check-sm:16px; --check-md:18px; --check-lg:22px;
 }
+
+/* Checkbox masked mark — the component carries the `cb-mark` base class; the
+   box's own accent fill shows through this alpha mask. Lives here (not as
+   Tailwind arbitrary utilities) because of the vendor-prefixed mask + spring
+   ease. */
+.cb-mark::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: #fff; /* mark color on the accent fill — matches the old before:border-white */
+  -webkit-mask: var(--cb-check) center / 62% no-repeat;
+          mask: var(--cb-check) center / 62% no-repeat;
+  opacity: 0; transform: scale(0.5);
+  transition: opacity var(--transition-fast) ease,
+              transform var(--transition-fast) cubic-bezier(.34, 1.4, .64, 1);
+}
+.cb-mark:checked::before { opacity: 1; transform: scale(1); }
+.cb-mark:indeterminate::before {
+  opacity: 1; transform: scale(1);
+  -webkit-mask-image: var(--cb-dash); mask-image: var(--cb-dash);
+}
+@media (prefers-reduced-motion: reduce) { .cb-mark::before { transition: none; } }
 
 /* Honour the appearance.animations toggle. When off, kill all transitions/
    animations app-wide so settings → UI is consistent. The exception list

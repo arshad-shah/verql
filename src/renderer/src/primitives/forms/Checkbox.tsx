@@ -4,41 +4,34 @@ import { cn } from '../utils/cn'
 
 const checkboxVariants = cva(
   cn(
-    // Base: hidden native appearance (size-independent)
-    'relative cursor-pointer appearance-none rounded border border-border-default',
+    // single styled native checkbox; the masked mark comes from `.cb-mark::before` (globals)
+    'cb-mark relative shrink-0 cursor-pointer appearance-none',
+    'h-[var(--cb-size)] w-[var(--cb-size)] rounded-[max(3px,calc(var(--cb-size)*0.26))]',
+    'border border-border-default',
     'bg-[linear-gradient(180deg,var(--color-input-gradient-top),var(--color-input-gradient-bottom)),var(--color-bg-tertiary)]',
     'shadow-input-inset',
-    'transition-all duration-(--transition-fast)',
-    // Hover
+    'transition-[background-color,border-color,box-shadow,transform] duration-(--transition-fast) motion-reduce:transition-none',
+    // hover
     'hover:border-border-strong',
-    // Checked
-    'checked:bg-accent checked:border-accent checked:shadow-none',
-    'checked:hover:brightness-110',
-    // Focus
-    'focus:outline-none focus:shadow-[var(--shadow-focus-glow)]',
-    'checked:focus:shadow-focus-glow',
-    // Disabled
+    // press
+    'active:scale-[0.94] motion-reduce:active:scale-100',
+    // checked / indeterminate fill
+    'checked:border-accent checked:bg-accent checked:shadow-none checked:hover:brightness-110',
+    'indeterminate:border-accent indeterminate:bg-accent indeterminate:shadow-none indeterminate:hover:brightness-110',
+    // keyboard focus only
+    'focus-visible:outline-none focus-visible:shadow-focus-glow',
+    // disabled
     'disabled:pointer-events-none disabled:opacity-50',
-    // Checkmark pseudo-element (CSS border trick) — position is size-independent
-    'before:absolute before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-[60%]',
-    'before:rotate-45',
-    'before:border-b-2 before:border-r-2 before:border-white',
-    'before:opacity-0 before:scale-0',
-    'before:transition-all before:duration-(--transition-fast)',
-    // Checkmark visible on checked
-    'checked:before:opacity-100 checked:before:scale-100'
   ),
   {
     variants: {
       size: {
-        sm: 'h-3.5 w-3.5 before:h-1.75 before:w-1',
-        md: 'h-4 w-4 before:h-2 before:w-1.25',
-        lg: 'h-5 w-5 before:h-2.5 before:w-1.5',
+        sm: '[--cb-size:var(--check-sm)]',
+        md: '[--cb-size:var(--check-md)]',
+        lg: '[--cb-size:var(--check-lg)]',
       },
     },
-    defaultVariants: {
-      size: 'md',
-    },
+    defaultVariants: { size: 'md' },
   }
 )
 

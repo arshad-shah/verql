@@ -86,10 +86,14 @@ describe('Checkbox', () => {
   })
 
   it('applies styling classes', () => {
+    // Box size is density-token driven: every size shares the same base
+    // width/height class (`*-[var(--cb-size)]`) and differs only by the
+    // `--cb-size` var it sets. md maps to `--check-md`.
     const { container } = render(<Checkbox />)
     const input = container.querySelector('input')
-    expect(input).toHaveClass('h-4')
-    expect(input).toHaveClass('w-4')
+    expect(input).toHaveClass('h-[var(--cb-size)]')
+    expect(input).toHaveClass('w-[var(--cb-size)]')
+    expect(input).toHaveClass('[--cb-size:var(--check-md)]')
   })
 
   it('forwards ref', () => {
