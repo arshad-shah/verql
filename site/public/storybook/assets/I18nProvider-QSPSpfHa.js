@@ -1,1 +1,0 @@
-import{J as r}from"./iframe-CdY22T7n.js";import{t as e,s,g as t}from"./index-8X-GOh7L.js";import"./settings-Df4NhSNk.js";function a(){return r.useSyncExternalStore(s,t,t)}function i(){const o=a();return{t:e,locale:o}}export{i as u};

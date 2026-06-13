@@ -1,2 +1,0 @@
-class i{actions=new Map;listeners=new Set;register(t){return this.actions.set(t.id,t),this.emit(),()=>{this.actions.delete(t.id)&&this.emit()}}get(t){return this.actions.get(t)}list(){return[...this.actions.values()]}async run(t,e={}){const s=this.actions.get(t);if(!s)throw new Error(`Unknown app action: ${t}`);await s.run(e)}describeForPrompt(){return this.actions.size===0?"":this.list().map(t=>`${t.id} "${t.title}"`).join(`
-`)}onChange(t){return this.listeners.add(t),()=>{this.listeners.delete(t)}}emit(){for(const t of this.listeners)t()}}const r=new i;export{r as a};

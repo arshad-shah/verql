@@ -1,1 +1,0 @@
-import{J as s,B as d}from"./iframe-CdY22T7n.js";import{a as t}from"./cn-DDt1maD9.js";const a=s.forwardRef(({className:r,...e},o)=>d.jsx("div",{ref:o,className:t("bg-bg-secondary border border-border-default shadow-[var(--shadow-card)]",r),...e}));a.displayName="Panel";a.__docgenInfo={description:"",methods:[],displayName:"Panel"};export{a as P};

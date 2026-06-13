@@ -1,1 +1,0 @@
-import{c as r}from"./react-CM93qTYy.js";const l=r(o=>({selection:null,setSelection:e=>o({selection:e}),clearForTab:e=>o(n=>n.selection?.kind==="row"&&n.selection.tabId===e?{selection:null}:{})}));export{l as u};
