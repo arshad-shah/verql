@@ -265,9 +265,20 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     environment: release
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     permissions:
       contents: read
     steps:
+      # `msstore publish`'s first argument is the PROJECT, not a package file: it
+      # reads package.json to identify the app (Electron), then submits the
+      # package given by --inputFile. Without the project checked out it fails
+      # with "could not find a project publisher", so check out the tagged source
+      # FIRST (a clean checkout would otherwise wipe the downloaded artifact).
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
       - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: verql-windows-latest
@@ -295,4 +306,7 @@ jobs:
             exit 1
           fi
           echo "Publishing $appx to product $PRODUCT_ID"
-          msstore publish "$appx" -id "$PRODUCT_ID"
+          # `.` = the Electron project (msstore identifies the app from
+          # package.json); --inputFile submits the prebuilt package instead of
+          # rebuilding; `-id` supplies the Store product id (no `init` needed).
+          msstore publish . -id "$PRODUCT_ID" --inputFile "$appx"

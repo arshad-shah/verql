@@ -271,6 +271,13 @@ the Store being configured. To turn it on:
    repository **variable** `MICROSOFT_STORE_PRODUCT_ID` (a variable, not a
    secret — it isn't sensitive; `msstore publish -id` reads it).
 
+> **How the CI publish is invoked.** `msstore publish`'s first argument is the
+> **project**, not the package — it reads `package.json` to identify the Electron
+> app, then submits the package passed via `--inputFile`. So the `publish-msstore`
+> job checks out the tagged source first and runs
+> `msstore publish . -id "$PRODUCT_ID" --inputFile <the .appx>`. Pointing it
+> straight at the `.appx` fails with *"could not find a project publisher"*.
+
 **Publishing credentials (Azure Entra app registration):**
 
 1. Azure portal → **Microsoft Entra ID → App registrations → New registration**.
