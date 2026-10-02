@@ -95,7 +95,7 @@
     "@vitest/coverage-istanbul": "4.1.10",
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/ui": "4.1.10",
-    "electron": "39.8.10",
+    "electron": "41.10.6",
     "electron-builder": "26.8.1",
     "electron-vite": "5.0.0",
     "jsdom": "29.0.2",
